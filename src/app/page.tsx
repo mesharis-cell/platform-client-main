@@ -42,8 +42,8 @@ export default function HomePage() {
 			const role = jwtDecode<CustomJwtPayload>(access_token).role;
 
 			if (role === 'CLIENT') {
-				// PMG Admin goes to analytics dashboard
-				router.push('/companies');
+				// Company client goes to analytics dashboard
+				// router.push('/companies');
 			}
 		}
 	}, [access_token, loading, router]);
@@ -65,9 +65,9 @@ export default function HomePage() {
 					description: "Welcome to the fulfillment platform.",
 				});
 
-				router.push('/companies')
+				// router.push('/companies')
 			} else {
-				// User is not an admin, sign out and invalidate token
+				// User is not a client, sign out and invalidate token
 				Cookies.remove('access_token')
 				Cookies.remove('refresh_token')
 				toast.success("Access Denied", {

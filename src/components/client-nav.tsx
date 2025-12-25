@@ -31,10 +31,10 @@ import { useState, useEffect } from 'react';
 import type { Company } from '@/types';
 
 const clientNav = [
-  { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
+  // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
   { name: 'Catalog', href: '/catalog', icon: Grid3x3 },
-  { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
-  { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
+  // { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
+  // { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
 ];
 
 interface ClientNavProps {
