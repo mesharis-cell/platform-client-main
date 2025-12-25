@@ -184,7 +184,7 @@ export interface CatalogListParams {
 	company?: string
 	brand?: string
 	category?: string
-	search?: string
+	search_term?: string
 	type?: 'asset' | 'collection' | 'all'
 	limit?: number
 	offset?: number

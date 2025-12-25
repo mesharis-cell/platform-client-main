@@ -76,7 +76,7 @@ function CatalogPageInner() {
 
 	// Fetch catalog data
 	const { data: catalogData, isLoading } = useCatalog({
-		search: searchQuery || undefined,
+		search_term: searchQuery || undefined,
 		brand:
 			selectedBrand && selectedBrand !== '_all_'
 				? selectedBrand
@@ -88,6 +88,9 @@ function CatalogPageInner() {
 		type: viewType,
 		limit: 100,
 	})
+
+	console.log('catalogData........', catalogData);
+
 
 	const { data: brandsData } = useBrands({ limit: '100' })
 
@@ -375,21 +378,19 @@ function CatalogPageInner() {
 						<div className='flex border border-border/50 rounded-lg p-1 bg-card/50'>
 							<button
 								onClick={() => setLayoutMode('grid')}
-								className={`p-2 rounded transition-all ${
-									layoutMode === 'grid'
-										? 'bg-primary text-primary-foreground shadow-sm'
-										: 'hover:bg-muted text-muted-foreground'
-								}`}
+								className={`p-2 rounded transition-all ${layoutMode === 'grid'
+									? 'bg-primary text-primary-foreground shadow-sm'
+									: 'hover:bg-muted text-muted-foreground'
+									}`}
 							>
 								<Grid3x3 className='w-4 h-4' />
 							</button>
 							<button
 								onClick={() => setLayoutMode('list')}
-								className={`p-2 rounded transition-all ${
-									layoutMode === 'list'
-										? 'bg-primary text-primary-foreground shadow-sm'
-										: 'hover:bg-muted text-muted-foreground'
-								}`}
+								className={`p-2 rounded transition-all ${layoutMode === 'list'
+									? 'bg-primary text-primary-foreground shadow-sm'
+									: 'hover:bg-muted text-muted-foreground'
+									}`}
 							>
 								<List className='w-4 h-4' />
 							</button>
@@ -481,7 +482,7 @@ function CatalogPageInner() {
 												) : (
 													<div className='absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50'>
 														{item.type ===
-														'collection' ? (
+															'collection' ? (
 															<Layers className='w-20 h-20 text-muted-foreground/20' />
 														) : (
 															<Package className='w-20 h-20 text-muted-foreground/20' />
@@ -495,15 +496,15 @@ function CatalogPageInner() {
 														className={cn(
 															'backdrop-blur-md bg-primary/80 border border-border/50 font-mono text-xs',
 															item.type ===
-																'asset' &&
-																'bg-secondary',
+															'asset' &&
+															'bg-secondary',
 															item.type ===
-																'collection' &&
-																'bg-primary'
+															'collection' &&
+															'bg-primary'
 														)}
 													>
 														{item.type ===
-														'collection' ? (
+															'collection' ? (
 															<>
 																<Layers className='w-3 h-3 mr-1.5' />
 																Collection
@@ -523,23 +524,22 @@ function CatalogPageInner() {
 														{/* Condition Badge */}
 														{item.condition &&
 															item.condition !==
-																'GREEN' && (
+															'GREEN' && (
 																<Badge
 																	variant={
 																		item.condition ===
-																		'RED'
+																			'RED'
 																			? 'destructive'
 																			: 'default'
 																	}
-																	className={`backdrop-blur-md border border-border/50 font-mono text-xs ${
-																		item.condition ===
+																	className={`backdrop-blur-md border border-border/50 font-mono text-xs ${item.condition ===
 																		'ORANGE'
-																			? 'bg-orange-500 hover:bg-orange-600'
-																			: ''
-																	}`}
+																		? 'bg-orange-500 hover:bg-orange-600'
+																		: ''
+																		}`}
 																>
 																	{item.condition ===
-																	'RED' ? (
+																		'RED' ? (
 																		<>
 																			<AlertCircle className='w-3 h-3 mr-1.5' />
 																			Damaged
@@ -557,14 +557,14 @@ function CatalogPageInner() {
 														<Badge
 															variant={
 																item.availableQuantity >
-																0
+																	0
 																	? 'default'
 																	: 'destructive'
 															}
 															className='backdrop-blur-md bg-primary border border-border/50 font-mono text-xs'
 														>
 															{item.availableQuantity >
-															0 ? (
+																0 ? (
 																<>
 																	<CheckCircle className='w-3 h-3 mr-1.5' />
 																	{
@@ -591,7 +591,7 @@ function CatalogPageInner() {
 														>
 															{item.itemCount}{' '}
 															{item.itemCount ===
-															1
+																1
 																? 'item'
 																: 'items'}
 														</Badge>
@@ -607,7 +607,7 @@ function CatalogPageInner() {
 												{/* Hover Overlay with Quick Add */}
 												{item.type === 'asset' &&
 													item.availableQuantity >
-														0 && (
+													0 && (
 														<div className='absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6'>
 															<Button
 																onClick={e => {
@@ -763,7 +763,7 @@ function CatalogPageInner() {
 												<div className='pt-2'>
 													{item.type === 'asset' ? (
 														item.availableQuantity >
-														0 ? (
+															0 ? (
 															<Button
 																onClick={e => {
 																	e.stopPropagation()
@@ -842,7 +842,7 @@ function CatalogPageInner() {
 														}
 													>
 														{item.images.length >
-														0 ? (
+															0 ? (
 															<Image
 																src={
 																	item
@@ -856,7 +856,7 @@ function CatalogPageInner() {
 														) : (
 															<div className='w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center'>
 																{item.type ===
-																'collection' ? (
+																	'collection' ? (
 																	<Layers className='w-16 h-16 text-muted-foreground/20' />
 																) : (
 																	<Package className='w-16 h-16 text-muted-foreground/20' />
@@ -894,14 +894,14 @@ function CatalogPageInner() {
 																<Badge
 																	variant={
 																		item.type ===
-																		'collection'
+																			'collection'
 																			? 'default'
 																			: 'secondary'
 																	}
 																	className='ml-4 font-mono'
 																>
 																	{item.type ===
-																	'collection' ? (
+																		'collection' ? (
 																		<>
 																			<Layers className='w-3 h-3 mr-1.5' />
 																			Collection
@@ -941,18 +941,18 @@ function CatalogPageInner() {
 																	</Badge>
 
 																	{item.type ===
-																	'asset' ? (
+																		'asset' ? (
 																		<Badge
 																			variant={
 																				item.availableQuantity >
-																				0
+																					0
 																					? 'default'
 																					: 'destructive'
 																			}
 																			className='font-mono'
 																		>
 																			{item.availableQuantity >
-																			0 ? (
+																				0 ? (
 																				<>
 																					<CheckCircle className='w-3 h-3 mr-1.5' />
 																					{
@@ -978,7 +978,7 @@ function CatalogPageInner() {
 																				item.itemCount
 																			}{' '}
 																			{item.itemCount ===
-																			1
+																				1
 																				? 'item'
 																				: 'items'}
 																		</Badge>
@@ -988,74 +988,74 @@ function CatalogPageInner() {
 																{/* Dimensions Grid (for assets) */}
 																{item.type ===
 																	'asset' && (
-																	<div className='grid grid-cols-5 gap-2 max-w-md'>
-																		<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
-																			<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
-																				Length
+																		<div className='grid grid-cols-5 gap-2 max-w-md'>
+																			<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
+																				<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
+																					Length
+																				</div>
+																				<div className='font-bold font-mono text-sm'>
+																					{Number(
+																						item.dimensionLength
+																					).toFixed(
+																						0
+																					)}{' '}
+																					cm
+																				</div>
 																			</div>
-																			<div className='font-bold font-mono text-sm'>
-																				{Number(
-																					item.dimensionLength
-																				).toFixed(
-																					0
-																				)}{' '}
-																				cm
+																			<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
+																				<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
+																					Width
+																				</div>
+																				<div className='font-bold font-mono text-sm'>
+																					{Number(
+																						item.dimensionWidth
+																					).toFixed(
+																						0
+																					)}{' '}
+																					cm
+																				</div>
+																			</div>
+																			<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
+																				<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
+																					Height
+																				</div>
+																				<div className='font-bold font-mono text-sm'>
+																					{Number(
+																						item.dimensionHeight
+																					).toFixed(
+																						0
+																					)}{' '}
+																					cm
+																				</div>
+																			</div>
+																			<div className='text-center p-2 bg-primary/10 rounded border border-primary/20'>
+																				<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
+																					Weight
+																				</div>
+																				<div className='font-bold font-mono text-sm text-primary'>
+																					{Number(
+																						item.weight
+																					).toFixed(
+																						1
+																					)}{' '}
+																					kg
+																				</div>
+																			</div>
+																			<div className='text-center p-2 bg-secondary/10 rounded border border-secondary/20'>
+																				<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
+																					Volume
+																				</div>
+																				<div className='font-bold font-mono text-sm text-secondary'>
+																					{Number(
+																						item.volume
+																					).toFixed(
+																						2
+																					)}{' '}
+																					m³
+																				</div>
 																			</div>
 																		</div>
-																		<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
-																			<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
-																				Width
-																			</div>
-																			<div className='font-bold font-mono text-sm'>
-																				{Number(
-																					item.dimensionWidth
-																				).toFixed(
-																					0
-																				)}{' '}
-																				cm
-																			</div>
-																		</div>
-																		<div className='text-center p-2 bg-muted/50 rounded border border-border/30'>
-																			<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
-																				Height
-																			</div>
-																			<div className='font-bold font-mono text-sm'>
-																				{Number(
-																					item.dimensionHeight
-																				).toFixed(
-																					0
-																				)}{' '}
-																				cm
-																			</div>
-																		</div>
-																		<div className='text-center p-2 bg-primary/10 rounded border border-primary/20'>
-																			<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
-																				Weight
-																			</div>
-																			<div className='font-bold font-mono text-sm text-primary'>
-																				{Number(
-																					item.weight
-																				).toFixed(
-																					1
-																				)}{' '}
-																				kg
-																			</div>
-																		</div>
-																		<div className='text-center p-2 bg-secondary/10 rounded border border-secondary/20'>
-																			<div className='text-xs text-muted-foreground uppercase font-mono mb-0.5'>
-																				Volume
-																			</div>
-																			<div className='font-bold font-mono text-sm text-secondary'>
-																				{Number(
-																					item.volume
-																				).toFixed(
-																					2
-																				)}{' '}
-																				m³
-																			</div>
-																		</div>
-																	</div>
-																)}
+																	)}
 															</div>
 														</div>
 
@@ -1075,7 +1075,7 @@ function CatalogPageInner() {
 															{item.type ===
 																'asset' &&
 																item.availableQuantity >
-																	0 && (
+																0 && (
 																	<Button
 																		onClick={e => {
 																			e.stopPropagation()
@@ -1138,14 +1138,14 @@ function CatalogPageInner() {
 											<Badge
 												variant={
 													selectedItem.type ===
-													'collection'
+														'collection'
 														? 'default'
 														: 'secondary'
 												}
 												className='font-mono'
 											>
 												{selectedItem.type ===
-												'collection' ? (
+													'collection' ? (
 													<>
 														<Layers className='w-3 h-3 mr-1.5' />
 														Collection
@@ -1162,23 +1162,22 @@ function CatalogPageInner() {
 											{selectedItem.type === 'asset' &&
 												selectedItem.condition &&
 												selectedItem.condition !==
-													'GREEN' && (
+												'GREEN' && (
 													<Badge
 														variant={
 															selectedItem.condition ===
-															'RED'
+																'RED'
 																? 'destructive'
 																: 'default'
 														}
-														className={`font-mono ${
-															selectedItem.condition ===
+														className={`font-mono ${selectedItem.condition ===
 															'ORANGE'
-																? 'bg-orange-500 hover:bg-orange-600'
-																: ''
-														}`}
+															? 'bg-orange-500 hover:bg-orange-600'
+															: ''
+															}`}
 													>
 														{selectedItem.condition ===
-														'RED' ? (
+															'RED' ? (
 															<>
 																<AlertCircle className='w-3 h-3 mr-1.5' />
 																Damaged
@@ -1221,13 +1220,12 @@ function CatalogPageInner() {
 											.map((image, index) => (
 												<div
 													key={index}
-													className={`rounded-lg overflow-hidden border border-border relative ${
-														index === 0 &&
+													className={`rounded-lg overflow-hidden border border-border relative ${index === 0 &&
 														selectedItem.images
 															.length > 1
-															? 'col-span-2 aspect-[21/9]'
-															: 'aspect-square'
-													}`}
+														? 'col-span-2 aspect-[21/9]'
+														: 'aspect-square'
+														}`}
 												>
 													<Image
 														src={image}
@@ -1359,7 +1357,7 @@ function CatalogPageInner() {
 													(selectedItem.condition ===
 														'ORANGE' ||
 														selectedItem.condition ===
-															'RED') && (
+														'RED') && (
 														<div className='col-span-2 bg-amber-500/10 rounded-lg p-4 border border-amber-500/20'>
 															<p className='text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1'>
 																Estimated Refurb
@@ -1418,7 +1416,7 @@ function CatalogPageInner() {
 															Math.max(
 																1,
 																selectedQuantity -
-																	1
+																1
 															)
 														)
 													}
@@ -1437,7 +1435,7 @@ function CatalogPageInner() {
 															Math.min(
 																selectedItem.availableQuantity,
 																selectedQuantity +
-																	1
+																1
 															)
 														)
 													}
