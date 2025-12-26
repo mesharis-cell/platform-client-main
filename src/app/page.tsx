@@ -57,7 +57,7 @@ export default function HomePage() {
 					description: "Welcome to the fulfillment platform.",
 				});
 
-				// router.push('/companies')
+				router.push('/catalog')
 			} else {
 				// User is not a client, sign out and invalidate token
 				Cookies.remove('access_token')

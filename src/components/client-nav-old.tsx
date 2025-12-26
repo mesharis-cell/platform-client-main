@@ -7,23 +7,21 @@
  * Industrial aesthetic matching admin panel for consistency.
  */
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { signOut, useSession } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard,
-  ShoppingCart,
+  Box,
   Calendar,
   Grid3x3,
-  Package,
+  LayoutDashboard,
   LogOut,
-  Box,
+  ShoppingCart
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useSession } from '@/lib/auth';
-import { signOut } from '@/lib/auth';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
 const clientNav = [
   { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
@@ -43,7 +41,7 @@ export function ClientNav({ children }: ClientNavProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login');
+    router.push('/');
   };
 
   return (

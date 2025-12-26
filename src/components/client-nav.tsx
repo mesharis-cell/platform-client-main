@@ -6,29 +6,24 @@
  * Industrial aesthetic with floating cart button and badge
  */
 
+import { FloatingCart } from '@/components/cart/floating-cart';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CartProvider, useCart } from '@/contexts/cart-context';
+import { signOut, useSession } from '@/lib/auth';
+import { cn } from '@/lib/utils';
+import type { Company } from '@/types';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Box,
+  Grid3x3,
+  LogOut,
+  ShoppingCart
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Calendar,
-  Grid3x3,
-  Package,
-  LogOut,
-  Box,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useSession } from '@/lib/auth';
-import { signOut } from '@/lib/auth';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { CartProvider, useCart } from '@/contexts/cart-context';
-import { FloatingCart } from '@/components/cart/floating-cart';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import type { Company } from '@/types';
+import { useEffect, useState } from 'react';
 
 const clientNav = [
   // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
@@ -91,7 +86,7 @@ function ClientNavInner({ children }: ClientNavProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login');
+    router.push('/');
   };
 
   // Find most specific matching route for active state
