@@ -29,12 +29,6 @@ export default function HomePage() {
 	const { access_token, loading } = useToken();
 
 	const { platform } = usePlatform();
-	console.log('platform2.......', platform);
-
-	console.log('access_token', access_token);
-	console.log('loading', loading);
-
-
 
 	useEffect(() => {
 		if (access_token) {
@@ -52,10 +46,8 @@ export default function HomePage() {
 		e.preventDefault();
 		setIsLoading(true);
 
-		console.log('platform.......', platform);
-
 		try {
-			const res = await login(email, password, platform?.id);
+			const res = await login(email, password, platform?.platform_id);
 
 			console.log('res.....', res?.data);
 
@@ -85,12 +77,6 @@ export default function HomePage() {
 			setIsLoading(false);
 		}
 	};
-
-	// Show loading state while checking token OR if user is authenticated (to prevent form flash during redirect)
-	// if (loading || access_token) {
-	// 	return <LoadingState />;
-	// }
-
 	return (
 		<div className="min-h-screen bg-background relative overflow-hidden">
 			{/* Industrial Grid Background */}
@@ -126,7 +112,7 @@ export default function HomePage() {
 							</div>
 							<div>
 								<h1 className="text-2xl font-bold tracking-tight font-mono uppercase">
-									{platform?.platforms?.config?.logistics_partner_name || "PMG Platform"}
+									{platform?.company_name || "PMG Platform"}
 								</h1>
 								<p className="text-xs text-muted-foreground font-mono tracking-wider">
 									Asset Fulfillment System
