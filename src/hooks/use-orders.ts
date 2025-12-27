@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Phase 6: Order Management React Query Hooks
  *

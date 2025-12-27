@@ -32,7 +32,7 @@ import { useAuth } from '@/contexts/user-context';
 const clientNav = [
   { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
   { name: 'Catalog', href: '/catalog', icon: Grid3x3 },
-  // { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
+  { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
   // { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
 ];
 

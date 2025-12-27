@@ -19,14 +19,13 @@ import { ClientNav } from '@/components/client-nav';
 
 // Order status display configuration
 const ORDER_STATUS_CONFIG = {
+	DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700 border-gray-300' },
 	SUBMITTED: { label: 'Submitted', color: 'bg-blue-100 text-blue-700 border-blue-300' },
 	PRICING_REVIEW: { label: 'Pricing Review', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+	PENDING_APPROVAL: { label: 'Pending Approval', color: 'bg-amber-100 text-amber-700 border-amber-300' },
 	QUOTED: { label: 'Quoted', color: 'bg-purple-100 text-purple-700 border-purple-300' },
-	APPROVED: { label: 'Approved', color: 'bg-green-100 text-green-700 border-green-300' },
 	DECLINED: { label: 'Declined', color: 'bg-red-100 text-red-700 border-red-300' },
-	INVOICED: { label: 'Invoiced', color: 'bg-indigo-100 text-indigo-700 border-indigo-300' },
-	PAID: { label: 'Paid', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
-	CONFIRMED: { label: 'Confirmed', color: 'bg-teal-100 text-teal-700 border-teal-300' },
+	CONFIRMED: { label: 'Confirmed', color: 'bg-green-100 text-green-700 border-green-300' },
 	IN_PREPARATION: { label: 'In Preparation', color: 'bg-cyan-100 text-cyan-700 border-cyan-300' },
 	READY_FOR_DELIVERY: { label: 'Ready', color: 'bg-sky-100 text-sky-700 border-sky-300' },
 	IN_TRANSIT: { label: 'In Transit', color: 'bg-violet-100 text-violet-700 border-violet-300' },
@@ -154,7 +153,7 @@ export default function MyOrdersPage() {
 								<p className="text-destructive font-medium">Failed to load orders. Please try again.</p>
 							</CardContent>
 						</Card>
-					) : !data || data.orders.length === 0 ? (
+					) : !data || data?.data?.length === 0 ? (
 						<Card className="bg-card/80 backdrop-blur-sm border-border/40">
 							<CardContent className="p-12 text-center">
 								<Package className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
@@ -175,7 +174,7 @@ export default function MyOrdersPage() {
 					) : (
 						<>
 							<div className="flex flex-col space-y-4">
-								{data.orders.map((order) => (
+								{data?.data.map((order) => (
 									<Link key={order.id} href={`/orders/${order.orderId}`}>
 										<Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-all duration-200 group cursor-pointer">
 											<CardContent className="p-6">
@@ -184,9 +183,9 @@ export default function MyOrdersPage() {
 														{/* Order ID and Brand */}
 														<div className="flex items-center gap-3">
 															<p className="font-mono text-lg font-bold text-foreground">
-																{order.orderId}
+																{order.order_id}
 															</p>
-															{order.brand && (
+															{order?.brand && (
 																<Badge variant="outline" className="text-xs">
 																	{order.brand.name}
 																</Badge>
@@ -195,13 +194,13 @@ export default function MyOrdersPage() {
 
 														{/* Venue */}
 														<div className="flex items-start gap-2">
-															<MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+															<MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
 															<div className="min-w-0">
 																<p className="font-semibold text-foreground text-base truncate">
-																	{order.venueName}
+																	{order.venue_name}
 																</p>
 																<p className="text-sm text-muted-foreground">
-																	{order.venueCity}
+																	{order.venue_city}
 																</p>
 															</div>
 														</div>
@@ -211,7 +210,7 @@ export default function MyOrdersPage() {
 															<Calendar className="h-5 w-5 text-muted-foreground" />
 															<p className="text-sm text-muted-foreground">
 																Event: <span className="font-medium text-foreground font-mono">
-																	{new Date(order.eventStartDate).toLocaleDateString()}
+																	{new Date(order.event_start_date).toLocaleDateString()}
 																</span>
 															</p>
 														</div>
@@ -221,9 +220,9 @@ export default function MyOrdersPage() {
 													<div className="flex flex-col items-end gap-3">
 														<Badge
 															variant="outline"
-															className={`${(ORDER_STATUS_CONFIG as any)[order.status]?.color || 'bg-gray-100 text-gray-700 border-gray-300'} font-medium border whitespace-nowrap px-4 py-1.5 text-sm`}
+															className={`${(ORDER_STATUS_CONFIG as any)[order.order_status]?.color || 'bg-gray-100 text-gray-700 border-gray-300'} font-medium border whitespace-nowrap px-4 py-1.5 text-sm`}
 														>
-															{(ORDER_STATUS_CONFIG as any)[order.status]?.label || order.status}
+															{(ORDER_STATUS_CONFIG as any)[order.order_status]?.label || order.order_status}
 														</Badge>
 														<Button
 															variant="ghost"
@@ -241,14 +240,14 @@ export default function MyOrdersPage() {
 							</div>
 
 							{/* Pagination */}
-							{data.pagination && data.pagination.totalPages > 1 && (
+							{data?.meta && data?.meta?.total > 10 && (
 								<Card className="bg-card/80 backdrop-blur-sm border-border/40 mt-6">
 									<CardContent className="py-4">
 										<div className="flex items-center justify-between">
 											<p className="text-sm text-muted-foreground">
 												Showing {(page - 1) * limit + 1} to{' '}
-												{Math.min(page * limit, data.pagination.totalCount)} of{' '}
-												{data.pagination.totalCount} orders
+												{Math.min(page * limit, data.meta.total)} of{' '}
+												{data.meta.total} orders
 											</p>
 											<div className="flex gap-2">
 												<Button
@@ -262,8 +261,8 @@ export default function MyOrdersPage() {
 													Previous
 												</Button>
 												<Button
-													onClick={() => setPage((p) => Math.min(data.pagination.totalPages, p + 1))}
-													disabled={page === data.pagination.totalPages}
+													onClick={() => setPage((p) => Math.min(data.meta.page, p + 1))}
+													disabled={page === data.meta.page}
 													variant="outline"
 													size="sm"
 													className="gap-1"

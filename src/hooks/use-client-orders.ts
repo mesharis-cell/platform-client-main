@@ -1,8 +1,12 @@
+"use client";
+
 /**
  * React Query hooks for client order tracking operations
  * Phase 13: Client Order Tracking Dashboard
  */
 
+import { apiClient } from '@/lib/api/api-client';
+import { throwApiError } from '@/lib/utils/throw-api-error';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Types for client order operations
@@ -95,20 +99,21 @@ export function useClientOrders(params: ClientOrderListParams = {}) {
   return useQuery({
     queryKey: ['client-orders', params],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-      if (params.status) queryParams.append('status', params.status);
-      if (params.search) queryParams.append('search', params.search);
-      if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
-      if (params.dateTo) queryParams.append('dateTo', params.dateTo);
-      if (params.brand) queryParams.append('brand', params.brand);
-      if (params.page) queryParams.append('page', params.page.toString());
-      if (params.limit) queryParams.append('limit', params.limit.toString());
+      try {
+        const queryParams = new URLSearchParams();
+        if (params.status) queryParams.append('order_status', params.status);
+        if (params.search) queryParams.append('search_term', params.search);
+        if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+        if (params.dateTo) queryParams.append('dateTo', params.dateTo);
+        if (params.brand) queryParams.append('brand', params.brand);
+        if (params.page) queryParams.append('page', params.page.toString());
+        if (params.limit) queryParams.append('limit', params.limit.toString());
 
-      const response = await fetch(`/api/client/orders?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-      return response.json();
+        const response = await apiClient.get(`/client/v1/order/my?${queryParams.toString()}`);
+        return response.data;
+    } catch (error) {
+      throwApiError(error);
+    }
     },
   });
 }

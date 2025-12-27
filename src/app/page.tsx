@@ -79,7 +79,7 @@ export default function HomePage() {
 	};
 
 	// Show loading state while checking token OR if user is authenticated (to prevent form flash during redirect)
-	if (isAuthenticated) {
+	if (!isAuthenticated) {
 		return <LoadingState />;
 	}
 
