@@ -162,7 +162,7 @@ export default function MyOrdersPage() {
 						<>
 							<div className="flex flex-col space-y-4">
 								{data?.data.map((order) => (
-									<Link key={order.id} href={`/orders/${order.orderId}`}>
+									<Link key={order.id} href={`/orders/${order.order_id}`}>
 										<Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-all duration-200 group cursor-pointer">
 											<CardContent className="p-6">
 												<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
