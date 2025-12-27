@@ -5,7 +5,7 @@
  * Professional order list interface with filtering and search
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useClientOrders } from '@/hooks/use-client-orders';
 import { Button } from '@/components/ui/button';
@@ -41,33 +41,24 @@ export default function MyOrdersPage() {
 	const [limit] = useState(10);
 	const [status, setStatus] = useState<string>('');
 	const [search, setSearch] = useState<string>('');
-	const [searchInput, setSearchInput] = useState<string>('');
+
+	const queryParams = useMemo(() => {
+		const params: Record<string, string> = {
+			limit: '100',
+			offset: '0',
+		}
+		if (search) params.search = search
+		if (status) params.status = status
+		return params
+	}, [search, status])
 
 	// Data fetching
-	const { data, isLoading, error } = useClientOrders({
-		page,
-		limit,
-		status: status || undefined,
-		search: search || undefined,
-	});
-
-	// Handle search
-	const handleSearch = () => {
-		setSearch(searchInput);
-		setPage(1);
-	};
-
-	const handleKeyPress = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			handleSearch();
-		}
-	};
+	const { data, isLoading, error } = useClientOrders(queryParams);
 
 	// Clear filters
 	const clearFilters = () => {
 		setStatus('');
 		setSearch('');
-		setSearchInput('');
 		setPage(1);
 	};
 
@@ -105,14 +96,10 @@ export default function MyOrdersPage() {
 								<div className="flex-1 flex gap-2">
 									<Input
 										placeholder="Search by order ID or venue name..."
-										value={searchInput}
-										onChange={(e) => setSearchInput(e.target.value)}
-										onKeyPress={handleKeyPress}
+										value={search}
+										onChange={(e) => setSearch(e.target.value)}
 										className="flex-1"
 									/>
-									<Button onClick={handleSearch} size="icon" variant="secondary">
-										<Search className="h-4 w-4" />
-									</Button>
 								</div>
 
 								{/* Status Filter */}
