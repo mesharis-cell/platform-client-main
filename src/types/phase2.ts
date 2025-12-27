@@ -184,10 +184,12 @@ export interface BrandListParams {
 }
 
 export interface BrandListResponse {
-	brands: Brand[];
-	total: number;
-	limit: number;
-	offset: number;
+	data: Brand[]
+	meta: {
+		total: number
+		limit: number
+		page: number
+	}
 }
 
 // ============================================================

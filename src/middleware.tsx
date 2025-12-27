@@ -1,5 +1,7 @@
+import { jwtDecode } from 'jwt-decode'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
+import { CustomJwtPayload } from './app/page'
 
 // Routes that don't require authentication
 const publicRoutes = ['/', '/reset-password']
@@ -23,6 +25,14 @@ export async function middleware(request: NextRequest) {
 
 	// If no token and trying to access protected route, redirect to homepage
 	if (!accessToken) {
+		return NextResponse.redirect(new URL('/', request.url))
+	}
+
+
+	// Decode the token only after confirming it exists
+	const role = jwtDecode<CustomJwtPayload>(accessToken).role;
+
+	if (role !== 'CLIENT') {
 		return NextResponse.redirect(new URL('/', request.url))
 	}
 

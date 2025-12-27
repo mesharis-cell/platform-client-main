@@ -1,3 +1,5 @@
+"use client";
+
 // Phase 4: Catalog React Query Hooks
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +10,7 @@ import type {
 	CatalogAssetDetailsResponse,
 	CatalogCollectionDetailsResponse,
 } from '@/types/collection';
+import { throwApiError } from '@/lib/utils/throw-api-error';
 
 // ========================================
 // Query Keys
@@ -94,13 +97,21 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 }
 
 async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsResponse> {
-	const response = await apiClient.get<CatalogAssetDetailsResponse>(`/client/v1/catalog/assets/${id}`);
-	return response.data;
+	try {
+		const response = await apiClient.get<CatalogAssetDetailsResponse>(`/client/v1/catalog/assets/${id}`);
+		return response.data;
+	} catch (error) {
+		throwApiError(error);
+	}
 }
 
 async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDetailsResponse> {
-	const response = await apiClient.get<CatalogCollectionDetailsResponse>(`/client/v1/catalog/collections/${id}`);
-	return response.data;
+	try {
+		const response = await apiClient.get<CatalogCollectionDetailsResponse>(`/client/v1/catalog/collections/${id}`);
+		return response.data;
+	} catch (error) {
+		throwApiError(error);
+	}
 }
 
 // ========================================

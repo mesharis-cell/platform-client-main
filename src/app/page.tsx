@@ -9,14 +9,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import axios from "axios";
 import { Eye, EyeOff, Lock, Mail, Package } from "lucide-react";
-import { jwtDecode, JwtPayload } from "jwt-decode";
-import { login } from "@/actions/login";
-import Cookies from "js-cookie";
-import { useToken } from "@/lib/auth/use-token";
-import { usePlatform } from "@/contexts/platform-context";
+import { jwtDecode } from "jwt-decode";
 import { LoadingState } from "@/components/loading-state";
+import { usePlatform } from "@/contexts/platform-context";
+import { login } from "@/actions/login";
+import type { JwtPayload } from "jwt-decode";
+import { useAuth } from "@/contexts/user-context";
 
-interface CustomJwtPayload extends JwtPayload {
+export interface CustomJwtPayload extends JwtPayload {
 	role: string;
 }
 
@@ -26,21 +26,22 @@ export default function HomePage() {
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const { access_token, loading } = useToken();
-
+	const { isAuthenticated, user, setUser, setIsAuthenticated } = useAuth();
 	const { platform } = usePlatform();
 
 	useEffect(() => {
-		if (access_token) {
-			// User is authenticated, redirect based on role
-			const role = jwtDecode<CustomJwtPayload>(access_token).role;
+		if (isAuthenticated) {
 
-			if (role === 'CLIENT') {
-				// Company client goes to analytics dashboard
-				// router.push('/companies');
+			if (user?.role === 'CLIENT') {
+				// PMG Client goes to dashboard
+				router.push('/client-dashboard');
+			} else {
+				setUser(null);
+				setIsAuthenticated(false);
+				router.push('/');
 			}
 		}
-	}, [access_token, loading, router]);
+	}, [isAuthenticated, user, router]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -49,20 +50,19 @@ export default function HomePage() {
 		try {
 			const res = await login(email, password, platform?.platform_id);
 
-			console.log('res.....', res?.data);
-
-
 			if (res.data.role === 'CLIENT') {
 				toast.success("Access Granted", {
 					description: "Welcome to the fulfillment platform.",
 				});
 
-				router.push('/catalog')
+				const { access_token, refresh_token, ...user } = res.data;
+				localStorage.setItem("user", JSON.stringify(user));
+				setUser(user);
+				setIsAuthenticated(true);
+
+				router.push('/client-dashboard')
 			} else {
-				// User is not a client, sign out and invalidate token
-				Cookies.remove('access_token')
-				Cookies.remove('refresh_token')
-				toast.success("Access Denied", {
+				toast.error("Access Denied", {
 					description: "You do not have access to this platform.",
 				});
 			}
@@ -77,6 +77,12 @@ export default function HomePage() {
 			setIsLoading(false);
 		}
 	};
+
+	// Show loading state while checking token OR if user is authenticated (to prevent form flash during redirect)
+	if (isAuthenticated) {
+		return <LoadingState />;
+	}
+
 	return (
 		<div className="min-h-screen bg-background relative overflow-hidden">
 			{/* Industrial Grid Background */}

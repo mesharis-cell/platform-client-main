@@ -89,13 +89,11 @@ function CatalogPageInner() {
 		limit: 100,
 	})
 
-	console.log('catalogData........', catalogData);
-
 
 	const { data: brandsData } = useBrands({ limit: '100' })
 
 	const items = catalogData?.items || []
-	const brands = brandsData?.brands || []
+	const brands = brandsData?.data || []
 
 	// Extract unique categories
 	const categories = Array.from(
@@ -145,7 +143,7 @@ function CatalogPageInner() {
 	return (
 		<div className='min-h-screen bg-background'>
 			{/* Enhanced Hero Header */}
-			<div className='relative border-b border-border overflow-hidden bg-gradient-to-br from-background via-muted/20 to-background'>
+			<div className='relative border-b border-border overflow-hidden bg-linear-to-br from-background via-muted/20 to-background'>
 				{/* Animated grid pattern */}
 				<div
 					className='absolute inset-0 opacity-[0.03]'
@@ -412,7 +410,7 @@ function CatalogPageInner() {
 								key={i}
 								className='overflow-hidden bg-card/50 border-border/50'
 							>
-								<div className='aspect-[4/3] bg-muted/50 animate-pulse' />
+								<div className='aspect-4/3 bg-muted/50 animate-pulse' />
 								<CardContent className='p-6 space-y-3'>
 									<div className='h-6 bg-muted/50 rounded animate-pulse' />
 									<div className='h-4 bg-muted/50 rounded w-2/3 animate-pulse' />
@@ -467,7 +465,7 @@ function CatalogPageInner() {
 										<Card className='overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full'>
 											{/* Image with Overlay */}
 											<div
-												className='aspect-[3/2] bg-muted relative overflow-hidden'
+												className='aspect-3/2 bg-muted relative overflow-hidden'
 												onClick={() =>
 													setSelectedItem(item)
 												}

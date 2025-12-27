@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Phase 5: Pricing Tiers React Query Hooks
  * Custom hooks for pricing tier management operations
@@ -14,6 +16,23 @@ import type {
 	CalculatePricingParams,
 	CalculatePricingResponse,
 } from "@/types/pricing";
+import { apiClient } from "@/lib/api/api-client";
+import { throwApiError } from "@/lib/utils/throw-api-error";
+
+// Fetch pricing tier locations (public endpoint, no pricing details)
+export function usePricingTierLocations() {
+	return useQuery({
+		queryKey: ['pricing-tier-locations'],
+		queryFn: async () => {
+			try {
+				const response = await apiClient.get('/operations/v1/pricing-tier/locations')
+				return response.data
+			} catch (error) {
+				throwApiError(error)
+			}
+		},
+	})
+}
 
 /**
  * List pricing tiers with filtering
