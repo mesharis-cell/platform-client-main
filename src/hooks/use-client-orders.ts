@@ -36,38 +36,63 @@ interface ClientOrder {
 
 interface ClientOrderDetail {
   id: string;
-  orderId: string;
+  order_id: string;
   company: { id: string; name: string };
   brand: { id: string; name: string } | null;
-  createdBy: { id: string; name: string; email: string };
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  eventStartDate: string;
-  eventEndDate: string;
-  venueName: string;
-  venueCountry: string;
-  venueCity: string;
-  venueAddress: string;
-  venueAccessNotes: string | null;
-  deliveryWindowStart: string | null;
-  deliveryWindowEnd: string | null;
-  pickupWindowStart: string | null;
-  pickupWindowEnd: string | null;
-  truckPhotos: string[];
-  specialInstructions: string | null;
-  calculatedVolume: number;
-  calculatedWeight: number;
-  finalTotalPrice: number;
-  quoteSentAt: string | null;
-  invoiceNumber: string | null;
-  invoiceGeneratedAt: string | null;
-  invoicePdfUrl: string | null;
-  status: string;
-  items: any[];
-  statusHistory: any[];
-  createdAt: string;
-  updatedAt: string;
+  user: { id: string; name: string; email: string };
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  event_start_date: string;
+  event_end_date: string;
+  venue_name: string;
+  venue_location: {
+    city: string;
+    address: string;
+    country: string;
+    access_notes: string | null;
+  };
+  delivery_window: { start: string; end: string } | null;
+  pickup_window: { start: string; end: string } | null;
+  delivery_photos: string[];
+  special_instructions: string | null;
+  calculated_totals: {
+    volume: string;
+    weight: string;
+    total_price?: number;
+  };
+  final_pricing: { total: number } | null;
+  quote_sent_at: string | null;
+  invoice_id: string | null;
+  invoice_generated_at: string | null;
+  invoice_paid_at: string | null;
+  invoice_pdf_url?: string | null;
+  order_status: string;
+  items: {
+    order_item: {
+      id: string;
+      asset_name: string;
+      quantity: number;
+      volume_per_unit: string;
+      weight_per_unit: string;
+      total_volume: string;
+      total_weight: string;
+    };
+    asset: {
+      id: string;
+      name: string;
+      condition: string;
+      dimension_length?: number;
+      dimension_width?: number;
+      dimension_height?: number;
+    };
+  }[];
+  order_status_history: any[];
+  created_at: string;
+  updated_at: string;
+  a2_adjusted_price?: boolean;
+  a2_adjusted_reason?: string;
+  pmg_review_notes?: string;
 }
 
 interface CalendarEvent {
@@ -125,12 +150,13 @@ export function useClientOrderDetail(orderId: string | null) {
   return useQuery({
     queryKey: ['client-order-detail', orderId],
     queryFn: async () => {
+      try {
       if (!orderId) return null;
-      const response = await fetch(`/api/client/orders/${orderId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch order details');
-      }
-      return response.json();
+      const response = await apiClient.get(`/client/v1/order/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throwApiError(error);
+    }
     },
     enabled: !!orderId,
   });

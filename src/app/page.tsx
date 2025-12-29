@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import axios from "axios";
 import { Eye, EyeOff, Lock, Mail, Package } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
 import { LoadingState } from "@/components/loading-state";
 import { usePlatform } from "@/contexts/platform-context";
 import { login } from "@/actions/login";
@@ -26,60 +25,60 @@ export default function HomePage() {
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const { isAuthenticated, user, setUser, setIsAuthenticated } = useAuth();
+	const { isAuthenticated, user, setUser, setIsAuthenticated, logout } = useAuth();
 	const { platform } = usePlatform();
+	const [loading, startTransition] = useTransition()
 
 	useEffect(() => {
+		setIsLoading(true);
 		if (isAuthenticated) {
-
 			if (user?.role === 'CLIENT') {
 				// PMG Client goes to dashboard
 				router.push('/client-dashboard');
 			} else {
 				setUser(null);
 				setIsAuthenticated(false);
-				router.push('/');
+				logout();
 			}
 		}
+		setIsLoading(false);
 	}, [isAuthenticated, user, router]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsLoading(true);
 
-		try {
-			const res = await login(email, password, platform?.platform_id);
+		startTransition(async () => {
+			try {
+				const res = await login(email, password, platform?.platform_id);
 
-			if (res.data.role === 'CLIENT') {
-				toast.success("Access Granted", {
-					description: "Welcome to the fulfillment platform.",
-				});
+				if (res.data.role === 'CLIENT') {
+					toast.success("Access Granted", {
+						description: "Welcome to the fulfillment platform.",
+					});
 
-				const { access_token, refresh_token, ...user } = res.data;
-				localStorage.setItem("user", JSON.stringify(user));
-				setUser(user);
-				setIsAuthenticated(true);
+					const { access_token, refresh_token, ...user } = res.data;
+					localStorage.setItem("user", JSON.stringify(user));
+					setUser(user);
+					setIsAuthenticated(true);
 
-				router.push('/client-dashboard')
-			} else {
-				toast.error("Access Denied", {
-					description: "You do not have access to this platform.",
+					router.push('/client-dashboard')
+				} else {
+					toast.error("Access Denied", {
+						description: "You do not have access to this platform.",
+					});
+				}
+			} catch (error: unknown) {
+				toast.error("Authentication Failed", {
+					description: axios.isAxiosError(error) && error.response?.data?.message
+						? error.response.data.message
+						: "Unable to process authentication request.",
 				});
 			}
-
-		} catch (error: unknown) {
-			toast.error("Authentication Failed", {
-				description: axios.isAxiosError(error) && error.response?.data?.message
-					? error.response.data.message
-					: "Unable to process authentication request.",
-			});
-		} finally {
-			setIsLoading(false);
-		}
+		})
 	};
 
 	// Show loading state while checking token OR if user is authenticated (to prevent form flash during redirect)
-	if (!isAuthenticated) {
+	if (isLoading) {
 		return <LoadingState />;
 	}
 
@@ -214,11 +213,11 @@ export default function HomePage() {
 								{/* Submit Button */}
 								<Button
 									type="submit"
-									disabled={isLoading}
+									disabled={loading}
 									className="w-full h-12 font-mono uppercase tracking-wider text-sm font-bold relative overflow-hidden group"
 								>
 									<span className="relative z-10">
-										{isLoading ? "Authenticating..." : "Grant Access"}
+										{loading ? "Authenticating..." : "Grant Access"}
 									</span>
 									<div className="absolute inset-0 bg-primary-foreground/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
 								</Button>

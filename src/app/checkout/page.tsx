@@ -122,11 +122,12 @@ function CheckoutPageInner() {
 					return
 				}
 
-				const { assets } = response.data
+				const assets = response.data.data
 				const issues: string[] = []
 
 				items.forEach(item => {
 					const asset = assets.find((a: any) => a.id === item.assetId)
+
 					if (!asset || asset.status !== 'AVAILABLE') {
 						issues.push(`${item.assetName} is no longer available`)
 					} else if (item.quantity > asset.availableQuantity) {
