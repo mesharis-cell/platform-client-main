@@ -11,24 +11,28 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CartProvider, useCart } from '@/contexts/cart-context';
-import { signOut, useSession } from '@/lib/auth';
+import { useSession } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import type { Company } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Box,
+  LayoutDashboard,
   Grid3x3,
   LogOut,
-  ShoppingCart
+  ShoppingCart,
+  Box
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/user-context';
 
 const clientNav = [
-  // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
   { name: 'Catalog', href: '/catalog', icon: Grid3x3 },
-  // { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
+  { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
   // { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
 ];
 
@@ -40,6 +44,7 @@ function ClientNavInner({ children }: ClientNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const { logout } = useAuth();
   const { toggleCart, itemCount } = useCart();
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
@@ -84,10 +89,11 @@ function ClientNavInner({ children }: ClientNavProps) {
     fetchCompany();
   }, [session]);
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
+    logout();
     router.push('/');
-  };
+    toast.success('You have been signed out.')
+  }
 
   // Find most specific matching route for active state
   const getActiveRoute = () => {
@@ -105,7 +111,7 @@ function ClientNavInner({ children }: ClientNavProps) {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Sidebar Navigation */}
-      <aside className="w-72 border-r border-border bg-muted/30 flex-shrink-0 sticky top-0 h-screen flex flex-col relative overflow-hidden">
+      <aside className="w-72 border-r border-border bg-muted/30 shrink-0 sticky top-0 h-screen flex flex-col overflow-hidden">
         {/* Grid pattern overlay */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -202,7 +208,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground/30" />
                   )}
 
-                  <Icon className="h-4 w-4 relative z-10 flex-shrink-0" />
+                  <Icon className="h-4 w-4 relative z-10 shrink-0" />
                   <span className="flex-1 relative z-10 uppercase tracking-wide text-xs">{item.name}</span>
 
                   {!isActive && (

@@ -224,7 +224,7 @@ export default function EventCalendarPage() {
 
 	return (
 		<ClientNav>
-			<div className='min-h-screen bg-gradient-to-br from-background via-muted/30 to-background'>
+			<div className='min-h-screen bg-linear-to-br from-background via-muted/30 to-background'>
 				{/* Header */}
 				<div className='border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10'>
 					<div className='container mx-auto px-6 py-6'>
@@ -341,22 +341,20 @@ export default function EventCalendarPage() {
 										return (
 											<div
 												key={index}
-												className={`min-h-[120px] border-2 rounded-lg p-2 transition-all ${
-													isTodayDate
+												className={`min-h-[120px] border-2 rounded-lg p-2 transition-all ${isTodayDate
 														? 'border-primary bg-primary/5'
 														: isCurrentMonth
 															? 'border-border bg-card hover:border-primary/30'
 															: 'border-border/40 bg-muted/20 opacity-40'
-												}`}
+													}`}
 											>
 												<div
-													className={`text-sm font-semibold mb-2 ${
-														isTodayDate
+													className={`text-sm font-semibold mb-2 ${isTodayDate
 															? 'text-primary'
 															: isCurrentMonth
 																? 'text-foreground'
 																: 'text-muted-foreground'
-													}`}
+														}`}
 												>
 													{format(day, 'd')}
 												</div>

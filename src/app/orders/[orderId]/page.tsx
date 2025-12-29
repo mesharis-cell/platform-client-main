@@ -61,7 +61,7 @@ export default function OrderPage({
     const { orderId } = use(params)
     const router = useRouter()
     const { data: orderData, isLoading } = useClientOrderDetail(orderId)
-    const order = orderData
+    const order = orderData?.data;
     const approveQuote = useClientApproveQuote()
     const declineQuote = useClientDeclineQuote()
     const downloadInvoice = useDownloadInvoice()
@@ -122,7 +122,7 @@ export default function OrderPage({
     if (isLoading) {
         return (
             <ClientNav>
-                <div className='min-h-screen bg-gradient-to-br from-background via-muted/10 to-background'>
+                <div className='min-h-screen bg-linear-to-br from-background via-muted/10 to-background'>
                     <div className='max-w-7xl mx-auto px-8 py-10'>
                         <Skeleton className='h-40 w-full mb-8' />
                         <Skeleton className='h-96 w-full' />
@@ -135,7 +135,7 @@ export default function OrderPage({
     if (!order) {
         return (
             <ClientNav>
-                <div className='min-h-screen bg-gradient-to-br from-background via-muted/10 to-background flex items-center justify-center p-8'>
+                <div className='min-h-screen bg-linear-to-br from-background via-muted/10 to-background flex items-center justify-center p-8'>
                     <Card className='max-w-md w-full p-10 text-center border-border/50 bg-card/50'>
                         <div className='h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6'>
                             <AlertCircle className='w-10 h-10 text-muted-foreground/50' />
@@ -183,22 +183,22 @@ export default function OrderPage({
     }
 
     // Individual state checks for precise UI control
-    const isSubmitted = order.status === 'SUBMITTED'
-    const isPricingReview = order.status === 'PRICING_REVIEW'
-    const isPendingApproval = order.status === 'PENDING_APPROVAL'
-    const isQuoted = order.status === 'QUOTED'
-    const isApproved = order.status === 'APPROVED'
-    const isDeclined = order.status === 'DECLINED'
-    const isInvoiced = order.status === 'INVOICED'
-    const isPaid = order.status === 'PAID'
-    const isConfirmed = order.status === 'CONFIRMED'
-    const isInPreparation = order.status === 'IN_PREPARATION'
-    const isReadyForDelivery = order.status === 'READY_FOR_DELIVERY'
-    const isInTransit = order.status === 'IN_TRANSIT'
-    const isDelivered = order.status === 'DELIVERED'
-    const isInUse = order.status === 'IN_USE'
-    const isAwaitingReturn = order.status === 'AWAITING_RETURN'
-    const isClosed = order.status === 'CLOSED'
+    const isSubmitted = order.order_status === 'SUBMITTED'
+    const isPricingReview = order.order_status === 'PRICING_REVIEW'
+    const isPendingApproval = order.order_status === 'PENDING_APPROVAL'
+    const isQuoted = order.order_status === 'QUOTED'
+    const isApproved = order.order_status === 'APPROVED'
+    const isDeclined = order.order_status === 'DECLINED'
+    const isInvoiced = order.order_status === 'INVOICED'
+    const isPaid = order.order_status === 'PAID'
+    const isConfirmed = order.order_status === 'CONFIRMED'
+    const isInPreparation = order.order_status === 'IN_PREPARATION'
+    const isReadyForDelivery = order.order_status === 'READY_FOR_DELIVERY'
+    const isInTransit = order.order_status === 'IN_TRANSIT'
+    const isDelivered = order.order_status === 'DELIVERED'
+    const isInUse = order.order_status === 'IN_USE'
+    const isAwaitingReturn = order.order_status === 'AWAITING_RETURN'
+    const isClosed = order.order_status === 'CLOSED'
 
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined
@@ -226,28 +226,28 @@ export default function OrderPage({
         isClosed
 
     const invoice =
-        showInvoiceSection && order.invoiceNumber
+        showInvoiceSection && order.invoice_id
             ? {
-                    invoiceNumber: order.invoiceNumber,
-                    invoiceGeneratedAt: order.invoiceGeneratedAt,
-                    finalTotalPrice: order.finalTotalPrice,
-                    isPaid:
-                        isPaid ||
-                        isConfirmed ||
-                        isInPreparation ||
-                        isReadyForDelivery ||
-                        isInTransit ||
-                        isDelivered ||
-                        isInUse ||
-                        isAwaitingReturn ||
-                        isClosed,
-                    invoicePaidAt: isPaid ? order.updatedAt : null,
-                }
+                invoiceNumber: order.invoice_id,
+                invoiceGeneratedAt: order.invoice_generated_at,
+                finalTotalPrice: order.final_pricing?.total || order.calculated_totals?.total_price || 0, // Fallback if final_pricing is null but calculated exists
+                isPaid:
+                    isPaid ||
+                    isConfirmed ||
+                    isInPreparation ||
+                    isReadyForDelivery ||
+                    isInTransit ||
+                    isDelivered ||
+                    isInUse ||
+                    isAwaitingReturn ||
+                    isClosed,
+                invoicePaidAt: isPaid ? order.invoice_paid_at : null,
+            }
             : null
 
     return (
         <ClientNav>
-            <div className='min-h-screen bg-gradient-to-br from-background via-muted/10 to-background relative'>
+            <div className='min-h-screen bg-linear-gradient-to-br from-background via-muted/10 to-background relative'>
                 {/* Subtle grid pattern */}
                 <div
                     className='fixed inset-0 opacity-[0.015] pointer-events-none'
@@ -274,7 +274,7 @@ export default function OrderPage({
                             Orders
                         </button>
                         <span>/</span>
-                        <span className='text-foreground'>{order.orderId}</span>
+                        <span className='text-foreground'>{order?.order_id}</span>
                     </motion.div>
 
                     {/* Status Hero */}
@@ -289,15 +289,15 @@ export default function OrderPage({
                                 <div className='flex-1'>
                                     <div className='flex items-center gap-3 mb-3'>
                                         <Badge
-                                            className={`font-mono text-xs border ${statusColors[order.status] || 'bg-muted border-muted'}`}
+                                            className={`font-mono text-xs border ${statusColors[order?.order_status] || 'bg-muted border-muted'}`}
                                         >
-                                            {order.status.replace(/_/g, ' ')}
+                                            {order?.order_status.replace(/_/g, ' ')}
                                         </Badge>
                                         <span className='text-xs text-muted-foreground font-mono flex items-center gap-1'>
                                             <Clock className='w-3 h-3' />
-                                            {order.quoteSentAt
-                                                ? `Quote sent ${new Date(order.quoteSentAt).toLocaleDateString()}`
-                                                : `Submitted ${new Date(order.createdAt).toLocaleDateString()}`}
+                                            {order.quote_sent_at
+                                                ? `Quote sent ${new Date(order.quote_sent_at).toLocaleDateString()}`
+                                                : `Submitted ${new Date(order.created_at).toLocaleDateString()}`}
                                         </span>
                                     </div>
                                     <h1 className='text-4xl font-bold mb-2'>
@@ -356,26 +356,25 @@ export default function OrderPage({
                                     </p>
                                 </div>
                                 <div
-                                    className={`w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                        isApproved ||
+                                    className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${isApproved ||
                                         isPaid ||
                                         isDelivered ||
                                         isClosed
-                                            ? 'bg-green-500'
-                                            : isDeclined
-                                                ? 'bg-destructive'
-                                                : isQuoted || isInvoiced
-                                                    ? 'bg-amber-500'
-                                                    : isPendingApproval
-                                                        ? 'bg-orange-500'
-                                                        : isInTransit
-                                                            ? 'bg-violet-500'
-                                                            : isInPreparation
-                                                                ? 'bg-cyan-500'
-                                                                : isAwaitingReturn
-                                                                    ? 'bg-rose-500'
-                                                                    : 'bg-primary'
-                                    }`}
+                                        ? 'bg-green-500'
+                                        : isDeclined
+                                            ? 'bg-destructive'
+                                            : isQuoted || isInvoiced
+                                                ? 'bg-amber-500'
+                                                : isPendingApproval
+                                                    ? 'bg-orange-500'
+                                                    : isInTransit
+                                                        ? 'bg-violet-500'
+                                                        : isInPreparation
+                                                            ? 'bg-cyan-500'
+                                                            : isAwaitingReturn
+                                                                ? 'bg-rose-500'
+                                                                : 'bg-primary'
+                                        }`}
                                 >
                                     {(isSubmitted || isPricingReview) && (
                                         <CheckCircle2 className='w-10 h-10 text-white' />
@@ -441,7 +440,7 @@ export default function OrderPage({
                                         Order ID
                                     </p>
                                     <p className='text-2xl font-bold font-mono tracking-wider'>
-                                        {order.orderId}
+                                        {order.order_id}
                                     </p>
                                 </div>
                                 <Cuboid className='h-12 w-12 text-primary/20' />
@@ -454,8 +453,8 @@ export default function OrderPage({
                         <div className='lg:col-span-2 space-y-6'>
                             {/* Feedback #3: Price Adjustment Banner - Show for QUOTED if A2 adjusted pricing */}
                             {isQuoted &&
-                                order.a2AdjustedPrice &&
-                                order.a2AdjustmentReason && (
+                                order.a2_adjusted_price &&
+                                order.a2_adjusted_reason && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -463,21 +462,21 @@ export default function OrderPage({
                                     >
                                         <Card className='p-4 bg-blue-500/5 border-blue-500/30'>
                                             <div className='flex items-start gap-3'>
-                                                <AlertCircle className='h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5' />
+                                                <AlertCircle className='h-5 w-5 text-blue-600 shrink-0 mt-0.5' />
                                                 <div className='flex-1'>
                                                     <p className='font-mono text-sm font-bold text-blue-700 dark:text-blue-400 mb-2'>
                                                         Price Adjustment Applied
                                                     </p>
                                                     <p className='font-mono text-xs text-muted-foreground mb-2'>
                                                         {
-                                                            order.a2AdjustmentReason
+                                                            order.a2_adjusted_reason
                                                         }
                                                     </p>
-                                                    {order.pmgReviewNotes && (
+                                                    {order.pmg_review_notes && (
                                                         <p className='font-mono text-xs text-muted-foreground italic p-2 bg-background/50 rounded border border-blue-500/20'>
                                                             Note:{' '}
                                                             {
-                                                                order.pmgReviewNotes
+                                                                order.pmg_review_notes
                                                             }
                                                         </p>
                                                     )}
@@ -488,20 +487,19 @@ export default function OrderPage({
                                 )}
 
                             {/* Quote Section */}
-                            {showQuoteSection && order.finalTotalPrice && (
+                            {showQuoteSection && (order.final_pricing?.total || order.calculated_totals?.total_price) && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
                                 >
                                     <Card
-                                        className={`p-6 bg-card/50 backdrop-blur-sm border ${
-                                            isApproved
-                                                ? 'border-green-500/30'
-                                                : isDeclined
-                                                    ? 'border-destructive/30'
-                                                    : 'border-amber-500/30'
-                                        }`}
+                                        className={`p-6 bg-card/50 backdrop-blur-sm border ${isApproved
+                                            ? 'border-green-500/30'
+                                            : isDeclined
+                                                ? 'border-destructive/30'
+                                                : 'border-amber-500/30'
+                                            }`}
                                     >
                                         <div className='flex items-center gap-2 mb-4'>
                                             <DollarSign className='w-5 h-5 text-primary' />
@@ -512,10 +510,10 @@ export default function OrderPage({
 
                                         <div className='text-4xl font-bold font-mono text-primary mb-4'>
                                             AED{' '}
-                                            {order.finalTotalPrice
+                                            {order.final_pricing?.total
                                                 ? parseFloat(
-                                                        order.finalTotalPrice
-                                                    ).toFixed(2)
+                                                    order.final_pricing.total
+                                                ).toFixed(2)
                                                 : 'N/A'}
                                         </div>
 
@@ -553,7 +551,7 @@ export default function OrderPage({
                                                     <CheckCircle2 className='w-3 h-3 inline mr-1' />
                                                     Approved{' '}
                                                     {new Date(
-                                                        order.updatedAt
+                                                        order.updated_at
                                                     ).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -564,7 +562,7 @@ export default function OrderPage({
                                                     <XCircle className='w-3 h-3 inline mr-1' />
                                                     Declined{' '}
                                                     {new Date(
-                                                        order.updatedAt
+                                                        order.updated_at
                                                     ).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -664,8 +662,7 @@ export default function OrderPage({
                                             {/* Confirmed */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
@@ -673,9 +670,9 @@ export default function OrderPage({
                                                         isReadyForDelivery ||
                                                         isInPreparation ||
                                                         isConfirmed
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        ? 'bg-green-500 text-white'
+                                                        : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <CheckCircle2 className='w-5 h-5' />
                                                 </div>
@@ -693,19 +690,18 @@ export default function OrderPage({
                                             {/* In Preparation */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
                                                         isInTransit ||
                                                         isReadyForDelivery ||
                                                         isInPreparation
-                                                            ? 'bg-green-500 text-white'
-                                                            : isConfirmed
-                                                                ? 'bg-primary text-white animate-pulse'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        ? 'bg-green-500 text-white'
+                                                        : isConfirmed
+                                                            ? 'bg-primary text-white animate-pulse'
+                                                            : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <BoxIcon className='w-5 h-5' />
                                                 </div>
@@ -722,17 +718,16 @@ export default function OrderPage({
                                             {/* In Transit */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
                                                         isInTransit
-                                                            ? 'bg-green-500 text-white'
-                                                            : isReadyForDelivery
-                                                                ? 'bg-primary text-white animate-pulse'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        ? 'bg-green-500 text-white'
+                                                        : isReadyForDelivery
+                                                            ? 'bg-primary text-white animate-pulse'
+                                                            : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <Truck className='w-5 h-5' />
                                                 </div>
@@ -743,16 +738,16 @@ export default function OrderPage({
                                                     <p className='text-xs text-muted-foreground'>
                                                         On the way to venue
                                                     </p>
-                                                    {order.deliveryWindowStart &&
+                                                    {order.delivery_window?.start &&
                                                         (isInTransit ||
                                                             isReadyForDelivery) && (
                                                             <p className='text-xs font-mono text-primary mt-1'>
                                                                 ETA:{' '}
                                                                 {new Date(
-                                                                    order.deliveryWindowStart
+                                                                    order.delivery_window?.start
                                                                 ).toLocaleDateString()}{' '}
                                                                 {new Date(
-                                                                    order.deliveryWindowStart
+                                                                    order.delivery_window?.start
                                                                 ).toLocaleTimeString(
                                                                     [],
                                                                     {
@@ -768,16 +763,15 @@ export default function OrderPage({
                                             {/* Delivered */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered
-                                                            ? 'bg-green-500 text-white'
-                                                            : isInTransit
-                                                                ? 'bg-primary text-white animate-pulse'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        ? 'bg-green-500 text-white'
+                                                        : isInTransit
+                                                            ? 'bg-primary text-white animate-pulse'
+                                                            : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <CheckCircle2 className='w-5 h-5' />
                                                 </div>
@@ -794,14 +788,13 @@ export default function OrderPage({
                                             {/* Event Complete / Awaiting Return */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn
-                                                            ? 'bg-green-500 text-white'
-                                                            : isInUse
-                                                                ? 'bg-primary text-white animate-pulse'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        ? 'bg-green-500 text-white'
+                                                        : isInUse
+                                                            ? 'bg-primary text-white animate-pulse'
+                                                            : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <Clock className='w-5 h-5' />
                                                 </div>
@@ -812,16 +805,16 @@ export default function OrderPage({
                                                     <p className='text-xs text-muted-foreground'>
                                                         Items ready for return
                                                     </p>
-                                                    {order.pickupWindowStart &&
+                                                    {order.pickup_window?.start &&
                                                         (isAwaitingReturn ||
                                                             isInUse) && (
                                                             <p className='text-xs font-mono text-primary mt-1'>
                                                                 Pickup:{' '}
                                                                 {new Date(
-                                                                    order.pickupWindowStart
+                                                                    order.pickup_window?.start
                                                                 ).toLocaleDateString()}{' '}
                                                                 {new Date(
-                                                                    order.pickupWindowStart
+                                                                    order.pickup_window?.start
                                                                 ).toLocaleTimeString(
                                                                     [],
                                                                     {
@@ -837,13 +830,12 @@ export default function OrderPage({
                                             {/* Completed */}
                                             <div className='flex items-start gap-4'>
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                        isClosed
-                                                            ? 'bg-green-500 text-white'
-                                                            : isAwaitingReturn
-                                                                ? 'bg-primary text-white animate-pulse'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed
+                                                        ? 'bg-green-500 text-white'
+                                                        : isAwaitingReturn
+                                                            ? 'bg-primary text-white animate-pulse'
+                                                            : 'bg-muted text-muted-foreground'
+                                                        }`}
                                                 >
                                                     <Archive className='w-5 h-5' />
                                                 </div>
@@ -891,85 +883,77 @@ export default function OrderPage({
                                                 className='p-4 border border-border/40 rounded-lg bg-background/50 hover:border-primary/20 transition-colors'
                                             >
                                                 <div className='flex items-start gap-4'>
-                                                    <div className='text-xl font-bold font-mono text-muted-foreground w-8 flex-shrink-0'>
+                                                    <div className='text-xl font-bold font-mono text-muted-foreground w-8 shrink-0'>
                                                         {String(
                                                             index + 1
                                                         ).padStart(2, '0')}
                                                     </div>
                                                     <div className='flex-1 min-w-0'>
                                                         <div className='font-semibold mb-2'>
-                                                            {item.assetName}
+                                                            {item.order_item.asset_name}
                                                         </div>
 
                                                         {/* Compact dimensions */}
                                                         <div className='grid grid-cols-5 gap-2 mb-2'>
                                                             {item.asset
-                                                                ?.dimensionLength && (
-                                                                <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
-                                                                    <div className='text-[9px] text-muted-foreground font-mono uppercase'>
-                                                                        L
+                                                                ?.dimension_length && (
+                                                                    <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
+                                                                        <div className='text-[9px] text-muted-foreground font-mono uppercase'>
+                                                                            L
+                                                                        </div>
+                                                                        <div className='text-xs font-bold font-mono'>
+                                                                            {Number(
+                                                                                order.calculated_totals?.volume || 0
+                                                                            ).toFixed(2)}
+                                                                        </div>
+                                                                        <div className='text-[8px] text-muted-foreground'>
+                                                                            cm
+                                                                        </div>
                                                                     </div>
-                                                                    <div className='text-xs font-bold font-mono'>
-                                                                        {Number(
-                                                                            item
-                                                                                .asset
-                                                                                .dimensionLength
-                                                                        ).toFixed(
-                                                                            0
-                                                                        )}
-                                                                    </div>
-                                                                    <div className='text-[8px] text-muted-foreground'>
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
+                                                                )}
                                                             {item.asset
-                                                                ?.dimensionWidth && (
-                                                                <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
-                                                                    <div className='text-[9px] text-muted-foreground font-mono uppercase'>
-                                                                        W
+                                                                ?.dimension_width && (
+                                                                    <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
+                                                                        <div className='text-[9px] text-muted-foreground font-mono uppercase'>
+                                                                            W
+                                                                        </div>
+                                                                        <div className='text-xs font-bold font-mono'>
+                                                                            {Number(
+                                                                                item
+                                                                                    .asset
+                                                                                    .dimension_width
+                                                                            ).toFixed(
+                                                                                0
+                                                                            )}
+                                                                        </div>
+                                                                        <div className='text-[8px] text-muted-foreground'>
+                                                                            cm
+                                                                        </div>
                                                                     </div>
-                                                                    <div className='text-xs font-bold font-mono'>
-                                                                        {Number(
-                                                                            item
-                                                                                .asset
-                                                                                .dimensionWidth
-                                                                        ).toFixed(
-                                                                            0
-                                                                        )}
-                                                                    </div>
-                                                                    <div className='text-[8px] text-muted-foreground'>
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
+                                                                )}
                                                             {item.asset
-                                                                ?.dimensionHeight && (
-                                                                <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
-                                                                    <div className='text-[9px] text-muted-foreground font-mono uppercase'>
-                                                                        H
+                                                                ?.dimension_height && (
+                                                                    <div className='text-center p-1.5 bg-muted/50 rounded border border-border/30'>
+                                                                        <div className='text-[9px] text-muted-foreground font-mono uppercase'>
+                                                                            H
+                                                                        </div>
+                                                                        <div className='text-xs font-bold font-mono'>
+                                                                            {Number(
+                                                                                order.calculated_totals?.weight || 0
+                                                                            ).toFixed(1)}
+                                                                        </div>
+                                                                        <div className='text-[8px] text-muted-foreground'>
+                                                                            cm
+                                                                        </div>
                                                                     </div>
-                                                                    <div className='text-xs font-bold font-mono'>
-                                                                        {Number(
-                                                                            item
-                                                                                .asset
-                                                                                .dimensionHeight
-                                                                        ).toFixed(
-                                                                            0
-                                                                        )}
-                                                                    </div>
-                                                                    <div className='text-[8px] text-muted-foreground'>
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
+                                                                )}
                                                             <div className='text-center p-1.5 bg-primary/10 rounded border border-primary/20'>
                                                                 <div className='text-[9px] text-muted-foreground font-mono uppercase'>
                                                                     WT
                                                                 </div>
                                                                 <div className='text-xs font-bold font-mono text-primary'>
                                                                     {Number(
-                                                                        item.weight
+                                                                        item.order_item.weight_per_unit || 0
                                                                     ).toFixed(
                                                                         1
                                                                     )}
@@ -984,7 +968,7 @@ export default function OrderPage({
                                                                 </div>
                                                                 <div className='text-xs font-bold font-mono text-secondary'>
                                                                     {Number(
-                                                                        item.volume
+                                                                        item.order_item.volume_per_unit || 0
                                                                     ).toFixed(
                                                                         2
                                                                     )}
@@ -1001,7 +985,7 @@ export default function OrderPage({
                                                                 Qty:{' '}
                                                                 <span className='font-bold text-foreground'>
                                                                     {
-                                                                        item.quantity
+                                                                        item.order_item.quantity
                                                                     }
                                                                 </span>
                                                             </span>
@@ -1010,7 +994,7 @@ export default function OrderPage({
                                                                 Total:{' '}
                                                                 <span className='font-bold text-secondary'>
                                                                     {Number(
-                                                                        item.totalVolume
+                                                                        item.order_item.total_volume
                                                                     ).toFixed(
                                                                         2
                                                                     )}{' '}
@@ -1021,7 +1005,7 @@ export default function OrderPage({
                                                             <span>
                                                                 <span className='font-bold text-primary'>
                                                                     {Number(
-                                                                        item.totalWeight
+                                                                        item.order_item.total_weight
                                                                     ).toFixed(
                                                                         1
                                                                     )}{' '}
@@ -1045,7 +1029,7 @@ export default function OrderPage({
                                             </p>
                                             <p className='text-xl font-bold font-mono text-primary'>
                                                 {Number(
-                                                    order.calculatedVolume
+                                                    order.calculated_totals?.volume || 0
                                                 ).toFixed(2)}{' '}
                                                 m³
                                             </p>
@@ -1054,9 +1038,9 @@ export default function OrderPage({
                                             <p className='text-[10px] font-mono text-muted-foreground uppercase tracking-wide mb-1'>
                                                 Total Weight
                                             </p>
-                                            <p className='text-xl font-bold font-mono text-secondary'>
+                                            <p className='text-xl font-bold font-mono'>
                                                 {Number(
-                                                    order.calculatedWeight
+                                                    order.calculated_totals?.weight || 0
                                                 ).toFixed(1)}{' '}
                                                 kg
                                             </p>
@@ -1077,66 +1061,66 @@ export default function OrderPage({
                             {(isSubmitted ||
                                 isPricingReview ||
                                 isPendingApproval) && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                >
-                                    <Card className='p-6 bg-secondary/5 border-secondary/20'>
-                                        <h3 className='font-bold font-mono mb-4 uppercase tracking-wide text-sm'>
-                                            What's Next
-                                        </h3>
-                                        <div className='space-y-3 text-sm'>
-                                            <div className='flex gap-3'>
-                                                <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center flex-shrink-0 text-xs font-bold'>
-                                                    1
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                    >
+                                        <Card className='p-6 bg-secondary/5 border-secondary/20'>
+                                            <h3 className='font-bold font-mono mb-4 uppercase tracking-wide text-sm'>
+                                                What's Next
+                                            </h3>
+                                            <div className='space-y-3 text-sm'>
+                                                <div className='flex gap-3'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                        1
+                                                    </div>
+                                                    <div>
+                                                        <p className='font-semibold mb-1'>
+                                                            Order Review
+                                                        </p>
+                                                        <p className='text-xs text-muted-foreground'>
+                                                            Our team reviews your
+                                                            requirements and
+                                                            calculates logistics
+                                                            pricing.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className='font-semibold mb-1'>
-                                                        Order Review
-                                                    </p>
-                                                    <p className='text-xs text-muted-foreground'>
-                                                        Our team reviews your
-                                                        requirements and
-                                                        calculates logistics
-                                                        pricing.
-                                                    </p>
+                                                <div className='flex gap-3'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                        2
+                                                    </div>
+                                                    <div>
+                                                        <p className='font-semibold mb-1'>
+                                                            Receive Quote
+                                                        </p>
+                                                        <p className='text-xs text-muted-foreground'>
+                                                            Quote sent via email.
+                                                            Return here to approve
+                                                            or decline.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className='flex gap-3'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                        3
+                                                    </div>
+                                                    <div>
+                                                        <p className='font-semibold mb-1'>
+                                                            Invoice & Fulfillment
+                                                        </p>
+                                                        <p className='text-xs text-muted-foreground'>
+                                                            After approval, receive
+                                                            invoice and we begin
+                                                            fulfillment.
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className='flex gap-3'>
-                                                <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center flex-shrink-0 text-xs font-bold'>
-                                                    2
-                                                </div>
-                                                <div>
-                                                    <p className='font-semibold mb-1'>
-                                                        Receive Quote
-                                                    </p>
-                                                    <p className='text-xs text-muted-foreground'>
-                                                        Quote sent via email.
-                                                        Return here to approve
-                                                        or decline.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className='flex gap-3'>
-                                                <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center flex-shrink-0 text-xs font-bold'>
-                                                    3
-                                                </div>
-                                                <div>
-                                                    <p className='font-semibold mb-1'>
-                                                        Invoice & Fulfillment
-                                                    </p>
-                                                    <p className='text-xs text-muted-foreground'>
-                                                        After approval, receive
-                                                        invoice and we begin
-                                                        fulfillment.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                </motion.div>
-                            )}
+                                        </Card>
+                                    </motion.div>
+                                )}
 
                             {isApproved && (
                                 <motion.div
@@ -1265,7 +1249,7 @@ export default function OrderPage({
                                 </motion.div>
                             )}
 
-                            {isAwaitingReturn && order.pickupWindowStart && (
+                            {isAwaitingReturn && order.pickup_window?.start && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -1281,13 +1265,13 @@ export default function OrderPage({
                                             for pickup on{' '}
                                             <strong>
                                                 {new Date(
-                                                    order.pickupWindowStart
+                                                    order.pickup_window.start
                                                 ).toLocaleDateString()}
                                             </strong>{' '}
                                             at{' '}
                                             <strong>
                                                 {new Date(
-                                                    order.pickupWindowStart
+                                                    order.pickup_window.start
                                                 ).toLocaleTimeString([], {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
@@ -1356,10 +1340,10 @@ export default function OrderPage({
                                                 Start
                                             </p>
                                             <p className='font-mono font-semibold'>
-                                                {order.eventStartDate
+                                                {order.event_start_date
                                                     ? new Date(
-                                                            order.eventStartDate
-                                                        ).toLocaleDateString()
+                                                        order.event_start_date
+                                                    ).toLocaleDateString()
                                                     : 'N/A'}
                                             </p>
                                         </div>
@@ -1368,10 +1352,10 @@ export default function OrderPage({
                                                 End
                                             </p>
                                             <p className='font-mono font-semibold'>
-                                                {order.eventEndDate
+                                                {order.event_end_date
                                                     ? new Date(
-                                                            order.eventEndDate
-                                                        ).toLocaleDateString()
+                                                        order.event_end_date
+                                                    ).toLocaleDateString()
                                                     : 'N/A'}
                                             </p>
                                         </div>
@@ -1394,14 +1378,14 @@ export default function OrderPage({
                                     </div>
                                     <div className='space-y-2 text-sm'>
                                         <p className='font-semibold'>
-                                            {order.venueName}
+                                            {order.venue_name}
                                         </p>
                                         <p className='text-muted-foreground'>
-                                            {order.venueCity},{' '}
-                                            {order.venueCountry}
+                                            {order.venue_location?.city},{' '}
+                                            {order.venue_location?.country}
                                         </p>
                                         <p className='text-xs text-muted-foreground leading-relaxed'>
-                                            {order.venueAddress}
+                                            {order.venue_location?.address}
                                         </p>
                                     </div>
                                 </Card>
@@ -1426,7 +1410,7 @@ export default function OrderPage({
                                                 Name
                                             </p>
                                             <p className='font-mono font-semibold'>
-                                                {order.contactName}
+                                                {order.contact_name}
                                             </p>
                                         </div>
                                         <div>
@@ -1434,7 +1418,7 @@ export default function OrderPage({
                                                 Email
                                             </p>
                                             <p className='font-mono font-semibold text-xs'>
-                                                {order.contactEmail}
+                                                {order.contact_email}
                                             </p>
                                         </div>
                                         <div>
@@ -1442,7 +1426,7 @@ export default function OrderPage({
                                                 Phone
                                             </p>
                                             <p className='font-mono font-semibold'>
-                                                {order.contactPhone}
+                                                {order.contact_phone}
                                             </p>
                                         </div>
                                     </div>
@@ -1450,7 +1434,7 @@ export default function OrderPage({
                             </motion.div>
 
                             {/* Special Instructions */}
-                            {order.specialInstructions && (
+                            {order.special_instructions && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -1464,7 +1448,7 @@ export default function OrderPage({
                                             </h4>
                                         </div>
                                         <p className='text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap'>
-                                            {order.specialInstructions}
+                                            {order.special_instructions}
                                         </p>
                                     </Card>
                                 </motion.div>
@@ -1481,7 +1465,7 @@ export default function OrderPage({
                     >
                         <Button
                             variant='outline'
-                            onClick={() => router.push('/orders')}
+                            onClick={() => router.push('/my-orders')}
                             className='font-mono gap-2'
                         >
                             <ArrowLeft className='w-4 h-4' />
@@ -1509,9 +1493,9 @@ export default function OrderPage({
                         </DialogHeader>
                         <div className='space-y-4'>
                             <p className='text-sm text-muted-foreground'>
-                                Approve quote for order{' '}
+                                Approved quote for order{' '}
                                 <span className='font-mono font-semibold'>
-                                    {order.orderId}
+                                    {order.order_id}
                                 </span>
                                 . This proceeds to invoicing and fulfillment.
                             </p>
@@ -1520,10 +1504,10 @@ export default function OrderPage({
                                     <span>Total Amount</span>
                                     <span>
                                         AED{' '}
-                                        {order.finalTotalPrice
+                                        {order.final_pricing?.total
                                             ? parseFloat(
-                                                    order.finalTotalPrice
-                                                ).toFixed(2)
+                                                order.final_pricing.total
+                                            ).toFixed(2)
                                             : 'N/A'}
                                     </span>
                                 </div>
@@ -1572,7 +1556,7 @@ export default function OrderPage({
                             <p className='text-sm text-muted-foreground'>
                                 Decline quote for order{' '}
                                 <span className='font-mono font-semibold'>
-                                    {order.orderId}
+                                    {order.order_id}
                                 </span>
                                 . Please provide a reason so we can better serve
                                 you.

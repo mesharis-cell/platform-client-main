@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Phase 6: Order Management React Query Hooks
  *
@@ -12,6 +14,8 @@ import type {
 	MyOrdersListParams,
 	MyOrdersListResponse,
 } from '@/types/order'
+import { apiClient } from '@/lib/api/api-client'
+import { throwApiError } from '@/lib/utils/throw-api-error'
 
 // ============================================================
 // Order Submission
@@ -54,18 +58,13 @@ export function useSubmitOrderFromCart() {
 
 	return useMutation({
 		mutationFn: async (data: any) => {
-			const response = await fetch('/api/orders/submit-from-cart', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data),
-			})
+			try {
+				const response = await apiClient.post('/client/v1/order/submit-from-cart', data)
+				return response.data;
 
-			if (!response.ok) {
-				const error = await response.json()
-				throw new Error(error.error || 'Failed to submit order')
+			} catch (error) {
+				throwApiError(error)
 			}
-
-			return response.json()
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['orders'] })

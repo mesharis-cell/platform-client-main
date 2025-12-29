@@ -39,11 +39,17 @@ import {
 	AlertCircle,
 	TrendingUp,
 	Cuboid,
+	Divide,
 } from 'lucide-react'
 import Image from 'next/image'
 import { ClientNav } from '@/components/client-nav'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useBrands } from '@/hooks/use-brands'
+import { Brand } from '@/types'
+import { apiClient } from '@/lib/api/api-client'
+import { useAuth } from '@/contexts/user-context'
+import { usePricingTierLocations } from '@/hooks/use-pricing-tiers'
 
 type Step = 'cart' | 'event' | 'venue' | 'contact' | 'review'
 
@@ -70,38 +76,34 @@ function CheckoutPageInner() {
 	const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([])
 	const [useCustomLocation, setUseCustomLocation] = useState(false)
 	const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null)
+	const { user } = useAuth()
 
 	// Mutations
-	const submitMutation = useSubmitOrderFromCart()
+	const submitMutation = useSubmitOrderFromCart();
+	const { data: brandsData } = useBrands(user?.company_id ? { company: user?.company_id } : undefined)
 
 	// Form state
 	const [formData, setFormData] = useState({
-		eventStartDate: '',
-		eventEndDate: '',
-		venueName: '',
-		venueCountry: '',
-		venueCity: '',
-		venueAddress: '',
-		venueAccessNotes: '',
-		contactName: '',
-		contactEmail: '',
-		contactPhone: '',
-		specialInstructions: '',
+		brand_id: undefined,
+		event_start_date: '',
+		event_end_date: '',
+		venue_name: '',
+		venue_country: '',
+		venue_city: '',
+		venue_address: '',
+		venue_access_notes: '',
+		contact_name: '',
+		contact_email: '',
+		contact_phone: '',
+		special_instructions: '',
 	})
 
 	// Fetch pricing tier locations (public endpoint, no pricing details)
-	const { data: locationsData } = useQuery({
-		queryKey: ['pricing-tier-locations'],
-		queryFn: async () => {
-			const response = await fetch('/api/pricing-tiers/locations')
-			if (!response.ok) throw new Error('Failed to fetch locations')
-			return response.json()
-		},
-	})
+	const { data: locationsData } = usePricingTierLocations();
 
-	const countries = locationsData?.countries || []
-	const cities = formData.venueCountry
-		? locationsData?.locationsByCountry?.[formData.venueCountry] || []
+	const countries = locationsData?.data?.countries || []
+	const cities = formData.venue_country
+		? locationsData?.data?.locations_by_country?.[formData.venue_country] || []
 		: []
 
 	// Validate cart availability before review step
@@ -111,22 +113,21 @@ function CheckoutPageInner() {
 
 			try {
 				const assetIds = items.map(i => i.assetId)
-				const response = await fetch('/api/assets/batch-availability', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ assetIds }),
+				const response = await apiClient.post('/operations/v1/asset/batch-availability', {
+					asset_ids: assetIds,
 				})
 
-				if (!response.ok) {
+				if (!response.data.success) {
 					console.error('Failed to validate availability')
 					return
 				}
 
-				const { assets } = await response.json()
+				const assets = response.data.data
 				const issues: string[] = []
 
 				items.forEach(item => {
 					const asset = assets.find((a: any) => a.id === item.assetId)
+
 					if (!asset || asset.status !== 'AVAILABLE') {
 						issues.push(`${item.assetName} is no longer available`)
 					} else if (item.quantity > asset.availableQuantity) {
@@ -149,8 +150,8 @@ function CheckoutPageInner() {
 	useEffect(() => {
 		const calculatePrice = async () => {
 			if (
-				!formData.venueCountry ||
-				!formData.venueCity ||
+				!formData.venue_country ||
+				!formData.venue_city ||
 				useCustomLocation ||
 				totalVolume === 0
 			) {
@@ -160,21 +161,18 @@ function CheckoutPageInner() {
 
 			try {
 				const params = new URLSearchParams({
-					country: formData.venueCountry,
-					city: formData.venueCity,
+					country: formData.venue_country,
+					city: formData.venue_city,
 					volume: totalVolume.toFixed(3),
 				})
 
-				const response = await fetch(
-					`/api/pricing-tiers/calculate?${params}`
-				)
+				const response = await apiClient.get(`/operations/v1/pricing-tier/calculate?${params}`)
+				const data = await response.data
 
-				if (!response.ok) {
+				if (!data.success) {
 					setEstimatedPrice(null)
 					return
 				}
-
-				const data = await response.json()
 				// Use estimatedTotal (flat rate + margin), not basePrice × volume
 				if (data.estimatedTotal) {
 					setEstimatedPrice(parseFloat(data.estimatedTotal))
@@ -189,8 +187,8 @@ function CheckoutPageInner() {
 
 		calculatePrice()
 	}, [
-		formData.venueCountry,
-		formData.venueCity,
+		formData.venue_country,
+		formData.venue_city,
 		totalVolume,
 		useCustomLocation,
 	])
@@ -210,23 +208,23 @@ function CheckoutPageInner() {
 				return items.length > 0
 			case 'event':
 				return (
-					formData.eventStartDate &&
-					formData.eventEndDate &&
-					new Date(formData.eventStartDate) <
-						new Date(formData.eventEndDate)
+					formData.event_start_date &&
+					formData.event_end_date &&
+					new Date(formData.event_start_date) <
+					new Date(formData.event_end_date)
 				)
 			case 'venue':
 				return (
-					formData.venueName &&
-					formData.venueCountry &&
-					formData.venueCity &&
-					formData.venueAddress
+					formData.venue_name &&
+					formData.venue_country &&
+					formData.venue_city &&
+					formData.venue_address
 				)
 			case 'contact':
 				return (
-					formData.contactName &&
-					formData.contactEmail &&
-					formData.contactPhone
+					formData.contact_name &&
+					formData.contact_email &&
+					formData.contact_phone
 				)
 			case 'review':
 				return true
@@ -269,9 +267,9 @@ function CheckoutPageInner() {
 		try {
 			const submitData = {
 				items: items.map(item => ({
-					assetId: item.assetId,
+					asset_id: item.assetId,
 					quantity: item.quantity,
-					fromCollectionId: item.fromCollection,
+					from_collection_id: item.fromCollection,
 				})),
 				...formData,
 			}
@@ -335,7 +333,7 @@ function CheckoutPageInner() {
 	}
 
 	return (
-		<div className='min-h-screen bg-gradient-to-br from-background via-muted/10 to-background'>
+		<div className='min-h-screen bg-linear-to-br from-background via-muted/10 to-background'>
 			{/* Progress Header */}
 			<div className='border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10'>
 				<div className='max-w-5xl mx-auto px-8 py-6'>
@@ -352,13 +350,12 @@ function CheckoutPageInner() {
 								>
 									<div className='flex items-center gap-3'>
 										<div
-											className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
-												isCompleted
-													? 'bg-primary border-primary text-primary-foreground'
-													: isActive
-														? 'bg-primary/10 border-primary text-primary'
-														: 'bg-muted border-border text-muted-foreground'
-											}`}
+											className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
+												? 'bg-primary border-primary text-primary-foreground'
+												: isActive
+													? 'bg-primary/10 border-primary text-primary'
+													: 'bg-muted border-border text-muted-foreground'
+												}`}
 										>
 											{isCompleted ? (
 												<Check className='h-5 w-5' />
@@ -370,11 +367,10 @@ function CheckoutPageInner() {
 											className={`hidden sm:block ${index < STEPS.length - 1 ? '' : ''}`}
 										>
 											<p
-												className={`text-sm font-medium font-mono uppercase tracking-wide ${
-													isActive
-														? 'text-foreground'
-														: 'text-muted-foreground'
-												}`}
+												className={`text-sm font-medium font-mono uppercase tracking-wide ${isActive
+													? 'text-foreground'
+													: 'text-muted-foreground'
+													}`}
 											>
 												{step.label}
 											</p>
@@ -386,11 +382,10 @@ function CheckoutPageInner() {
 									</div>
 									{index < STEPS.length - 1 && (
 										<div
-											className={`flex-1 h-0.5 mx-4 transition-colors ${
-												isCompleted
-													? 'bg-primary'
-													: 'bg-border'
-											}`}
+											className={`flex-1 h-0.5 mx-4 transition-colors ${isCompleted
+												? 'bg-primary'
+												: 'bg-border'
+												}`}
 										/>
 									)}
 								</div>
@@ -430,7 +425,7 @@ function CheckoutPageInner() {
 											key={item.assetId}
 											className='flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0'
 										>
-											<div className='w-24 h-24 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-muted'>
+											<div className='w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted'>
 												{item.image ? (
 													<Image
 														src={item.image}
@@ -528,7 +523,25 @@ function CheckoutPageInner() {
 								</p>
 							</div>
 
-							<Card className='p-8 bg-card/50 border-border/50'>
+							<Card className='p-8 bg-card/50 border-border/50 space-y-6'>
+								<div>
+									<Label
+										htmlFor='brand'
+										className='font-mono uppercase text-xs tracking-wide'
+									>
+										Brand (Optional)
+									</Label>
+									<Select>
+										<SelectTrigger>
+											<SelectValue placeholder='Select Brand' />
+										</SelectTrigger>
+										<SelectContent>
+											{brandsData?.data?.map((brand: Brand) => (
+												<SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
 								<div className='space-y-6'>
 									<div className='grid grid-cols-2 gap-6'>
 										<div className='space-y-2'>
@@ -541,11 +554,11 @@ function CheckoutPageInner() {
 											<Input
 												id='eventStartDate'
 												type='date'
-												value={formData.eventStartDate}
+												value={formData.event_start_date}
 												onChange={e =>
 													setFormData({
 														...formData,
-														eventStartDate:
+														event_start_date:
 															e.target.value,
 													})
 												}
@@ -564,23 +577,23 @@ function CheckoutPageInner() {
 											<Input
 												id='eventEndDate'
 												type='date'
-												value={formData.eventEndDate}
+												value={formData.event_end_date}
 												onChange={e =>
 													setFormData({
 														...formData,
-														eventEndDate:
+														event_end_date:
 															e.target.value,
 													})
 												}
 												required
-												min={formData.eventStartDate}
+												min={formData.event_start_date}
 												className='h-12 font-mono'
 											/>
 										</div>
 									</div>
 
-									{formData.eventStartDate &&
-										formData.eventEndDate && (
+									{formData.event_start_date &&
+										formData.event_end_date && (
 											<div className='bg-primary/5 border border-primary/20 rounded-lg p-4'>
 												<div className='flex items-center gap-3'>
 													<Calendar className='h-5 w-5 text-primary' />
@@ -591,15 +604,15 @@ function CheckoutPageInner() {
 														<p className='text-xs text-muted-foreground font-mono'>
 															{Math.ceil(
 																(new Date(
-																	formData.eventEndDate
+																	formData.event_end_date
 																).getTime() -
 																	new Date(
-																		formData.eventStartDate
+																		formData.event_start_date
 																	).getTime()) /
-																	(1000 *
-																		60 *
-																		60 *
-																		24)
+																(1000 *
+																	60 *
+																	60 *
+																	24)
 															)}{' '}
 															days
 														</p>
@@ -642,11 +655,11 @@ function CheckoutPageInner() {
 										</Label>
 										<Input
 											id='venueName'
-											value={formData.venueName}
+											value={formData.venue_name}
 											onChange={e =>
 												setFormData({
 													...formData,
-													venueName: e.target.value,
+													venue_name: e.target.value,
 												})
 											}
 											placeholder='e.g., Dubai Festival City'
@@ -666,7 +679,7 @@ function CheckoutPageInner() {
 											{!useCustomLocation ? (
 												<Select
 													value={
-														formData.venueCountry
+														formData.venue_country
 													}
 													onValueChange={value => {
 														if (
@@ -677,16 +690,16 @@ function CheckoutPageInner() {
 															)
 															setFormData({
 																...formData,
-																venueCountry:
+																venue_country:
 																	'',
-																venueCity: '',
+																venue_city: '',
 															})
 														} else {
 															setFormData({
 																...formData,
-																venueCountry:
+																venue_country:
 																	value,
-																venueCity: '',
+																venue_city: '',
 															})
 														}
 													}}
@@ -724,12 +737,12 @@ function CheckoutPageInner() {
 													<Input
 														id='venueCountry'
 														value={
-															formData.venueCountry
+															formData.venue_country
 														}
 														onChange={e =>
 															setFormData({
 																...formData,
-																venueCountry:
+																venue_country:
 																	e.target
 																		.value,
 															})
@@ -746,9 +759,9 @@ function CheckoutPageInner() {
 															)
 															setFormData({
 																...formData,
-																venueCountry:
+																venue_country:
 																	'',
-																venueCity: '',
+																venue_city: '',
 															})
 														}}
 														className='h-12 px-4'
@@ -768,7 +781,7 @@ function CheckoutPageInner() {
 											</Label>
 											{!useCustomLocation ? (
 												<Select
-													value={formData.venueCity}
+													value={formData.venue_city}
 													onValueChange={value => {
 														if (
 															value === '_custom_'
@@ -778,24 +791,24 @@ function CheckoutPageInner() {
 															)
 															setFormData({
 																...formData,
-																venueCity: '',
+																venue_city: '',
 															})
 														} else {
 															setFormData({
 																...formData,
-																venueCity:
+																venue_city:
 																	value,
 															})
 														}
 													}}
 													disabled={
-														!formData.venueCountry
+														!formData.venue_country
 													}
 												>
 													<SelectTrigger className='h-12 font-mono'>
 														<SelectValue
 															placeholder={
-																formData.venueCountry
+																formData.venue_country
 																	? 'Select city'
 																	: 'Select country first'
 															}
@@ -825,11 +838,11 @@ function CheckoutPageInner() {
 											) : (
 												<Input
 													id='venueCity'
-													value={formData.venueCity}
+													value={formData.venue_city}
 													onChange={e =>
 														setFormData({
 															...formData,
-															venueCity:
+															venue_city:
 																e.target.value,
 														})
 													}
@@ -850,11 +863,11 @@ function CheckoutPageInner() {
 										</Label>
 										<Textarea
 											id='venueAddress'
-											value={formData.venueAddress}
+											value={formData.venue_address}
 											onChange={e =>
 												setFormData({
 													...formData,
-													venueAddress:
+													venue_address:
 														e.target.value,
 												})
 											}
@@ -874,11 +887,11 @@ function CheckoutPageInner() {
 										</Label>
 										<Textarea
 											id='venueAccessNotes'
-											value={formData.venueAccessNotes}
+											value={formData.venue_access_notes}
 											onChange={e =>
 												setFormData({
 													...formData,
-													venueAccessNotes:
+													venue_access_notes:
 														e.target.value,
 												})
 											}
@@ -922,11 +935,11 @@ function CheckoutPageInner() {
 										</Label>
 										<Input
 											id='contactName'
-											value={formData.contactName}
+											value={formData.contact_name}
 											onChange={e =>
 												setFormData({
 													...formData,
-													contactName: e.target.value,
+													contact_name: e.target.value,
 												})
 											}
 											placeholder='e.g., John Smith'
@@ -946,11 +959,11 @@ function CheckoutPageInner() {
 											<Input
 												id='contactEmail'
 												type='email'
-												value={formData.contactEmail}
+												value={formData.contact_email}
 												onChange={e =>
 													setFormData({
 														...formData,
-														contactEmail:
+														contact_email:
 															e.target.value,
 													})
 												}
@@ -970,11 +983,11 @@ function CheckoutPageInner() {
 											<Input
 												id='contactPhone'
 												type='tel'
-												value={formData.contactPhone}
+												value={formData.contact_phone}
 												onChange={e =>
 													setFormData({
 														...formData,
-														contactPhone:
+														contact_phone:
 															e.target.value,
 													})
 												}
@@ -994,11 +1007,11 @@ function CheckoutPageInner() {
 										</Label>
 										<Textarea
 											id='specialInstructions'
-											value={formData.specialInstructions}
+											value={formData.special_instructions}
 											onChange={e =>
 												setFormData({
 													...formData,
-													specialInstructions:
+													special_instructions:
 														e.target.value,
 												})
 											}
@@ -1050,7 +1063,7 @@ function CheckoutPageInner() {
 												key={item.assetId}
 												className='flex items-center gap-3 text-sm'
 											>
-												<div className='w-12 h-12 rounded border border-border overflow-hidden flex-shrink-0'>
+												<div className='w-12 h-12 rounded border border-border overflow-hidden shrink-0'>
 													{item.image ? (
 														<Image
 															src={item.image}
@@ -1121,7 +1134,7 @@ function CheckoutPageInner() {
 												</p>
 												<p className='font-medium'>
 													{new Date(
-														formData.eventStartDate
+														formData.event_start_date
 													).toLocaleDateString(
 														'en-US',
 														{
@@ -1139,7 +1152,7 @@ function CheckoutPageInner() {
 												</p>
 												<p className='font-medium'>
 													{new Date(
-														formData.eventEndDate
+														formData.event_end_date
 													).toLocaleDateString(
 														'en-US',
 														{
@@ -1165,7 +1178,7 @@ function CheckoutPageInner() {
 													Venue Name
 												</p>
 												<p className='font-medium'>
-													{formData.venueName}
+													{formData.venue_name}
 												</p>
 											</div>
 											<div>
@@ -1173,8 +1186,8 @@ function CheckoutPageInner() {
 													Location
 												</p>
 												<p className='font-medium'>
-													{formData.venueCity},{' '}
-													{formData.venueCountry}
+													{formData.venue_city},{' '}
+													{formData.venue_country}
 												</p>
 											</div>
 											<div>
@@ -1182,17 +1195,17 @@ function CheckoutPageInner() {
 													Address
 												</p>
 												<p className='font-medium leading-relaxed'>
-													{formData.venueAddress}
+													{formData.venue_address}
 												</p>
 											</div>
-											{formData.venueAccessNotes && (
+											{formData.venue_access_notes && (
 												<div>
 													<p className='text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1'>
 														Access Notes
 													</p>
 													<p className='font-medium leading-relaxed'>
 														{
-															formData.venueAccessNotes
+															formData.venue_access_notes
 														}
 													</p>
 												</div>
@@ -1211,7 +1224,7 @@ function CheckoutPageInner() {
 													Name
 												</p>
 												<p className='font-medium'>
-													{formData.contactName}
+													{formData.contact_name}
 												</p>
 											</div>
 											<div>
@@ -1219,7 +1232,7 @@ function CheckoutPageInner() {
 													Email
 												</p>
 												<p className='font-medium'>
-													{formData.contactEmail}
+													{formData.contact_email}
 												</p>
 											</div>
 											<div>
@@ -1227,17 +1240,17 @@ function CheckoutPageInner() {
 													Phone
 												</p>
 												<p className='font-medium'>
-													{formData.contactPhone}
+													{formData.contact_phone}
 												</p>
 											</div>
-											{formData.specialInstructions && (
+											{formData.special_instructions && (
 												<div>
 													<p className='text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1'>
 														Special Instructions
 													</p>
 													<p className='font-medium leading-relaxed'>
 														{
-															formData.specialInstructions
+															formData.special_instructions
 														}
 													</p>
 												</div>
@@ -1251,7 +1264,7 @@ function CheckoutPageInner() {
 							{availabilityIssues.length > 0 && (
 								<Card className='border-destructive/50 bg-destructive/5 p-6'>
 									<div className='flex items-start gap-3'>
-										<AlertCircle className='h-5 w-5 text-destructive flex-shrink-0 mt-0.5' />
+										<AlertCircle className='h-5 w-5 text-destructive shrink-0 mt-0.5' />
 										<div className='flex-1'>
 											<p className='text-sm font-semibold text-destructive mb-2'>
 												Availability Issues
@@ -1288,7 +1301,7 @@ function CheckoutPageInner() {
 							{/* Price Estimate */}
 							{availabilityIssues.length === 0 &&
 								estimatedPrice && (
-									<Card className='p-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20'>
+									<Card className='p-8 bg-linear-to-br from-primary/10 to-primary/5 border-primary/20'>
 										<div className='flex items-center justify-between'>
 											<div>
 												<p className='text-sm font-mono uppercase tracking-wide text-muted-foreground mb-2'>
@@ -1307,15 +1320,15 @@ function CheckoutPageInner() {
 												<p className='text-xs text-muted-foreground font-mono'>
 													Based on{' '}
 													{totalVolume.toFixed(2)} m³
-													• {formData.venueCity},{' '}
-													{formData.venueCountry}
+													• {formData.venue_city},{' '}
+													{formData.venue_country}
 												</p>
 											</div>
 											<Cuboid className='h-16 w-16 text-primary/30' />
 										</div>
 										<div className='mt-6 pt-6 border-t border-primary/10'>
 											<div className='flex items-start gap-3'>
-												<AlertCircle className='h-5 w-5 text-primary flex-shrink-0 mt-0.5' />
+												<AlertCircle className='h-5 w-5 text-primary shrink-0 mt-0.5' />
 												<p className='text-xs text-muted-foreground leading-relaxed'>
 													This is an estimate based on
 													standard logistics pricing.
@@ -1332,11 +1345,11 @@ function CheckoutPageInner() {
 							{/* No Pricing Tier Note */}
 							{availabilityIssues.length === 0 &&
 								!estimatedPrice &&
-								formData.venueCountry &&
-								formData.venueCity && (
+								formData.venue_country &&
+								formData.venue_city && (
 									<Card className='p-6 bg-muted/30 border-border'>
 										<div className='flex items-start gap-3'>
-											<AlertCircle className='h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5' />
+											<AlertCircle className='h-5 w-5 text-muted-foreground shrink-0 mt-0.5' />
 											<div className='flex-1'>
 												<p className='text-sm font-medium mb-1'>
 													Custom Quote Required
@@ -1344,8 +1357,8 @@ function CheckoutPageInner() {
 												<p className='text-xs text-muted-foreground leading-relaxed'>
 													No standard pricing
 													available for{' '}
-													{formData.venueCity},{' '}
-													{formData.venueCountry}. You
+													{formData.venue_city},{' '}
+													{formData.venue_country}. You
 													will receive a custom quote
 													via email within 24-48 hours
 													after submitting your order.
