@@ -20,7 +20,8 @@ import {
   Grid3x3,
   LogOut,
   ShoppingCart,
-  Box
+  Box,
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -33,7 +34,7 @@ const clientNav = [
   { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
   { name: 'Catalog', href: '/catalog', icon: Grid3x3 },
   { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
-  // { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
+  { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
 ];
 
 interface ClientNavProps {

@@ -472,25 +472,21 @@ export function useClientApproveQuote() {
 			orderId: string
 			notes?: string
 		}) => {
-			const response = await fetch(
-				`/api/client/orders/${orderId}/quote/approve`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ notes }),
-				}
-			)
+			try {
+				const response = await apiClient.patch(
+					`/client/v1/order/${orderId}/approve-quote`,
+					{ notes }
+				)
 
-			if (!response.ok) {
-				const error = await response.json()
-				throw new Error(error.error || 'Failed to approve quote')
+				return response.data
+			} catch (error) {
+				throwApiError(error)
 			}
-
-			return response.json()
 		},
-		onSuccess: (_, variables) => {
+		onSuccess: (data) => {
+			console.log(data.data.order_id)
 			queryClient.invalidateQueries({
-				queryKey: ['client-order-detail', variables.orderId],
+				queryKey: ['client-order-detail', data.data.order_id],
 			})
 			queryClient.invalidateQueries({ queryKey: ['client-orders'] })
 			queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] })
@@ -512,25 +508,20 @@ export function useClientDeclineQuote() {
 			orderId: string
 			declineReason: string
 		}) => {
-			const response = await fetch(
-				`/api/client/orders/${orderId}/quote/decline`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ declineReason }),
-				}
-			)
+			try {
+				const response = await apiClient.patch(
+					`/client/v1/order/${orderId}/decline-quote`,
+					{ decline_reason: declineReason }
+				)
 
-			if (!response.ok) {
-				const error = await response.json()
-				throw new Error(error.error || 'Failed to decline quote')
+				return response.data
+			} catch (error) {
+				throwApiError(error)
 			}
-
-			return response.json()
 		},
-		onSuccess: (_, variables) => {
+		onSuccess: (data) => {
 			queryClient.invalidateQueries({
-				queryKey: ['client-order-detail', variables.orderId],
+				queryKey: ['client-order-detail', data.data.order_id],
 			})
 			queryClient.invalidateQueries({ queryKey: ['client-orders'] })
 			queryClient.invalidateQueries({ queryKey: ['orders', 'my-orders'] })

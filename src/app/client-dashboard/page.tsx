@@ -7,7 +7,6 @@
 
 import {
 	useClientDashboardSummary,
-	useClientOrders,
 } from '@/hooks/use-client-orders'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -89,12 +88,8 @@ export default function ClientDashboardPage() {
 	// Fetch dashboard data
 	const { data: summaryData, isLoading: summaryLoading } =
 		useClientDashboardSummary()
-	const { data: ordersData, isLoading: ordersLoading } = useClientOrders({
-		limit: 5,
-	})
 
-	const summary = summaryData?.summary
-	const recentOrders = ordersData?.orders || []
+	const summary = summaryData?.data
 
 	return (
 		<ClientNav>
@@ -140,7 +135,7 @@ export default function ClientDashboardPage() {
 													Active Orders
 												</p>
 												<p className='text-3xl font-bold text-foreground mt-1 font-mono'>
-													{summary?.activeOrders || 0}
+													{summary?.summary?.active_orders || 0}
 												</p>
 												<p className='text-xs text-muted-foreground mt-1'>
 													In progress
@@ -159,7 +154,7 @@ export default function ClientDashboardPage() {
 													Pending Quotes
 												</p>
 												<p className='text-3xl font-bold text-foreground mt-1 font-mono'>
-													{summary?.pendingQuotes ||
+													{summary?.summary?.pending_quotes ||
 														0}
 												</p>
 												<p className='text-xs text-muted-foreground mt-1'>
@@ -179,7 +174,7 @@ export default function ClientDashboardPage() {
 													Upcoming Events
 												</p>
 												<p className='text-3xl font-bold text-foreground mt-1 font-mono'>
-													{summary?.upcomingEvents ||
+													{summary?.summary?.upcoming_events ||
 														0}
 												</p>
 												<p className='text-xs text-muted-foreground mt-1'>
@@ -199,7 +194,7 @@ export default function ClientDashboardPage() {
 													Awaiting Return
 												</p>
 												<p className='text-3xl font-bold text-foreground mt-1 font-mono'>
-													{summary?.awaitingReturn ||
+													{summary?.summary?.awaiting_return ||
 														0}
 												</p>
 												<p className='text-xs text-muted-foreground mt-1'>
@@ -235,7 +230,7 @@ export default function ClientDashboardPage() {
 								</div>
 							</CardHeader>
 							<CardContent className='p-0'>
-								{ordersLoading ? (
+								{summaryLoading ? (
 									<div className='p-6 space-y-4'>
 										{[...Array(3)].map((_, i) => (
 											<Skeleton
@@ -244,7 +239,7 @@ export default function ClientDashboardPage() {
 											/>
 										))}
 									</div>
-								) : recentOrders.length === 0 ? (
+								) : summary?.recent_orders.length === 0 ? (
 									<div className='p-12 text-center'>
 										<Package className='h-12 w-12 mx-auto text-muted-foreground/50 mb-4' />
 										<p className='text-muted-foreground font-medium'>
@@ -263,10 +258,10 @@ export default function ClientDashboardPage() {
 									</div>
 								) : (
 									<div className='divide-y divide-border/40'>
-										{recentOrders.map(order => (
+										{summary?.recent_orders.map(order => (
 											<Link
 												key={order.id}
-												href={`/orders/${order.orderId}`}
+												href={`/orders/${order.order_id}`}
 											>
 												<div className='p-6 hover:bg-muted/30 transition-colors cursor-pointer group'>
 													<div className='flex items-start justify-between gap-4'>
@@ -274,7 +269,7 @@ export default function ClientDashboardPage() {
 															<div className='flex items-center gap-3 mb-2'>
 																<p className='font-mono text-sm font-bold text-foreground'>
 																	{
-																		order.orderId
+																		order.order_id
 																	}
 																</p>
 																{order.brand && (
@@ -291,16 +286,16 @@ export default function ClientDashboardPage() {
 																)}
 															</div>
 															<div className='flex items-start gap-2 mb-1'>
-																<MapPin className='h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0' />
+																<MapPin className='h-4 w-4 text-muted-foreground mt-0.5 shrink-0' />
 																<div className='min-w-0'>
 																	<p className='font-medium text-foreground text-sm truncate'>
 																		{
-																			order.venueName
+																			order.venue_name
 																		}
 																	</p>
 																	<p className='text-xs text-muted-foreground'>
 																		{
-																			order.venueCity
+																			order.venue_city
 																		}
 																	</p>
 																</div>
@@ -310,7 +305,7 @@ export default function ClientDashboardPage() {
 																<p className='text-xs text-muted-foreground'>
 																	Event:{' '}
 																	{new Date(
-																		order.eventStartDate
+																		order.event_start_date
 																	).toLocaleDateString()}
 																</p>
 															</div>
@@ -318,13 +313,13 @@ export default function ClientDashboardPage() {
 														<div className='flex flex-col items-end gap-2'>
 															<Badge
 																variant='outline'
-																className={`${(ORDER_STATUS_CONFIG as any)[order.status]?.color || 'bg-gray-100 text-gray-700 border-gray-300'} font-medium border whitespace-nowrap text-xs`}
+																className={`${(ORDER_STATUS_CONFIG as any)[order.order_status]?.color || 'bg-gray-100 text-gray-700 border-gray-300'} font-medium border whitespace-nowrap text-xs`}
 															>
 																{(
 																	ORDER_STATUS_CONFIG as any
-																)[order.status]
+																)[order.order_status]
 																	?.label ||
-																	order.status}
+																	order.order_status}
 															</Badge>
 															<ArrowRight className='h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity' />
 														</div>

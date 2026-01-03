@@ -493,12 +493,6 @@ function CatalogPageInner() {
 													<Badge
 														className={cn(
 															'backdrop-blur-md bg-primary/80 border border-border/50 font-mono text-xs',
-															item.type ===
-															'asset' &&
-															'bg-secondary',
-															item.type ===
-															'collection' &&
-															'bg-primary'
 														)}
 													>
 														{item.type ===
@@ -742,7 +736,7 @@ function CatalogPageInner() {
 																<div className='text-[9px] text-muted-foreground uppercase font-mono mb-0.5'>
 																	VOL
 																</div>
-																<div className='font-bold font-mono text-xs text-secondary'>
+																<div className='font-bold font-mono text-xs'>
 																	{Number(
 																		item.volume
 																	).toFixed(
