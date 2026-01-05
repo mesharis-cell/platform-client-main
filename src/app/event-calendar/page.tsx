@@ -139,13 +139,13 @@ export default function EventCalendarPage() {
 
 	// Group events by date - spread multi-day events across all dates
 	const eventsByDate = useMemo(() => {
-		if (!data?.events) return {}
+		if (!data?.data) return {}
 
-		const grouped: Record<string, typeof data.events> = {}
+		const grouped: Record<string, typeof data.data> = {}
 
-		data.events.forEach(event => {
-			const startDate = new Date(event.eventStartDate)
-			const endDate = new Date(event.eventEndDate)
+		data.data.forEach(event => {
+			const startDate = new Date(event.event_start_date)
+			const endDate = new Date(event.event_end_date)
 
 			// Loop through each day from start to end (inclusive)
 			const currentDate = new Date(startDate)
@@ -342,18 +342,18 @@ export default function EventCalendarPage() {
 											<div
 												key={index}
 												className={`min-h-[120px] border-2 rounded-lg p-2 transition-all ${isTodayDate
-														? 'border-primary bg-primary/5'
-														: isCurrentMonth
-															? 'border-border bg-card hover:border-primary/30'
-															: 'border-border/40 bg-muted/20 opacity-40'
+													? 'border-primary bg-primary/5'
+													: isCurrentMonth
+														? 'border-border bg-card hover:border-primary/30'
+														: 'border-border/40 bg-muted/20 opacity-40'
 													}`}
 											>
 												<div
 													className={`text-sm font-semibold mb-2 ${isTodayDate
-															? 'text-primary'
-															: isCurrentMonth
-																? 'text-foreground'
-																: 'text-muted-foreground'
+														? 'text-primary'
+														: isCurrentMonth
+															? 'text-foreground'
+															: 'text-muted-foreground'
 														}`}
 												>
 													{format(day, 'd')}
@@ -373,15 +373,15 @@ export default function EventCalendarPage() {
 														.map(event => (
 															<Link
 																key={event.id}
-																href={`/orders/${event.orderId}`}
+																href={`/orders/${event.order_id}`}
 															>
 																<div
 																	className={`text-xs p-1.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(event.status)}`}
-																	title={`${event.orderId} - ${event.venueName}`}
+																	title={`${event.order_id} - ${event.venue_name}`}
 																>
 																	<div className='truncate text-[10px] opacity-80'>
 																		{
-																			event.venueName
+																			event.venue_name
 																		}
 																	</div>
 																</div>
@@ -418,7 +418,7 @@ export default function EventCalendarPage() {
 										<div className='flex flex-wrap gap-2'>
 											{Array.from(
 												new Set<string>(
-													data?.events?.map(
+													data?.data?.map(
 														e => e.status
 													) || []
 												)

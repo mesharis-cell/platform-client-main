@@ -74,7 +74,7 @@ export default function OrderPage({
     const handleApprove = async () => {
         try {
             await approveQuote.mutateAsync({
-                orderId,
+                orderId: orderData?.data?.id,
                 notes: notes || undefined,
             })
             toast.success(
@@ -95,7 +95,7 @@ export default function OrderPage({
 
         try {
             await declineQuote.mutateAsync({
-                orderId,
+                orderId: orderData?.data?.id,
                 declineReason: declineReason.trim(),
             })
             toast.success(
@@ -148,7 +148,7 @@ export default function OrderPage({
                             access to it.
                         </p>
                         <Button
-                            onClick={() => router.push('/orders')}
+                            onClick={() => router.push('/my-orders')}
                             variant='outline'
                             className='gap-2 font-mono'
                         >
@@ -164,7 +164,7 @@ export default function OrderPage({
     const statusColors: Record<string, string> = {
         DRAFT: 'bg-muted text-muted-foreground border-muted',
         SUBMITTED: 'bg-primary/10 text-primary border-primary/30',
-        PRICING_REVIEW: 'bg-secondary/10 text-secondary border-secondary/30',
+        PRICING_REVIEW: 'text-secondary border-secondary/30',
         PENDING_APPROVAL:
             'bg-orange-500/10 text-orange-600 border-orange-500/30',
         QUOTED: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
@@ -303,8 +303,7 @@ export default function OrderPage({
                                     <h1 className='text-4xl font-bold mb-2'>
                                         {isSubmitted && 'Order Submitted'}
                                         {isPricingReview && 'Under Review'}
-                                        {isPendingApproval &&
-                                            'Pricing Under Review'}
+                                        {isPendingApproval && 'Pricing Under Review'}
                                         {isQuoted && 'Quote Ready'}
                                         {isApproved && 'Quote Approved'}
                                         {isDeclined && 'Quote Declined'}
@@ -453,8 +452,8 @@ export default function OrderPage({
                         <div className='lg:col-span-2 space-y-6'>
                             {/* Feedback #3: Price Adjustment Banner - Show for QUOTED if A2 adjusted pricing */}
                             {isQuoted &&
-                                order.a2_adjusted_price &&
-                                order.a2_adjusted_reason && (
+                                (order?.logistic_pricing?.base_price ||
+                                    order?.logistics_pricing?.adjusted_price) && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -468,15 +467,13 @@ export default function OrderPage({
                                                         Price Adjustment Applied
                                                     </p>
                                                     <p className='font-mono text-xs text-muted-foreground mb-2'>
-                                                        {
-                                                            order.a2_adjusted_reason
-                                                        }
+                                                        {order.logistics_pricing?.adjustment_reason}
                                                     </p>
-                                                    {order.pmg_review_notes && (
+                                                    {order?.platform_pricing?.notes && (
                                                         <p className='font-mono text-xs text-muted-foreground italic p-2 bg-background/50 rounded border border-blue-500/20'>
                                                             Note:{' '}
                                                             {
-                                                                order.pmg_review_notes
+                                                                order?.platform_pricing?.notes
                                                             }
                                                         </p>
                                                     )}
@@ -487,7 +484,7 @@ export default function OrderPage({
                                 )}
 
                             {/* Quote Section */}
-                            {showQuoteSection && (order.final_pricing?.total || order.calculated_totals?.total_price) && (
+                            {showQuoteSection && order?.final_pricing?.total_price && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -510,10 +507,8 @@ export default function OrderPage({
 
                                         <div className='text-4xl font-bold font-mono text-primary mb-4'>
                                             AED{' '}
-                                            {order.final_pricing?.total
-                                                ? parseFloat(
-                                                    order.final_pricing.total
-                                                ).toFixed(2)
+                                            {order?.final_pricing?.total_price
+                                                ? parseFloat(order.final_pricing.total_price).toFixed(2)
                                                 : 'N/A'}
                                         </div>
 
@@ -521,9 +516,7 @@ export default function OrderPage({
                                             <div className='flex gap-3'>
                                                 <Button
                                                     onClick={() =>
-                                                        setApproveDialogOpen(
-                                                            true
-                                                        )
+                                                        setApproveDialogOpen(true)
                                                     }
                                                     className='flex-1 font-mono gap-2'
                                                 >
@@ -532,9 +525,7 @@ export default function OrderPage({
                                                 </Button>
                                                 <Button
                                                     onClick={() =>
-                                                        setDeclineDialogOpen(
-                                                            true
-                                                        )
+                                                        setDeclineDialogOpen(true)
                                                     }
                                                     variant='outline'
                                                     className='flex-1 font-mono gap-2'
@@ -550,9 +541,7 @@ export default function OrderPage({
                                                 <p className='text-xs font-mono text-green-700 dark:text-green-400'>
                                                     <CheckCircle2 className='w-3 h-3 inline mr-1' />
                                                     Approved{' '}
-                                                    {new Date(
-                                                        order.updated_at
-                                                    ).toLocaleDateString()}
+                                                    {new Date(order.updated_at).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         )}
@@ -561,9 +550,7 @@ export default function OrderPage({
                                                 <p className='text-xs font-mono text-destructive'>
                                                     <XCircle className='w-3 h-3 inline mr-1' />
                                                     Declined{' '}
-                                                    {new Date(
-                                                        order.updated_at
-                                                    ).toLocaleDateString()}
+                                                    {new Date(order.updated_at).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         )}
@@ -966,14 +953,14 @@ export default function OrderPage({
                                                                 <div className='text-[9px] text-muted-foreground font-mono uppercase'>
                                                                     VOL
                                                                 </div>
-                                                                <div className='text-xs font-bold font-mono text-secondary'>
+                                                                <div className='text-xs font-bold font-mono'>
                                                                     {Number(
                                                                         item.order_item.volume_per_unit || 0
                                                                     ).toFixed(
                                                                         2
                                                                     )}
                                                                 </div>
-                                                                <div className='text-[8px] text-secondary/70'>
+                                                                <div className='text-[8px] text-muted-foreground/70'>
                                                                     m³
                                                                 </div>
                                                             </div>
@@ -984,31 +971,21 @@ export default function OrderPage({
                                                             <span>
                                                                 Qty:{' '}
                                                                 <span className='font-bold text-foreground'>
-                                                                    {
-                                                                        item.order_item.quantity
-                                                                    }
+                                                                    {item.order_item.quantity}
                                                                 </span>
                                                             </span>
                                                             <span>•</span>
                                                             <span>
                                                                 Total:{' '}
-                                                                <span className='font-bold text-secondary'>
-                                                                    {Number(
-                                                                        item.order_item.total_volume
-                                                                    ).toFixed(
-                                                                        2
-                                                                    )}{' '}
+                                                                <span className='font-bold'>
+                                                                    {Number(item.order_item.total_volume).toFixed(2)}{' '}
                                                                     m³
                                                                 </span>
                                                             </span>
                                                             <span>•</span>
                                                             <span>
                                                                 <span className='font-bold text-primary'>
-                                                                    {Number(
-                                                                        item.order_item.total_weight
-                                                                    ).toFixed(
-                                                                        1
-                                                                    )}{' '}
+                                                                    {Number(item.order_item.total_weight).toFixed(1)}{' '}
                                                                     kg
                                                                 </span>
                                                             </span>
@@ -1028,9 +1005,7 @@ export default function OrderPage({
                                                 Total Volume
                                             </p>
                                             <p className='text-xl font-bold font-mono text-primary'>
-                                                {Number(
-                                                    order.calculated_totals?.volume || 0
-                                                ).toFixed(2)}{' '}
+                                                {Number(order.calculated_totals?.volume || 0).toFixed(2)}{' '}
                                                 m³
                                             </p>
                                         </div>
@@ -1039,9 +1014,7 @@ export default function OrderPage({
                                                 Total Weight
                                             </p>
                                             <p className='text-xl font-bold font-mono'>
-                                                {Number(
-                                                    order.calculated_totals?.weight || 0
-                                                ).toFixed(1)}{' '}
+                                                {Number(order.calculated_totals?.weight || 0).toFixed(1)}{' '}
                                                 kg
                                             </p>
                                         </div>
@@ -1504,9 +1477,9 @@ export default function OrderPage({
                                     <span>Total Amount</span>
                                     <span>
                                         AED{' '}
-                                        {order.final_pricing?.total
+                                        {order.final_pricing?.total_price
                                             ? parseFloat(
-                                                order.final_pricing.total
+                                                order.final_pricing.total_price
                                             ).toFixed(2)
                                             : 'N/A'}
                                     </span>

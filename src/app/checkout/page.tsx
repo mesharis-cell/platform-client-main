@@ -130,9 +130,9 @@ function CheckoutPageInner() {
 
 					if (!asset || asset.status !== 'AVAILABLE') {
 						issues.push(`${item.assetName} is no longer available`)
-					} else if (item.quantity > asset.availableQuantity) {
+					} else if (item.quantity > asset.available_quantity) {
 						issues.push(
-							`${item.assetName}: only ${asset.availableQuantity} available (you have ${item.quantity})`
+							`${item.assetName}: only ${asset.available_quantity} available (you have ${item.quantity})`
 						)
 					}
 				})
@@ -174,8 +174,8 @@ function CheckoutPageInner() {
 					return
 				}
 				// Use estimatedTotal (flat rate + margin), not basePrice × volume
-				if (data.estimatedTotal) {
-					setEstimatedPrice(parseFloat(data.estimatedTotal))
+				if (data.data.estimated_total) {
+					setEstimatedPrice(parseFloat(data.data.estimated_total))
 				} else {
 					setEstimatedPrice(null)
 				}

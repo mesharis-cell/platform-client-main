@@ -180,9 +180,9 @@ export function useApproveQuote() {
       }
       return response.json();
     },
-    onSuccess: (_, orderId) => {
+    onSuccess: (data, orderId) => {
       // Invalidate order detail and list queries
-      queryClient.invalidateQueries({ queryKey: ['client-order-detail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['client-order-detail', data?.data?.order_id] });
       queryClient.invalidateQueries({ queryKey: ['client-orders'] });
       queryClient.invalidateQueries({ queryKey: ['client-dashboard-summary'] });
     },
@@ -208,9 +208,9 @@ export function useDeclineQuote() {
       }
       return response.json();
     },
-    onSuccess: (_, { orderId }) => {
+    onSuccess: (data, { orderId }) => {
       // Invalidate order detail and list queries
-      queryClient.invalidateQueries({ queryKey: ['client-order-detail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['client-order-detail', data?.data?.order_id] });
       queryClient.invalidateQueries({ queryKey: ['client-orders'] });
       queryClient.invalidateQueries({ queryKey: ['client-dashboard-summary'] });
     },
@@ -224,15 +224,16 @@ export function useClientCalendar(params: { month?: string; year?: string } = {}
   return useQuery({
     queryKey: ['client-calendar', params],
     queryFn: async () => {
+      try {
       const queryParams = new URLSearchParams();
       if (params.month) queryParams.append('month', params.month);
       if (params.year) queryParams.append('year', params.year);
 
-      const response = await fetch(`/api/client/calendar?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch calendar events');
-      }
-      return response.json();
+      const response = await apiClient.get(`/client/v1/calendar?${queryParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      throwApiError(error);
+    }
     },
   });
 }
@@ -244,11 +245,12 @@ export function useClientDashboardSummary() {
   return useQuery({
     queryKey: ['client-dashboard-summary'],
     queryFn: async () => {
-      const response = await fetch('/api/client/dashboard/summary');
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard summary');
-      }
-      return response.json();
+      try {
+      const response = await apiClient.get('/client/v1/order/dashboard-summary');
+      return response.data;
+    } catch (error) {
+      throwApiError(error);
+    }
     },
   });
 }
