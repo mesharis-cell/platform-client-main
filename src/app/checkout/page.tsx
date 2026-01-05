@@ -48,8 +48,8 @@ import { toast } from 'sonner'
 import { useBrands } from '@/hooks/use-brands'
 import { Brand } from '@/types'
 import { apiClient } from '@/lib/api/api-client'
-import { useAuth } from '@/contexts/user-context'
 import { usePricingTierLocations } from '@/hooks/use-pricing-tiers'
+import { useToken } from '@/lib/auth/use-token'
 
 type Step = 'cart' | 'event' | 'venue' | 'contact' | 'review'
 
@@ -76,7 +76,7 @@ function CheckoutPageInner() {
 	const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([])
 	const [useCustomLocation, setUseCustomLocation] = useState(false)
 	const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null)
-	const { user } = useAuth()
+	const { user } = useToken()
 
 	// Mutations
 	const submitMutation = useSubmitOrderFromCart();
