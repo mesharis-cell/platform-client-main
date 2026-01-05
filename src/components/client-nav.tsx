@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CartProvider, useCart } from '@/contexts/cart-context';
 import { useSession } from '@/lib/auth';
+import { useToken } from '@/lib/auth/use-token';
 import { cn } from '@/lib/utils';
 import type { Company } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -26,9 +27,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/user-context';
 
 const clientNav = [
   { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
@@ -45,7 +44,7 @@ function ClientNavInner({ children }: ClientNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const { logout } = useAuth();
+  const { logout } = useToken();
   const { toggleCart, itemCount } = useCart();
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
