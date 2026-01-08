@@ -52,6 +52,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { ClientNav } from '@/components/client-nav'
+import { usePlatform } from '@/contexts/platform-context'
 
 export default function OrderPage({
     params,
@@ -65,6 +66,7 @@ export default function OrderPage({
     const approveQuote = useClientApproveQuote()
     const declineQuote = useClientDeclineQuote()
     const downloadInvoice = useDownloadInvoice()
+    const { platform } = usePlatform()
 
     const [approveDialogOpen, setApproveDialogOpen] = useState(false)
     const [declineDialogOpen, setDeclineDialogOpen] = useState(false)
@@ -112,10 +114,10 @@ export default function OrderPage({
         if (!invoice) return
 
         try {
-            await downloadInvoice.mutateAsync(invoice.invoiceNumber)
-            toast.success('Invoice downloaded successfully')
+            const res = await downloadInvoice.mutateAsync({ invoiceNumber: invoice.invoiceNumber, platformId: platform.platform_id });
+            window.open(res.data.download_url, '_blank');
         } catch (error: any) {
-            toast.error(error.message || 'Failed to download invoice')
+            toast.error(error.message || 'Failed to download Cost Estimate');
         }
     }
 
@@ -226,11 +228,12 @@ export default function OrderPage({
         isClosed
 
     const invoice =
-        showInvoiceSection && order.invoice_id
+        showInvoiceSection && order?.invoice?.invoice_id
             ? {
-                invoiceNumber: order.invoice_id,
-                invoiceGeneratedAt: order.invoice_generated_at,
-                finalTotalPrice: order.final_pricing?.total || order.calculated_totals?.total_price || 0, // Fallback if final_pricing is null but calculated exists
+                // id: order?.invoice?.id,
+                invoiceNumber: order?.invoice?.invoice_id,
+                invoiceGeneratedAt: order?.invoice?.created_at,
+                finalTotalPrice: order?.final_pricing?.total_price || 0,
                 isPaid:
                     isPaid ||
                     isConfirmed ||
@@ -241,7 +244,7 @@ export default function OrderPage({
                     isInUse ||
                     isAwaitingReturn ||
                     isClosed,
-                invoicePaidAt: isPaid ? order.invoice_paid_at : null,
+                invoicePaidAt: isPaid ? order?.invoice?.invoice_paid_at : null,
             }
             : null
 
@@ -469,14 +472,6 @@ export default function OrderPage({
                                                     <p className='font-mono text-xs text-muted-foreground mb-2'>
                                                         {order.logistics_pricing?.adjustment_reason}
                                                     </p>
-                                                    {order?.platform_pricing?.notes && (
-                                                        <p className='font-mono text-xs text-muted-foreground italic p-2 bg-background/50 rounded border border-blue-500/20'>
-                                                            Note:{' '}
-                                                            {
-                                                                order?.platform_pricing?.notes
-                                                            }
-                                                        </p>
-                                                    )}
                                                 </div>
                                             </div>
                                         </Card>
@@ -1577,4 +1572,3 @@ export default function OrderPage({
         </ClientNav>
     )
 }
-

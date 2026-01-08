@@ -22,7 +22,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
   const { addItem, openCart } = useCart();
   const [showCustomizer, setShowCustomizer] = useState(false);
 
-  const collection = data?.collection;
+  const collection = data?.data;
 
   const handleAddSelectedItems = (
     selectedItems: Array<{
@@ -77,7 +77,10 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
 
   if (!collection) return null;
 
-  const allAvailable = collection.items.every(item => item.isAvailable);
+  // Use the pre-calculated values from the hook
+  const allAvailable = collection.isFullyAvailable;
+  const totalVolume = Number(collection.totalVolume);
+  const totalWeight = Number(collection.totalWeight);
 
   return (
     <div className="space-y-6">
@@ -112,11 +115,10 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
         {collection.items.map((item) => (
           <div
             key={item.id}
-            className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
-              item.isAvailable
-                ? 'border-border bg-card hover:border-primary/30'
-                : 'border-destructive/30 bg-destructive/5'
-            }`}
+            className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${item.availableQuantity > 0
+              ? 'border-border bg-card hover:border-primary/30'
+              : 'border-destructive/30 bg-destructive/5'
+              }`}
           >
             {/* Thumbnail */}
             <div className="w-20 h-20 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
@@ -145,10 +147,10 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                   </Badge>
                 </div>
                 <Badge
-                  variant={item.isAvailable ? 'default' : 'destructive'}
+                  variant={item.availableQuantity > 0 ? 'default' : 'destructive'}
                   className="font-mono text-xs flex-shrink-0"
                 >
-                  {item.isAvailable ? (
+                  {item.availableQuantity > 0 ? (
                     <>
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Available
@@ -168,7 +170,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                 <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
                   <div className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">Qty:</span>
-                    <span className="font-bold">{item.defaultQuantity}</span>
+                    <span className="font-bold">{item.totalQuantity}</span>
                   </div>
                   <span className="text-muted-foreground">•</span>
                   <div className="flex items-center gap-1.5">
@@ -199,9 +201,9 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                     <div className="font-bold font-mono text-xs text-primary">{Number(item.weight).toFixed(1)}</div>
                     <div className="text-[8px] text-primary/70">kg</div>
                   </div>
-                  <div className="text-center p-1.5 bg-secondary/10 rounded border border-secondary/20">
+                  <div className="text-center p-1.5 bg-muted/10 rounded border border-secondary/20">
                     <div className="text-[9px] text-muted-foreground uppercase font-mono">VOL</div>
-                    <div className="font-bold font-mono text-xs text-secondary">{Number(item.volume).toFixed(2)}</div>
+                    <div className="font-bold font-mono text-xs">{Number(item.volume).toFixed(2)}</div>
                     <div className="text-[8px] text-secondary/70">m³</div>
                   </div>
                 </div>
@@ -220,11 +222,11 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
           </div>
           <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
             <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">Total Volume</p>
-            <p className="text-2xl font-bold font-mono text-primary">{Number(collection.totalVolume).toFixed(2)} m³</p>
+            <p className="text-2xl font-bold font-mono text-primary">{Number(totalVolume).toFixed(2)} m³</p>
           </div>
           <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
             <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">Total Weight</p>
-            <p className="text-2xl font-bold font-mono">{Number(collection.totalWeight).toFixed(1)} kg</p>
+            <p className="text-2xl font-bold font-mono">{Number(totalWeight).toFixed(1)} kg</p>
           </div>
         </div>
       </div>

@@ -578,7 +578,7 @@ function CatalogPageInner() {
 												{item.type === 'collection' && (
 													<div className='absolute bottom-3 left-3 right-3 flex justify-between items-center'>
 														<Badge
-															variant='secondary'
+															variant='outline'
 															className='backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs'
 														>
 															{item.itemCount}{' '}

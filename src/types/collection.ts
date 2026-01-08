@@ -267,5 +267,5 @@ export interface CatalogAssetDetailsResponse {
 
 export interface CatalogCollectionDetailsResponse {
 	success: boolean
-	collection: CatalogCollectionDetails
+	data: CatalogCollectionDetails
 }
