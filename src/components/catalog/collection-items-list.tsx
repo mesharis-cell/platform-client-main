@@ -87,9 +87,9 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
       {/* Info Banner */}
       <div className={`${allAvailable ? 'bg-primary/10 border-primary/20' : 'bg-amber-500/10 border-amber-500/20'} border rounded-lg p-4 flex items-start gap-3`}>
         {allAvailable ? (
-          <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
         ) : (
-          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
         )}
         <div className="flex-1">
           {allAvailable ? (
@@ -121,7 +121,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
               }`}
           >
             {/* Thumbnail */}
-            <div className="w-20 h-20 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
+            <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
               {item.images?.[0] ? (
                 <Image
                   src={item.images[0]}
@@ -148,7 +148,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                 </div>
                 <Badge
                   variant={item.availableQuantity > 0 ? 'default' : 'destructive'}
-                  className="font-mono text-xs flex-shrink-0"
+                  className="font-mono text-xs shrink-0"
                 >
                   {item.availableQuantity > 0 ? (
                     <>

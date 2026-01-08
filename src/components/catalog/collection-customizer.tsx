@@ -149,7 +149,7 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 								</div>
 
 								{/* Thumbnail */}
-								<div className="w-16 h-16 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
+								<div className="w-16 h-16 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
 									{item.images?.[0] ? (
 										<Image src={item.images[0]} alt={item.name} width={64} height={64} className="object-cover w-full h-full" />
 									) : (
@@ -168,7 +168,7 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 												{item.category}
 											</Badge>
 										</div>
-										<Badge variant={item.isAvailable ? 'default' : 'destructive'} className="text-xs flex-shrink-0">
+										<Badge variant={item.isAvailable ? 'default' : 'destructive'} className="text-xs shrink-0">
 											{item.isAvailable ? (
 												<>
 													<CheckCircle className="w-3 h-3 mr-1" />

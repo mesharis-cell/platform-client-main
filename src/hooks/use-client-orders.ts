@@ -262,7 +262,28 @@ export function useDownloadInvoice() {
   return useMutation({
     mutationFn: async ({ invoiceNumber, platformId }: { invoiceNumber: string; platformId: string }) => {
       try {
-        const response = await apiClient.get(`/client/v1/invoice/download/${invoiceNumber}?pid=${platformId}`);
+        const response = await apiClient.get(`/client/v1/invoice/download-pdf/${invoiceNumber}?pid=${platformId}`, {
+          responseType: 'blob',
+        });
+        return response.data;
+      } catch (error) {
+        throwApiError(error);
+      }
+    },
+  });
+}
+
+/**
+ * Hook to download cost estimate PDF
+ */
+export function useDownloadCostEstimate() {
+  return useMutation({
+    mutationFn: async ({ orderId, platformId }: { orderId: string, platformId: string }) => {
+      try {
+        const response = await apiClient.get(
+          `/client/v1/invoice/download-cost-estimate-pdf/${orderId}?pid=${platformId}`,
+          { responseType: 'blob' }
+        );
         return response.data;
       } catch (error) {
         throwApiError(error);

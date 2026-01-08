@@ -47,12 +47,26 @@ import {
 } from '@/hooks/use-orders'
 import {
     useClientOrderDetail,
+    useDownloadCostEstimate,
     useDownloadInvoice,
 } from '@/hooks/use-client-orders'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { ClientNav } from '@/components/client-nav'
 import { usePlatform } from '@/contexts/platform-context'
+
+const costEstimatedStatus = [
+    'QUOTED',
+    'DECLINED',
+    'CONFIRMED',
+    'IN_PREPARATION',
+    'READY_FOR_DELIVERY',
+    'IN_TRANSIT',
+    'DELIVERED',
+    'IN_USE',
+    'AWAITING_RETURN',
+    'CLOSED'
+]
 
 export default function OrderPage({
     params,
@@ -66,12 +80,31 @@ export default function OrderPage({
     const approveQuote = useClientApproveQuote()
     const declineQuote = useClientDeclineQuote()
     const downloadInvoice = useDownloadInvoice()
+    const downloadCostEstimate = useDownloadCostEstimate()
     const { platform } = usePlatform()
 
     const [approveDialogOpen, setApproveDialogOpen] = useState(false)
     const [declineDialogOpen, setDeclineDialogOpen] = useState(false)
     const [declineReason, setDeclineReason] = useState('')
     const [notes, setNotes] = useState('')
+
+    const handleDownloadCostEstimate = async () => {
+        try {
+            const pdfBlob = await downloadCostEstimate.mutateAsync({
+                orderId: orderData?.data?.id,
+                platformId: platform.platform_id,
+            })
+
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cost-estimate-${order?.order_id || 'download'}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to download cost estimate')
+        }
+    }
 
     const handleApprove = async () => {
         try {
@@ -114,10 +147,15 @@ export default function OrderPage({
         if (!invoice) return
 
         try {
-            const res = await downloadInvoice.mutateAsync({ invoiceNumber: invoice.invoiceNumber, platformId: platform.platform_id });
-            window.open(res.data.download_url, '_blank');
+            const pdfBlob = await downloadInvoice.mutateAsync({ invoiceNumber: invoice.invoiceNumber, platformId: platform.platform_id });
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `invoice-${order?.order_id || 'download'}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
         } catch (error: any) {
-            toast.error(error.message || 'Failed to download Cost Estimate');
+            toast.error(error.message || 'Failed to download Invoice');
         }
     }
 
@@ -1040,7 +1078,7 @@ export default function OrderPage({
                                             </h3>
                                             <div className='space-y-3 text-sm'>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         1
                                                     </div>
                                                     <div>
@@ -1056,7 +1094,7 @@ export default function OrderPage({
                                                     </div>
                                                 </div>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         2
                                                     </div>
                                                     <div>
@@ -1071,7 +1109,7 @@ export default function OrderPage({
                                                     </div>
                                                 </div>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         3
                                                     </div>
                                                     <div>
@@ -1289,6 +1327,12 @@ export default function OrderPage({
 
                         {/* Sidebar */}
                         <div className='space-y-6'>
+                            {
+                                costEstimatedStatus.includes(order?.order_status || '') && (
+                                    <Button onClick={handleDownloadCostEstimate} className='w-full'>Download Cost Estimate</Button>
+                                )
+                            }
+
                             {/* Event Details */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
