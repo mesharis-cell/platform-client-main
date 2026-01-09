@@ -478,7 +478,7 @@ function CatalogPageInner() {
 														className='object-cover group-hover:scale-110 transition-transform duration-700'
 													/>
 												) : (
-													<div className='absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50'>
+													<div className='absolute inset-0 flex items-center justify-center bg-linear-gradient-to-br from-muted to-muted/50'>
 														{item.type ===
 															'collection' ? (
 															<Layers className='w-20 h-20 text-muted-foreground/20' />
@@ -578,7 +578,7 @@ function CatalogPageInner() {
 												{item.type === 'collection' && (
 													<div className='absolute bottom-3 left-3 right-3 flex justify-between items-center'>
 														<Badge
-															variant='secondary'
+															variant='outline'
 															className='backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs'
 														>
 															{item.itemCount}{' '}
@@ -600,7 +600,7 @@ function CatalogPageInner() {
 												{item.type === 'asset' &&
 													item.availableQuantity >
 													0 && (
-														<div className='absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6'>
+														<div className='absolute inset-0 bg-linear-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6'>
 															<Button
 																onClick={e => {
 																	e.stopPropagation()
@@ -826,7 +826,7 @@ function CatalogPageInner() {
 												<div className='flex gap-6'>
 													{/* Thumbnail */}
 													<div
-														className='w-40 h-40 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-muted cursor-pointer'
+														className='w-40 h-40 rounded-lg overflow-hidden border border-border shrink-0 bg-muted cursor-pointer'
 														onClick={() =>
 															setSelectedItem(
 																item
@@ -846,7 +846,7 @@ function CatalogPageInner() {
 																className='object-cover w-full h-full group-hover:scale-110 transition-transform duration-700'
 															/>
 														) : (
-															<div className='w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center'>
+															<div className='w-full h-full bg-linear-gradient-to-br from-muted to-muted/50 flex items-center justify-center'>
 																{item.type ===
 																	'collection' ? (
 																	<Layers className='w-16 h-16 text-muted-foreground/20' />
@@ -1128,12 +1128,7 @@ function CatalogPageInner() {
 										</DialogTitle>
 										<div className='flex flex-wrap gap-2'>
 											<Badge
-												variant={
-													selectedItem.type ===
-														'collection'
-														? 'default'
-														: 'secondary'
-												}
+												variant='outline'
 												className='font-mono'
 											>
 												{selectedItem.type ===
@@ -1215,7 +1210,7 @@ function CatalogPageInner() {
 													className={`rounded-lg overflow-hidden border border-border relative ${index === 0 &&
 														selectedItem.images
 															.length > 1
-														? 'col-span-2 aspect-[21/9]'
+														? 'col-span-2 aspect-21/9'
 														: 'aspect-square'
 														}`}
 												>
@@ -1306,7 +1301,7 @@ function CatalogPageInner() {
 													<p className='text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1'>
 														Volume
 													</p>
-													<p className='text-xl font-bold font-mono text-secondary'>
+													<p className='text-xl font-bold font-mono'>
 														{Number(
 															selectedItem.volume
 														).toFixed(3)}{' '}

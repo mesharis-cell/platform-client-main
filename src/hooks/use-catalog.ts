@@ -83,7 +83,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 				name: collection.brand.name,
 				logoUrl: collection.brand.logo_url
 			} : null,
-			itemCount: 0 // Fetch actual count if needed
+			itemCount: response.data.data.meta?.total_collections || 0
 		}))
 	];
 
@@ -107,8 +107,52 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
 
 async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDetailsResponse> {
 	try {
-		const response = await apiClient.get<CatalogCollectionDetailsResponse>(`/client/v1/catalog/collections/${id}`);
-		return response.data;
+		const response = await apiClient.get(`/operations/v1/collection/${id}`);
+		const raw = response.data.data;
+
+		// Transform backend response to match CatalogCollectionDetails type
+		const items = (raw.assets || []).map((item: any) => ({
+			id: item.asset.id,
+			name: item.asset.name,
+			category: item.asset.category,
+			images: item.asset.images || [],
+			defaultQuantity: item.default_quantity,
+			availableQuantity: item.asset.available_quantity,
+			totalQuantity: item.asset.total_quantity,
+			condition: item.asset.condition,
+			refurbDaysEstimate: item.asset.refurb_days_estimate || null,
+			volume: item.asset.volume_per_unit,
+			weight: item.asset.weight_per_unit,
+			dimensionLength: String(item.asset.dimensions?.length || 0),
+			dimensionWidth: String(item.asset.dimensions?.width || 0),
+			dimensionHeight: String(item.asset.dimensions?.height || 0),
+			isAvailable: item.asset.available_quantity >= item.default_quantity,
+		}));
+
+		// Calculate totals
+		const totalVolume = items.reduce((sum: number, item: any) => sum + Number(item.volume || 0), 0);
+		const totalWeight = items.reduce((sum: number, item: any) => sum + Number(item.weight || 0), 0);
+		const isFullyAvailable = items.every((item: any) => item.isAvailable);
+
+		return {
+			success: true,
+			data: {
+				id: raw.id,
+				name: raw.name,
+				description: raw.description || null,
+				category: raw.category || null,
+				images: raw.images || [],
+				brand: raw.brand ? {
+					id: raw.brand.id,
+					name: raw.brand.name,
+					logoUrl: raw.brand.logo_url || null,
+				} : null,
+				items,
+				totalVolume: String(totalVolume),
+				totalWeight: String(totalWeight),
+				isFullyAvailable,
+			},
+		};
 	} catch (error) {
 		throwApiError(error);
 	}

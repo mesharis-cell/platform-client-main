@@ -47,11 +47,26 @@ import {
 } from '@/hooks/use-orders'
 import {
     useClientOrderDetail,
+    useDownloadCostEstimate,
     useDownloadInvoice,
 } from '@/hooks/use-client-orders'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { ClientNav } from '@/components/client-nav'
+import { usePlatform } from '@/contexts/platform-context'
+
+const costEstimatedStatus = [
+    'QUOTED',
+    'DECLINED',
+    'CONFIRMED',
+    'IN_PREPARATION',
+    'READY_FOR_DELIVERY',
+    'IN_TRANSIT',
+    'DELIVERED',
+    'IN_USE',
+    'AWAITING_RETURN',
+    'CLOSED'
+]
 
 export default function OrderPage({
     params,
@@ -65,11 +80,31 @@ export default function OrderPage({
     const approveQuote = useClientApproveQuote()
     const declineQuote = useClientDeclineQuote()
     const downloadInvoice = useDownloadInvoice()
+    const downloadCostEstimate = useDownloadCostEstimate()
+    const { platform } = usePlatform()
 
     const [approveDialogOpen, setApproveDialogOpen] = useState(false)
     const [declineDialogOpen, setDeclineDialogOpen] = useState(false)
     const [declineReason, setDeclineReason] = useState('')
     const [notes, setNotes] = useState('')
+
+    const handleDownloadCostEstimate = async () => {
+        try {
+            const pdfBlob = await downloadCostEstimate.mutateAsync({
+                orderId: orderData?.data?.id,
+                platformId: platform.platform_id,
+            })
+
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cost-estimate-${order?.order_id || 'download'}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to download cost estimate')
+        }
+    }
 
     const handleApprove = async () => {
         try {
@@ -112,10 +147,15 @@ export default function OrderPage({
         if (!invoice) return
 
         try {
-            await downloadInvoice.mutateAsync(invoice.invoiceNumber)
-            toast.success('Invoice downloaded successfully')
+            const pdfBlob = await downloadInvoice.mutateAsync({ invoiceNumber: invoice.invoiceNumber, platformId: platform.platform_id });
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `invoice-${order?.order_id || 'download'}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
         } catch (error: any) {
-            toast.error(error.message || 'Failed to download invoice')
+            toast.error(error.message || 'Failed to download Invoice');
         }
     }
 
@@ -226,11 +266,12 @@ export default function OrderPage({
         isClosed
 
     const invoice =
-        showInvoiceSection && order.invoice_id
+        showInvoiceSection && order?.invoice?.invoice_id
             ? {
-                invoiceNumber: order.invoice_id,
-                invoiceGeneratedAt: order.invoice_generated_at,
-                finalTotalPrice: order.final_pricing?.total || order.calculated_totals?.total_price || 0, // Fallback if final_pricing is null but calculated exists
+                // id: order?.invoice?.id,
+                invoiceNumber: order?.invoice?.invoice_id,
+                invoiceGeneratedAt: order?.invoice?.created_at,
+                finalTotalPrice: order?.final_pricing?.total_price || 0,
                 isPaid:
                     isPaid ||
                     isConfirmed ||
@@ -241,7 +282,7 @@ export default function OrderPage({
                     isInUse ||
                     isAwaitingReturn ||
                     isClosed,
-                invoicePaidAt: isPaid ? order.invoice_paid_at : null,
+                invoicePaidAt: isPaid ? order?.invoice?.invoice_paid_at : null,
             }
             : null
 
@@ -469,14 +510,6 @@ export default function OrderPage({
                                                     <p className='font-mono text-xs text-muted-foreground mb-2'>
                                                         {order.logistics_pricing?.adjustment_reason}
                                                     </p>
-                                                    {order?.platform_pricing?.notes && (
-                                                        <p className='font-mono text-xs text-muted-foreground italic p-2 bg-background/50 rounded border border-blue-500/20'>
-                                                            Note:{' '}
-                                                            {
-                                                                order?.platform_pricing?.notes
-                                                            }
-                                                        </p>
-                                                    )}
                                                 </div>
                                             </div>
                                         </Card>
@@ -1045,7 +1078,7 @@ export default function OrderPage({
                                             </h3>
                                             <div className='space-y-3 text-sm'>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         1
                                                     </div>
                                                     <div>
@@ -1061,7 +1094,7 @@ export default function OrderPage({
                                                     </div>
                                                 </div>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         2
                                                     </div>
                                                     <div>
@@ -1076,7 +1109,7 @@ export default function OrderPage({
                                                     </div>
                                                 </div>
                                                 <div className='flex gap-3'>
-                                                    <div className='w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 text-xs font-bold'>
+                                                    <div className='w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold'>
                                                         3
                                                     </div>
                                                     <div>
@@ -1294,6 +1327,12 @@ export default function OrderPage({
 
                         {/* Sidebar */}
                         <div className='space-y-6'>
+                            {
+                                costEstimatedStatus.includes(order?.order_status || '') && (
+                                    <Button onClick={handleDownloadCostEstimate} className='w-full'>Download Cost Estimate</Button>
+                                )
+                            }
+
                             {/* Event Details */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -1577,4 +1616,3 @@ export default function OrderPage({
         </ClientNav>
     )
 }
-

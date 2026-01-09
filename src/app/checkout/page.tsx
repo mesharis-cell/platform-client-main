@@ -524,7 +524,7 @@ function CheckoutPageInner() {
 							</div>
 
 							<Card className='p-8 bg-card/50 border-border/50 space-y-6'>
-								<div>
+								{/* <div>
 									<Label
 										htmlFor='brand'
 										className='font-mono uppercase text-xs tracking-wide'
@@ -541,7 +541,7 @@ function CheckoutPageInner() {
 											))}
 										</SelectContent>
 									</Select>
-								</div>
+								</div> */}
 								<div className='space-y-6'>
 									<div className='grid grid-cols-2 gap-6'>
 										<div className='space-y-2'>

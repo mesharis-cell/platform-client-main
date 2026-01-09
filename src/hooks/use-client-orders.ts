@@ -260,23 +260,34 @@ export function useClientDashboardSummary() {
  */
 export function useDownloadInvoice() {
   return useMutation({
-    mutationFn: async (orderId: string) => {
-      const response = await fetch(`/api/client/invoices/download/${orderId}`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to download Cost Estimate');
+    mutationFn: async ({ invoiceNumber, platformId }: { invoiceNumber: string; platformId: string }) => {
+      try {
+        const response = await apiClient.get(`/client/v1/invoice/download-pdf/${invoiceNumber}?pid=${platformId}`, {
+          responseType: 'blob',
+        });
+        return response.data;
+      } catch (error) {
+        throwApiError(error);
       }
+    },
+  });
+}
 
-      // Create blob and trigger download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${orderId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+/**
+ * Hook to download cost estimate PDF
+ */
+export function useDownloadCostEstimate() {
+  return useMutation({
+    mutationFn: async ({ orderId, platformId }: { orderId: string, platformId: string }) => {
+      try {
+        const response = await apiClient.get(
+          `/client/v1/invoice/download-cost-estimate-pdf/${orderId}?pid=${platformId}`,
+          { responseType: 'blob' }
+        );
+        return response.data;
+      } catch (error) {
+        throwApiError(error);
+      }
     },
   });
 }

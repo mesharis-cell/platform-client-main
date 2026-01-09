@@ -140,9 +140,8 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 						return (
 							<div
 								key={item.id}
-								className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
-									isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card'
-								} ${!item.isAvailable ? 'opacity-50' : ''}`}
+								className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card'
+									} ${!item.isAvailable ? 'opacity-50' : ''}`}
 							>
 								{/* Checkbox */}
 								<div className="flex items-center pt-1">
@@ -150,7 +149,7 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 								</div>
 
 								{/* Thumbnail */}
-								<div className="w-16 h-16 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
+								<div className="w-16 h-16 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
 									{item.images?.[0] ? (
 										<Image src={item.images[0]} alt={item.name} width={64} height={64} className="object-cover w-full h-full" />
 									) : (
@@ -169,7 +168,7 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 												{item.category}
 											</Badge>
 										</div>
-										<Badge variant={item.isAvailable ? 'default' : 'destructive'} className="text-xs flex-shrink-0">
+										<Badge variant={item.isAvailable ? 'default' : 'destructive'} className="text-xs shrink-0">
 											{item.isAvailable ? (
 												<>
 													<CheckCircle className="w-3 h-3 mr-1" />
@@ -252,7 +251,7 @@ export function CollectionCustomizer({ collection, onAddToCart, onClose }: Colle
 					</div>
 					<div className="bg-background/50 rounded-lg p-3 border border-border/50">
 						<p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">Volume</p>
-						<p className="text-lg font-mono font-bold text-secondary">{totals.volume.toFixed(2)}</p>
+						<p className="text-lg font-mono font-bold">{totals.volume.toFixed(2)}</p>
 						<p className="text-[10px] text-muted-foreground">m³</p>
 					</div>
 					<div className="bg-background/50 rounded-lg p-3 border border-border/50">
