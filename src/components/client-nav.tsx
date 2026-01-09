@@ -22,7 +22,8 @@ import {
   LogOut,
   ShoppingCart,
   Box,
-  Calendar
+  Calendar,
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -34,6 +35,7 @@ const clientNav = [
   { name: 'Catalog', href: '/catalog', icon: Grid3x3 },
   { name: 'My Orders', href: '/my-orders', icon: ShoppingCart },
   { name: 'Event Calendar', href: '/event-calendar', icon: Calendar },
+  { name: 'Reset Password', href: '/reset-password', icon: Lock },
 ];
 
 interface ClientNavProps {
