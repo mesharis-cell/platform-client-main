@@ -11,10 +11,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CartProvider, useCart } from '@/contexts/cart-context';
-import { useSession } from '@/lib/auth';
+import { useCompany } from '@/hooks/use-companies';
 import { useToken } from '@/lib/auth/use-token';
 import { cn } from '@/lib/utils';
-import type { Company } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -27,7 +26,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const clientNav = [
@@ -45,51 +43,10 @@ interface ClientNavProps {
 function ClientNavInner({ children }: ClientNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session, isPending } = useSession();
   const { logout } = useToken();
   const { toggleCart, itemCount } = useCart();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [companyLoading, setCompanyLoading] = useState(true);
-
-  // Fetch user's company for logo display
-  useEffect(() => {
-    async function fetchCompany() {
-      if (!session?.user) {
-        setCompanyLoading(false);
-        return;
-      }
-
-      // Only fetch for CLIENT_USER
-      const permissionTemplate = (session.user as any).permissionTemplate;
-      if (permissionTemplate !== 'CLIENT_USER') {
-        setCompanyLoading(false);
-        return;
-      }
-
-      // Get user's company ID
-      const companies = (session.user as any).companies || [];
-      if (companies.length === 0 || companies[0] === '*') {
-        setCompanyLoading(false);
-        return;
-      }
-
-      const companyId = companies[0];
-
-      try {
-        const response = await fetch(`/api/companies/${companyId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setCompany(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch company:', error);
-      } finally {
-        setCompanyLoading(false);
-      }
-    }
-
-    fetchCompany();
-  }, [session]);
+  const { user } = useToken();
+  const { data: company, isLoading } = useCompany(user?.company_id || undefined)
 
   const handleSignOut = () => {
     logout();
@@ -137,20 +94,20 @@ function ClientNavInner({ children }: ClientNavProps) {
         {/* Header */}
         <div className="relative z-10 p-6 pb-4 border-b border-border">
           <div className="flex items-center gap-3 mb-2">
-            {companyLoading ? (
+            {isLoading ? (
               <Skeleton className="h-10 w-10 rounded-lg" />
-            ) : company?.logoUrl ? (
-              <div className="h-10 w-10 rounded-lg overflow-hidden bg-background border border-border flex items-center justify-center flex-shrink-0">
+            ) : company?.data?.settings?.branding?.logo_url ? (
+              <div className="h-10 w-10 rounded-lg overflow-hidden bg-background border border-border flex items-center justify-center shrink-0">
                 <img
-                  src={company.logoUrl}
-                  alt={`${company.name} logo`}
+                  src={company.data.settings.branding.logo_url}
+                  alt={`${company.data.name} logo`}
                   className="w-full h-full object-contain p-1"
                 />
               </div>
-            ) : company ? (
+            ) : company?.data ? (
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/30">
                 <span className="text-sm font-mono font-bold text-primary">
-                  {company.name.substring(0, 2).toUpperCase()}
+                  {company.data.name.substring(0, 2).toUpperCase()}
                 </span>
               </div>
             ) : (
@@ -160,7 +117,7 @@ function ClientNavInner({ children }: ClientNavProps) {
               </div>
             )}
             <div>
-              {companyLoading ? (
+              {isLoading ? (
                 <>
                   <Skeleton className="h-5 w-32 mb-1" />
                   <Skeleton className="h-3 w-24" />
@@ -168,7 +125,7 @@ function ClientNavInner({ children }: ClientNavProps) {
               ) : (
                 <>
                   <h2 className="text-lg font-mono font-bold tracking-tight uppercase">
-                    {company ? company.name : 'Client Portal'}
+                    {company?.data?.name ? company.data.name : 'Client Portal'}
                   </h2>
                   <p className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
                     Asset Ordering System
@@ -181,7 +138,7 @@ function ClientNavInner({ children }: ClientNavProps) {
 
         {/* Navigation Links */}
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto relative z-10">
-          {isPending ? (
+          {isLoading ? (
             <>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-3 py-2.5">
@@ -235,7 +192,7 @@ function ClientNavInner({ children }: ClientNavProps) {
 
         {/* User Profile */}
         <div className="relative z-10 p-4 space-y-3">
-          {isPending ? (
+          {isLoading ? (
             <>
               <div className="flex items-center gap-3 px-2">
                 <Skeleton className="h-10 w-10 rounded-lg" />
@@ -251,11 +208,11 @@ function ClientNavInner({ children }: ClientNavProps) {
               <div className="flex items-center gap-3 px-2 py-1">
                 <Avatar className="h-10 w-10 border-2 border-primary/20">
                   <AvatarFallback className="bg-primary/10 text-primary font-mono text-sm font-bold">
-                    {session?.user?.name?.charAt(0).toUpperCase() || 'C'}
+                    {user?.name?.charAt(0).toUpperCase() || 'C'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-mono font-semibold truncate">{session?.user?.name || 'Client User'}</p>
+                  <p className="text-sm font-mono font-semibold truncate">{user?.name || 'Client User'}</p>
                   <p className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
                     Client User
                   </p>

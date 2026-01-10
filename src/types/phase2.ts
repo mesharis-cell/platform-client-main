@@ -8,17 +8,39 @@
 // ============================================================
 
 export interface Company {
-	id: string;
-	name: string;
-	description?: string | null;
-	logoUrl?: string | null;
-	pmgMarginPercent: string; // Decimal stored as string
-	contactEmail?: string | null;
-	contactPhone?: string | null;
-	archivedAt?: Date | null;
-	createdAt: Date;
-	updatedAt: Date;
-}
+        id: string;
+        platform_id: string;
+        name: string;
+        domain: string;
+        settings: {
+            branding: {
+                title: string;
+                logo_url: string;
+                primary_color: string;
+                secondary_color: string;
+            }
+        },
+        platform_margin_percent: string;
+        contact_email: string | null;
+        contact_phone: string | null;
+        is_active: boolean;
+        created_at: string;
+        updated_at: string;
+        deleted_at: string | null;
+        domains: [
+            {
+                id: string;
+                platform_id: string;
+                company_id: string;
+                hostname: string;
+                type: string;
+                is_verified: boolean;
+                is_active: boolean;
+                created_at: string;
+                updated_at: string;
+            }
+        ]
+    }
 
 export interface CreateCompanyRequest {
 	name: string;

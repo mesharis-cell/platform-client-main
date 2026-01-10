@@ -1,5 +1,9 @@
+'use client';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Company, CompanyListResponse } from '@/types';
+import { apiClient } from '@/lib/api/api-client';
+import { throwApiError } from '@/lib/utils/throw-api-error';
 
 // Query keys
 export const companyKeys = {
@@ -18,6 +22,15 @@ async function fetchCompanies(params?: Record<string, string>): Promise<CompanyL
     throw new Error('Failed to fetch companies');
   }
   return response.json();
+}
+
+async function fetchCompanyById(id: string): Promise<{ data: Company }> {
+  try {
+    const response = await apiClient.get(`/operations/v1/company/${id}`);
+    return response.data;
+  } catch (error) {
+    throwApiError(error);
+  }
 }
 
 // Create company
@@ -63,6 +76,14 @@ export function useCompanies(params?: Record<string, string>) {
   return useQuery({
     queryKey: companyKeys.list(params),
     queryFn: () => fetchCompanies(params),
+  });
+}
+
+export function useCompany(id: string) {
+  return useQuery({
+    queryKey: companyKeys.detail(id),
+    queryFn: () => fetchCompanyById(id),
+    enabled: !!id,
   });
 }
 
