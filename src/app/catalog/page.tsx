@@ -72,7 +72,7 @@ function CatalogPageInner() {
 	>(null)
 	const [selectedQuantity, setSelectedQuantity] = useState(1)
 
-	const { addItem, openCart } = useCart()
+	const { addItem } = useCart()
 
 	// Fetch catalog data
 	const { data: catalogData, isLoading } = useCatalog({
@@ -130,14 +130,6 @@ function CatalogPageInner() {
 			category: item.category,
 			image: item.images[0],
 		})
-	}
-
-	const handleAddCollectionToCart = async (
-		collection: CatalogCollectionItem
-	) => {
-		// For now, open detail modal to show collection contents
-		// User can then add entire collection from there
-		setSelectedItem(collection)
 	}
 
 	return (

@@ -66,7 +66,7 @@ export default function MyOrdersPage() {
 
 	return (
 		<ClientNav>
-			<div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+			<div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/30 to-background">
 				{/* Header */}
 				<div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
 					<div className="container mx-auto px-6 py-6">
@@ -197,7 +197,7 @@ export default function MyOrdersPage() {
 															<Calendar className="h-5 w-5 text-muted-foreground" />
 															<p className="text-sm text-muted-foreground">
 																Event: <span className="font-medium text-foreground font-mono">
-																	{new Date(order.event_start_date).toLocaleDateString()}
+																	{new Date(order.event_start_date).toLocaleDateString()} - {new Date(order.event_end_date).toLocaleDateString()}
 																</span>
 															</p>
 														</div>
