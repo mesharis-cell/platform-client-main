@@ -139,7 +139,7 @@ export function FloatingCart() {
                     >
                       <div className="flex gap-4">
                         {/* Thumbnail */}
-                        <div className="w-20 h-20 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
+                        <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
                           {item.image ? (
                             <Image
                               src={item.image}
