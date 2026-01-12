@@ -46,7 +46,6 @@ import { ClientNav } from '@/components/client-nav'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { useBrands } from '@/hooks/use-brands'
-import { Brand } from '@/types'
 import { apiClient } from '@/lib/api/api-client'
 import { usePricingTierLocations } from '@/hooks/use-pricing-tiers'
 import { useToken } from '@/lib/auth/use-token'
@@ -54,7 +53,7 @@ import { useToken } from '@/lib/auth/use-token'
 type Step = 'cart' | 'event' | 'venue' | 'contact' | 'review'
 
 const STEPS: { key: Step; label: string; icon: any }[] = [
-	{ key: 'cart', label: 'Cart Review', icon: ShoppingCart },
+	{ key: 'cart', label: 'Order Review', icon: ShoppingCart },
 	{ key: 'event', label: 'Event Details', icon: Calendar },
 	{ key: 'venue', label: 'Venue Info', icon: MapPin },
 	{ key: 'contact', label: 'Contact', icon: User },
@@ -410,7 +409,7 @@ function CheckoutPageInner() {
 						>
 							<div>
 								<h2 className='text-3xl font-bold mb-2'>
-									Review Your Cart
+									Review Your Order
 								</h2>
 								<p className='text-muted-foreground'>
 									Verify your items before proceeding to event

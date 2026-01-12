@@ -7,7 +7,6 @@
 
 import { useCart } from '@/contexts/cart-context';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Plus, Minus, Trash2, ShoppingCart, Package, ArrowRight, Cuboid } from 'lucide-react';
 import Image from 'next/image';
@@ -75,7 +74,7 @@ export function FloatingCart() {
                     <ShoppingCart className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-mono font-bold uppercase tracking-tight">Your Cart</h2>
+                    <h2 className="text-lg font-mono font-bold uppercase tracking-tight">Your Order</h2>
                     <p className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
                       {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                     </p>
@@ -122,7 +121,7 @@ export function FloatingCart() {
                   <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                     <ShoppingCart className="h-10 w-10 text-muted-foreground/50" />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Your cart is empty</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Your order is empty</p>
                   <p className="text-xs text-muted-foreground/70 max-w-xs">
                     Browse the catalog and add assets to get started
                   </p>
@@ -140,7 +139,7 @@ export function FloatingCart() {
                     >
                       <div className="flex gap-4">
                         {/* Thumbnail */}
-                        <div className="w-20 h-20 rounded-md overflow-hidden border border-border flex-shrink-0 bg-muted">
+                        <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
                           {item.image ? (
                             <Image
                               src={item.image}
