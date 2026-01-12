@@ -385,6 +385,9 @@ export default function EventCalendarPage() {
 																		}
 																	</div>
 																</div>
+																<div className='truncate text-sm opacity-80 mt-2 text-center'>
+																	{event.order_id}
+																</div>
 															</Link>
 														))}
 													{dayEvents.length > 2 && (
