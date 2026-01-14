@@ -1329,7 +1329,14 @@ export default function OrderPage({
                         <div className='space-y-6'>
                             {
                                 costEstimatedStatus.includes(order?.order_status || '') && (
-                                    <Button onClick={handleDownloadCostEstimate} className='w-full'>Download Cost Estimate</Button>
+                                    <Button
+                                        onClick={handleDownloadCostEstimate}
+                                        disabled={downloadCostEstimate.isPending}
+                                        className='w-full'>
+                                        {downloadCostEstimate.isPending
+                                            ? 'Downloading...'
+                                            : 'Download Cost Estimate'}
+                                    </Button>
                                 )
                             }
 
