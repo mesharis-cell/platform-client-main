@@ -5,13 +5,13 @@
  * Slide-out cart with industrial-luxury aesthetic
  */
 
-import { useCart } from '@/contexts/cart-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, ShoppingCart, Package, ArrowRight, Cuboid } from 'lucide-react';
+import { useCart } from '@/contexts/cart-context';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Cuboid, Minus, Package, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export function FloatingCart() {
   const {

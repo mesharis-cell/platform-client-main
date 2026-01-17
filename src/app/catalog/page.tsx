@@ -10,15 +10,18 @@
  * - Intuitive add-to-cart experience
  */
 
-import { useState } from 'react'
-import { useCatalog } from '@/hooks/use-catalog'
-import { useBrands } from '@/hooks/use-brands'
-import { useCart } from '@/contexts/cart-context'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { CollectionItemsList } from '@/components/catalog/collection-items-list'
+import { ClientNav } from '@/components/client-nav'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import {
 	Select,
 	SelectContent,
@@ -26,38 +29,35 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog'
-import {
-	Search,
-	Package,
-	Layers,
-	Grid3x3,
-	List,
-	X,
-	CheckCircle,
-	AlertCircle,
-	XCircle,
-	Tag,
-	Plus,
-	Minus,
-	ShoppingCart,
-	Cuboid,
-} from 'lucide-react'
-import Image from 'next/image'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCart } from '@/contexts/cart-context'
+import { useBrands } from '@/hooks/use-brands'
+import { useCatalog } from '@/hooks/use-catalog'
+import { cn } from '@/lib/utils'
 import type {
 	CatalogAssetItem,
 	CatalogCollectionItem,
 } from '@/types/collection'
-import { ClientNav } from '@/components/client-nav'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+	AlertCircle,
+	CheckCircle,
+	Cuboid,
+	Grid3x3,
+	Layers,
+	List,
+	Minus,
+	Package,
+	Plus,
+	Search,
+	ShoppingCart,
+	Tag,
+	X,
+	XCircle,
+} from 'lucide-react'
+import Image from 'next/image'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { CollectionItemsList } from '@/components/catalog/collection-items-list'
-import { cn } from '@/lib/utils'
 
 function CatalogPageInner() {
 	const [searchQuery, setSearchQuery] = useState('')
@@ -93,6 +93,7 @@ function CatalogPageInner() {
 	const { data: brandsData } = useBrands({ limit: '100' })
 
 	const items = catalogData?.items || []
+
 	const brands = brandsData?.data || []
 
 	// Extract unique categories
@@ -499,6 +500,22 @@ function CatalogPageInner() {
 																Asset
 															</>
 														)}
+													</Badge>
+												</div>
+												<div className='absolute top-10 left-3'>
+													<Badge
+														variant='outline'
+														className={cn(
+															'border border-border/50 font-mono text-xs',
+														)}
+													>
+														{item.type ===
+															'asset' && (
+																<>
+																	{item.tracking_method}
+																</>
+															)
+														}
 													</Badge>
 												</div>
 
@@ -1305,7 +1322,7 @@ function CatalogPageInner() {
 											</div>
 										</div>
 
-										<div>
+										{selectedItem.type === 'asset' && selectedItem.tracking_method === "BATCH" && <div>
 											<h4 className='text-xs font-semibold mb-3 uppercase tracking-wide text-muted-foreground font-mono'>
 												Availability & Condition
 											</h4>
@@ -1360,7 +1377,7 @@ function CatalogPageInner() {
 														</div>
 													)}
 											</div>
-										</div>
+										</div>}
 									</div>
 								)}
 
@@ -1382,7 +1399,7 @@ function CatalogPageInner() {
 								selectedItem.availableQuantity > 0 && (
 									<div className='border-t border-border pt-6 space-y-4'>
 										{/* Quantity Selector */}
-										<div className='flex items-center gap-4'>
+										{selectedItem.tracking_method === "BATCH" && <div className='flex items-center gap-4'>
 											<label className='text-sm font-medium font-mono uppercase tracking-wide'>
 												Quantity
 											</label>
@@ -1432,7 +1449,7 @@ function CatalogPageInner() {
 												{selectedItem.availableQuantity}{' '}
 												available
 											</span>
-										</div>
+										</div>}
 
 										{/* Add to Cart Button */}
 										<Button

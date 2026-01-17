@@ -70,6 +70,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 			dimensionLength: asset.dimensions?.length,
 			dimensionWidth: asset.dimensions?.width,
 			dimensionHeight: asset.dimensions?.height,
+			tracking_method: asset.tracking_method,
 		})),
 		...collections.map((collection: any) => ({
 			type: 'collection' as const,

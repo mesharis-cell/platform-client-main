@@ -161,6 +161,7 @@ export interface CatalogAssetItem {
 	dimensionLength: string // decimal as string (cm)
 	dimensionWidth: string // decimal as string (cm)
 	dimensionHeight: string // decimal as string (cm)
+	tracking_method: string
 }
 
 export interface CatalogCollectionItem {
