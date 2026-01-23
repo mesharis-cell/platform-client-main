@@ -19,6 +19,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { TransportSelector } from '@/components/checkout/TransportSelector'
+import { OrderEstimate } from '@/components/checkout/OrderEstimate'
+import { useCalculateEstimate } from '@/hooks/use-order-submission'
+import { hasRebrandRequests } from '@/lib/cart-helpers'
+import type { TripType } from '@/types/hybrid-pricing'
 import {
 	Select,
 	SelectContent,
@@ -75,11 +80,20 @@ function CheckoutPageInner() {
 	const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([])
 	const [useCustomLocation, setUseCustomLocation] = useState(false)
 	const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null)
+	const [tripType, setTripType] = useState<TripType>('ROUND_TRIP') // NEW
 	const { user } = useToken()
 
 	// Mutations
 	const submitMutation = useSubmitOrderFromCart();
 	const { data: brandsData } = useBrands(user?.company_id ? { company: user?.company_id } : undefined)
+
+	// NEW: Calculate estimate using new system
+	const { data: estimateData } = useCalculateEstimate(
+		items,
+		formData.venue_city,
+		tripType,
+		currentStep === 'review' && !!formData.venue_city
+	)
 
 	// Form state
 	const [formData, setFormData] = useState({
@@ -95,6 +109,7 @@ function CheckoutPageInner() {
 		contact_email: '',
 		contact_phone: '',
 		special_instructions: '',
+		transport_trip_type: 'ROUND_TRIP' as TripType, // NEW
 	})
 
 	// Fetch pricing tier locations (public endpoint, no pricing details)
