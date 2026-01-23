@@ -3,9 +3,11 @@
 ## Components Ready for Integration
 
 ### ✅ QuoteReviewSection
+
 **When**: order.status === 'QUOTED'
 
 **Usage**:
+
 ```typescript
 import { QuoteReviewSection } from '@/components/orders/QuoteReviewSection'
 
@@ -24,6 +26,7 @@ import { QuoteReviewSection } from '@/components/orders/QuoteReviewSection'
 ```
 
 **Includes**:
+
 - Full itemized pricing breakdown
 - Quote expiry notice
 - Rebrand notification
@@ -31,9 +34,11 @@ import { QuoteReviewSection } from '@/components/orders/QuoteReviewSection'
 - Validation
 
 ### ✅ OrderStatusBanner
+
 **When**: order.status === 'AWAITING_FABRICATION' or 'CANCELLED'
 
 **Usage**:
+
 ```typescript
 import { OrderStatusBanner } from '@/components/orders/OrderStatusBanner'
 
@@ -47,9 +52,11 @@ import { OrderStatusBanner } from '@/components/orders/OrderStatusBanner'
 ```
 
 ### ✅ PricingBreakdown
+
 **When**: Any order with pricing data
 
 **Usage**:
+
 ```typescript
 import { PricingBreakdown } from '@/components/orders/PricingBreakdown'
 
@@ -63,7 +70,7 @@ import { PricingBreakdown } from '@/components/orders/PricingBreakdown'
 ## Integration Steps
 
 1. **Import components** into order detail page
-2. **Add status-based conditionals** 
+2. **Add status-based conditionals**
 3. **Pass order data** as props
 4. **Wire approve/decline** actions to existing hooks
 

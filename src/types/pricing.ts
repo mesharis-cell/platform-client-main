@@ -8,15 +8,15 @@
  * Represents volume-based and location-based pricing structure
  */
 export interface PricingTier {
-	id: string;
-	country: string;
-	city: string;
-	volumeMin: number; // Minimum cubic meters for this tier
-	volumeMax: number; // Maximum cubic meters for this tier (exclusive boundary)
-	basePrice: number; // A2 Logistics base cost for this tier
-	isActive: boolean; // Enable or disable pricing structure
-	createdAt: string;
-	updatedAt: string;
+    id: string;
+    country: string;
+    city: string;
+    volumeMin: number; // Minimum cubic meters for this tier
+    volumeMax: number; // Maximum cubic meters for this tier (exclusive boundary)
+    basePrice: number; // A2 Logistics base cost for this tier
+    isActive: boolean; // Enable or disable pricing structure
+    createdAt: string;
+    updatedAt: string;
 }
 
 /**
@@ -24,12 +24,12 @@ export interface PricingTier {
  * Payload for creating new pricing tier
  */
 export interface CreatePricingTierRequest {
-	country: string;
-	city: string;
-	volumeMin: number;
-	volumeMax: number;
-	basePrice: number;
-	isActive?: boolean; // Optional, defaults to true
+    country: string;
+    city: string;
+    volumeMin: number;
+    volumeMax: number;
+    basePrice: number;
+    isActive?: boolean; // Optional, defaults to true
 }
 
 /**
@@ -38,10 +38,10 @@ export interface CreatePricingTierRequest {
  * Country and city cannot be changed (create new tier instead)
  */
 export interface UpdatePricingTierRequest {
-	volumeMin?: number;
-	volumeMax?: number;
-	basePrice?: number;
-	isActive?: boolean;
+    volumeMin?: number;
+    volumeMax?: number;
+    basePrice?: number;
+    isActive?: boolean;
 }
 
 /**
@@ -49,13 +49,13 @@ export interface UpdatePricingTierRequest {
  * Query parameters for filtering pricing tier list
  */
 export interface PricingTierListParams {
-	country?: string;
-	city?: string;
-	isActive?: boolean;
-	sortBy?: "createdAt" | "country" | "city" | "volumeMin" | "basePrice";
-	sortOrder?: "asc" | "desc";
-	page?: number;
-	pageSize?: number;
+    country?: string;
+    city?: string;
+    isActive?: boolean;
+    sortBy?: "createdAt" | "country" | "city" | "volumeMin" | "basePrice";
+    sortOrder?: "asc" | "desc";
+    page?: number;
+    pageSize?: number;
 }
 
 /**
@@ -63,13 +63,13 @@ export interface PricingTierListParams {
  * Response format for listing pricing tiers
  */
 export interface PricingTierListResponse {
-	success: boolean;
-	data: PricingTier[];
-	meta: {
-		total: number;
-		page: number;
-		pageSize: number;
-	};
+    success: boolean;
+    data: PricingTier[];
+    meta: {
+        total: number;
+        page: number;
+        pageSize: number;
+    };
 }
 
 /**
@@ -77,9 +77,9 @@ export interface PricingTierListResponse {
  * Parameters for calculating A2 base price
  */
 export interface CalculatePricingParams {
-	country: string;
-	city: string;
-	volume: number; // Total order volume in m³
+    country: string;
+    city: string;
+    volume: number; // Total order volume in m³
 }
 
 /**
@@ -87,16 +87,16 @@ export interface CalculatePricingParams {
  * Response with matched pricing tier details
  */
 export interface CalculatePricingResponse {
-	success: boolean;
-	data: {
-		pricingTierId: string;
-		country: string;
-		city: string;
-		volumeMin: number;
-		volumeMax: number;
-		basePrice: number;
-		matchedVolume: number;
-	};
+    success: boolean;
+    data: {
+        pricingTierId: string;
+        country: string;
+        city: string;
+        volumeMin: number;
+        volumeMax: number;
+        basePrice: number;
+        matchedVolume: number;
+    };
 }
 
 /**
@@ -104,7 +104,7 @@ export interface CalculatePricingResponse {
  * Payload for activating/deactivating pricing tier
  */
 export interface TogglePricingTierRequest {
-	isActive: boolean;
+    isActive: boolean;
 }
 
 // Validation types are exported from types/phase2.ts to avoid duplicates
