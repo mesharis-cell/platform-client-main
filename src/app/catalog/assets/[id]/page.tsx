@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { ClientNav } from '@/components/client-nav';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { AddWithRebrandButton } from '@/components/rebrand/AddWithRebrandButton';
 
 export default function AssetDetailPage({
   params,
@@ -45,7 +46,7 @@ export default function AssetDetailPage({
 
   const asset = data?.asset;
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (rebrandData?: any) => {
     if (!asset) return;
 
     if (asset.availableQuantity < selectedQuantity) {
@@ -59,6 +60,7 @@ export default function AssetDetailPage({
       volume: Number(asset.volume),
       weight: Number(asset.weight),
       image: asset.images[0],
+      ...rebrandData, // Add rebrand data if provided
     });
 
     setSelectedQuantity(1);
@@ -356,15 +358,25 @@ export default function AssetDetailPage({
                     </span>
                   </div>
 
-                  {/* Add Button */}
-                  <Button
-                    onClick={handleAddToCart}
-                    className="w-full h-14 gap-2 font-mono uppercase tracking-wide text-base"
-                    size="lg"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    Add {selectedQuantity} to Cart
-                  </Button>
+                  {/* Add Buttons */}
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => handleAddToCart()}
+                      className="w-full h-14 gap-2 font-mono uppercase tracking-wide text-base"
+                      size="lg"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      Add {selectedQuantity} to Cart
+                    </Button>
+
+                    <AddWithRebrandButton
+                      asset={{ id: asset.id, name: asset.name }}
+                      companyBrands={asset.company?.brands || []}
+                      onAddToCart={(rebrandData) => {
+                        handleAddToCart(rebrandData);
+                      }}
+                    />
+                  </div>
                 </Card>
               )}
             </div>
