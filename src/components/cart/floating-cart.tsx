@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Cuboid, Minus, Package, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { RebrandItemBadge } from '@/components/rebrand/RebrandItemBadge';
 
 export function FloatingCart() {
   const {
@@ -212,6 +213,17 @@ export function FloatingCart() {
                               of {item.availableQuantity} available
                             </span>
                           </div>
+
+                          {/* NEW: Rebrand Badge */}
+                          {(item as any).isReskinRequest && (
+                            <div className="mt-3">
+                              <RebrandItemBadge
+                                targetBrandName={(item as any).reskinTargetBrandCustom || 'Custom Brand'}
+                                clientNotes={(item as any).reskinNotes || ''}
+                                showActions={false}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </motion.div>
