@@ -25,6 +25,11 @@ export interface LocalCartItem {
     fromCollection?: string;
     fromCollectionName?: string;
     addedAt: number;
+    // Reskin/Rebrand fields
+    isReskinRequest?: boolean;
+    reskinTargetBrandId?: string;
+    reskinTargetBrandCustom?: string;
+    reskinNotes?: string;
 }
 
 interface LocalCart {

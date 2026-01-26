@@ -29,7 +29,7 @@ import {
     Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -51,6 +51,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ClientNav } from "@/components/client-nav";
 import { usePlatform } from "@/contexts/platform-context";
+import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
+import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
+import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -74,12 +77,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const declineQuote = useClientDeclineQuote();
     const downloadInvoice = useDownloadInvoice();
     const downloadCostEstimate = useDownloadCostEstimate();
-    const { platform } = usePlatform();
-
-    const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-    const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
-    const [declineReason, setDeclineReason] = useState("");
-    const [notes, setNotes] = useState("");
+    const { platform} = usePlatform();
 
     const handleDownloadCostEstimate = async () => {
         try {
@@ -96,39 +94,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
             URL.revokeObjectURL(url);
         } catch (error: any) {
             toast.error(error.message || "Failed to download cost estimate");
-        }
-    };
-
-    const handleApprove = async () => {
-        try {
-            await approveQuote.mutateAsync({
-                orderId: orderData?.data?.id,
-                notes: notes || undefined,
-            });
-            toast.success("Quote approved successfully! Proceeding to invoicing.");
-            setApproveDialogOpen(false);
-            setNotes("");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to approve quote");
-        }
-    };
-
-    const handleDecline = async () => {
-        if (declineReason.trim().length < 10) {
-            toast.error("Decline reason must be at least 10 characters");
-            return;
-        }
-
-        try {
-            await declineQuote.mutateAsync({
-                orderId: orderData?.data?.id,
-                declineReason: declineReason.trim(),
-            });
-            toast.success("Quote declined. Your feedback has been sent to our team.");
-            setDeclineDialogOpen(false);
-            setDeclineReason("");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to decline quote");
         }
     };
 
@@ -227,6 +192,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isInUse = order.order_status === "IN_USE";
     const isAwaitingReturn = order.order_status === "AWAITING_RETURN";
     const isClosed = order.order_status === "CLOSED";
+    const isAwaitingFabrication = order.order_status === "AWAITING_FABRICATION";
+    const isCancelled = order.order_status === "CANCELLED";
 
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined;
@@ -456,6 +423,28 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         </Card>
                     </motion.div>
 
+                    {/* Status Banner for special states */}
+                    {(isAwaitingFabrication || isCancelled) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="mb-6"
+                        >
+                            <OrderStatusBanner
+                                status={order.order_status}
+                                cancellationReason={order.cancellation_reason}
+                                cancellationNotes={order.cancellation_notes}
+                                cancelledAt={order.cancelled_at}
+                                pendingReskinCount={
+                                    order.reskin_requests?.filter(
+                                        (r: any) => !r.completed_at && !r.cancelled_at
+                                    ).length || 0
+                                }
+                            />
+                        </motion.div>
+                    )}
+
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
@@ -485,79 +474,81 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 )}
 
                             {/* Quote Section */}
-                            {showQuoteSection && order?.final_pricing?.total_price && (
+                            {/* NEW: Hybrid Pricing Quote Section */}
+                            {isQuoted && order?.pricing && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
                                 >
-                                    <Card
-                                        className={`p-6 bg-card/50 backdrop-blur-sm border ${
-                                            isApproved
-                                                ? "border-green-500/30"
-                                                : isDeclined
-                                                  ? "border-destructive/30"
-                                                  : "border-amber-500/30"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <DollarSign className="w-5 h-5 text-primary" />
-                                            <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
-                                                Quote
-                                            </h3>
-                                        </div>
+                                    <QuoteReviewSection
+                                        orderId={order.id}
+                                        pricing={order.pricing}
+                                        lineItems={order.line_items || []}
+                                        hasReskinRequests={
+                                            order.reskin_requests?.some(
+                                                (r: any) => !r.cancelled_at
+                                            ) || false
+                                        }
+                                        onApprove={async () => {
+                                            await approveQuote.mutateAsync(order.id);
+                                        }}
+                                        onDecline={async (reason: string) => {
+                                            await declineQuote.mutateAsync({
+                                                orderId: order.id,
+                                                reason,
+                                            });
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
 
-                                        <div className="text-4xl font-bold font-mono text-primary mb-4">
-                                            AED{" "}
-                                            {order?.final_pricing?.total_price
-                                                ? parseFloat(
-                                                      order.final_pricing.total_price
-                                                  ).toFixed(2)
-                                                : "N/A"}
-                                        </div>
-
-                                        {isQuoted && (
-                                            <div className="flex gap-3">
-                                                <Button
-                                                    onClick={() => setApproveDialogOpen(true)}
-                                                    className="flex-1 font-mono gap-2"
-                                                >
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                    Approve
-                                                </Button>
-                                                <Button
-                                                    onClick={() => setDeclineDialogOpen(true)}
-                                                    variant="outline"
-                                                    className="flex-1 font-mono gap-2"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                    Decline
-                                                </Button>
-                                            </div>
-                                        )}
-
-                                        {isApproved && (
-                                            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md">
-                                                <p className="text-xs font-mono text-green-700 dark:text-green-400">
-                                                    <CheckCircle2 className="w-3 h-3 inline mr-1" />
-                                                    Approved{" "}
-                                                    {new Date(
-                                                        order.updated_at
-                                                    ).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                        )}
-                                        {isDeclined && (
-                                            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                                                <p className="text-xs font-mono text-destructive">
-                                                    <XCircle className="w-3 h-3 inline mr-1" />
-                                                    Declined{" "}
-                                                    {new Date(
-                                                        order.updated_at
-                                                    ).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                        )}
+                            {/* Quote Summary for Approved/Declined/Confirmed States */}
+                            {(isApproved || isDeclined || isConfirmed) && order?.pricing && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
+                                    <Card className="bg-card/50 backdrop-blur-sm">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <DollarSign className="h-5 w-5" />
+                                                Quote Summary
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <PricingBreakdown
+                                                pricing={order.pricing}
+                                                lineItems={order.line_items || []}
+                                                showTitle={false}
+                                            />
+                                            {isApproved && (
+                                                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+                                                    <p className="text-sm font-mono text-green-700 dark:text-green-400">
+                                                        <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                                                        Quote approved{" "}
+                                                        {new Date(
+                                                            order.updated_at
+                                                        ).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {isDeclined && order.decline_reason && (
+                                                <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                                    <p className="text-sm font-mono text-destructive mb-2">
+                                                        <XCircle className="w-4 h-4 inline mr-1" />
+                                                        Quote declined{" "}
+                                                        {new Date(
+                                                            order.updated_at
+                                                        ).toLocaleDateString()}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Reason: {order.decline_reason}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </CardContent>
                                     </Card>
                                 </motion.div>
                             )}
@@ -1427,101 +1418,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     </motion.div>
                 </div>
 
-                {/* Approve Dialog */}
-                <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Approve Quote</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">
-                                Approved quote for order{" "}
-                                <span className="font-mono font-semibold">{order.order_id}</span>.
-                                This proceeds to invoicing and fulfillment.
-                            </p>
-                            <div className="border border-border rounded-md p-4 bg-muted/50">
-                                <div className="flex justify-between font-bold text-lg font-mono">
-                                    <span>Total Amount</span>
-                                    <span>
-                                        AED{" "}
-                                        {order.final_pricing?.total_price
-                                            ? parseFloat(order.final_pricing.total_price).toFixed(2)
-                                            : "N/A"}
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <Label htmlFor="notes">Notes (Optional)</Label>
-                                <Textarea
-                                    id="notes"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Add any notes..."
-                                    rows={3}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => setApproveDialogOpen(false)}
-                                disabled={approveQuote.isPending}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={handleApprove} disabled={approveQuote.isPending}>
-                                {approveQuote.isPending ? "Approving..." : "Approve Quote"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Decline Dialog */}
-                <Dialog open={declineDialogOpen} onOpenChange={setDeclineDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Decline Quote</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">
-                                Decline quote for order{" "}
-                                <span className="font-mono font-semibold">{order.order_id}</span>.
-                                Please provide a reason so we can better serve you.
-                            </p>
-                            <div>
-                                <Label htmlFor="declineReason">
-                                    Reason for Declining <span className="text-destructive">*</span>
-                                </Label>
-                                <Textarea
-                                    id="declineReason"
-                                    value={declineReason}
-                                    onChange={(e) => setDeclineReason(e.target.value)}
-                                    placeholder="e.g., Budget constraints, timeline changed..."
-                                    rows={4}
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Minimum 10 characters required
-                                </p>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => setDeclineDialogOpen(false)}
-                                disabled={declineQuote.isPending}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDecline}
-                                disabled={declineQuote.isPending}
-                            >
-                                {declineQuote.isPending ? "Declining..." : "Decline Quote"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
             </div>
         </ClientNav>
     );

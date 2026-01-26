@@ -72,8 +72,7 @@ function CheckoutPageInner() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
     const [useCustomLocation, setUseCustomLocation] = useState(false);
-    const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
-    const [tripType, setTripType] = useState<TripType>("ROUND_TRIP"); // NEW
+    const [tripType, setTripType] = useState<TripType>("ROUND_TRIP");
     const { user } = useToken();
 
     // Mutations
@@ -99,13 +98,31 @@ function CheckoutPageInner() {
         transport_trip_type: "ROUND_TRIP" as TripType, // NEW
     });
 
+    // NEW: Hybrid pricing estimate
+    // const estimateQuery = useCalculateEstimate(
+    //     items.map((item) => ({
+    //         assetId: item.assetId,
+    //         quantity: item.quantity,
+    //         isReskinRequest: item.isReskinRequest,
+    //         reskinTargetBrandId: item.reskinTargetBrandId,
+    //         reskinTargetBrandCustom: item.reskinTargetBrandCustom,
+    //         reskinNotes: item.reskinNotes,
+    //     })),
+    //     formData.venue_city,
+    //     tripType,
+    //     currentStep === "review" && !!formData.venue_city && !useCustomLocation
+    // );
+    const hasRebrandItems = items.some((item) => item.isReskinRequest);
+
     // NEW: Calculate estimate using new system
-    const { data: estimateData } = useCalculateEstimate(
+    const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
         items,
         formData.venue_city,
         tripType,
         currentStep === "review" && !!formData.venue_city
     );
+
+    console.log("estimateData", estimateData);
 
     // Fetch pricing tier locations (public endpoint, no pricing details)
     const { data: locationsData } = usePricingTierLocations();
@@ -155,49 +172,7 @@ function CheckoutPageInner() {
         validateAvailability();
     }, [items, currentStep]);
 
-    // Calculate price estimate when country/city changes
-    useEffect(() => {
-        const calculatePrice = async () => {
-            if (
-                !formData.venue_country ||
-                !formData.venue_city ||
-                useCustomLocation ||
-                totalVolume === 0
-            ) {
-                setEstimatedPrice(null);
-                return;
-            }
-
-            try {
-                const params = new URLSearchParams({
-                    country: formData.venue_country,
-                    city: formData.venue_city,
-                    volume: totalVolume.toFixed(3),
-                });
-
-                const response = await apiClient.get(
-                    `/operations/v1/pricing-tier/calculate?${params}`
-                );
-                const data = await response.data;
-
-                if (!data.success) {
-                    setEstimatedPrice(null);
-                    return;
-                }
-                // Use estimatedTotal (flat rate + margin), not basePrice × volume
-                if (data.data.estimated_total) {
-                    setEstimatedPrice(parseFloat(data.data.estimated_total));
-                } else {
-                    setEstimatedPrice(null);
-                }
-            } catch (error) {
-                console.error("Error calculating price:", error);
-                setEstimatedPrice(null);
-            }
-        };
-
-        calculatePrice();
-    }, [formData.venue_country, formData.venue_city, totalVolume, useCustomLocation]);
+    // Estimate is now handled by useCalculateEstimate hook above
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -271,8 +246,14 @@ function CheckoutPageInner() {
                     asset_id: item.assetId,
                     quantity: item.quantity,
                     from_collection_id: item.fromCollection,
+                    // Include reskin fields
+                    is_reskin_request: item.isReskinRequest || false,
+                    reskin_target_brand_id: item.reskinTargetBrandId,
+                    reskin_target_brand_custom: item.reskinTargetBrandCustom,
+                    reskin_notes: item.reskinNotes,
                 })),
                 ...formData,
+                transport_trip_type: tripType, // Include trip type
             };
 
             const result = await submitMutation.mutateAsync(submitData);
@@ -337,13 +318,12 @@ function CheckoutPageInner() {
                                 <div key={step.key} className="flex items-center flex-1">
                                     <div className="flex items-center gap-3">
                                         <div
-                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                                                isCompleted
-                                                    ? "bg-primary border-primary text-primary-foreground"
-                                                    : isActive
-                                                      ? "bg-primary/10 border-primary text-primary"
-                                                      : "bg-muted border-border text-muted-foreground"
-                                            }`}
+                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
+                                                ? "bg-primary border-primary text-primary-foreground"
+                                                : isActive
+                                                    ? "bg-primary/10 border-primary text-primary"
+                                                    : "bg-muted border-border text-muted-foreground"
+                                                }`}
                                         >
                                             {isCompleted ? (
                                                 <Check className="h-5 w-5" />
@@ -355,11 +335,10 @@ function CheckoutPageInner() {
                                             className={`hidden sm:block ${index < STEPS.length - 1 ? "" : ""}`}
                                         >
                                             <p
-                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${
-                                                    isActive
-                                                        ? "text-foreground"
-                                                        : "text-muted-foreground"
-                                                }`}
+                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${isActive
+                                                    ? "text-foreground"
+                                                    : "text-muted-foreground"
+                                                    }`}
                                             >
                                                 {step.label}
                                             </p>
@@ -370,9 +349,8 @@ function CheckoutPageInner() {
                                     </div>
                                     {index < STEPS.length - 1 && (
                                         <div
-                                            className={`flex-1 h-0.5 mx-4 transition-colors ${
-                                                isCompleted ? "bg-primary" : "bg-border"
-                                            }`}
+                                            className={`flex-1 h-0.5 mx-4 transition-colors ${isCompleted ? "bg-primary" : "bg-border"
+                                                }`}
                                         />
                                     )}
                                 </div>
@@ -577,7 +555,7 @@ function CheckoutPageInner() {
                                                                 new Date(
                                                                     formData.event_start_date
                                                                 ).getTime()) /
-                                                                (1000 * 60 * 60 * 24)
+                                                            (1000 * 60 * 60 * 24)
                                                         )}{" "}
                                                         days
                                                     </p>
@@ -1195,58 +1173,43 @@ function CheckoutPageInner() {
                                 </Card>
                             )}
 
-                            {/* Price Estimate */}
-                            {availabilityIssues.length === 0 && estimatedPrice && (
-                                <Card className="p-8 bg-linear-to-br from-primary/10 to-primary/5 border-primary/20">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-mono uppercase tracking-wide text-muted-foreground mb-2">
-                                                Estimated Total
-                                            </p>
-                                            <p className="text-4xl font-bold font-mono text-primary mb-2">
-                                                AED{" "}
-                                                {estimatedPrice.toLocaleString(undefined, {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground font-mono">
-                                                Based on {totalVolume.toFixed(2)} m³ •{" "}
-                                                {formData.venue_city}, {formData.venue_country}
-                                            </p>
-                                        </div>
-                                        <Cuboid className="h-16 w-16 text-primary/30" />
-                                    </div>
-                                    <div className="mt-6 pt-6 border-t border-primary/10">
-                                        <div className="flex items-start gap-3">
-                                            <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                                This is an estimate based on standard logistics
-                                                pricing. The final price will be provided after our
-                                                team reviews your order and logistics requirements.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Card>
+                            {/* NEW: Hybrid Pricing Estimate */}
+                            {availabilityIssues.length === 0 && estimateData?.data && (
+                                <OrderEstimate
+                                    estimate={estimateData.data.estimate}
+                                    hasRebrandItems={hasRebrandItems}
+                                />
                             )}
 
-                            {/* No Pricing Tier Note */}
+                            {/* Loading Estimate */}
                             {availabilityIssues.length === 0 &&
-                                !estimatedPrice &&
-                                formData.venue_country &&
+                                isEstimateLoading &&
+                                formData.venue_city && (
+                                    <Card className="p-6 bg-muted/30 border-border">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                            <p className="text-sm text-muted-foreground">
+                                                Calculating estimate...
+                                            </p>
+                                        </div>
+                                    </Card>
+                                )}
+
+                            {/* Estimate Error */}
+                            {availabilityIssues.length === 0 &&
+                                isEstimateError &&
                                 formData.venue_city && (
                                     <Card className="p-6 bg-muted/30 border-border">
                                         <div className="flex items-start gap-3">
                                             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium mb-1">
-                                                    Custom Quote Required
+                                                    Unable to Calculate Estimate
                                                 </p>
                                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                                    No standard pricing available for{" "}
-                                                    {formData.venue_city}, {formData.venue_country}.
-                                                    You will receive a custom quote via email within
-                                                    24-48 hours after submitting your order.
+                                                    {estimateError instanceof Error
+                                                        ? estimateError.message
+                                                        : "You will receive a custom quote via email within 24-48 hours after submitting your order."}
                                                 </p>
                                             </div>
                                         </div>
