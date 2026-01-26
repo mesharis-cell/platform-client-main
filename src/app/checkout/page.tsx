@@ -99,28 +99,30 @@ function CheckoutPageInner() {
     });
 
     // NEW: Hybrid pricing estimate
-    const estimateQuery = useCalculateEstimate(
-        items.map((item) => ({
-            assetId: item.assetId,
-            quantity: item.quantity,
-            isReskinRequest: item.isReskinRequest,
-            reskinTargetBrandId: item.reskinTargetBrandId,
-            reskinTargetBrandCustom: item.reskinTargetBrandCustom,
-            reskinNotes: item.reskinNotes,
-        })),
-        formData.venue_city,
-        tripType,
-        currentStep === "review" && !!formData.venue_city && !useCustomLocation
-    );
+    // const estimateQuery = useCalculateEstimate(
+    //     items.map((item) => ({
+    //         assetId: item.assetId,
+    //         quantity: item.quantity,
+    //         isReskinRequest: item.isReskinRequest,
+    //         reskinTargetBrandId: item.reskinTargetBrandId,
+    //         reskinTargetBrandCustom: item.reskinTargetBrandCustom,
+    //         reskinNotes: item.reskinNotes,
+    //     })),
+    //     formData.venue_city,
+    //     tripType,
+    //     currentStep === "review" && !!formData.venue_city && !useCustomLocation
+    // );
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
 
     // NEW: Calculate estimate using new system
-    const { data: estimateData } = useCalculateEstimate(
+    const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
         items,
         formData.venue_city,
         tripType,
         currentStep === "review" && !!formData.venue_city
     );
+
+    console.log("estimateData", estimateData);
 
     // Fetch pricing tier locations (public endpoint, no pricing details)
     const { data: locationsData } = usePricingTierLocations();
@@ -316,13 +318,12 @@ function CheckoutPageInner() {
                                 <div key={step.key} className="flex items-center flex-1">
                                     <div className="flex items-center gap-3">
                                         <div
-                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                                                isCompleted
-                                                    ? "bg-primary border-primary text-primary-foreground"
-                                                    : isActive
-                                                      ? "bg-primary/10 border-primary text-primary"
-                                                      : "bg-muted border-border text-muted-foreground"
-                                            }`}
+                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
+                                                ? "bg-primary border-primary text-primary-foreground"
+                                                : isActive
+                                                    ? "bg-primary/10 border-primary text-primary"
+                                                    : "bg-muted border-border text-muted-foreground"
+                                                }`}
                                         >
                                             {isCompleted ? (
                                                 <Check className="h-5 w-5" />
@@ -334,11 +335,10 @@ function CheckoutPageInner() {
                                             className={`hidden sm:block ${index < STEPS.length - 1 ? "" : ""}`}
                                         >
                                             <p
-                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${
-                                                    isActive
-                                                        ? "text-foreground"
-                                                        : "text-muted-foreground"
-                                                }`}
+                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${isActive
+                                                    ? "text-foreground"
+                                                    : "text-muted-foreground"
+                                                    }`}
                                             >
                                                 {step.label}
                                             </p>
@@ -349,9 +349,8 @@ function CheckoutPageInner() {
                                     </div>
                                     {index < STEPS.length - 1 && (
                                         <div
-                                            className={`flex-1 h-0.5 mx-4 transition-colors ${
-                                                isCompleted ? "bg-primary" : "bg-border"
-                                            }`}
+                                            className={`flex-1 h-0.5 mx-4 transition-colors ${isCompleted ? "bg-primary" : "bg-border"
+                                                }`}
                                         />
                                     )}
                                 </div>
@@ -556,7 +555,7 @@ function CheckoutPageInner() {
                                                                 new Date(
                                                                     formData.event_start_date
                                                                 ).getTime()) /
-                                                                (1000 * 60 * 60 * 24)
+                                                            (1000 * 60 * 60 * 24)
                                                         )}{" "}
                                                         days
                                                     </p>
@@ -1175,16 +1174,16 @@ function CheckoutPageInner() {
                             )}
 
                             {/* NEW: Hybrid Pricing Estimate */}
-                            {availabilityIssues.length === 0 && estimateQuery.data?.data && (
+                            {availabilityIssues.length === 0 && estimateData?.data && (
                                 <OrderEstimate
-                                    estimate={estimateQuery.data.data}
+                                    estimate={estimateData.data.estimate}
                                     hasRebrandItems={hasRebrandItems}
                                 />
                             )}
 
                             {/* Loading Estimate */}
                             {availabilityIssues.length === 0 &&
-                                estimateQuery.isLoading &&
+                                isEstimateLoading &&
                                 formData.venue_city && (
                                     <Card className="p-6 bg-muted/30 border-border">
                                         <div className="flex items-center gap-3">
@@ -1198,7 +1197,7 @@ function CheckoutPageInner() {
 
                             {/* Estimate Error */}
                             {availabilityIssues.length === 0 &&
-                                estimateQuery.isError &&
+                                isEstimateError &&
                                 formData.venue_city && (
                                     <Card className="p-6 bg-muted/30 border-border">
                                         <div className="flex items-start gap-3">
@@ -1208,8 +1207,8 @@ function CheckoutPageInner() {
                                                     Unable to Calculate Estimate
                                                 </p>
                                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                                    {estimateQuery.error instanceof Error
-                                                        ? estimateQuery.error.message
+                                                    {estimateError instanceof Error
+                                                        ? estimateError.message
                                                         : "You will receive a custom quote via email within 24-48 hours after submitting your order."}
                                                 </p>
                                             </div>

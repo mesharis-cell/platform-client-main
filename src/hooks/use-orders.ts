@@ -56,18 +56,12 @@ export function useSubmitOrderFromCart() {
 
     return useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch("/api/orders/submit-from-cart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Failed to submit order");
+            try {
+                const response = await apiClient.post("/client/v1/order/submit-from-cart", data);
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
             }
-
-            return response.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["orders"] });

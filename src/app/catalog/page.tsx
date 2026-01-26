@@ -41,6 +41,7 @@ import {
     Minus,
     Package,
     Plus,
+    RefreshCw,
     Search,
     ShoppingCart,
     Tag,
@@ -50,6 +51,7 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
+import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
 
 function CatalogPageInner() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -61,8 +63,10 @@ function CatalogPageInner() {
         CatalogAssetItem | CatalogCollectionItem | null
     >(null);
     const [selectedQuantity, setSelectedQuantity] = useState(1);
+    const [rebrandModalOpen, setRebrandModalOpen] = useState(false);
+    const [rebrandAsset, setRebrandAsset] = useState<CatalogAssetItem | null>(null);
 
-    const { addItem } = useCart();
+    const { addItem, addItemWithRebrand } = useCart();
 
     // Fetch catalog data
     const { data: catalogData, isLoading } = useCatalog({
@@ -110,6 +114,40 @@ function CatalogPageInner() {
             category: item.category,
             image: item.images[0],
         });
+    };
+
+    const handleAddWithRebrand = (item: CatalogAssetItem) => {
+        setRebrandAsset(item);
+        setRebrandModalOpen(true);
+    };
+
+    const handleRebrandSubmit = (rebrandData: RebrandData) => {
+        if (!rebrandAsset) return;
+
+        if (rebrandAsset.availableQuantity < 1) {
+            toast.error("Not enough quantity available");
+            return;
+        }
+
+        addItemWithRebrand(
+            rebrandAsset.id,
+            1,
+            {
+                assetName: rebrandAsset.name,
+                availableQuantity: rebrandAsset.availableQuantity,
+                volume: Number(rebrandAsset.volume),
+                weight: Number(rebrandAsset.weight),
+                dimensionLength: Number(rebrandAsset.dimensionLength),
+                dimensionWidth: Number(rebrandAsset.dimensionWidth),
+                dimensionHeight: Number(rebrandAsset.dimensionHeight),
+                category: rebrandAsset.category,
+                image: rebrandAsset.images[0],
+            },
+            rebrandData
+        );
+
+        setRebrandModalOpen(false);
+        setRebrandAsset(null);
     };
 
     return (
@@ -321,21 +359,19 @@ function CatalogPageInner() {
                         <div className="flex border border-border/50 rounded-lg p-1 bg-card/50">
                             <button
                                 onClick={() => setLayoutMode("grid")}
-                                className={`p-2 rounded transition-all ${
-                                    layoutMode === "grid"
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "hover:bg-muted text-muted-foreground"
-                                }`}
+                                className={`p-2 rounded transition-all ${layoutMode === "grid"
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "hover:bg-muted text-muted-foreground"
+                                    }`}
                             >
                                 <Grid3x3 className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setLayoutMode("list")}
-                                className={`p-2 rounded transition-all ${
-                                    layoutMode === "list"
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "hover:bg-muted text-muted-foreground"
-                                }`}
+                                className={`p-2 rounded transition-all ${layoutMode === "list"
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "hover:bg-muted text-muted-foreground"
+                                    }`}
                             >
                                 <List className="w-4 h-4" />
                             </button>
@@ -467,11 +503,10 @@ function CatalogPageInner() {
                                                                             ? "destructive"
                                                                             : "default"
                                                                     }
-                                                                    className={`backdrop-blur-md border border-border/50 font-mono text-xs ${
-                                                                        item.condition === "ORANGE"
-                                                                            ? "bg-orange-500 hover:bg-orange-600"
-                                                                            : ""
-                                                                    }`}
+                                                                    className={`backdrop-blur-md border border-border/50 font-mono text-xs ${item.condition === "ORANGE"
+                                                                        ? "bg-orange-500 hover:bg-orange-600"
+                                                                        : ""
+                                                                        }`}
                                                                 >
                                                                     {item.condition === "RED" ? (
                                                                         <>
@@ -667,17 +702,30 @@ function CatalogPageInner() {
                                                 <div className="pt-2">
                                                     {item.type === "asset" ? (
                                                         item.availableQuantity > 0 ? (
-                                                            <Button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedItem(item);
-                                                                }}
-                                                                variant="outline"
-                                                                className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
-                                                            >
-                                                                <ShoppingCart className="w-4 h-4" />
-                                                                Add to Cart
-                                                            </Button>
+                                                            <div className="space-y-2">
+                                                                <Button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleAddToCart(item, 1);
+                                                                    }}
+                                                                    variant="outline"
+                                                                    className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                                                >
+                                                                    <ShoppingCart className="w-4 h-4" />
+                                                                    Add to Cart
+                                                                </Button>
+                                                                <Button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleAddWithRebrand(item);
+                                                                    }}
+                                                                    variant="outline"
+                                                                    className="w-full gap-2 font-mono hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all"
+                                                                >
+                                                                    <RefreshCw className="w-4 h-4" />
+                                                                    Add with Rebranding
+                                                                </Button>
+                                                            </div>
                                                         ) : (
                                                             <Button
                                                                 disabled
@@ -820,14 +868,14 @@ function CatalogPageInner() {
                                                                         <Badge
                                                                             variant={
                                                                                 item.availableQuantity >
-                                                                                0
+                                                                                    0
                                                                                     ? "default"
                                                                                     : "destructive"
                                                                             }
                                                                             className="font-mono"
                                                                         >
                                                                             {item.availableQuantity >
-                                                                            0 ? (
+                                                                                0 ? (
                                                                                 <>
                                                                                     <CheckCircle className="w-3 h-3 mr-1.5" />
                                                                                     {
@@ -1011,11 +1059,10 @@ function CatalogPageInner() {
                                                                 ? "destructive"
                                                                 : "default"
                                                         }
-                                                        className={`font-mono ${
-                                                            selectedItem.condition === "ORANGE"
-                                                                ? "bg-orange-500 hover:bg-orange-600"
-                                                                : ""
-                                                        }`}
+                                                        className={`font-mono ${selectedItem.condition === "ORANGE"
+                                                            ? "bg-orange-500 hover:bg-orange-600"
+                                                            : ""
+                                                            }`}
                                                     >
                                                         {selectedItem.condition === "RED" ? (
                                                             <>
@@ -1055,11 +1102,10 @@ function CatalogPageInner() {
                                         {selectedItem.images.slice(0, 4).map((image, index) => (
                                             <div
                                                 key={index}
-                                                className={`rounded-lg overflow-hidden border border-border relative ${
-                                                    index === 0 && selectedItem.images.length > 1
-                                                        ? "col-span-2 aspect-21/9"
-                                                        : "aspect-square"
-                                                }`}
+                                                className={`rounded-lg overflow-hidden border border-border relative ${index === 0 && selectedItem.images.length > 1
+                                                    ? "col-span-2 aspect-21/9"
+                                                    : "aspect-square"
+                                                    }`}
                                             >
                                                 <Image
                                                     src={image}
@@ -1180,7 +1226,7 @@ function CatalogPageInner() {
                                                         {selectedItem.refurbDaysEstimate &&
                                                             (selectedItem.condition === "ORANGE" ||
                                                                 selectedItem.condition ===
-                                                                    "RED") && (
+                                                                "RED") && (
                                                                 <div className="col-span-2 bg-amber-500/10 rounded-lg p-4 border border-amber-500/20">
                                                                     <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
                                                                         Estimated Refurb Time
@@ -1290,6 +1336,16 @@ function CatalogPageInner() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Rebrand Modal */}
+            <RebrandModal
+                open={rebrandModalOpen}
+                onOpenChange={setRebrandModalOpen}
+                assetName={rebrandAsset?.name || ""}
+                brands={brands}
+                onSubmit={handleRebrandSubmit}
+                mode="add"
+            />
         </div>
     );
 }

@@ -22,6 +22,13 @@ import {
 } from "@/lib/cart/localStorage";
 import { toast } from "sonner";
 
+interface RebrandData {
+    isReskinRequest: boolean;
+    reskinTargetBrandId?: string;
+    reskinTargetBrandCustom?: string;
+    reskinNotes?: string;
+}
+
 interface CartContextType {
     items: LocalCartItem[];
     itemCount: number;
@@ -34,6 +41,14 @@ interface CartContextType {
     closeCart: () => void;
     toggleCart: () => void;
     addItem: (assetId: string, quantity: number, assetDetails: Partial<LocalCartItem>) => void;
+    addItemWithRebrand: (
+        assetId: string,
+        quantity: number,
+        assetDetails: Partial<LocalCartItem>,
+        rebrandData: RebrandData
+    ) => void;
+    updateItemRebrand: (assetId: string, rebrandData: RebrandData) => void;
+    removeItemRebrand: (assetId: string) => void;
     removeItem: (assetId: string) => void;
     updateQuantity: (assetId: string, quantity: number) => void;
     clearCart: () => void;
@@ -227,6 +242,152 @@ export function CartProvider({ children }: { children: ReactNode }) {
         [items, removeItem]
     );
 
+    // Add item with rebrand data
+    const addItemWithRebrand = useCallback(
+        (
+            assetId: string,
+            quantity: number,
+            assetDetails: Partial<LocalCartItem>,
+            rebrandData: RebrandData
+        ) => {
+            // Prevent duplicate adds
+            if (addingItems.has(assetId)) {
+                return;
+            }
+
+            setAddingItems((prev) => new Set(prev).add(assetId));
+            setIsLoading(true);
+
+            try {
+                setItems((currentItems) => {
+                    const existingIndex = currentItems.findIndex((i) => i.assetId === assetId);
+                    let newItems: LocalCartItem[];
+
+                    if (existingIndex >= 0) {
+                        // Update existing item with rebrand data
+                        const existing = currentItems[existingIndex];
+                        const newQuantity = existing.quantity + quantity;
+
+                        // Validate against available quantity
+                        if (newQuantity > existing.availableQuantity) {
+                            toast.error(`Only ${existing.availableQuantity} available`, {
+                                description: existing.assetName,
+                            });
+                            return currentItems;
+                        }
+
+                        newItems = [...currentItems];
+                        newItems[existingIndex] = {
+                            ...existing,
+                            quantity: newQuantity,
+                            ...rebrandData,
+                        };
+                        toast.success("Cart updated with rebranding", {
+                            description: `${existing.assetName} - Quantity: ${newQuantity}`,
+                        });
+                    } else {
+                        // Add new item with rebrand data
+                        if (quantity > (assetDetails.availableQuantity || 0)) {
+                            toast.error(`Only ${assetDetails.availableQuantity} available`, {
+                                description: assetDetails.assetName,
+                            });
+                            return currentItems;
+                        }
+
+                        const newItem: LocalCartItem = {
+                            assetId,
+                            quantity,
+                            assetName: assetDetails.assetName || "",
+                            availableQuantity: assetDetails.availableQuantity || 0,
+                            volume: assetDetails.volume || 0,
+                            weight: assetDetails.weight || 0,
+                            dimensionLength: assetDetails.dimensionLength || 0,
+                            dimensionWidth: assetDetails.dimensionWidth || 0,
+                            dimensionHeight: assetDetails.dimensionHeight || 0,
+                            category: assetDetails.category || "",
+                            image: assetDetails.image,
+                            fromCollection: assetDetails.fromCollection,
+                            fromCollectionName: assetDetails.fromCollectionName,
+                            addedAt: Date.now(),
+                            ...rebrandData,
+                        };
+
+                        newItems = [...currentItems, newItem];
+                        toast.success("Added to cart with rebranding", {
+                            description: assetDetails.assetName,
+                        });
+                    }
+
+                    saveCart(newItems);
+                    return newItems;
+                });
+
+                openCart();
+            } catch (error) {
+                console.error("Failed to add item with rebrand:", error);
+                toast.error("Failed to add item to cart");
+            } finally {
+                setIsLoading(false);
+                setAddingItems((prev) => {
+                    const next = new Set(prev);
+                    next.delete(assetId);
+                    return next;
+                });
+            }
+        },
+        [addingItems, openCart]
+    );
+
+    // Update rebrand data for existing item
+    const updateItemRebrand = useCallback(
+        (assetId: string, rebrandData: RebrandData) => {
+            const item = items.find((i) => i.assetId === assetId);
+            if (!item) {
+                toast.error("Item not found in cart");
+                return;
+            }
+
+            const newItems = items.map((i) =>
+                i.assetId === assetId ? { ...i, ...rebrandData } : i
+            );
+            setItems(newItems);
+            saveCart(newItems);
+            toast.success("Rebranding details updated", {
+                description: item.assetName,
+            });
+        },
+        [items]
+    );
+
+    // Remove rebrand data but keep item in cart
+    const removeItemRebrand = useCallback(
+        (assetId: string) => {
+            const item = items.find((i) => i.assetId === assetId);
+            if (!item) {
+                toast.error("Item not found in cart");
+                return;
+            }
+
+            const newItems = items.map((i) =>
+                i.assetId === assetId
+                    ? {
+                        ...i,
+                        isReskinRequest: false,
+                        reskinTargetBrandId: undefined,
+                        reskinTargetBrandCustom: undefined,
+                        reskinNotes: undefined,
+                    }
+                    : i
+            );
+            setItems(newItems);
+            saveCart(newItems);
+            toast.success("Rebranding removed", {
+                description: item.assetName,
+            });
+        },
+        [items]
+    );
+
     const clearCart = useCallback(() => {
         setItems([]);
         clearLocalCart();
@@ -247,6 +408,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 closeCart,
                 toggleCart,
                 addItem,
+                addItemWithRebrand,
+                updateItemRebrand,
+                removeItemRebrand,
                 removeItem,
                 updateQuantity,
                 clearCart,

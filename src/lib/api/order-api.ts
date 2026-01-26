@@ -4,6 +4,8 @@
  */
 
 import type { TripType } from "@/types/hybrid-pricing";
+import { throwApiError } from "../utils/throw-api-error";
+import { apiClient } from "./api-client";
 
 export interface SubmitOrderPayload {
     items: Array<{
@@ -59,18 +61,11 @@ export async function calculateEstimate(data: {
     venue_city: string;
     transport_trip_type: TripType;
 }) {
-    const response = await fetch("/api/orders/estimate", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to calculate estimate");
+    try {
+        const response = await apiClient.post("/client/v1/order/estimate", data);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to calculate estimate:", error);
+        throwApiError(error);
     }
-
-    return response.json();
 }
