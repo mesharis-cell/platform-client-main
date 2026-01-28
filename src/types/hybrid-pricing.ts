@@ -27,7 +27,9 @@ export interface OrderEstimate {
     logistics_subtotal: number;
     margin: {
         percent: number;
-        amount: number;
+        total_amount: number;
+        base_ops_amount: number;
+        transport_rate_amount: number;
     };
     estimate_total: number;
 }

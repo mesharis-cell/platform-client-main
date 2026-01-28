@@ -19,6 +19,20 @@ import type {
 import { apiClient } from "@/lib/api/api-client";
 import { throwApiError } from "@/lib/utils/throw-api-error";
 
+export function useGetCountries() {
+    return useQuery({
+        queryKey: ["countries"],
+        queryFn: async () => {
+            try {
+                const response = await apiClient.get("/operations/v1/country");
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
+            }
+        },
+    });
+}
+
 // Fetch pricing tier locations (public endpoint, no pricing details)
 export function usePricingTierLocations() {
     return useQuery({

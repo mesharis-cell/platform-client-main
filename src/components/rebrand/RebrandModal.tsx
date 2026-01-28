@@ -197,8 +197,8 @@ export function RebrandModal({
           </div>
 
           {/* Info Note */}
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3">
-            <p className="text-xs text-blue-800 dark:text-blue-300">
+          <div className="bg-primary/10 border border-primary/20 rounded-md p-3">
+            <p className="text-xs text-primary">
               ℹ️ Rebranding costs will be quoted during order review. Final price may
               be higher than the standard estimate.
             </p>
