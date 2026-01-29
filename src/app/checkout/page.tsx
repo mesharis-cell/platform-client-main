@@ -455,24 +455,6 @@ function CheckoutPageInner() {
                             </div>
 
                             <Card className="p-8 bg-card/50 border-border/50 space-y-6">
-                                {/* <div>
-									<Label
-										htmlFor='brand'
-										className='font-mono uppercase text-xs tracking-wide'
-									>
-										Brand (Optional)
-									</Label>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Select Brand' />
-										</SelectTrigger>
-										<SelectContent>
-											{brandsData?.data?.map((brand: Brand) => (
-												<SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div> */}
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
@@ -665,12 +647,12 @@ function CheckoutPageInner() {
                                                                 {country.name}
                                                             </SelectItem>
                                                         ))}
-                                                        <SelectItem
+                                                        {/* <SelectItem
                                                             value="_custom_"
                                                             className="font-mono text-primary"
                                                         >
                                                             + Enter custom location
-                                                        </SelectItem>
+                                                        </SelectItem> */}
                                                     </SelectContent>
                                                 </Select>
                                             ) : (
@@ -758,14 +740,14 @@ function CheckoutPageInner() {
                                                                 {city.name}
                                                             </SelectItem>
                                                         ))}
-                                                        {cities.length > 0 && (
+                                                        {/* {cities.length > 0 && (
                                                             <SelectItem
                                                                 value="_custom_"
                                                                 className="font-mono text-primary"
                                                             >
                                                                 + Enter custom city
                                                             </SelectItem>
-                                                        )}
+                                                        )} */}
                                                     </SelectContent>
                                                 </Select>
                                             ) : (

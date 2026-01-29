@@ -6,16 +6,19 @@
  */
 
 import type { OrderPricing, OrderLineItem } from "@/types/hybrid-pricing";
+import type { Order } from "@/types/order";
 
 interface PricingBreakdownProps {
     pricing: OrderPricing;
     lineItems?: OrderLineItem[];
     showTitle?: boolean;
+    order: Order;
 }
 
 export function PricingBreakdown({
     pricing,
     lineItems = [],
+    order,
     showTitle = true,
 }: PricingBreakdownProps) {
     // Separate catalog and custom line items
@@ -26,6 +29,17 @@ export function PricingBreakdown({
         (item) => item.lineItemType === "CUSTOM" && !item.isVoided
     );
 
+    const marginAmount = pricing?.margin?.percent;
+
+    const basePrice = Number(pricing?.base_ops_total) + (Number(pricing?.base_ops_total) * (marginAmount / 100));
+    const transportPrice = Number(pricing?.transport.final_rate) + (Number(pricing?.transport.final_rate) * (marginAmount / 100));
+    const catalogPrice = Number(pricing?.line_items?.catalog_total) + (Number(pricing?.line_items?.catalog_total) * (marginAmount / 100));
+    const customPrice = Number(pricing?.line_items?.custom_total)
+
+    const servicePrice = catalogPrice + customPrice;
+    const total = basePrice + transportPrice + servicePrice;
+
+
     return (
         <div className="border border-border rounded-lg p-6 space-y-4">
             {showTitle && <h3 className="text-lg font-semibold mb-4">Cost Breakdown</h3>}
@@ -33,18 +47,18 @@ export function PricingBreakdown({
             {/* Base Operations */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Logistics & Handling ({pricing.base_operations.volume.toFixed(1)} m³)
+                    Logistics & Handling ({order.calculated_totals.volume} m³)
                 </span>
-                <span className="font-mono">{pricing.base_operations.total.toFixed(2)} AED</span>
+                <span className="font-mono">{basePrice.toFixed(2)} AED</span>
             </div>
 
             {/* Transport */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Transport ({pricing.transport.emirate},{" "}
-                    {pricing.transport.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
+                    Transport ({order.venue_city},{" "}
+                    {order.transport_trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
                 </span>
-                <span className="font-mono">{pricing.transport.final_rate.toFixed(2)} AED</span>
+                <span className="font-mono">{transportPrice.toFixed(2)} AED</span>
             </div>
 
             {/* Catalog Line Items */}
@@ -64,16 +78,16 @@ export function PricingBreakdown({
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-mono font-semibold">
-                    {pricing.logistics_subtotal.toFixed(2)} AED
+                    {(Number(basePrice) + Number(transportPrice)).toFixed(2)} AED
                 </span>
             </div>
 
             {/* Margin (Service Fee) */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Service Fee ({pricing.margin.percent.toFixed(0)}%)
+                    Service Fee (Including Reskin)
                 </span>
-                <span className="font-mono">{pricing.margin.amount.toFixed(2)} AED</span>
+                <span className="font-mono">{servicePrice.toFixed(2)} AED</span>
             </div>
 
             {/* Custom Line Items (if any) */}
@@ -95,7 +109,7 @@ export function PricingBreakdown({
             <div className="flex justify-between items-center">
                 <span className="text-lg font-bold">TOTAL</span>
                 <span className="text-2xl font-bold font-mono text-primary">
-                    {pricing.final_total.toFixed(2)} AED
+                    {total.toFixed(2)} AED
                 </span>
             </div>
 

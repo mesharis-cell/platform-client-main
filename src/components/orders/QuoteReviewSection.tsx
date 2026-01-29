@@ -21,9 +21,10 @@ import { toast } from "sonner";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { PricingBreakdown } from "./PricingBreakdown";
 import type { OrderPricing, OrderLineItem } from "@/types/hybrid-pricing";
+import type { Order } from "@/types/order";
 
 interface QuoteReviewSectionProps {
-    orderId: string;
+    order: Order;
     pricing: OrderPricing;
     lineItems: OrderLineItem[];
     hasReskinRequests?: boolean;
@@ -32,7 +33,7 @@ interface QuoteReviewSectionProps {
 }
 
 export function QuoteReviewSection({
-    orderId,
+    order,
     pricing,
     lineItems,
     hasReskinRequests = false,
@@ -76,17 +77,27 @@ export function QuoteReviewSection({
         }
     };
 
+    const marginAmount = pricing?.margin?.percent;
+
+    const basePrice = Number(pricing?.base_ops_total) + (Number(pricing?.base_ops_total) * (marginAmount / 100));
+    const transportPrice = Number(pricing?.transport.final_rate) + (Number(pricing?.transport.final_rate) * (marginAmount / 100));
+    const catalogPrice = Number(pricing?.line_items?.catalog_total) + (Number(pricing?.line_items?.catalog_total) * (marginAmount / 100));
+    const customPrice = Number(pricing?.line_items?.custom_total)
+
+    const logisticsSubTotal = basePrice + transportPrice;
+    const total = logisticsSubTotal + catalogPrice + customPrice;
+
     return (
         <div className="space-y-6">
             {/* Quote Expiry Notice */}
-            <Card className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/10">
+            <Card className="border-red-500/30 bg-red-50">
                 <CardContent className="p-4 flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+                    <Clock className="h-5 w-5 text-red-600 shrink-0" />
                     <div>
-                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                        <p className="text-sm font-semibold text-red-500">
                             Please respond within 48 hours
                         </p>
-                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                        <p className="text-xs text-red-500">
                             This quote is valid for 48 hours from receipt.
                         </p>
                     </div>
@@ -94,13 +105,13 @@ export function QuoteReviewSection({
             </Card>
 
             {/* Pricing Breakdown */}
-            <PricingBreakdown pricing={pricing} lineItems={lineItems} showTitle={true} />
+            <PricingBreakdown order={order} pricing={pricing} lineItems={lineItems} showTitle={true} />
 
             {/* Rebrand Note */}
             {hasReskinRequests && (
-                <Card className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/10">
+                <Card className="border-blue-500/30 bg-blue-50">
                     <CardContent className="p-4">
-                        <p className="text-sm text-blue-800 dark:text-blue-300">
+                        <p className="text-sm text-blue-500">
                             ℹ️ This order includes custom rebranding work which will be completed
                             before delivery. Your order will enter fabrication once you approve this
                             quote.
@@ -131,12 +142,12 @@ export function QuoteReviewSection({
                         <p className="text-sm">
                             By accepting this quote, you confirm the order total of{" "}
                             <span className="font-bold font-mono text-lg">
-                                {pricing.final_total.toFixed(2)} AED
+                                {Number(total).toFixed(2)} AED
                             </span>
                         </p>
                         {hasReskinRequests && (
-                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3">
-                                <p className="text-sm text-blue-800 dark:text-blue-300">
+                            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <p className="text-sm text-blue-500">
                                     Your order will enter fabrication for custom rebranding work
                                     before delivery.
                                 </p>

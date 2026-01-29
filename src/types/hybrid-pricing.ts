@@ -19,7 +19,7 @@ export interface OrderEstimate {
         total: number;
     };
     transport: {
-        emirate: string;
+        city: string;
         trip_type: TripType;
         vehicle_type: VehicleType;
         rate: number;
@@ -35,6 +35,7 @@ export interface OrderEstimate {
 }
 
 export interface OrderPricing {
+    base_ops_total: number;
     base_operations: {
         volume: number;
         rate: number;
