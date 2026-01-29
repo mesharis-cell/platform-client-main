@@ -26,12 +26,12 @@ export function OrderStatusBanner({
 }: OrderStatusBannerProps) {
     if (status === "AWAITING_FABRICATION") {
         return (
-            <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-                <Clock className="h-5 w-5 text-blue-600" />
-                <AlertTitle className="text-blue-900 dark:text-blue-100">
+            <Alert className="border-blue-500 bg-blue-50">
+                <Clock className="h-5 w-5 text-blue-500" />
+                <AlertTitle className="text-blue-500">
                     Order Confirmed - Awaiting Fabrication
                 </AlertTitle>
-                <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <AlertDescription className="text-blue-500">
                     Your order is confirmed and being prepared. Custom rebranding work is currently
                     in progress.
                     {pendingReskinCount > 0 && (

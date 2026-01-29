@@ -77,7 +77,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const declineQuote = useClientDeclineQuote();
     const downloadInvoice = useDownloadInvoice();
     const downloadCostEstimate = useDownloadCostEstimate();
-    const { platform} = usePlatform();
+    const { platform } = usePlatform();
 
     const handleDownloadCostEstimate = async () => {
         try {
@@ -167,6 +167,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         PAID: "bg-green-500/10 text-green-600 border-green-500/30",
         CONFIRMED: "bg-teal-500/10 text-teal-600 border-teal-500/30",
         IN_PREPARATION: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30",
+        AWAITING_FABRICATION: "bg-blue-500/10 text-blue-600 border-blue-500/30",
         READY_FOR_DELIVERY: "bg-sky-500/10 text-sky-600 border-sky-500/30",
         IN_TRANSIT: "bg-violet-500/10 text-violet-600 border-violet-500/30",
         DELIVERED: "bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/30",
@@ -223,22 +224,22 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const invoice =
         showInvoiceSection && order?.invoice?.invoice_id
             ? {
-                  // id: order?.invoice?.id,
-                  invoiceNumber: order?.invoice?.invoice_id,
-                  invoiceGeneratedAt: order?.invoice?.created_at,
-                  finalTotalPrice: order?.final_pricing?.total_price || 0,
-                  isPaid:
-                      isPaid ||
-                      isConfirmed ||
-                      isInPreparation ||
-                      isReadyForDelivery ||
-                      isInTransit ||
-                      isDelivered ||
-                      isInUse ||
-                      isAwaitingReturn ||
-                      isClosed,
-                  invoicePaidAt: isPaid ? order?.invoice?.invoice_paid_at : null,
-              }
+                // id: order?.invoice?.id,
+                invoiceNumber: order?.invoice?.invoice_id,
+                invoiceGeneratedAt: order?.invoice?.created_at,
+                finalTotalPrice: order?.final_pricing?.total_price || 0,
+                isPaid:
+                    isPaid ||
+                    isConfirmed ||
+                    isInPreparation ||
+                    isReadyForDelivery ||
+                    isInTransit ||
+                    isDelivered ||
+                    isInUse ||
+                    isAwaitingReturn ||
+                    isClosed,
+                invoicePaidAt: isPaid ? order?.invoice?.invoice_paid_at : null,
+            }
             : null;
 
     return (
@@ -346,26 +347,27 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             "Your event is complete. Items will be picked up during the scheduled window."}
                                         {isClosed &&
                                             "All items returned. Thank you for choosing us!"}
+                                        {isAwaitingFabrication &&
+                                            "Your order is awaiting fabrication. We are working on it!"}
                                     </p>
                                 </div>
                                 <div
-                                    className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${
-                                        isApproved || isPaid || isDelivered || isClosed
-                                            ? "bg-green-500"
-                                            : isDeclined
-                                              ? "bg-destructive"
-                                              : isQuoted || isInvoiced
+                                    className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${isApproved || isPaid || isDelivered || isClosed
+                                        ? "bg-green-500"
+                                        : isDeclined
+                                            ? "bg-destructive"
+                                            : isQuoted || isInvoiced
                                                 ? "bg-amber-500"
                                                 : isPendingApproval
-                                                  ? "bg-orange-500"
-                                                  : isInTransit
-                                                    ? "bg-violet-500"
-                                                    : isInPreparation
-                                                      ? "bg-cyan-500"
-                                                      : isAwaitingReturn
-                                                        ? "bg-rose-500"
-                                                        : "bg-primary"
-                                    }`}
+                                                    ? "bg-orange-500"
+                                                    : isInTransit
+                                                        ? "bg-violet-500"
+                                                        : isInPreparation
+                                                            ? "bg-cyan-500"
+                                                            : isAwaitingReturn
+                                                                ? "bg-rose-500"
+                                                                : "bg-primary"
+                                        }`}
                                 >
                                     {(isSubmitted || isPricingReview) && (
                                         <CheckCircle2 className="w-10 h-10 text-white" />
@@ -475,15 +477,15 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
                             {/* Quote Section */}
                             {/* NEW: Hybrid Pricing Quote Section */}
-                            {isQuoted && order?.pricing && (
+                            {isQuoted && order?.order_pricing && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
                                 >
                                     <QuoteReviewSection
-                                        orderId={order.id}
-                                        pricing={order.pricing}
+                                        order={order}
+                                        pricing={order.order_pricing}
                                         lineItems={order.line_items || []}
                                         hasReskinRequests={
                                             order.reskin_requests?.some(
@@ -491,12 +493,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             ) || false
                                         }
                                         onApprove={async () => {
-                                            await approveQuote.mutateAsync(order.id);
+                                            await approveQuote.mutateAsync({ orderId: order.id });
                                         }}
                                         onDecline={async (reason: string) => {
                                             await declineQuote.mutateAsync({
                                                 orderId: order.id,
-                                                reason,
+                                                declineReason: reason,
                                             });
                                         }}
                                     />
@@ -519,6 +521,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         </CardHeader>
                                         <CardContent>
                                             <PricingBreakdown
+                                                order={order}
                                                 pricing={order.pricing}
                                                 lineItems={order.line_items || []}
                                                 showTitle={false}
@@ -638,8 +641,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* Confirmed */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
@@ -647,9 +649,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                         isReadyForDelivery ||
                                                         isInPreparation ||
                                                         isConfirmed
-                                                            ? "bg-green-500 text-white"
-                                                            : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                        ? "bg-green-500 text-white"
+                                                        : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <CheckCircle2 className="w-5 h-5" />
                                                 </div>
@@ -664,19 +666,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* In Preparation */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
                                                         isInTransit ||
                                                         isReadyForDelivery ||
                                                         isInPreparation
-                                                            ? "bg-green-500 text-white"
-                                                            : isConfirmed
-                                                              ? "bg-primary text-white animate-pulse"
-                                                              : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                        ? "bg-green-500 text-white"
+                                                        : isConfirmed
+                                                            ? "bg-primary text-white animate-pulse"
+                                                            : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <BoxIcon className="w-5 h-5" />
                                                 </div>
@@ -691,17 +692,16 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* In Transit */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered ||
                                                         isInTransit
-                                                            ? "bg-green-500 text-white"
-                                                            : isReadyForDelivery
-                                                              ? "bg-primary text-white animate-pulse"
-                                                              : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                        ? "bg-green-500 text-white"
+                                                        : isReadyForDelivery
+                                                            ? "bg-primary text-white animate-pulse"
+                                                            : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <Truck className="w-5 h-5" />
                                                 </div>
@@ -731,16 +731,15 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* Delivered */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed ||
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
                                                         isAwaitingReturn ||
                                                         isInUse ||
                                                         isDelivered
-                                                            ? "bg-green-500 text-white"
-                                                            : isInTransit
-                                                              ? "bg-primary text-white animate-pulse"
-                                                              : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                        ? "bg-green-500 text-white"
+                                                        : isInTransit
+                                                            ? "bg-primary text-white animate-pulse"
+                                                            : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <CheckCircle2 className="w-5 h-5" />
                                                 </div>
@@ -755,13 +754,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* Event Complete / Awaiting Return */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed || isAwaitingReturn
-                                                            ? "bg-green-500 text-white"
-                                                            : isInUse
-                                                              ? "bg-primary text-white animate-pulse"
-                                                              : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed || isAwaitingReturn
+                                                        ? "bg-green-500 text-white"
+                                                        : isInUse
+                                                            ? "bg-primary text-white animate-pulse"
+                                                            : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <Clock className="w-5 h-5" />
                                                 </div>
@@ -791,13 +789,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             {/* Completed */}
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isClosed
-                                                            ? "bg-green-500 text-white"
-                                                            : isAwaitingReturn
-                                                              ? "bg-primary text-white animate-pulse"
-                                                              : "bg-muted text-muted-foreground"
-                                                    }`}
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed
+                                                        ? "bg-green-500 text-white"
+                                                        : isAwaitingReturn
+                                                            ? "bg-primary text-white animate-pulse"
+                                                            : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     <Archive className="w-5 h-5" />
                                                 </div>
@@ -1280,8 +1277,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             <p className="font-mono font-semibold">
                                                 {order.event_start_date
                                                     ? new Date(
-                                                          order.event_start_date
-                                                      ).toLocaleDateString()
+                                                        order.event_start_date
+                                                    ).toLocaleDateString()
                                                     : "N/A"}
                                             </p>
                                         </div>
@@ -1292,8 +1289,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             <p className="font-mono font-semibold">
                                                 {order.event_end_date
                                                     ? new Date(
-                                                          order.event_end_date
-                                                      ).toLocaleDateString()
+                                                        order.event_end_date
+                                                    ).toLocaleDateString()
                                                     : "N/A"}
                                             </p>
                                         </div>
@@ -1315,14 +1312,13 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         </h4>
                                     </div>
                                     <div className="space-y-2 text-sm">
-                                        <p className="font-semibold">{order.venue_name}</p>
-                                        <p className="text-muted-foreground">
-                                            {order.venue_location?.city},{" "}
-                                            {order.venue_location?.country}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <span className="font-semibold">{order.venue_name}</span>,
+                                        <span className="text-xs text-muted-foreground leading-relaxed">
                                             {order.venue_location?.address}
-                                        </p>
+                                        </span>,
+                                        <span className="text-xs text-muted-foreground leading-relaxed">
+                                            {order.venue_city}
+                                        </span>
                                     </div>
                                 </Card>
                             </motion.div>

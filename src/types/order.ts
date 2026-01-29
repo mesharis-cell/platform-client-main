@@ -68,8 +68,10 @@ export interface Order {
     // Special instructions
     specialInstructions?: string | null;
     // Calculated totals
-    calculatedVolume: string; // decimal as string
-    calculatedWeight: string; // decimal as string
+    calculated_totals: {
+        volume: string; // decimal as string
+        weight: string; // decimal as string
+    };
     // Pricing tier reference
     pricingTier?: string | null;
     // Pricing fields (Phase 8)
@@ -104,6 +106,9 @@ export interface Order {
     // Status (Feedback #1: Separate financial from fulfillment)
     status: OrderStatus;
     financialStatus: FinancialStatus;
+    transport_trip_type?: string | null;
+    transport_vehicle_type?: string | null;
+    venue_city?: string | null;
     // Timestamps
     createdAt: Date;
     updatedAt: Date;

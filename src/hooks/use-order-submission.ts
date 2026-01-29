@@ -51,8 +51,11 @@ export function useCalculateEstimate(
     tripType: TripType,
     enabled: boolean = true
 ) {
+    // Create a stable key from cart items (assetId + quantity)
+    const cartKey = cart.map((item) => `${item.assetId}:${item.quantity}`).join(",");
+
     return useQuery({
-        queryKey: ["order-estimate", cart.length, venueCity, tripType],
+        queryKey: ["order-estimate", cartKey, venueCity, tripType],
         queryFn: async () => {
             if (cart.length === 0 || !venueCity) {
                 return null;

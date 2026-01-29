@@ -52,6 +52,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
+import { useToken } from "@/lib/auth/use-token";
 
 function CatalogPageInner() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +66,7 @@ function CatalogPageInner() {
     const [selectedQuantity, setSelectedQuantity] = useState(1);
     const [rebrandModalOpen, setRebrandModalOpen] = useState(false);
     const [rebrandAsset, setRebrandAsset] = useState<CatalogAssetItem | null>(null);
+    const { user } = useToken()
 
     const { addItem, addItemWithRebrand } = useCart();
 
@@ -77,7 +79,7 @@ function CatalogPageInner() {
         limit: 100,
     });
 
-    const { data: brandsData } = useBrands({ limit: "100" });
+    const { data: brandsData } = useBrands({ limit: "100", company_id: user?.company_id });
 
     const items = catalogData?.items || [];
 

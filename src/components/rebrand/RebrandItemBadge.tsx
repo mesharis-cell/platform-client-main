@@ -6,7 +6,6 @@
  */
 
 import { RefreshCw } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface RebrandItemBadgeProps {
@@ -59,11 +58,9 @@ export function RebrandItemBadge({
                 </div>
             )}
 
-            {!showActions && (
-                <p className="text-xs text-muted-foreground mt-2">
-                    ℹ️ Rebranding cost will be added to your quote
-                </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-2">
+                ℹ️ Rebranding cost will be added to your quote
+            </p>
         </div>
     );
 }

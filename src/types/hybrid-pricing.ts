@@ -19,7 +19,7 @@ export interface OrderEstimate {
         total: number;
     };
     transport: {
-        emirate: string;
+        city: string;
         trip_type: TripType;
         vehicle_type: VehicleType;
         rate: number;
@@ -27,12 +27,15 @@ export interface OrderEstimate {
     logistics_subtotal: number;
     margin: {
         percent: number;
-        amount: number;
+        total_amount: number;
+        base_ops_amount: number;
+        transport_rate_amount: number;
     };
     estimate_total: number;
 }
 
 export interface OrderPricing {
+    base_ops_total: number;
     base_operations: {
         volume: number;
         rate: number;

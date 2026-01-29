@@ -11,18 +11,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { TransportSelector } from "@/components/checkout/TransportSelector";
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
-import { hasRebrandRequests } from "@/lib/cart-helpers";
 import type { TripType } from "@/types/hybrid-pricing";
 import {
     Select,
@@ -42,17 +38,13 @@ import {
     FileText,
     Package,
     AlertCircle,
-    TrendingUp,
-    Cuboid,
-    Divide,
 } from "lucide-react";
 import Image from "next/image";
 import { ClientNav } from "@/components/client-nav";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { useBrands } from "@/hooks/use-brands";
 import { apiClient } from "@/lib/api/api-client";
-import { usePricingTierLocations } from "@/hooks/use-pricing-tiers";
+import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
 import { useToken } from "@/lib/auth/use-token";
 
 type Step = "cart" | "event" | "venue" | "contact" | "review";
@@ -71,15 +63,11 @@ function CheckoutPageInner() {
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
-    const [useCustomLocation, setUseCustomLocation] = useState(false);
-    const [tripType, setTripType] = useState<TripType>("ROUND_TRIP");
-    const { user } = useToken();
+    const [useCustomCountry, setUseCustomCountry] = useState(false);
+    const [useCustomCity, setUseCustomCity] = useState(false);
 
     // Mutations
     const submitMutation = useSubmitOrderFromCart();
-    const { data: brandsData } = useBrands(
-        user?.company_id ? { company: user?.company_id } : undefined
-    );
 
     // Form state
     const [formData, setFormData] = useState({
@@ -88,7 +76,9 @@ function CheckoutPageInner() {
         event_end_date: "",
         venue_name: "",
         venue_country: "",
+        venue_country_name: "",
         venue_city: "",
+        venue_city_name: "",
         venue_address: "",
         venue_access_notes: "",
         contact_name: "",
@@ -98,38 +88,24 @@ function CheckoutPageInner() {
         transport_trip_type: "ROUND_TRIP" as TripType, // NEW
     });
 
-    // NEW: Hybrid pricing estimate
-    // const estimateQuery = useCalculateEstimate(
-    //     items.map((item) => ({
-    //         assetId: item.assetId,
-    //         quantity: item.quantity,
-    //         isReskinRequest: item.isReskinRequest,
-    //         reskinTargetBrandId: item.reskinTargetBrandId,
-    //         reskinTargetBrandCustom: item.reskinTargetBrandCustom,
-    //         reskinNotes: item.reskinNotes,
-    //     })),
-    //     formData.venue_city,
-    //     tripType,
-    //     currentStep === "review" && !!formData.venue_city && !useCustomLocation
-    // );
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
 
     // NEW: Calculate estimate using new system
     const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
         items,
         formData.venue_city,
-        tripType,
+        formData.transport_trip_type,
         currentStep === "review" && !!formData.venue_city
     );
 
     console.log("estimateData", estimateData);
 
-    // Fetch pricing tier locations (public endpoint, no pricing details)
-    const { data: locationsData } = usePricingTierLocations();
+    // NEW: Get countries
+    const { data: countriesData } = useGetCountries();
 
-    const countries = locationsData?.data?.countries || [];
+    // NEW: Get cities based on selected country
     const cities = formData.venue_country
-        ? locationsData?.data?.locations_by_country?.[formData.venue_country] || []
+        ? countriesData?.data?.find((country) => country.id === formData.venue_country)?.cities ?? []
         : [];
 
     // Validate cart availability before review step
@@ -241,6 +217,7 @@ function CheckoutPageInner() {
 
         setIsSubmitting(true);
         try {
+            // For payload: send ID if from dropdown, or name if custom
             const submitData = {
                 items: items.map((item) => ({
                     asset_id: item.assetId,
@@ -253,7 +230,12 @@ function CheckoutPageInner() {
                     reskin_notes: item.reskinNotes,
                 })),
                 ...formData,
-                transport_trip_type: tripType, // Include trip type
+                // Send ID if from dropdown, or custom text if custom mode
+                venue_country: useCustomCountry ? formData.venue_country : formData.venue_country,
+                venue_city: useCustomCity ? formData.venue_city : formData.venue_city,
+                venue_city_name: undefined,
+                venue_country_name: undefined,
+                transport_trip_type: formData.transport_trip_type, // Include trip type
             };
 
             const result = await submitMutation.mutateAsync(submitData);
@@ -473,24 +455,6 @@ function CheckoutPageInner() {
                             </div>
 
                             <Card className="p-8 bg-card/50 border-border/50 space-y-6">
-                                {/* <div>
-									<Label
-										htmlFor='brand'
-										className='font-mono uppercase text-xs tracking-wide'
-									>
-										Brand (Optional)
-									</Label>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Select Brand' />
-										</SelectTrigger>
-										<SelectContent>
-											{brandsData?.data?.map((brand: Brand) => (
-												<SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div> */}
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
@@ -592,6 +556,32 @@ function CheckoutPageInner() {
                                             htmlFor="venueName"
                                             className="font-mono uppercase text-xs tracking-wide"
                                         >
+                                            Transport Trip Type
+                                        </Label>
+                                        <Select
+                                            value={formData.transport_trip_type}
+                                            onValueChange={(value) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    transport_trip_type: value as TripType,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <SelectTrigger className="h-12">
+                                                <SelectValue placeholder="Select Transport Trip Type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="ROUND_TRIP">Round Trip</SelectItem>
+                                                <SelectItem value="ONE_WAY">One Way</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="venueName"
+                                            className="font-mono uppercase text-xs tracking-wide"
+                                        >
                                             Venue Name *
                                         </Label>
                                         <Input
@@ -617,22 +607,29 @@ function CheckoutPageInner() {
                                             >
                                                 Country *
                                             </Label>
-                                            {!useCustomLocation ? (
+                                            {!useCustomCountry ? (
                                                 <Select
                                                     value={formData.venue_country}
                                                     onValueChange={(value) => {
                                                         if (value === "_custom_") {
-                                                            setUseCustomLocation(true);
+                                                            setUseCustomCountry(true);
+                                                            setUseCustomCity(true);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_country: "",
+                                                                venue_country_name: "",
                                                                 venue_city: "",
+                                                                venue_city_name: "",
                                                             });
                                                         } else {
+                                                            const selectedCountry = countriesData?.data?.find((c) => c.id === value);
+                                                            setUseCustomCity(false);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_country: value,
+                                                                venue_country_name: selectedCountry?.name || "",
                                                                 venue_city: "",
+                                                                venue_city_name: "",
                                                             });
                                                         }
                                                     }}
@@ -641,21 +638,21 @@ function CheckoutPageInner() {
                                                         <SelectValue placeholder="Select country" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {countries.map((country) => (
+                                                        {countriesData?.data?.map((country) => (
                                                             <SelectItem
-                                                                key={country}
-                                                                value={country}
+                                                                key={country.id}
+                                                                value={country.id}
                                                                 className="font-mono"
                                                             >
-                                                                {country}
+                                                                {country.name}
                                                             </SelectItem>
                                                         ))}
-                                                        <SelectItem
+                                                        {/* <SelectItem
                                                             value="_custom_"
                                                             className="font-mono text-primary"
                                                         >
                                                             + Enter custom location
-                                                        </SelectItem>
+                                                        </SelectItem> */}
                                                     </SelectContent>
                                                 </Select>
                                             ) : (
@@ -667,6 +664,7 @@ function CheckoutPageInner() {
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_country: e.target.value,
+                                                                venue_country_name: e.target.value,
                                                             })
                                                         }
                                                         placeholder="e.g., UAE"
@@ -676,11 +674,14 @@ function CheckoutPageInner() {
                                                     <Button
                                                         variant="outline"
                                                         onClick={() => {
-                                                            setUseCustomLocation(false);
+                                                            setUseCustomCountry(false);
+                                                            setUseCustomCity(false);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_country: "",
+                                                                venue_country_name: "",
                                                                 venue_city: "",
+                                                                venue_city_name: "",
                                                             });
                                                         }}
                                                         className="h-12 px-4"
@@ -698,20 +699,23 @@ function CheckoutPageInner() {
                                             >
                                                 City *
                                             </Label>
-                                            {!useCustomLocation ? (
+                                            {!useCustomCity ? (
                                                 <Select
                                                     value={formData.venue_city}
                                                     onValueChange={(value) => {
                                                         if (value === "_custom_") {
-                                                            setUseCustomLocation(true);
+                                                            setUseCustomCity(true);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_city: "",
+                                                                venue_city_name: "",
                                                             });
                                                         } else {
+                                                            const selectedCity = cities.find((c) => c.id === value);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_city: value,
+                                                                venue_city_name: selectedCity?.name || "",
                                                             });
                                                         }
                                                     }}
@@ -729,37 +733,56 @@ function CheckoutPageInner() {
                                                     <SelectContent>
                                                         {cities.map((city) => (
                                                             <SelectItem
-                                                                key={city}
-                                                                value={city}
+                                                                key={city.id}
+                                                                value={city.id}
                                                                 className="font-mono"
                                                             >
-                                                                {city}
+                                                                {city.name}
                                                             </SelectItem>
                                                         ))}
-                                                        {cities.length > 0 && (
+                                                        {/* {cities.length > 0 && (
                                                             <SelectItem
                                                                 value="_custom_"
                                                                 className="font-mono text-primary"
                                                             >
-                                                                + Enter custom location
+                                                                + Enter custom city
                                                             </SelectItem>
-                                                        )}
+                                                        )} */}
                                                     </SelectContent>
                                                 </Select>
                                             ) : (
-                                                <Input
-                                                    id="venueCity"
-                                                    value={formData.venue_city}
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            venue_city: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder="e.g., Dubai"
-                                                    required
-                                                    className="h-12"
-                                                />
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        id="venueCity"
+                                                        value={formData.venue_city}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                venue_city: e.target.value,
+                                                                venue_city_name: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder="e.g., Dubai"
+                                                        required
+                                                        className="h-12"
+                                                    />
+                                                    {!useCustomCountry && (
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                setUseCustomCity(false);
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    venue_city: "",
+                                                                    venue_city_name: "",
+                                                                });
+                                                            }}
+                                                            className="h-12 px-4"
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -1075,7 +1098,7 @@ function CheckoutPageInner() {
                                                     Location
                                                 </p>
                                                 <p className="font-medium">
-                                                    {formData.venue_city}, {formData.venue_country}
+                                                    {formData.venue_city_name}, {formData.venue_country_name}
                                                 </p>
                                             </div>
                                             <div>
@@ -1204,12 +1227,7 @@ function CheckoutPageInner() {
                                             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium mb-1">
-                                                    Unable to Calculate Estimate
-                                                </p>
-                                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                                    {estimateError instanceof Error
-                                                        ? estimateError.message
-                                                        : "You will receive a custom quote via email within 24-48 hours after submitting your order."}
+                                                    Unable to Calculate Estimate for <b>{formData.venue_city_name}</b>, You will receive a custom quote via email within 24-48 hours after submitting your order.
                                                 </p>
                                             </div>
                                         </div>
@@ -1239,7 +1257,7 @@ function CheckoutPageInner() {
                     {currentStep === "review" ? (
                         <Button
                             onClick={handleSubmit}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || availabilityIssues.length > 0}
                             className="gap-2 font-mono uppercase tracking-wide"
                             size="lg"
                         >
