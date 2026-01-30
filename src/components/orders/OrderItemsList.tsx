@@ -37,6 +37,7 @@ interface ReskinList {
 interface OrderItem {
   id: string;
   order_item: {
+    id: string;
     asset_id: string;
     asset_name: string;
     quantity: number;
@@ -66,7 +67,8 @@ interface OrderItemsListProps {
 type ReskinStatus = "pending" | "completed" | "cancelled" | "none";
 
 function getReskinStatus(item: OrderItem, reskinList?: ReskinList[]): { status: ReskinStatus; reskin?: ReskinList } {
-  const reskin = reskinList?.find((r) => r.original_asset_id === item.order_item.asset_id);
+  // Match by order_item_id since the asset_id changes after reskin completion
+  const reskin = reskinList?.find((r) => r.order_item_id === item.order_item.id);
 
   if (!reskin) {
     return { status: "none" };
