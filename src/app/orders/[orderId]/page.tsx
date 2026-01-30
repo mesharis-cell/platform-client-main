@@ -54,6 +54,7 @@ import { usePlatform } from "@/contexts/platform-context";
 import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
 import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
 import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
+import { OrderItemsList } from "@/components/orders/OrderItemsList";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -810,192 +811,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 </motion.div>
                             )}
 
-                            {/* Cargo Manifest */}
+                            {/* Order Items */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <Package className="w-5 h-5 text-primary" />
-                                        <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
-                                            Items
-                                        </h3>
-                                        <Badge
-                                            variant="secondary"
-                                            className="ml-auto font-mono text-xs"
-                                        >
-                                            {order.items.length}{" "}
-                                            {order.items.length === 1 ? "item" : "items"}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {order.items.map((item, index) => (
-                                            <div
-                                                key={item.id}
-                                                className="p-4 border border-border/40 rounded-lg bg-background/50 hover:border-primary/20 transition-colors"
-                                            >
-                                                <div className="flex items-start gap-4">
-                                                    <div className="text-xl font-bold font-mono text-muted-foreground w-8 shrink-0">
-                                                        {String(index + 1).padStart(2, "0")}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="font-semibold mb-2">
-                                                            {item.order_item.asset_name}
-                                                        </div>
-
-                                                        {/* Compact dimensions */}
-                                                        <div className="grid grid-cols-5 gap-2 mb-2">
-                                                            {item.asset?.dimension_length && (
-                                                                <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                                                    <div className="text-[9px] text-muted-foreground font-mono uppercase">
-                                                                        L
-                                                                    </div>
-                                                                    <div className="text-xs font-bold font-mono">
-                                                                        {Number(
-                                                                            order.calculated_totals
-                                                                                ?.volume || 0
-                                                                        ).toFixed(2)}
-                                                                    </div>
-                                                                    <div className="text-[8px] text-muted-foreground">
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {item.asset?.dimension_width && (
-                                                                <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                                                    <div className="text-[9px] text-muted-foreground font-mono uppercase">
-                                                                        W
-                                                                    </div>
-                                                                    <div className="text-xs font-bold font-mono">
-                                                                        {Number(
-                                                                            item.asset
-                                                                                .dimension_width
-                                                                        ).toFixed(0)}
-                                                                    </div>
-                                                                    <div className="text-[8px] text-muted-foreground">
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {item.asset?.dimension_height && (
-                                                                <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                                                    <div className="text-[9px] text-muted-foreground font-mono uppercase">
-                                                                        H
-                                                                    </div>
-                                                                    <div className="text-xs font-bold font-mono">
-                                                                        {Number(
-                                                                            order.calculated_totals
-                                                                                ?.weight || 0
-                                                                        ).toFixed(1)}
-                                                                    </div>
-                                                                    <div className="text-[8px] text-muted-foreground">
-                                                                        cm
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            <div className="text-center p-1.5 bg-primary/10 rounded border border-primary/20">
-                                                                <div className="text-[9px] text-muted-foreground font-mono uppercase">
-                                                                    WT
-                                                                </div>
-                                                                <div className="text-xs font-bold font-mono text-primary">
-                                                                    {Number(
-                                                                        item.order_item
-                                                                            .weight_per_unit || 0
-                                                                    ).toFixed(1)}
-                                                                </div>
-                                                                <div className="text-[8px] text-primary/70">
-                                                                    kg
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-center p-1.5 bg-secondary/10 rounded border border-secondary/20">
-                                                                <div className="text-[9px] text-muted-foreground font-mono uppercase">
-                                                                    VOL
-                                                                </div>
-                                                                <div className="text-xs font-bold font-mono">
-                                                                    {Number(
-                                                                        item.order_item
-                                                                            .volume_per_unit || 0
-                                                                    ).toFixed(2)}
-                                                                </div>
-                                                                <div className="text-[8px] text-muted-foreground/70">
-                                                                    m³
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Quantity line */}
-                                                        <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
-                                                            <span>
-                                                                Qty:{" "}
-                                                                <span className="font-bold text-foreground">
-                                                                    {item.order_item.quantity}
-                                                                </span>
-                                                            </span>
-                                                            <span>•</span>
-                                                            <span>
-                                                                Total:{" "}
-                                                                <span className="font-bold">
-                                                                    {Number(
-                                                                        item.order_item.total_volume
-                                                                    ).toFixed(2)}{" "}
-                                                                    m³
-                                                                </span>
-                                                            </span>
-                                                            <span>•</span>
-                                                            <span>
-                                                                <span className="font-bold text-primary">
-                                                                    {Number(
-                                                                        item.order_item.total_weight
-                                                                    ).toFixed(1)}{" "}
-                                                                    kg
-                                                                </span>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <Separator className="my-4" />
-
-                                    {/* Totals */}
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/40">
-                                            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                                Total Volume
-                                            </p>
-                                            <p className="text-xl font-bold font-mono text-primary">
-                                                {Number(
-                                                    order.calculated_totals?.volume || 0
-                                                ).toFixed(2)}{" "}
-                                                m³
-                                            </p>
-                                        </div>
-                                        <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/40">
-                                            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                                Total Weight
-                                            </p>
-                                            <p className="text-xl font-bold font-mono">
-                                                {Number(
-                                                    order.calculated_totals?.weight || 0
-                                                ).toFixed(1)}{" "}
-                                                kg
-                                            </p>
-                                        </div>
-                                        <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/40">
-                                            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                                Items
-                                            </p>
-                                            <p className="text-xl font-bold font-mono">
-                                                {order.items.length}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Card>
+                                <OrderItemsList
+                                    items={order.items}
+                                    reskinList={order.reskin_requests}
+                                    calculatedTotals={order.calculated_totals}
+                                />
                             </motion.div>
 
                             {/* What's Next Section - State-specific guidance */}
