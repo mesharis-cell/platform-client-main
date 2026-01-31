@@ -32,15 +32,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useClientApproveQuote, useClientDeclineQuote } from "@/hooks/use-orders";
 import {
     useClientOrderDetail,
@@ -55,6 +46,7 @@ import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
 import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
 import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 import { OrderItemsList } from "@/components/orders/OrderItemsList";
+import { getOrderPrice } from "@/lib/utils/helper";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -99,11 +91,11 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     };
 
     const handleDownloadInvoice = async () => {
-        if (!invoice) return;
+        if (!order?.invoice?.invoice_id) return;
 
         try {
             const pdfBlob = await downloadInvoice.mutateAsync({
-                invoiceNumber: invoice.invoiceNumber,
+                invoiceNumber: order?.invoice?.invoice_id,
                 platformId: platform.platform_id,
             });
             const url = URL.createObjectURL(pdfBlob);
@@ -222,26 +214,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isAwaitingReturn ||
         isClosed;
 
-    const invoice =
-        showInvoiceSection && order?.invoice?.invoice_id
-            ? {
-                // id: order?.invoice?.id,
-                invoiceNumber: order?.invoice?.invoice_id,
-                invoiceGeneratedAt: order?.invoice?.created_at,
-                finalTotalPrice: order?.final_pricing?.total_price || 0,
-                isPaid:
-                    isPaid ||
-                    isConfirmed ||
-                    isInPreparation ||
-                    isReadyForDelivery ||
-                    isInTransit ||
-                    isDelivered ||
-                    isInUse ||
-                    isAwaitingReturn ||
-                    isClosed,
-                invoicePaidAt: isPaid ? order?.invoice?.invoice_paid_at : null,
-            }
-            : null;
+    const cancelledReskinRequests = order?.reskin_requests?.filter((reskinRequest) => reskinRequest.cancelled_at !== null);
+
+    const { total } = getOrderPrice(order?.order_pricing);
 
     return (
         <ClientNav>
@@ -324,7 +299,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isPendingApproval &&
                                             "Our management team is reviewing the pricing. You will receive your quote shortly."}
                                         {isQuoted &&
-                                            "Your quote is ready! Review the pricing below and approve or decline."}
+                                            <>
+                                                <p>
+                                                    Your quote is ready! Review the pricing below and approve or decline.
+                                                </p>
+
+                                                {cancelledReskinRequests?.length > 0 && (
+                                                    <p className="font-semibold text-red-500">
+                                                        {cancelledReskinRequests?.length} Reskin requests have been cancelled. Review the new quote below.
+                                                    </p>
+                                                )}
+                                            </>
+                                        }
                                         {isApproved &&
                                             "Your order is proceeding to invoicing. We will begin fulfillment preparations."}
                                         {isDeclined &&
@@ -451,32 +437,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Feedback #3: Price Adjustment Banner - Show for QUOTED if A2 adjusted pricing */}
-                            {isQuoted &&
-                                (order?.logistic_pricing?.base_price ||
-                                    order?.logistics_pricing?.adjusted_price) && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25 }}
-                                    >
-                                        <Card className="p-4 bg-blue-500/5 border-blue-500/30">
-                                            <div className="flex items-start gap-3">
-                                                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                                                <div className="flex-1">
-                                                    <p className="font-mono text-sm font-bold text-blue-700 dark:text-blue-400 mb-2">
-                                                        Price Adjustment Applied
-                                                    </p>
-                                                    <p className="font-mono text-xs text-muted-foreground mb-2">
-                                                        {order.logistics_pricing?.adjustment_reason}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </motion.div>
-                                )}
-
-                            {/* Quote Section */}
                             {/* NEW: Hybrid Pricing Quote Section */}
                             {isQuoted && order?.order_pricing && (
                                 <motion.div
@@ -558,7 +518,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                             )}
 
                             {/* Invoice Section */}
-                            {showInvoiceSection && invoice && (
+                            {showInvoiceSection && order?.invoice?.invoice_id && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -573,9 +533,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                 </h3>
                                             </div>
                                             <Badge
-                                                className={`font-mono text-xs ${invoice.isPaid ? "bg-green-500/10 text-green-600 border-green-500/30" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}
+                                                className={`font-mono text-xs ${order?.invoice?.invoice_paid_at ? "bg-green-500/10 text-green-600 border-green-500/30" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}
                                             >
-                                                {invoice.isPaid ? "PAID" : "PENDING"}
+                                                {order?.invoice?.invoice_paid_at ? "PAID" : "PENDING"}
                                             </Badge>
                                         </div>
 
@@ -585,14 +545,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     Invoice Number
                                                 </span>
                                                 <span className="font-bold">
-                                                    {invoice.invoiceNumber}
+                                                    {order?.invoice?.invoice_id}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between text-sm font-mono">
                                                 <span className="text-muted-foreground">Date</span>
                                                 <span className="font-bold">
                                                     {new Date(
-                                                        invoice.invoiceGeneratedAt
+                                                        order?.invoice?.created_at
                                                     ).toLocaleDateString()}
                                                 </span>
                                             </div>
@@ -603,7 +563,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                 </span>
                                                 <span className="text-2xl font-bold font-mono text-primary">
                                                     AED{" "}
-                                                    {parseFloat(invoice.finalTotalPrice).toFixed(2)}
+                                                    {total}
                                                 </span>
                                             </div>
                                         </div>
