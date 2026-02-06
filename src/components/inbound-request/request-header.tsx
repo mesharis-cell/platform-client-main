@@ -1,26 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Package, Clock, Pencil, XCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import Link from "next/link";
-import type { InboundRequestStatus, InboundRequestDetails } from "@/types/inbound-request";
 import { EditInboundRequestDialog } from "@/components/assets/edit-inbound-request-dialog";
-import { useUpdateInboundRequest } from "@/hooks/use-inbound-requests";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import type { InboundRequestDetails, InboundRequestStatus } from "@/types/inbound-request";
+import { motion } from "framer-motion";
+import { ArrowLeft, Clock, Package, Pencil } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 const STATUS_COLORS: Record<InboundRequestStatus, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -62,22 +50,6 @@ export function RequestHeader({
   onRefresh,
 }: RequestHeaderProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const updateMutation = useUpdateInboundRequest();
-
-  async function handleCancel() {
-    try {
-      await updateMutation.mutateAsync({
-        id: requestId,
-        data: { status: "CANCELLED" },
-      });
-      toast.success("Request cancelled successfully");
-      onRefresh();
-      setCancelDialogOpen(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel request");
-    }
-  }
 
   return (
     <>
@@ -96,24 +68,16 @@ export function RequestHeader({
         </Link>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setEditDialogOpen(true)}
-            className="font-mono gap-2"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setCancelDialogOpen(true)}
-            className="font-mono gap-2"
-          >
-            <XCircle className="w-4 h-4" />
-            Cancel
-          </Button>
-        </div>
+
+        <Button
+          variant="outline"
+          onClick={() => setEditDialogOpen(true)}
+          className="font-mono gap-2"
+        >
+          <Pencil className="w-4 h-4" />
+          Edit
+        </Button>
+
       </motion.div>
 
       {/* Status Hero */}
@@ -174,35 +138,6 @@ export function RequestHeader({
         }}
         request={request}
       />
-
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="font-mono">Cancel Request?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this inbound request? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="font-mono">Keep Request</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancel}
-              disabled={updateMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-mono"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                "Yes, Cancel Request"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

@@ -64,11 +64,34 @@ async function updateInboundRequest(
         throwApiError(error);
     }
 }
+// approve or decline quote
+async function approveOrDeclineQuote(
+    id: string,
+    status: "DECLINED" | "CONFIRMED",
+    note?: string,
+): Promise<InboundRequestList> {
+    try {
+        const response = await apiClient.patch(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
 
 // Delete inbound request
 async function deleteInboundRequest(id: string): Promise<void> {
     try {
         const response = await apiClient.delete(`/client/v1/inbound-request/${id}`);
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
+// Cancel inbound request
+async function cancelInboundRequest(id: string): Promise<InboundRequestList> {
+    try {
+        const response = await apiClient.patch(`/client/v1/inbound-request/${id}/cancel`);
         return response.data;
     } catch (error) {
         throwApiError(error);
@@ -114,6 +137,27 @@ export function useUpdateInboundRequest() {
         },
     });
 }
+
+export function useApproveOrDeclineQuote() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            id,
+            status,
+            note,
+        }: {
+            id: string;
+            status: "DECLINED" | "CONFIRMED";
+            note?: string;
+        }) => approveOrDeclineQuote(id, status, note),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: inboundRequestKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: inboundRequestKeys.detail(variables.id) });
+        },
+    });
+}
+
 
 export function useDeleteInboundRequest() {
     const queryClient = useQueryClient();
