@@ -23,8 +23,8 @@ export interface SubmitOrderPayload {
     event_start_date: string;
     event_end_date: string;
     venue_name: string;
-    venue_country: string;
-    venue_city: string;
+    venue_country_id: string;
+    venue_city_id: string;
     venue_address: string;
     venue_access_notes?: string;
     contact_name: string;
