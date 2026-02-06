@@ -69,7 +69,7 @@ export function useCalculateEstimate(
             return calculateEstimate({
                 items,
                 venue_city: venueCity,
-                transport_trip_type: tripType,
+                trip_type: tripType,
             });
         },
         enabled: enabled && cart.length > 0 && !!venueCity,
@@ -94,7 +94,7 @@ export function useSubmitOrder() {
                     reskin_target_brand_custom: item.reskinTargetBrandCustom,
                     reskin_notes: item.reskinNotes,
                 })),
-                transport_trip_type: data.tripType,
+                trip_type: data.tripType,
                 event_start_date: data.eventData.startDate,
                 event_end_date: data.eventData.endDate,
                 venue_name: data.venueData.name,

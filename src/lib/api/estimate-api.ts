@@ -11,7 +11,7 @@ export interface EstimateRequest {
         quantity: number;
     }>;
     venue_city: string;
-    transport_trip_type: TripType;
+    trip_type: TripType;
 }
 
 /**

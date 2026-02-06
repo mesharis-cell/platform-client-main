@@ -85,7 +85,7 @@ function CheckoutPageInner() {
         contact_email: "",
         contact_phone: "",
         special_instructions: "",
-        transport_trip_type: "ROUND_TRIP" as TripType, // NEW
+        trip_type: "ROUND_TRIP" as TripType, // NEW
     });
 
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
@@ -94,7 +94,7 @@ function CheckoutPageInner() {
     const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
         items,
         formData.venue_city,
-        formData.transport_trip_type,
+        formData.trip_type,
         currentStep === "review" && !!formData.venue_city
     );
 
@@ -235,7 +235,7 @@ function CheckoutPageInner() {
                 venue_city: useCustomCity ? formData.venue_city : formData.venue_city,
                 venue_city_name: undefined,
                 venue_country_name: undefined,
-                transport_trip_type: formData.transport_trip_type, // Include trip type
+                trip_type: formData.trip_type, // Include trip type
             };
 
             const result = await submitMutation.mutateAsync(submitData);
@@ -559,11 +559,11 @@ function CheckoutPageInner() {
                                             Transport Trip Type
                                         </Label>
                                         <Select
-                                            value={formData.transport_trip_type}
+                                            value={formData.trip_type}
                                             onValueChange={(value) =>
                                                 setFormData({
                                                     ...formData,
-                                                    transport_trip_type: value as TripType,
+                                                    trip_type: value as TripType,
                                                 })
                                             }
                                             required
