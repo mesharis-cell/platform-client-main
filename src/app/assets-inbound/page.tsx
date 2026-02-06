@@ -2,12 +2,6 @@
 
 /**
  * Assets Inbound Page
- * 
- * Features:
- * - List of inbound asset requests
- * - Create new request via multi-step modal
- * - Search and filter
- * - Delete and status management
  */
 
 import { useState } from "react";
