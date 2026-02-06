@@ -69,8 +69,8 @@ export function RequestItemCard({ item, index }: RequestItemCardProps) {
                           key={idx}
                           onClick={() => setSelectedImageIndex(idx)}
                           className={`w-2 h-2 rounded-full transition-colors ${idx === selectedImageIndex
-                              ? "bg-white"
-                              : "bg-white/50"
+                            ? "bg-white"
+                            : "bg-white/50"
                             }`}
                         />
                       ))}
@@ -100,8 +100,8 @@ export function RequestItemCard({ item, index }: RequestItemCardProps) {
                 <Badge
                   variant="outline"
                   className={`font-mono text-xs ${item.tracking_method === "INDIVIDUAL"
-                      ? "border-blue-500/30 text-blue-500"
-                      : "border-purple-500/30 text-purple-500"
+                    ? "border-blue-500/30 text-blue-500"
+                    : "border-purple-500/30 text-purple-500"
                     }`}
                 >
                   {item.tracking_method}
@@ -116,7 +116,7 @@ export function RequestItemCard({ item, index }: RequestItemCardProps) {
             </div>
 
             {/* Specs Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="bg-muted/30 p-3 rounded-lg">
                 <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
                   <Layers className="w-3 h-3" />
@@ -144,15 +144,37 @@ export function RequestItemCard({ item, index }: RequestItemCardProps) {
                   {item.volume_per_unit} m³
                 </p>
               </div>
+            </div>
+
+            {/* Dimensions */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                  <Ruler className="w-3 h-3" />
+                  Length
+                </div>
+                <p className="text-lg font-bold font-mono">
+                  {item.dimensions.length}
+                </p>
+              </div>
 
               <div className="bg-muted/30 p-3 rounded-lg">
                 <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
                   <Ruler className="w-3 h-3" />
-                  Dimensions
+                  Width
                 </div>
-                <p className="text-sm font-bold font-mono">
-                  {item.dimensions.width} × {item.dimensions.height} ×{" "}
-                  {item.dimensions.length}
+                <p className="text-lg font-bold font-mono">
+                  {item.dimensions.width}
+                </p>
+              </div>
+
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                  <Ruler className="w-3 h-3" />
+                  Height
+                </div>
+                <p className="text-lg font-bold font-mono">
+                  {item.dimensions.height}
                 </p>
               </div>
             </div>
