@@ -14,12 +14,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft } from "lucide-react";
-import {
-  RequestHeader,
-  RequestInfoCard,
-  RequestItemsList,
-  RequestPricingCard,
-} from "@/components/inbound-request";
+import { RequestHeader } from "@/components/inbound-request/request-header";
+import { RequestInfoCard } from "@/components/inbound-request/request-info-card";
+import { RequestItemsList } from "@/components/inbound-request/request-items-list";
+import { RequestPricingCard } from "@/components/inbound-request/request-pricing-card";
 import type { InboundRequestStatus } from "@/types/inbound-request";
 
 export default function InboundRequestDetailsPage({
