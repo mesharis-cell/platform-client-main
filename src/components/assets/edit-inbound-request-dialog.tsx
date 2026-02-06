@@ -822,7 +822,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        value={currentItem.dimensions?.length || ""}
+                        value={Number(currentItem.dimensions?.length).toFixed(2) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -839,7 +839,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        value={currentItem.dimensions?.width || ""}
+                        value={Number(currentItem.dimensions?.width).toFixed(2) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -858,7 +858,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        value={currentItem.dimensions?.height || ""}
+                        value={Number(currentItem.dimensions?.height).toFixed(2) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -881,7 +881,7 @@ export function EditInboundRequestDialog({
                         step="0.01"
                         min="0"
                         placeholder="0.00"
-                        value={currentItem.weight_per_unit || ""}
+                        value={Number(currentItem.weight_per_unit).toFixed(2) || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             weight_per_unit:
@@ -900,7 +900,7 @@ export function EditInboundRequestDialog({
                         step="0.001"
                         min="0"
                         placeholder="0.000"
-                        value={currentItem.volume_per_unit?.toFixed(6) || ""}
+                        value={Number(currentItem.volume_per_unit).toFixed(2) || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             volume_per_unit:
@@ -989,8 +989,8 @@ export function EditInboundRequestDialog({
                           </p>
                         </div>
                         <div className="text-right text-xs font-mono text-muted-foreground">
-                          <p>{item.weight_per_unit} kg</p>
-                          <p>{item.volume_per_unit?.toFixed(4)} m³</p>
+                          <p>{Number(item.weight_per_unit).toFixed(2)} kg</p>
+                          <p>{Number(item.volume_per_unit).toFixed(2)} m³</p>
                         </div>
                       </div>
                       {item.handling_tags &&

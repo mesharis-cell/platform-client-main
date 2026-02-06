@@ -33,6 +33,7 @@ import {
 import type { InboundRequestStatus } from "@/types/inbound-request";
 import { ClientNav } from "@/components/client-nav";
 import Link from "next/link";
+import { format } from "date-fns";
 
 const STATUS_COLORS: Record<InboundRequestStatus, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -46,16 +47,6 @@ export default function AssetsInboundPage() {
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data, isLoading, refetch } = useInboundRequests({ search_term: search });
-
-  console.log(data);
-
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  }
 
   return (
     <ClientNav>
@@ -100,7 +91,7 @@ export default function AssetsInboundPage() {
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="font-mono font-semibold">Company</TableHead>
-                <TableHead className="font-mono font-semibold">Items</TableHead>
+                <TableHead className="font-mono font-semibold">Delivery Date</TableHead>
                 <TableHead className="font-mono font-semibold">Status</TableHead>
                 <TableHead className="font-mono font-semibold">Created</TableHead>
                 <TableHead className="font-mono font-semibold w-[50px]"></TableHead>
@@ -146,7 +137,7 @@ export default function AssetsInboundPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {data?.meta.total} item(s)
+                        {format(request.incoming_at, "MMM dd, yyyy")}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -158,7 +149,7 @@ export default function AssetsInboundPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-sm text-muted-foreground">
-                      {formatDate(request.created_at)}
+                      {format(request.created_at, "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell>
                       <Link href={`/assets-inbound/${request.id}`}>
