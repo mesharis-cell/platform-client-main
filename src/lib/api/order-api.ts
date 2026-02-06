@@ -19,12 +19,12 @@ export interface SubmitOrderPayload {
         reskin_notes?: string;
     }>;
     brand_id?: string;
-    transport_trip_type?: TripType; // NEW
+    trip_type?: TripType; // NEW
     event_start_date: string;
     event_end_date: string;
     venue_name: string;
-    venue_country: string;
-    venue_city: string;
+    venue_country_id: string;
+    venue_city_id: string;
     venue_address: string;
     venue_access_notes?: string;
     contact_name: string;
@@ -59,7 +59,7 @@ export async function submitOrder(payload: SubmitOrderPayload) {
 export async function calculateEstimate(data: {
     items: Array<{ asset_id: string; quantity: number }>;
     venue_city: string;
-    transport_trip_type: TripType;
+    trip_type: TripType;
 }) {
     try {
         const response = await apiClient.post("/client/v1/order/estimate", data);

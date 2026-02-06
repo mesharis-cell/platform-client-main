@@ -56,7 +56,7 @@ export function PricingBreakdown({
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                     Transport ({order.venue_city},{" "}
-                    {order.transport_trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
+                    {order.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
                 </span>
                 <span className="font-mono">{transportPrice.toFixed(2)} AED</span>
             </div>

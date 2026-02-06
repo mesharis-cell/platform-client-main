@@ -58,7 +58,7 @@ export function CheckoutIntegrationExample({
                         quantity: item.quantity,
                     })),
                     venue_city: venueData.city,
-                    transport_trip_type: tripType,
+                    trip_type: tripType,
                 });
                 setEstimate(result.estimate);
             } catch (error: any) {
@@ -85,12 +85,12 @@ export function CheckoutIntegrationExample({
                     reskin_target_brand_custom: item.reskinTargetBrandCustom,
                     reskin_notes: item.reskinNotes,
                 })),
-                transport_trip_type: tripType, // NEW
+                trip_type: tripType, // NEW
                 event_start_date: eventData.startDate,
                 event_end_date: eventData.endDate,
                 venue_name: venueData.name,
-                venue_country: venueData.country,
-                venue_city: venueData.city,
+                venue_country_id: venueData.country,
+                venue_city_id: venueData.city,
                 venue_address: venueData.address,
                 venue_access_notes: venueData.accessNotes,
                 contact_name: contactData.name,
@@ -166,5 +166,5 @@ export function CheckoutIntegrationExample({
  * 2. Add tripType state to checkout
  * 3. Call calculateEstimate() in useEffect when cart/venue changes
  * 4. Display estimate in review step
- * 5. Include transport_trip_type and rebrand fields in submission payload
+ * 5. Include trip_type and rebrand fields in submission payload
  */

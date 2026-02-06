@@ -75,9 +75,9 @@ function CheckoutPageInner() {
         event_start_date: "",
         event_end_date: "",
         venue_name: "",
-        venue_country: "",
+        venue_country_id: "",
         venue_country_name: "",
-        venue_city: "",
+        venue_city_id: "",
         venue_city_name: "",
         venue_address: "",
         venue_access_notes: "",
@@ -85,7 +85,7 @@ function CheckoutPageInner() {
         contact_email: "",
         contact_phone: "",
         special_instructions: "",
-        transport_trip_type: "ROUND_TRIP" as TripType, // NEW
+        trip_type: "ROUND_TRIP" as TripType, // NEW
     });
 
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
@@ -93,9 +93,9 @@ function CheckoutPageInner() {
     // NEW: Calculate estimate using new system
     const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
         items,
-        formData.venue_city,
-        formData.transport_trip_type,
-        currentStep === "review" && !!formData.venue_city
+        formData.venue_city_id,
+        formData.trip_type,
+        currentStep === "review" && !!formData.venue_city_id
     );
 
     console.log("estimateData", estimateData);
@@ -104,8 +104,8 @@ function CheckoutPageInner() {
     const { data: countriesData } = useGetCountries();
 
     // NEW: Get cities based on selected country
-    const cities = formData.venue_country
-        ? countriesData?.data?.find((country) => country.id === formData.venue_country)?.cities ?? []
+    const cities = formData.venue_country_id
+        ? countriesData?.data?.find((country) => country.id === formData.venue_country_id)?.cities ?? []
         : [];
 
     // Validate cart availability before review step
@@ -172,8 +172,8 @@ function CheckoutPageInner() {
             case "venue":
                 return (
                     formData.venue_name &&
-                    formData.venue_country &&
-                    formData.venue_city &&
+                    formData.venue_country_id &&
+                    formData.venue_city_id &&
                     formData.venue_address
                 );
             case "contact":
@@ -231,11 +231,11 @@ function CheckoutPageInner() {
                 })),
                 ...formData,
                 // Send ID if from dropdown, or custom text if custom mode
-                venue_country: useCustomCountry ? formData.venue_country : formData.venue_country,
-                venue_city: useCustomCity ? formData.venue_city : formData.venue_city,
+                venue_country_id: useCustomCountry ? formData.venue_country_id : formData.venue_country_id,
+                venue_city_id: useCustomCity ? formData.venue_city_id : formData.venue_city_id,
                 venue_city_name: undefined,
                 venue_country_name: undefined,
-                transport_trip_type: formData.transport_trip_type, // Include trip type
+                trip_type: formData.trip_type, // Include trip type
             };
 
             const result = await submitMutation.mutateAsync(submitData);
@@ -559,11 +559,11 @@ function CheckoutPageInner() {
                                             Transport Trip Type
                                         </Label>
                                         <Select
-                                            value={formData.transport_trip_type}
+                                            value={formData.trip_type}
                                             onValueChange={(value) =>
                                                 setFormData({
                                                     ...formData,
-                                                    transport_trip_type: value as TripType,
+                                                    trip_type: value as TripType,
                                                 })
                                             }
                                             required
@@ -609,16 +609,16 @@ function CheckoutPageInner() {
                                             </Label>
                                             {!useCustomCountry ? (
                                                 <Select
-                                                    value={formData.venue_country}
+                                                    value={formData.venue_country_id}
                                                     onValueChange={(value) => {
                                                         if (value === "_custom_") {
                                                             setUseCustomCountry(true);
                                                             setUseCustomCity(true);
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_country: "",
+                                                                venue_country_id: "",
                                                                 venue_country_name: "",
-                                                                venue_city: "",
+                                                                venue_city_id: "",
                                                                 venue_city_name: "",
                                                             });
                                                         } else {
@@ -626,9 +626,9 @@ function CheckoutPageInner() {
                                                             setUseCustomCity(false);
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_country: value,
+                                                                venue_country_id: value,
                                                                 venue_country_name: selectedCountry?.name || "",
-                                                                venue_city: "",
+                                                                venue_city_id: "",
                                                                 venue_city_name: "",
                                                             });
                                                         }
@@ -659,11 +659,11 @@ function CheckoutPageInner() {
                                                 <div className="flex gap-2">
                                                     <Input
                                                         id="venueCountry"
-                                                        value={formData.venue_country}
+                                                        value={formData.venue_country_id}
                                                         onChange={(e) =>
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_country: e.target.value,
+                                                                venue_country_id: e.target.value,
                                                                 venue_country_name: e.target.value,
                                                             })
                                                         }
@@ -678,9 +678,9 @@ function CheckoutPageInner() {
                                                             setUseCustomCity(false);
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_country: "",
+                                                                venue_country_id: "",
                                                                 venue_country_name: "",
-                                                                venue_city: "",
+                                                                venue_city_id: "",
                                                                 venue_city_name: "",
                                                             });
                                                         }}
@@ -701,30 +701,30 @@ function CheckoutPageInner() {
                                             </Label>
                                             {!useCustomCity ? (
                                                 <Select
-                                                    value={formData.venue_city}
+                                                    value={formData.venue_city_id}
                                                     onValueChange={(value) => {
                                                         if (value === "_custom_") {
                                                             setUseCustomCity(true);
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_city: "",
+                                                                venue_city_id: "",
                                                                 venue_city_name: "",
                                                             });
                                                         } else {
                                                             const selectedCity = cities.find((c) => c.id === value);
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_city: value,
+                                                                venue_city_id: value,
                                                                 venue_city_name: selectedCity?.name || "",
                                                             });
                                                         }
                                                     }}
-                                                    disabled={!formData.venue_country}
+                                                    disabled={!formData.venue_country_id}
                                                 >
                                                     <SelectTrigger className="h-12 font-mono">
                                                         <SelectValue
                                                             placeholder={
-                                                                formData.venue_country
+                                                                formData.venue_country_id
                                                                     ? "Select city"
                                                                     : "Select country first"
                                                             }
@@ -754,11 +754,11 @@ function CheckoutPageInner() {
                                                 <div className="flex gap-2">
                                                     <Input
                                                         id="venueCity"
-                                                        value={formData.venue_city}
+                                                        value={formData.venue_city_id}
                                                         onChange={(e) =>
                                                             setFormData({
                                                                 ...formData,
-                                                                venue_city: e.target.value,
+                                                                venue_city_id: e.target.value,
                                                                 venue_city_name: e.target.value,
                                                             })
                                                         }
@@ -773,7 +773,7 @@ function CheckoutPageInner() {
                                                                 setUseCustomCity(false);
                                                                 setFormData({
                                                                     ...formData,
-                                                                    venue_city: "",
+                                                                    venue_city_id: "",
                                                                     venue_city_name: "",
                                                                 });
                                                             }}
@@ -1207,7 +1207,7 @@ function CheckoutPageInner() {
                             {/* Loading Estimate */}
                             {availabilityIssues.length === 0 &&
                                 isEstimateLoading &&
-                                formData.venue_city && (
+                                formData.venue_city_id && (
                                     <Card className="p-6 bg-muted/30 border-border">
                                         <div className="flex items-center gap-3">
                                             <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -1221,7 +1221,7 @@ function CheckoutPageInner() {
                             {/* Estimate Error */}
                             {availabilityIssues.length === 0 &&
                                 isEstimateError &&
-                                formData.venue_city && (
+                                formData.venue_city_id && (
                                     <Card className="p-6 bg-muted/30 border-border">
                                         <div className="flex items-start gap-3">
                                             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
