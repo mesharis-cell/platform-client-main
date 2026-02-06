@@ -7,6 +7,8 @@ import type {
     CreateAssetRequest,
     UpdateAssetRequest,
 } from "@/types/asset";
+import { apiClient } from "@/lib/api/api-client";
+import { throwApiError } from "@/lib/utils/throw-api-error";
 
 // Query keys
 export const assetKeys = {
@@ -161,15 +163,20 @@ async function deleteAsset(id: string): Promise<void> {
 }
 
 // Upload image
-async function uploadImage(formData: FormData): Promise<{ imageUrl: string }> {
-    const response = await fetch("/api/assets/upload-image", {
-        method: "POST",
-        body: formData,
-    });
-    if (!response.ok) {
-        throw new Error("Failed to upload image");
+async function uploadImage(
+    formData: FormData
+): Promise<{ data: { imageUrls: string[]; presignedUrl: string } }> {
+    try {
+        const response = await apiClient.post("/operations/v1/upload/images", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
     }
-    return response.json();
 }
 
 // Generate QR code
