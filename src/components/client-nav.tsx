@@ -25,6 +25,7 @@ const clientNav = [
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
     { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
+    { name: "Assets Inbound", href: "/assets-inbound", icon: Box },
     { name: "Reset Password", href: "/reset-password", icon: Lock },
 ];
 
