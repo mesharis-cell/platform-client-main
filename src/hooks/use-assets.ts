@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
     Asset,
+    AssetsListResponse,
     AssetWithDetails,
     CreateAssetRequest,
     UpdateAssetRequest,
@@ -22,22 +23,24 @@ export const assetKeys = {
 // Fetch assets list
 async function fetchAssets(
     params?: Record<string, string>
-): Promise<{ assets: Asset[]; total: number; limit: number; offset: number }> {
+): Promise<AssetsListResponse> {
     const searchParams = new URLSearchParams(params);
-    const response = await fetch(`/api/assets?${searchParams}`);
-    if (!response.ok) {
-        throw new Error("Failed to fetch assets");
+    try {
+        const response = await apiClient.get(`/operations/v1/asset?${searchParams}`);
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
     }
-    return response.json();
 }
 
 // Fetch single asset
 async function fetchAsset(id: string): Promise<{ asset: AssetWithDetails }> {
-    const response = await fetch(`/api/assets/${id}`);
-    if (!response.ok) {
-        throw new Error("Failed to fetch asset");
+    try {
+        const response = await apiClient.get(`/operations/v1/asset/${id}`);
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
     }
-    return response.json();
 }
 
 type CreateAssetPayload = {
@@ -197,6 +200,20 @@ export function useAssets(params?: Record<string, string>) {
     return useQuery({
         queryKey: assetKeys.list(params),
         queryFn: () => fetchAssets(params),
+    });
+}
+
+// Search assets hook with enabled control for debounced searching
+export function useSearchAssets(searchTerm: string, companyId?: string) {
+    const params: Record<string, string> = {};
+    if (searchTerm) params.search_term = searchTerm;
+    if (companyId) params.company_id = companyId;
+
+    return useQuery({
+        queryKey: [...assetKeys.lists(), "search", searchTerm, companyId] as const,
+        queryFn: () => fetchAssets(params),
+        enabled: !!searchTerm && searchTerm.length >= 2 && !!companyId,
+        staleTime: 30000, // Cache for 30 seconds
     });
 }
 
