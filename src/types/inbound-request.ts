@@ -5,7 +5,14 @@
 export type TrackingMethod = "INDIVIDUAL" | "BATCH";
 
 // Inbound Request Status
-export type InboundRequestStatus = "PENDING" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type InboundRequestStatus =
+    | "PRICING_REVIEW"
+    | "PENDING_APPROVAL"
+    | "QUOTED"
+    | "CONFIRMED"
+    | "DECLINED"
+    | "CANCELLED"
+    | "COMPLETED";
 
 // Inbound Request Item
 export interface InboundRequestItem {
@@ -99,6 +106,7 @@ export interface InboundRequestDetailsResponse {
 
 export interface InboundRequestDetails {
     id: string;
+    inbound_request_id: string;
     platform_id: string;
     incoming_at: string;
     note: string | null;
@@ -115,6 +123,8 @@ export interface InboundRequestDetails {
     },
     request_pricing: {
         final_total: string;
+        logistics_sub_total: string;
+        service_fee: string;
     },
     items: InboundRequestItem[];
     created_at: string;

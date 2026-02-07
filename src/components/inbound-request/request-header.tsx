@@ -11,27 +11,43 @@ import Link from "next/link";
 import { useState } from "react";
 
 const STATUS_COLORS: Record<InboundRequestStatus, string> = {
-  PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  APPROVED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  IN_PROGRESS: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  COMPLETED: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  PRICING_REVIEW: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  PENDING_APPROVAL: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  QUOTED: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  CONFIRMED: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+  DECLINED: "bg-rose-500/10 text-rose-500 border-rose-500/20",
   CANCELLED: "bg-red-500/10 text-red-500 border-red-500/20",
+  COMPLETED: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
 };
 
 const STATUS_LABELS: Record<InboundRequestStatus, string> = {
-  PENDING: "Pending Review",
-  APPROVED: "Approved",
-  IN_PROGRESS: "In Progress",
-  COMPLETED: "Completed",
+  PRICING_REVIEW: "Pricing Review",
+  PENDING_APPROVAL: "Pending Approval",
+  QUOTED: "Quoted",
+  CONFIRMED: "Confirmed",
+  DECLINED: "Declined",
   CANCELLED: "Cancelled",
+  COMPLETED: "Completed",
 };
 
 const STATUS_DESCRIPTIONS: Record<InboundRequestStatus, string> = {
-  PENDING: "Your request is awaiting review by our team.",
-  APPROVED: "Request has been approved and will be processed.",
-  IN_PROGRESS: "Items are currently being processed.",
-  COMPLETED: "All items have been successfully processed.",
+  PRICING_REVIEW: "Our team is reviewing your request to provide a quote.",
+  PENDING_APPROVAL: "A quote is ready for your approval.",
+  QUOTED: "Quote details are available.",
+  CONFIRMED: "Your request has been confirmed.",
+  DECLINED: "This request has been declined.",
   CANCELLED: "This request has been cancelled.",
+  COMPLETED: "All items have been successfully processed.",
+};
+
+const STATUS_ICON_BG: Record<InboundRequestStatus, string> = {
+  PRICING_REVIEW: "bg-yellow-500",
+  PENDING_APPROVAL: "bg-blue-500",
+  QUOTED: "bg-purple-500",
+  CONFIRMED: "bg-indigo-500",
+  DECLINED: "bg-rose-500",
+  CANCELLED: "bg-destructive",
+  COMPLETED: "bg-emerald-500",
 };
 
 interface RequestHeaderProps {
@@ -98,8 +114,7 @@ export function RequestHeader({
                   {status.replace(/_/g, " ")}
                 </Badge>
                 <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Submitted {new Date(createdAt).toLocaleDateString()}
+                  Request ID: {request.inbound_request_id || "N/A"}
                 </span>
               </div>
               <h1 className="text-4xl font-bold mb-2">
@@ -111,16 +126,7 @@ export function RequestHeader({
             </div>
 
             <div
-              className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${status === "COMPLETED"
-                ? "bg-emerald-500"
-                : status === "CANCELLED"
-                  ? "bg-destructive"
-                  : status === "APPROVED"
-                    ? "bg-blue-500"
-                    : status === "IN_PROGRESS"
-                      ? "bg-purple-500"
-                      : "bg-yellow-500"
-                }`}
+              className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${STATUS_ICON_BG[status] || "bg-muted"}`}
             >
               <Package className="w-10 h-10 text-white" />
             </div>

@@ -570,6 +570,7 @@ export function CreateInboundRequestDialog({
                     <Input
                       type="date"
                       value={formData.incoming_at}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -832,11 +833,11 @@ export function CreateInboundRequestDialog({
                       <Label className="font-mono text-xs">Quantity *</Label>
                       <Input
                         type="number"
-                        min="1"
-                        value={currentItem.quantity || 1}
+                        // min="1"
+                        value={currentItem.quantity}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
-                            quantity: parseInt(e.target.value) || 1,
+                            quantity: parseInt(e.target.value),
                           })
                         }
                         className="font-mono"

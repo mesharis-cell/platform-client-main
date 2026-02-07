@@ -122,7 +122,7 @@ export default function InboundRequestDetailsPage({
           />
 
           {/* Pricing Card */}
-          <RequestPricingCard finalTotal={request.request_pricing.final_total} />
+          <RequestPricingCard pricingOverview={request.request_pricing} />
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
