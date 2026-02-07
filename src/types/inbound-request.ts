@@ -138,6 +138,18 @@ export interface InboundRequestDetails {
         service_fee: string;
     },
     items: InboundRequestItem[];
+    invoice?: {
+        id: string;
+        platform_id: string;
+        order_id: string | null;
+        inbound_request_id: string;
+        type: string;
+        invoice_id: string;
+        invoice_pdf_url: string;
+        invoice_paid_at: string | null;
+        payment_method: string | null;
+        payment_reference: string | null;
+    };
     created_at: string;
     updated_at: string;
 }

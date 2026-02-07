@@ -171,9 +171,9 @@ export function useDeleteInboundRequest() {
 }
 
 // Download Cost Estimate
-async function downloadInboundCostEstimate(id: string): Promise<Blob> {
+async function downloadInboundCostEstimate({ id, platformId }: { id: string; platformId: string }): Promise<Blob> {
     try {
-        const response = await apiClient.get(`/client/v1/inbound-request/${id}/cost-estimate/download`, {
+        const response = await apiClient.get(`/client/v1/invoice/download-ir-cost-estimate-pdf/${id}?pid=${platformId}`, {
             responseType: "blob",
         });
         return response.data;
@@ -189,9 +189,10 @@ export function useDownloadInboundCostEstimate() {
 }
 
 // Download Invoice
-async function downloadInboundInvoice(id: string): Promise<Blob> {
+async function downloadInboundInvoice({ invoiceId, platformId }: { invoiceId: string; platformId: string }): Promise<Blob> {
     try {
-        const response = await apiClient.get(`/client/v1/inbound-request/${id}/invoice/download`, {
+        // Shared endpoint with Orders
+        const response = await apiClient.get(`/client/v1/invoice/download-pdf/${invoiceId}?pid=${platformId}`, {
             responseType: "blob",
         });
         return response.data;

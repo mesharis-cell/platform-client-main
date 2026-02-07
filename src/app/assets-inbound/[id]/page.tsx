@@ -11,6 +11,7 @@ import { useInboundRequest, inboundRequestKeys, useApproveOrDeclineQuote, useDow
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClientNav } from "@/components/client-nav";
+import { usePlatform } from "@/contexts/platform-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,16 +43,20 @@ export default function InboundRequestDetailsPage({
     queryClient.invalidateQueries({ queryKey: inboundRequestKeys.lists() });
   }
 
+  const { platform } = usePlatform();
   const downloadCostEstimate = useDownloadInboundCostEstimate();
   const downloadInvoice = useDownloadInboundInvoice();
 
   const handleDownloadCostEstimate = async () => {
     try {
-      const blob = await downloadCostEstimate.mutateAsync(id);
+      const blob = await downloadCostEstimate.mutateAsync({
+        id,
+        platformId: platform.platform_id
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `cost-estimate-${request?.id || "download"}.pdf`;
+      link.download = `cost-estimate-${request?.inbound_request_id || "download"}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error: any) {
@@ -60,12 +65,16 @@ export default function InboundRequestDetailsPage({
   };
 
   const handleDownloadInvoice = async () => {
+    if (!request?.invoice?.invoice_id) return;
     try {
-      const blob = await downloadInvoice.mutateAsync(id);
+      const blob = await downloadInvoice.mutateAsync({
+        invoiceId: request.invoice.invoice_id,
+        platformId: platform.platform_id
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `invoice-${request?.id || "download"}.pdf`;
+      link.download = `invoice-${request.invoice.invoice_id}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error: any) {
@@ -73,7 +82,7 @@ export default function InboundRequestDetailsPage({
     }
   };
 
-  const showCostEstimate = request && ["QUOTED", "CONFIRMED", "DECLINED", "COMPLETED", "CANCELLED"].includes(request.request_status);
+  const showCostEstimate = request && ["CONFIRMED", "DECLINED", "COMPLETED", "CANCELLED"].includes(request.request_status);
   const showInvoice = request && request.request_status === "COMPLETED";
 
   console.log('request', request);
