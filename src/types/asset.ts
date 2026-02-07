@@ -51,6 +51,72 @@ export interface Asset {
     updatedAt: string;
 }
 
+export interface AssetsListResponse{
+    success: boolean;
+    message: string;
+    meta: {
+        total: number;
+        page: number;
+        limit: number;
+    }
+    data: {
+        id: string;
+        platform_id: string;
+        company_id: string;
+        warehouse_id: string;
+        zone_id: string;
+        brand_id: string;
+        name: string;
+        description: string | null;
+        category: string;
+        images: string[];
+        tracking_method: TrackingMethod;
+        total_quantity: number;
+        available_quantity: number;
+        qr_code: string;
+        packaging: string | null;
+        weight_per_unit: number;
+        dimensions: {
+            width: number;
+            height: number;
+            length: number;
+        },
+        volume_per_unit: string;
+        condition: Condition;
+        condition_notes: string | null;
+        refurb_days_estimate: null;
+        condition_history: [];
+        handling_tags: string[];
+        status: AssetStatus;
+        last_scanned_at: null;
+        last_scanned_by: null;
+        transformed_from: null;
+        transformed_to: null;
+        created_at: string;
+        updated_at: string;
+        deleted_at: null;
+        company: {
+            id: string;
+            name: string;
+            domain: string;
+        },
+        warehouse: {
+            id: string;
+            name: string;
+            city: string;
+            country: string;
+        },
+        zone: {
+            id: string;
+            name: string;
+        },
+        brand: {
+            id: string;
+            name: string;
+        }
+}[]
+}
+
 // Asset with related entity details (for detail view)
 export interface AssetWithDetails extends Asset {
     latestConditionNotes?: string; // Feedback #2: Latest condition notes from history
