@@ -121,14 +121,14 @@ export default function InboundRequestDetailsPage({
             onRefresh={handleRefresh}
           />
 
-          {/* Pricing Card */}
-          <RequestPricingCard pricingOverview={request.request_pricing} />
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Items */}
             <div className="lg:col-span-2">
               <RequestItemsList items={request.items} />
+              {/* Pricing Card */}
+              <RequestPricingCard pricingOverview={request.request_pricing} />
             </div>
 
             {/* Right Column - Request Info */}

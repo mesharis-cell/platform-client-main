@@ -27,7 +27,7 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="mb-8"
+      className="my-8"
     >
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 overflow-hidden shadow-sm">
         <CardContent className="p-0">

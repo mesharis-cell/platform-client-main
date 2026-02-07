@@ -7,19 +7,12 @@
  * Steps: Review Cart → Event Details → Venue Info → Contact → Review & Submit
  */
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/contexts/cart-context";
-import { useSubmitOrderFromCart } from "@/hooks/use-orders";
+import { OrderEstimate } from "@/components/checkout/OrderEstimate";
+import { ClientNav } from "@/components/client-nav";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { OrderEstimate } from "@/components/checkout/OrderEstimate";
-import { useCalculateEstimate } from "@/hooks/use-order-submission";
-import type { TripType } from "@/types/hybrid-pricing";
 import {
     Select,
     SelectContent,
@@ -27,25 +20,31 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useCart } from "@/contexts/cart-context";
+import { useCalculateEstimate } from "@/hooks/use-order-submission";
+import { useSubmitOrderFromCart } from "@/hooks/use-orders";
+import { useGetCountries } from "@/hooks/use-pricing-tiers";
+import { apiClient } from "@/lib/api/api-client";
+import type { TripType } from "@/types/hybrid-pricing";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+    AlertCircle,
+    Calendar,
     Check,
     ChevronLeft,
     ChevronRight,
-    ShoppingCart,
-    Calendar,
-    MapPin,
-    User,
     FileText,
+    MapPin,
     Package,
-    AlertCircle,
+    ShoppingCart,
+    User,
 } from "lucide-react";
 import Image from "next/image";
-import { ClientNav } from "@/components/client-nav";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { apiClient } from "@/lib/api/api-client";
-import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
-import { useToken } from "@/lib/auth/use-token";
 
 type Step = "cart" | "event" | "venue" | "contact" | "review";
 
@@ -167,7 +166,7 @@ function CheckoutPageInner() {
                 return (
                     formData.event_start_date &&
                     formData.event_end_date &&
-                    new Date(formData.event_start_date) < new Date(formData.event_end_date)
+                    new Date(formData.event_start_date) <= new Date(formData.event_end_date)
                 );
             case "venue":
                 return (
@@ -468,6 +467,7 @@ function CheckoutPageInner() {
                                                 id="eventStartDate"
                                                 type="date"
                                                 value={formData.event_start_date}
+                                                min={new Date().toISOString().split("T")[0]}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
@@ -520,7 +520,7 @@ function CheckoutPageInner() {
                                                                     formData.event_start_date
                                                                 ).getTime()) /
                                                             (1000 * 60 * 60 * 24)
-                                                        )}{" "}
+                                                        ) + 1}{" "}
                                                         days
                                                     </p>
                                                 </div>

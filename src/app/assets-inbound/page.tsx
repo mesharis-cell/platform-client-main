@@ -86,6 +86,7 @@ export default function AssetsInboundPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
+                <TableHead className="font-mono font-semibold">Inbound ID</TableHead>
                 <TableHead className="font-mono font-semibold">Company</TableHead>
                 <TableHead className="font-mono font-semibold">Delivery Date</TableHead>
                 <TableHead className="font-mono font-semibold">Status</TableHead>
@@ -128,6 +129,9 @@ export default function AssetsInboundPage() {
               ) : (
                 data?.data.map((request) => (
                   <TableRow key={request.id} className="hover:bg-muted/30">
+                    <TableCell className="font-mono">
+                      {request.inbound_request_id}
+                    </TableCell>
                     <TableCell className="font-mono">
                       {request.company?.name || "-"}
                     </TableCell>

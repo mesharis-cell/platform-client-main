@@ -43,6 +43,7 @@ export interface InboundRequestItem {
 // Full Inbound Request Entity (from API response)
 export interface InboundRequestList {
     id: string;
+    inbound_request_id: string;
     platform_id: string;
     incoming_at: string;
     note: string | null;
