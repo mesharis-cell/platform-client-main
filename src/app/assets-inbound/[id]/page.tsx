@@ -7,18 +7,20 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { useInboundRequest, inboundRequestKeys } from "@/hooks/use-inbound-requests";
+import { useInboundRequest, inboundRequestKeys, useApproveOrDeclineQuote } from "@/hooks/use-inbound-requests";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClientNav } from "@/components/client-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { RequestHeader } from "@/components/inbound-request/request-header";
 import { RequestInfoCard } from "@/components/inbound-request/request-info-card";
 import { RequestItemsList } from "@/components/inbound-request/request-items-list";
 import { RequestPricingCard } from "@/components/inbound-request/request-pricing-card";
 import type { InboundRequestStatus } from "@/types/inbound-request";
+import { InboundQuoteReviewSection } from "@/components/inbound-request/inbound-quote-review-section";
+import { motion } from "framer-motion";
 
 export default function InboundRequestDetailsPage({
   params,
@@ -29,6 +31,7 @@ export default function InboundRequestDetailsPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data, isLoading } = useInboundRequest(id);
+  const approveOrDecline = useApproveOrDeclineQuote();
 
   const request = data?.data;
 
@@ -127,8 +130,54 @@ export default function InboundRequestDetailsPage({
             {/* Left Column - Items */}
             <div className="lg:col-span-2">
               <RequestItemsList items={request.items} />
-              {/* Pricing Card */}
-              <RequestPricingCard pricingOverview={request.request_pricing} />
+
+              {/* Pricing Card or Quote Review */}
+              {request.request_status === "QUOTED" ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <InboundQuoteReviewSection
+                    request={request}
+                    onApprove={async (note) => {
+                      await approveOrDecline.mutateAsync({
+                        id: request.id,
+                        status: "CONFIRMED",
+                        note,
+                      });
+                    }}
+                    onDecline={async (note) => {
+                      await approveOrDecline.mutateAsync({
+                        id: request.id,
+                        status: "DECLINED",
+                        note,
+                      });
+                    }}
+                  />
+                </motion.div>
+              ) : (
+                <>
+                  <RequestPricingCard pricingOverview={request.request_pricing} />
+
+                  {request.request_status === "CONFIRMED" && (
+                    <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+                      <p className="text-sm font-mono text-green-700 dark:text-green-400">
+                        <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                        Quote accepted. We are processing your request.
+                      </p>
+                    </div>
+                  )}
+                  {request.request_status === "DECLINED" && (
+                    <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                      <p className="text-sm font-mono text-destructive mb-2">
+                        <XCircle className="w-4 h-4 inline mr-1" />
+                        Quote declined.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Right Column - Request Info */}
@@ -141,6 +190,85 @@ export default function InboundRequestDetailsPage({
                 createdAt={request.created_at}
                 updatedAt={request.updated_at}
               />
+
+              {/* What's Next Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-6"
+              >
+                {/* PRICING REVIEW / PENDING APPROVAL */}
+                {(request.request_status === "PRICING_REVIEW" || request.request_status === "PENDING_APPROVAL") && (
+                  <Card className="p-6 bg-secondary/5 border-secondary/20">
+                    <h3 className="font-bold font-mono mb-4 uppercase tracking-wide text-sm">
+                      What's Next
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold">1</div>
+                        <div>
+                          <p className="font-semibold mb-1">Review</p>
+                          <p className="text-xs text-muted-foreground">Our team reviews your items and calculates pricing.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold">2</div>
+                        <div>
+                          <p className="font-semibold mb-1">Receive Quote</p>
+                          <p className="text-xs text-muted-foreground">You will receive a quote to approve or decline.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0 text-xs font-bold">3</div>
+                        <div>
+                          <p className="font-semibold mb-1">Processing</p>
+                          <p className="text-xs text-muted-foreground">After approval, we process your inbound items.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
+                {/* QUOTED */}
+                {request.request_status === "QUOTED" && (
+                  <Card className="p-6 bg-amber-500/5 border-amber-500/20">
+                    <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Action Required
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Please review the quote and approve or decline to proceed.
+                    </p>
+                  </Card>
+                )}
+
+                {/* CONFIRMED */}
+                {request.request_status === "CONFIRMED" && (
+                  <Card className="p-6 bg-green-500/5 border-green-500/20">
+                    <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      What's Next
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Quote accepted! We are now processing your request and preparing for item intake.
+                    </p>
+                  </Card>
+                )}
+
+                {/* COMPLETED */}
+                {request.request_status === "COMPLETED" && (
+                  <Card className="p-6 bg-slate-500/5 border-slate-500/20">
+                    <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Completed
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      All items have been successfully processed and added to inventory.
+                    </p>
+                  </Card>
+                )}
+              </motion.div>
             </div>
           </div>
         </div>

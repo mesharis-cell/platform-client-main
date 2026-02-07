@@ -71,7 +71,7 @@ async function approveOrDeclineQuote(
     note?: string,
 ): Promise<InboundRequestList> {
     try {
-        const response = await apiClient.patch(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
+        const response = await apiClient.post(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
         return response.data;
     } catch (error) {
         throwApiError(error);
