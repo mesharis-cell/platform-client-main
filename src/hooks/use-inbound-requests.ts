@@ -169,3 +169,39 @@ export function useDeleteInboundRequest() {
         },
     });
 }
+
+// Download Cost Estimate
+async function downloadInboundCostEstimate(id: string): Promise<Blob> {
+    try {
+        const response = await apiClient.get(`/client/v1/inbound-request/${id}/cost-estimate/download`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
+export function useDownloadInboundCostEstimate() {
+    return useMutation({
+        mutationFn: downloadInboundCostEstimate,
+    });
+}
+
+// Download Invoice
+async function downloadInboundInvoice(id: string): Promise<Blob> {
+    try {
+        const response = await apiClient.get(`/client/v1/inbound-request/${id}/invoice/download`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
+export function useDownloadInboundInvoice() {
+    return useMutation({
+        mutationFn: downloadInboundInvoice,
+    });
+}

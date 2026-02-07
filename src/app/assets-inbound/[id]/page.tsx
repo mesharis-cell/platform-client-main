@@ -7,13 +7,14 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { useInboundRequest, inboundRequestKeys, useApproveOrDeclineQuote } from "@/hooks/use-inbound-requests";
+import { useInboundRequest, inboundRequestKeys, useApproveOrDeclineQuote, useDownloadInboundCostEstimate, useDownloadInboundInvoice } from "@/hooks/use-inbound-requests";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClientNav } from "@/components/client-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, XCircle, Download } from "lucide-react";
 import { RequestHeader } from "@/components/inbound-request/request-header";
 import { RequestInfoCard } from "@/components/inbound-request/request-info-card";
 import { RequestItemsList } from "@/components/inbound-request/request-items-list";
@@ -21,6 +22,7 @@ import { RequestPricingCard } from "@/components/inbound-request/request-pricing
 import type { InboundRequestStatus } from "@/types/inbound-request";
 import { InboundQuoteReviewSection } from "@/components/inbound-request/inbound-quote-review-section";
 import { motion } from "framer-motion";
+import { AssetsFromInbound } from "@/components/inbound-request/assets-from-inbound";
 
 export default function InboundRequestDetailsPage({
   params,
@@ -39,6 +41,44 @@ export default function InboundRequestDetailsPage({
     queryClient.invalidateQueries({ queryKey: inboundRequestKeys.detail(id) });
     queryClient.invalidateQueries({ queryKey: inboundRequestKeys.lists() });
   }
+
+  const downloadCostEstimate = useDownloadInboundCostEstimate();
+  const downloadInvoice = useDownloadInboundInvoice();
+
+  const handleDownloadCostEstimate = async () => {
+    try {
+      const blob = await downloadCostEstimate.mutateAsync(id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cost-estimate-${request?.id || "download"}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to download cost estimate");
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    try {
+      const blob = await downloadInvoice.mutateAsync(id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${request?.id || "download"}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to download invoice");
+    }
+  };
+
+  const showCostEstimate = request && ["QUOTED", "CONFIRMED", "DECLINED", "COMPLETED", "CANCELLED"].includes(request.request_status);
+  const showInvoice = request && request.request_status === "COMPLETED";
+
+  console.log('request', request);
+  console.log('showCostEstimate', showCostEstimate);
+
 
   // Loading State
   if (isLoading) {
@@ -130,6 +170,7 @@ export default function InboundRequestDetailsPage({
             {/* Left Column - Items */}
             <div className="lg:col-span-2">
               <RequestItemsList items={request.items} />
+              {request.request_status === "COMPLETED" && <AssetsFromInbound items={request.items} />}
 
               {/* Pricing Card or Quote Review */}
               {request.request_status === "QUOTED" ? (
@@ -190,6 +231,33 @@ export default function InboundRequestDetailsPage({
                 createdAt={request.created_at}
                 updatedAt={request.updated_at}
               />
+
+              {/* Downloads */}
+              <div className="space-y-3 mt-6">
+                {showCostEstimate && (
+                  <Button
+                    onClick={handleDownloadCostEstimate}
+                    disabled={downloadCostEstimate.isPending}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    {downloadCostEstimate.isPending ? "Downloading..." : "Download Cost Estimate"}
+                  </Button>
+                )}
+
+                {showInvoice && (
+                  <Button
+                    onClick={handleDownloadInvoice}
+                    disabled={downloadInvoice.isPending}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    {downloadInvoice.isPending ? "Downloading..." : "Download Invoice"}
+                  </Button>
+                )}
+              </div>
 
               {/* What's Next Section */}
               <motion.div

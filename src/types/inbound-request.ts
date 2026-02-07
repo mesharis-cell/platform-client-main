@@ -17,6 +17,16 @@ export type InboundRequestStatus =
 // Inbound Request Item
 export interface InboundRequestItem {
     id: string;
+    asset?: {
+        name: string;
+        images: string[];
+        qr_code: string;
+        tracking_method: TrackingMethod;
+        category: string;
+        status: string;
+        total_quantity: number;
+        available_quantity: number;
+    }
     asset_id: string | null;
     inbound_request_id: string;
     brand_id: string | null;
