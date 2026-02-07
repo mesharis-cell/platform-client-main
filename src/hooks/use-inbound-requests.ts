@@ -71,7 +71,7 @@ async function approveOrDeclineQuote(
     note?: string,
 ): Promise<InboundRequestList> {
     try {
-        const response = await apiClient.patch(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
+        const response = await apiClient.post(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
         return response.data;
     } catch (error) {
         throwApiError(error);
@@ -167,5 +167,42 @@ export function useDeleteInboundRequest() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: inboundRequestKeys.lists() });
         },
+    });
+}
+
+// Download Cost Estimate
+async function downloadInboundCostEstimate({ id, platformId }: { id: string; platformId: string }): Promise<Blob> {
+    try {
+        const response = await apiClient.get(`/client/v1/invoice/download-ir-cost-estimate-pdf/${id}?pid=${platformId}`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
+export function useDownloadInboundCostEstimate() {
+    return useMutation({
+        mutationFn: downloadInboundCostEstimate,
+    });
+}
+
+// Download Invoice
+async function downloadInboundInvoice({ invoiceId, platformId }: { invoiceId: string; platformId: string }): Promise<Blob> {
+    try {
+        // Shared endpoint with Orders
+        const response = await apiClient.get(`/client/v1/invoice/download-pdf/${invoiceId}?pid=${platformId}`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
+export function useDownloadInboundInvoice() {
+    return useMutation({
+        mutationFn: downloadInboundInvoice,
     });
 }

@@ -428,11 +428,11 @@ export function CreateInboundRequestDialog({
             images: uploadedImages,
             category: item.category || "",
             tracking_method: item.tracking_method || "INDIVIDUAL",
-            quantity: item.quantity || 1,
+            quantity: Number(item.quantity) || 1,
             packaging: item.packaging || undefined,
-            weight_per_unit: item.weight_per_unit || 0,
+            weight_per_unit: parseFloat(String(item.weight_per_unit)) || 0,
             dimensions: item.dimensions,
-            volume_per_unit: item.volume_per_unit || 0,
+            volume_per_unit: parseFloat(String(item.volume_per_unit)) || 0,
             handling_tags: item.handling_tags || [],
           };
         }),
@@ -570,6 +570,7 @@ export function CreateInboundRequestDialog({
                     <Input
                       type="date"
                       value={formData.incoming_at}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -579,6 +580,9 @@ export function CreateInboundRequestDialog({
                       className="font-mono pl-10"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    Must be at least 24 hours in the future
+                  </p>
                 </div>
               </div>
 
@@ -832,11 +836,11 @@ export function CreateInboundRequestDialog({
                       <Label className="font-mono text-xs">Quantity *</Label>
                       <Input
                         type="number"
-                        min="1"
-                        value={currentItem.quantity || 1}
+                        // min="1"
+                        value={currentItem.quantity}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
-                            quantity: parseInt(e.target.value) || 1,
+                            quantity: parseInt(e.target.value),
                           })
                         }
                         className="font-mono"
@@ -1043,7 +1047,7 @@ export function CreateInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.00"
-                        value={currentItem.weight_per_unit || ""}
+                        value={currentItem.weight_per_unit}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             weight_per_unit:
@@ -1063,7 +1067,7 @@ export function CreateInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.000"
-                        value={currentItem.volume_per_unit || ""}
+                        value={currentItem.volume_per_unit}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             volume_per_unit:

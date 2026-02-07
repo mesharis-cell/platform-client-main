@@ -5,11 +5,28 @@
 export type TrackingMethod = "INDIVIDUAL" | "BATCH";
 
 // Inbound Request Status
-export type InboundRequestStatus = "PENDING" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type InboundRequestStatus =
+    | "PRICING_REVIEW"
+    | "PENDING_APPROVAL"
+    | "QUOTED"
+    | "CONFIRMED"
+    | "DECLINED"
+    | "CANCELLED"
+    | "COMPLETED";
 
 // Inbound Request Item
 export interface InboundRequestItem {
     id: string;
+    asset?: {
+        name: string;
+        images: string[];
+        qr_code: string;
+        tracking_method: TrackingMethod;
+        category: string;
+        status: string;
+        total_quantity: number;
+        available_quantity: number;
+    }
     asset_id: string | null;
     inbound_request_id: string;
     brand_id: string | null;
@@ -36,6 +53,7 @@ export interface InboundRequestItem {
 // Full Inbound Request Entity (from API response)
 export interface InboundRequestList {
     id: string;
+    inbound_request_id: string;
     platform_id: string;
     incoming_at: string;
     note: string | null;
@@ -99,6 +117,7 @@ export interface InboundRequestDetailsResponse {
 
 export interface InboundRequestDetails {
     id: string;
+    inbound_request_id: string;
     platform_id: string;
     incoming_at: string;
     note: string | null;
@@ -115,8 +134,22 @@ export interface InboundRequestDetails {
     },
     request_pricing: {
         final_total: string;
+        logistics_sub_total: string;
+        service_fee: string;
     },
     items: InboundRequestItem[];
+    invoice?: {
+        id: string;
+        platform_id: string;
+        order_id: string | null;
+        inbound_request_id: string;
+        type: string;
+        invoice_id: string;
+        invoice_pdf_url: string;
+        invoice_paid_at: string | null;
+        payment_method: string | null;
+        payment_reference: string | null;
+    };
     created_at: string;
     updated_at: string;
 }
