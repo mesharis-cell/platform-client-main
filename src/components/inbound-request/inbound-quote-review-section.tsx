@@ -35,14 +35,15 @@ export function InboundQuoteReviewSection({
 }: InboundQuoteReviewSectionProps) {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
-  const [note, setNote] = useState("");
+  const [approveNote, setApproveNote] = useState("");
+  const [declineNote, setDeclineNote] = useState("");
   const [isApproving, setIsApproving] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
 
   const handleApprove = async () => {
     setIsApproving(true);
     try {
-      await onApprove(note);
+      await onApprove(approveNote);
       toast.success("Quote accepted! Your request is confirmed.");
       setApproveDialogOpen(false);
     } catch (error: any) {
@@ -53,14 +54,11 @@ export function InboundQuoteReviewSection({
   };
 
   const handleDecline = async () => {
-    if (!note.trim() || note.trim().length < 10) {
-      toast.error("Please provide a decline reason (min 10 characters)");
-      return;
-    }
+
 
     setIsDeclining(true);
     try {
-      await onDecline(note.trim());
+      await onDecline(declineNote.trim());
       toast.success("Quote declined");
       setDeclineDialogOpen(false);
     } catch (error: any) {
@@ -124,8 +122,8 @@ export function InboundQuoteReviewSection({
                 Optional Note
               </Label>
               <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
+                value={approveNote}
+                onChange={(e) => setApproveNote(e.target.value)}
                 placeholder="Add any additional notes..."
                 rows={3}
                 className="mt-2"
@@ -163,8 +161,8 @@ export function InboundQuoteReviewSection({
                 Decline Reason <span className="text-destructive">*</span>
               </Label>
               <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
+                value={declineNote}
+                onChange={(e) => setDeclineNote(e.target.value)}
                 placeholder="e.g., Price is higher than expected..."
                 rows={4}
                 className="mt-2"
@@ -185,7 +183,7 @@ export function InboundQuoteReviewSection({
             <Button
               onClick={handleDecline}
               variant="destructive"
-              disabled={isDeclining}
+              disabled={isDeclining || !declineNote.trim() || declineNote.trim().length < 10}
             >
               {isDeclining ? "Declining..." : "Decline Quote"}
             </Button>
