@@ -50,6 +50,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { InboundRequestDetails, InboundRequestItem, UpdateInboundRequestPayload, TrackingMethod } from "@/types/inbound-request";
+
+import { useCompanies } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
 
 const STEPS = [
@@ -100,6 +102,7 @@ export function EditInboundRequestDialog({
   onSuccess,
   request,
 }: EditInboundRequestDialogProps) {
+  const { user } = useToken()
   const [currentStep, setCurrentStep] = useState(0);
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [formData, setFormData] = useState<FormData>({
@@ -122,7 +125,7 @@ export function EditInboundRequestDialog({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch reference data
-  const { user } = useToken();
+
 
   // Asset search - uses debounced search query for current item
   const currentSearchQuery = searchQueriesPerItem.get(currentItemIndex) || "";
@@ -157,6 +160,7 @@ export function EditInboundRequestDialog({
         incoming_at: request.incoming_at?.split("T")[0] || "",
         items: request.items.map((item) => ({
           ...item,
+          item_id: item.id,
           dimensions: item.dimensions || { length: 0, width: 0, height: 0 },
         })),
       });
@@ -218,7 +222,7 @@ export function EditInboundRequestDialog({
       tracking_method: asset.tracking_method,
       weight_per_unit: asset.weight_per_unit,
       dimensions: asset.dimensions,
-      volume_per_unit: parseFloat(asset.volume_per_unit) || 0,
+      volume_per_unit: Number(asset.volume_per_unit || 0),
       handling_tags: asset.handling_tags || [],
       images: asset.images || [],
       brand_id: asset.brand_id || undefined,
@@ -430,11 +434,10 @@ export function EditInboundRequestDialog({
   }
 
   async function handleSubmit() {
-    if (!request) return;
     if (!user?.company_id) {
       toast.error("Company ID not available");
       return;
-    }
+    };
 
     try {
       // Collect all NEW files from all items for batch upload
@@ -456,7 +459,7 @@ export function EditInboundRequestDialog({
       let allUploadedUrls: string[] = [];
       if (allFiles.length > 0) {
         const uploadFormData = new FormData();
-        uploadFormData.append("companyId", user.company_id);
+        uploadFormData.append("companyId", user?.company_id);
         allFiles.forEach((file) => uploadFormData.append("files", file));
 
         const uploadResult = await uploadMutation.mutateAsync(uploadFormData);
@@ -477,6 +480,7 @@ export function EditInboundRequestDialog({
           const existing = existingImagesPerItem.get(index) || [];
           const newlyUploaded = uploadedImagesPerItem.get(index) || [];
           return {
+            item_id: item.item_id || undefined,
             asset_id: item.asset_id || undefined,
             brand_id: item.brand_id || undefined,
             name: item.name || "",
@@ -486,9 +490,9 @@ export function EditInboundRequestDialog({
             tracking_method: item.tracking_method || "INDIVIDUAL",
             quantity: item.quantity || 1,
             packaging: item.packaging || undefined,
-            weight_per_unit: item.weight_per_unit || 0,
+            weight_per_unit: Number(item.weight_per_unit) || 0,
             dimensions: item.dimensions,
-            volume_per_unit: item.volume_per_unit || 0,
+            volume_per_unit: Number(item.volume_per_unit) || 0,
             handling_tags: item.handling_tags || [],
           };
         }),
@@ -522,6 +526,7 @@ export function EditInboundRequestDialog({
             item.name.trim() !== "" &&
             item.category &&
             item.category.trim() !== "" &&
+            item.quantity > 0 &&
             item.tracking_method
         );
       case 2: // Specifications
@@ -609,7 +614,7 @@ export function EditInboundRequestDialog({
           {/* Step 1: Request Info */}
           {currentStep === 0 && (
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="font-mono text-xs">
                     Incoming Date *
@@ -881,11 +886,10 @@ export function EditInboundRequestDialog({
                       <Label className="font-mono text-xs">Quantity *</Label>
                       <Input
                         type="number"
-                        min="1"
-                        value={currentItem.quantity || 1}
+                        value={currentItem.quantity}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
-                            quantity: parseInt(e.target.value) || 1,
+                            quantity: parseInt(e.target.value),
                           })
                         }
                         className="font-mono"
@@ -1035,7 +1039,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="1"
                         placeholder="0.00"
-                        value={Number(currentItem.dimensions?.length).toFixed(2) || ""}
+                        value={Number(currentItem.dimensions?.length) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -1053,7 +1057,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="1"
                         placeholder="0.00"
-                        value={Number(currentItem.dimensions?.width).toFixed(2) || ""}
+                        value={Number(currentItem.dimensions?.width) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -1073,7 +1077,7 @@ export function EditInboundRequestDialog({
                         type="number"
                         step="1"
                         placeholder="0.00"
-                        value={Number(currentItem.dimensions?.height).toFixed(2) || ""}
+                        value={Number(currentItem.dimensions?.height) || ""}
                         onChange={(e) =>
                           updateDimension(
                             currentItemIndex,
@@ -1097,7 +1101,7 @@ export function EditInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.00"
-                        value={Number(currentItem.weight_per_unit).toFixed(2) || ""}
+                        value={Number(currentItem.weight_per_unit) || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             weight_per_unit:
@@ -1117,7 +1121,7 @@ export function EditInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.000"
-                        value={Number(currentItem.volume_per_unit).toFixed(2) || ""}
+                        value={Number(currentItem.volume_per_unit) || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             volume_per_unit:

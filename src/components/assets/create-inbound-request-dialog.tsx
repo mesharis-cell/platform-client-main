@@ -10,7 +10,7 @@
  * 4. Review & Submit
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useBrands } from "@/hooks/use-brands";
 import { useCreateInboundRequest } from "@/hooks/use-inbound-requests";
 import { useSearchAssets, useUploadImage } from "@/hooks/use-assets";
@@ -49,6 +49,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { InboundRequestItem, CreateInboundRequestPayload, TrackingMethod } from "@/types/inbound-request";
+import { useCompanies } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
 
 const STEPS = [
@@ -98,6 +99,7 @@ export function CreateInboundRequestDialog({
   onOpenChange,
   onSuccess,
 }: CreateInboundRequestDialogProps) {
+  const { user } = useToken();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [formData, setFormData] = useState<FormData>({
@@ -114,9 +116,6 @@ export function CreateInboundRequestDialog({
   // Image upload state - store files locally per item until form submit
   const [selectedImagesPerItem, setSelectedImagesPerItem] = useState<Map<number, File[]>>(new Map());
   const [previewUrlsPerItem, setPreviewUrlsPerItem] = useState<Map<number, string[]>>(new Map());
-
-  // Fetch reference data
-  const { user } = useToken();
 
   // Asset search - uses debounced search query for current item
   const currentSearchQuery = searchQueriesPerItem.get(currentItemIndex) || "";
@@ -135,6 +134,13 @@ export function CreateInboundRequestDialog({
   // Mutations
   const createMutation = useCreateInboundRequest();
   const uploadMutation = useUploadImage();
+
+  function onModalOpenChange(open: boolean) {
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
+  }
 
   // Debounced search handler
   function handleSearchInput(itemIndex: number, value: string) {
@@ -175,7 +181,7 @@ export function CreateInboundRequestDialog({
       tracking_method: asset.tracking_method,
       weight_per_unit: asset.weight_per_unit,
       dimensions: asset.dimensions,
-      volume_per_unit: parseFloat(asset.volume_per_unit) || 0,
+      volume_per_unit: Number(asset.volume_per_unit) || 0,
       handling_tags: asset.handling_tags || [],
       images: asset.images || [],
       brand_id: asset.brand_id || undefined,
@@ -400,7 +406,7 @@ export function CreateInboundRequestDialog({
       let allUploadedUrls: string[] = [];
       if (allFiles.length > 0) {
         const uploadFormData = new FormData();
-        uploadFormData.append("companyId", user.company_id);
+        uploadFormData.append("companyId", user?.company_id);
         allFiles.forEach((file) => uploadFormData.append("files", file));
 
         const uploadResult = await uploadMutation.mutateAsync(uploadFormData);
@@ -415,7 +421,7 @@ export function CreateInboundRequestDialog({
 
       // Build payload with uploaded image URLs
       const payload: CreateInboundRequestPayload = {
-        company_id: user.company_id,
+        company_id: user?.company_id,
         note: formData.note || undefined,
         incoming_at: formData.incoming_at,
         items: formData.items.map((item, index) => {
@@ -430,9 +436,9 @@ export function CreateInboundRequestDialog({
             tracking_method: item.tracking_method || "INDIVIDUAL",
             quantity: Number(item.quantity) || 1,
             packaging: item.packaging || undefined,
-            weight_per_unit: parseFloat(String(item.weight_per_unit)) || 0,
+            weight_per_unit: Number(item.weight_per_unit) || 0,
             dimensions: item.dimensions,
-            volume_per_unit: parseFloat(String(item.volume_per_unit)) || 0,
+            volume_per_unit: Number(item.volume_per_unit) || 0,
             handling_tags: item.handling_tags || [],
           };
         }),
@@ -475,6 +481,7 @@ export function CreateInboundRequestDialog({
             item.name.trim() !== "" &&
             item.category &&
             item.category.trim() !== "" &&
+            item.quantity > 0 &&
             item.tracking_method
         );
       case 2: // Specifications
@@ -495,7 +502,7 @@ export function CreateInboundRequestDialog({
   const currentItem = formData.items[currentItemIndex];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onModalOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-mono text-xl flex items-center gap-2">
@@ -560,7 +567,7 @@ export function CreateInboundRequestDialog({
           {/* Step 1: Request Info */}
           {currentStep === 0 && (
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="font-mono text-xs">
                     Incoming Date *
@@ -570,7 +577,6 @@ export function CreateInboundRequestDialog({
                     <Input
                       type="date"
                       value={formData.incoming_at}
-                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -580,9 +586,6 @@ export function CreateInboundRequestDialog({
                       className="font-mono pl-10"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground font-mono">
-                    Must be at least 24 hours in the future
-                  </p>
                 </div>
               </div>
 
@@ -836,8 +839,7 @@ export function CreateInboundRequestDialog({
                       <Label className="font-mono text-xs">Quantity *</Label>
                       <Input
                         type="number"
-                        value={currentItem.quantity || 1}
-                        // min="1"
+                        value={currentItem.quantity}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             quantity: parseInt(e.target.value),
@@ -1047,7 +1049,7 @@ export function CreateInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.00"
-                        value={currentItem.weight_per_unit}
+                        value={currentItem.weight_per_unit || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             weight_per_unit:
@@ -1067,7 +1069,7 @@ export function CreateInboundRequestDialog({
                         step="1"
                         min="0"
                         placeholder="0.000"
-                        value={currentItem.volume_per_unit}
+                        value={currentItem.volume_per_unit || ""}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {
                             volume_per_unit:

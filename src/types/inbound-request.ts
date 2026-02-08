@@ -18,6 +18,7 @@ export type InboundRequestStatus =
 export interface InboundRequestItem {
     id: string;
     asset?: {
+        id: string;
         name: string;
         images: string[];
         qr_code: string;
@@ -28,6 +29,7 @@ export interface InboundRequestItem {
         available_quantity: number;
     }
     asset_id: string | null;
+    item_id?: string | null;
     inbound_request_id: string;
     brand_id: string | null;
     name: string;
@@ -49,7 +51,6 @@ export interface InboundRequestItem {
     created_at: string;
     updated_at: string;
 }
-
 // Full Inbound Request Entity (from API response)
 export interface InboundRequestList {
     id: string;
