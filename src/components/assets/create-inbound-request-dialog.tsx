@@ -10,7 +10,7 @@
  * 4. Review & Submit
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useBrands } from "@/hooks/use-brands";
 import { useCreateInboundRequest } from "@/hooks/use-inbound-requests";
 import { useSearchAssets, useUploadImage } from "@/hooks/use-assets";
@@ -421,7 +421,7 @@ export function CreateInboundRequestDialog({
         items: formData.items.map((item, index) => {
           const uploadedImages = uploadedImagesPerItem.get(index) || [];
           return {
-            asset_id: undefined,
+            asset_id: item.asset_id || undefined,
             brand_id: item.brand_id || undefined,
             name: item.name || "",
             description: item.description || undefined,
@@ -832,7 +832,6 @@ export function CreateInboundRequestDialog({
                       <Label className="font-mono text-xs">Quantity *</Label>
                       <Input
                         type="number"
-                        min="1"
                         value={currentItem.quantity || 1}
                         onChange={(e) =>
                           updateItem(currentItemIndex, {

@@ -98,7 +98,16 @@ function CheckoutPageInner() {
         currentStep === "review" && !!formData.venue_city_id
     );
 
-    console.log("estimateData", estimateData);
+    // Calculate minimum allowed date (Today + 6 days)
+    // "disable prev data also 5 days after current date. measn including current and 5 days after today will be disable."
+    const calculateMinDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 6);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     // NEW: Get countries
     const { data: countriesData } = useGetCountries();
@@ -475,6 +484,7 @@ function CheckoutPageInner() {
                                                     })
                                                 }
                                                 required
+                                                min={calculateMinDate()}
                                                 className="h-12 font-mono"
                                             />
                                         </div>
@@ -497,7 +507,7 @@ function CheckoutPageInner() {
                                                     })
                                                 }
                                                 required
-                                                min={formData.event_start_date}
+                                                min={formData.event_start_date || calculateMinDate()}
                                                 className="h-12 font-mono"
                                             />
                                         </div>

@@ -139,6 +139,7 @@ export interface CatalogAssetItem {
     type: "asset";
     id: string;
     name: string;
+    status: AssetStatus;
     description: string | null;
     category: string;
     images: string[];

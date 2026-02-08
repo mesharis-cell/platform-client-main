@@ -33,7 +33,9 @@ import type { CatalogAssetItem, CatalogCollectionItem } from "@/types/collection
 import { AnimatePresence, motion } from "framer-motion";
 import {
     AlertCircle,
+    Ban,
     CheckCircle,
+    Clock,
     Cuboid,
     Grid3x3,
     Layers,
@@ -45,6 +47,7 @@ import {
     Search,
     ShoppingCart,
     Tag,
+    Wrench,
     X,
     XCircle,
 } from "lucide-react";
@@ -53,6 +56,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
 import { useToken } from "@/lib/auth/use-token";
+import { AssetStatus } from "@/types";
 
 function CatalogPageInner() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -150,6 +154,21 @@ function CatalogPageInner() {
 
         setRebrandModalOpen(false);
         setRebrandAsset(null);
+    };
+
+    const getAssetStatusText = (status: AssetStatus) => {
+        switch (status) {
+            case "AVAILABLE":
+                return "Available";
+            case "BOOKED":
+                return "Asset is Booked";
+            case "OUT":
+                return "Asset is Out for another Order";
+            case "IN_MAINTENANCE":
+                return "Asset is In Maintenance";
+            default:
+                return status;
+        }
     };
 
     return (
@@ -571,6 +590,7 @@ function CatalogPageInner() {
 
                                                 {/* Hover Overlay with Quick Add */}
                                                 {item.type === "asset" &&
+                                                    item.status === "AVAILABLE" &&
                                                     item.availableQuantity > 0 && (
                                                         <div className="absolute inset-0 bg-linear-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                                                             <Button
@@ -640,9 +660,7 @@ function CatalogPageInner() {
                                                                     L
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionLength
-                                                                    ).toFixed(0)}
+                                                                    {Number(item.dimensionLength).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -653,9 +671,7 @@ function CatalogPageInner() {
                                                                     W
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionWidth
-                                                                    ).toFixed(0)}
+                                                                    {Number(item.dimensionWidth).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -666,9 +682,7 @@ function CatalogPageInner() {
                                                                     H
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionHeight
-                                                                    ).toFixed(0)}
+                                                                    {Number(item.dimensionHeight).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -703,7 +717,7 @@ function CatalogPageInner() {
                                                 {/* Actions */}
                                                 <div className="pt-2">
                                                     {item.type === "asset" ? (
-                                                        item.availableQuantity > 0 ? (
+                                                        item.availableQuantity > 0 && item.status === "AVAILABLE" ? (
                                                             <div className="space-y-2">
                                                                 <Button
                                                                     onClick={(e) => {
@@ -735,7 +749,7 @@ function CatalogPageInner() {
                                                                 className="w-full gap-2 font-mono"
                                                             >
                                                                 <XCircle className="w-4 h-4" />
-                                                                Out of Stock
+                                                                {item.availableQuantity < 1 ? "Out of Stock" : getAssetStatusText(item.status)}
                                                             </Button>
                                                         )
                                                     ) : (
