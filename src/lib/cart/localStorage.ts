@@ -30,6 +30,7 @@ export interface LocalCartItem {
     reskinTargetBrandId?: string;
     reskinTargetBrandCustom?: string;
     reskinNotes?: string;
+    condition?: string;
 }
 
 interface LocalCart {

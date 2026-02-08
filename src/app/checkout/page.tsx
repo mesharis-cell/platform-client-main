@@ -44,8 +44,7 @@ import { ClientNav } from "@/components/client-nav";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
-import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
-import { useToken } from "@/lib/auth/use-token";
+import { useGetCountries } from "@/hooks/use-pricing-tiers";
 
 type Step = "cart" | "event" | "venue" | "contact" | "review";
 
@@ -89,6 +88,7 @@ function CheckoutPageInner() {
     });
 
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
+    const isAllGreenItems = items.every((item) => item.condition === "GREEN");
 
     // NEW: Calculate estimate using new system
     const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
@@ -1243,6 +1243,19 @@ function CheckoutPageInner() {
                                         </div>
                                     </Card>
                                 )}
+
+                            {!isAllGreenItems && (
+                                <Card className="p-6 bg-red-500/10 border-red-500">
+                                    <div className="flex items-start gap-3">
+                                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                                        <div className="flex-1">
+                                            <p className="font-medium mb-1 text-red-500">
+                                                Your order includes damaged {hasRebrandItems && "and rebrand"} items. Please consider couple of days for assets maintenance {hasRebrandItems && "and rebrand"}.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

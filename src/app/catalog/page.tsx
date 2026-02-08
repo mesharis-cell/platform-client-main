@@ -58,6 +58,21 @@ import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModa
 import { useToken } from "@/lib/auth/use-token";
 import { AssetStatus } from "@/types";
 
+const getAssetStatusText = (status: AssetStatus) => {
+    switch (status) {
+        case "AVAILABLE":
+            return "Available";
+        case "BOOKED":
+            return "Asset is Booked";
+        case "OUT":
+            return "Asset is Out for another Order";
+        case "IN_MAINTENANCE":
+            return "Asset is In Maintenance";
+        default:
+            return status;
+    }
+};
+
 function CatalogPageInner() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrand, setSelectedBrand] = useState<string>("");
@@ -119,6 +134,7 @@ function CatalogPageInner() {
             dimensionHeight: Number(item.dimensionHeight),
             category: item.category,
             image: item.images[0],
+            condition: item.condition,
         });
     };
 
@@ -148,27 +164,13 @@ function CatalogPageInner() {
                 dimensionHeight: Number(rebrandAsset.dimensionHeight),
                 category: rebrandAsset.category,
                 image: rebrandAsset.images[0],
+                condition: rebrandAsset.condition,
             },
             rebrandData
         );
 
         setRebrandModalOpen(false);
         setRebrandAsset(null);
-    };
-
-    const getAssetStatusText = (status: AssetStatus) => {
-        switch (status) {
-            case "AVAILABLE":
-                return "Available";
-            case "BOOKED":
-                return "Asset is Booked";
-            case "OUT":
-                return "Asset is Out for another Order";
-            case "IN_MAINTENANCE":
-                return "Asset is In Maintenance";
-            default:
-                return status;
-        }
     };
 
     return (
@@ -456,7 +458,10 @@ function CatalogPageInner() {
                                             duration: 0.3,
                                         }}
                                     >
-                                        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full">
+                                        <Card
+                                            className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full"
+                                        // className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group bg-card/50 backdrop-blur-sm h-full ${item.type === "asset" && item.condition === 'GREEN' ? "border-green-500/50 hover:border-green-500" : item.type === "asset" && item.condition === 'ORANGE' ? "border-orange-500/50 hover:border-orange-500" : item.type === "asset" && item.condition === 'RED' ? "border-red-500/50 hover:border-red-500" : ""}`}
+                                        >
                                             {/* Image with Overlay */}
                                             <div
                                                 className="aspect-3/2 bg-muted relative overflow-hidden"

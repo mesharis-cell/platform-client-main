@@ -9,6 +9,7 @@ import { Package, Paintbrush, CheckCircle2, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Condition } from "@/types";
 
 interface ReskinList {
   id: string;
@@ -47,9 +48,10 @@ interface OrderItem {
     total_weight: number;
   };
   asset?: {
-    dimension_length?: number;
-    dimension_width?: number;
-    dimension_height?: number;
+    condition: Condition;
+    id: string;
+    name: string;
+    refurbishment_days_estimate: number | null;
   };
 }
 
@@ -119,6 +121,7 @@ export function OrderItemsList({
   reskinList,
   calculatedTotals,
 }: OrderItemsListProps) {
+  console.log(items)
 
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
@@ -208,7 +211,7 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
           )}
 
           {/* Compact dimensions */}
-          <div className="grid grid-cols-5 gap-2 mb-2">
+          {/* <div className="grid grid-cols-5 gap-2 mb-2">
             {item.asset?.dimension_length && (
               <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
                 <div className="text-[9px] text-muted-foreground font-mono uppercase">
@@ -280,7 +283,7 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
                 m³
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Quantity line */}
           <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
@@ -310,6 +313,12 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
               </span>
             </span>
           </div>
+
+          {item.asset.condition !== 'GREEN' && (
+            <div className="mt-2 flex items-center gap-3 text-xs font-mono bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg p-2">
+              <p>This assets is damaged. Estimated refurbishment {item.asset.refurbishment_days_estimate} days</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
