@@ -295,6 +295,9 @@ function CheckoutPageInner() {
         );
     }
 
+    console.log('items from checkout......', items);
+
+
     return (
         <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background">
             {/* Progress Header */}
@@ -352,6 +355,26 @@ function CheckoutPageInner() {
                 </div>
             </div>
 
+            {/* warning if any item condition is red or orange */}
+
+            {items.length > 0 && <div className="max-w-5xl mx-auto px-8 pt-10">
+                {items.some((item) => item.condition === "RED" || item.condition === "ORANGE") && (
+                    <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <AlertCircle className="h-5 w-5 text-yellow-400" />
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-yellow-800">Maintenance Required</h3>
+                                <div className="mt-2 text-sm text-yellow-700">
+                                    <p>Your order contain item(s) require maintenance. It may require some time to prepare.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>}
+
             {/* Content */}
             <div className="max-w-5xl mx-auto px-8 py-10">
                 <AnimatePresence mode="wait">
@@ -406,6 +429,14 @@ function CheckoutPageInner() {
                                                     <span>•</span>
                                                     <span>{item.weight} kg each</span>
                                                 </div>
+                                                {
+                                                    (item.condition === "RED" || item.condition === "ORANGE") && (
+                                                        <p className="text-xs text-red-500 font-mono">
+                                                            Attention: This item requires maintenance <br />
+                                                            Condition: {item.condition}
+                                                        </p>
+                                                    )
+                                                }
                                                 {item.fromCollectionName && (
                                                     <p className="text-xs text-muted-foreground font-mono">
                                                         From collection: {item.fromCollectionName}

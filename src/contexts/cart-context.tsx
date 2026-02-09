@@ -122,6 +122,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            console.log(assetDetails, "asset details...")
+
             setAddingItems((prev) => new Set(prev).add(assetId));
             setIsLoading(true);
 

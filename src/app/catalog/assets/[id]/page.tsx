@@ -56,6 +56,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
             volume: Number(asset.volume),
             weight: Number(asset.weight),
             image: asset.images[0],
+            condition: asset.condition,
             ...rebrandData, // Add rebrand data if provided
         });
 
@@ -143,7 +144,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                             onClick={() =>
                                                 setSelectedImageIndex(
                                                     (selectedImageIndex - 1 + asset.images.length) %
-                                                        asset.images.length
+                                                    asset.images.length
                                                 )
                                             }
                                             className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -171,11 +172,10 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
-                                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                                                index === selectedImageIndex
+                                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
                                                     ? "border-primary"
                                                     : "border-border hover:border-border/80"
-                                            }`}
+                                                }`}
                                         >
                                             <Image
                                                 src={image}
@@ -293,8 +293,8 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                                 asset.condition === "GREEN"
                                                     ? "default"
                                                     : asset.condition === "ORANGE"
-                                                      ? "secondary"
-                                                      : "destructive"
+                                                        ? "secondary"
+                                                        : "destructive"
                                             }
                                             className="font-mono"
                                         >

@@ -63,11 +63,11 @@ const getAssetStatusText = (status: AssetStatus) => {
         case "AVAILABLE":
             return "Available";
         case "BOOKED":
-            return "Asset is Booked";
+            return "Asset is booked";
         case "OUT":
-            return "Asset is Out for another Order";
+            return "Asset is out for another order";
         case "IN_MAINTENANCE":
-            return "Asset is In Maintenance";
+            return "Asset is in maintenance";
         default:
             return status;
     }
@@ -124,6 +124,7 @@ function CatalogPageInner() {
             return;
         }
 
+        console.log("cart item item", item);
         addItem(item.id, quantity, {
             assetName: item.name,
             availableQuantity: item.availableQuantity,
@@ -258,7 +259,7 @@ function CatalogPageInner() {
                 `}</style>
             </div>
 
-            <div className="max-w-7xl mx-auto px-8 py-10">
+            <div className="max-w-7xl mx-auto px-8 py-10 ">
                 {/* Search and Filters - Enhanced */}
                 <div className="mb-10 space-y-6">
                     {/* Search Bar */}
@@ -459,9 +460,7 @@ function CatalogPageInner() {
                                         }}
                                     >
                                         <Card
-                                            className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full"
-                                        // className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group bg-card/50 backdrop-blur-sm h-full ${item.type === "asset" && item.condition === 'GREEN' ? "border-green-500/50 hover:border-green-500" : item.type === "asset" && item.condition === 'ORANGE' ? "border-orange-500/50 hover:border-orange-500" : item.type === "asset" && item.condition === 'RED' ? "border-red-500/50 hover:border-red-500" : ""}`}
-                                        >
+                                            className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full">
                                             {/* Image with Overlay */}
                                             <div
                                                 className="aspect-3/2 bg-muted relative overflow-hidden"
@@ -506,7 +505,7 @@ function CatalogPageInner() {
                                                 </div>
                                                 <div className="absolute top-10 left-3">
                                                     <Badge
-                                                        variant="outline"
+                                                        variant="default"
                                                         className={cn(
                                                             "border border-border/50 font-mono text-xs"
                                                         )}
@@ -549,25 +548,15 @@ function CatalogPageInner() {
                                                             )}
                                                         {/* Availability Badge */}
                                                         <Badge
-                                                            variant={
-                                                                item.availableQuantity > 0
-                                                                    ? "default"
-                                                                    : "destructive"
-                                                            }
-                                                            className="backdrop-blur-md bg-primary border border-border/50 font-mono text-xs"
-                                                        >
-                                                            {item.availableQuantity > 0 ? (
-                                                                <>
-                                                                    <CheckCircle className="w-3 h-3 mr-1.5" />
-                                                                    {item.availableQuantity}{" "}
-                                                                    Available
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <XCircle className="w-3 h-3 mr-1.5" />
-                                                                    Out of Stock
-                                                                </>
+                                                            variant="default"
+                                                            className={cn(
+                                                                "backdrop-blur-md border border-border/50 font-mono text-xs",
+                                                                item.status === "AVAILABLE"
+                                                                    ? "bg-green-500 hover:bg-green-600"
+                                                                    : "bg-primary"
                                                             )}
+                                                        >
+                                                            {item.status}
                                                         </Badge>
                                                     </div>
                                                 )}

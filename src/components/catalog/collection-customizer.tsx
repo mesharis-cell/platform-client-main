@@ -36,6 +36,7 @@ interface CollectionCustomizerProps {
             dimensionHeight: number;
             category: string;
             image?: string;
+            condition?: string;
         }>
     ) => void;
     onClose: () => void;
@@ -117,6 +118,7 @@ export function CollectionCustomizer({
             dimensionHeight: parseFloat(item.dimensionHeight),
             category: item.category,
             image: item.images[0],
+            condition: item.condition,
         }));
 
         onAddToCart(itemsToAdd);
@@ -146,11 +148,10 @@ export function CollectionCustomizer({
                         return (
                             <div
                                 key={item.id}
-                                className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
-                                    isSelected
-                                        ? "border-primary bg-primary/5"
-                                        : "border-border bg-card"
-                                } ${!item.isAvailable ? "opacity-50" : ""}`}
+                                className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${isSelected
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border bg-card"
+                                    } ${!item.isAvailable ? "opacity-50" : ""}`}
                             >
                                 {/* Checkbox */}
                                 <div className="flex items-center pt-1">
