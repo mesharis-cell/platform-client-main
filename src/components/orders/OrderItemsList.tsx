@@ -9,6 +9,7 @@ import { Package, Paintbrush, CheckCircle2, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Condition } from "@/types";
 
 interface ReskinList {
   id: string;
@@ -47,9 +48,10 @@ interface OrderItem {
     total_weight: number;
   };
   asset?: {
-    dimension_length?: number;
-    dimension_width?: number;
-    dimension_height?: number;
+    condition: Condition;
+    id: string;
+    name: string;
+    refurbishment_days_estimate: number | null;
   };
 }
 
@@ -60,6 +62,7 @@ interface CalculatedTotals {
 
 interface OrderItemsListProps {
   items: OrderItem[];
+  orderStatus: string;
   reskinList?: ReskinList[];
   calculatedTotals?: CalculatedTotals;
 }
@@ -116,10 +119,10 @@ function getReskinStyles(status: ReskinStatus): { containerClass: string; badgeC
 
 export function OrderItemsList({
   items,
+  orderStatus,
   reskinList,
   calculatedTotals,
 }: OrderItemsListProps) {
-
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
       <div className="flex items-center gap-2 mb-6">
@@ -137,7 +140,7 @@ export function OrderItemsList({
 
       <div className="space-y-3">
         {items.map((item, index) => (
-          <OrderItemCard key={item.id} item={item} reskinList={reskinList} index={index} />
+          <OrderItemCard key={item.id} orderStatus={orderStatus} item={item} reskinList={reskinList} index={index} />
         ))}
       </div>
 
@@ -173,9 +176,17 @@ export function OrderItemsList({
 }
 
 
-const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinList?: ReskinList[], index: number }) => {
+const OrderItemCard = ({ item, orderStatus, reskinList, index }: { item: OrderItem, orderStatus: string, reskinList?: ReskinList[], index: number }) => {
   const { status, reskin } = getReskinStatus(item, reskinList);
   const styles = getReskinStyles(status);
+
+  const statusForReskin = [
+    "PRICING_REVIEW",
+    "PENDING_APPROVAL",
+    "QUOTED",
+    "CONFIRMED",
+    "AWAITING_FABRICATION"
+  ];
 
   return (
     <div
@@ -190,7 +201,7 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
             <div className="font-semibold">
               {item.order_item.asset_name}
             </div>
-            {status !== "none" && (
+            {status !== "none" && statusForReskin.includes(orderStatus) && (
               <Badge className={`font-mono text-[10px] gap-1 ${styles.badgeClass}`}>
                 {status === "pending" && <Paintbrush className="w-3 h-3" />}
                 {status === "completed" && <CheckCircle2 className="w-3 h-3" />}
@@ -208,7 +219,7 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
           )}
 
           {/* Compact dimensions */}
-          <div className="grid grid-cols-5 gap-2 mb-2">
+          {/* <div className="grid grid-cols-5 gap-2 mb-2">
             {item.asset?.dimension_length && (
               <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
                 <div className="text-[9px] text-muted-foreground font-mono uppercase">
@@ -280,7 +291,7 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
                 m³
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Quantity line */}
           <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
@@ -310,6 +321,12 @@ const OrderItemCard = ({ item, reskinList, index }: { item: OrderItem, reskinLis
               </span>
             </span>
           </div>
+
+          {item.asset.condition !== 'GREEN' && statusForReskin.includes(orderStatus) && (
+            <div className="mt-2 flex items-center gap-3 text-xs font-mono bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg p-2">
+              <p>This assets is damaged. Estimated refurbishment {item.asset.refurbishment_days_estimate} days</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

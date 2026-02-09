@@ -53,6 +53,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             type: "asset" as const,
             id: asset.id,
             name: asset.name,
+            status: asset.status,
             description: asset.description,
             category: asset.category,
             images: asset.images || [],

@@ -25,8 +25,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
-import { useGetCountries } from "@/hooks/use-pricing-tiers";
-import { apiClient } from "@/lib/api/api-client";
 import type { TripType } from "@/types/hybrid-pricing";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -45,6 +43,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api/api-client";
+import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
+import { useToken } from "@/lib/auth/use-token";
 
 type Step = "cart" | "event" | "venue" | "contact" | "review";
 
@@ -88,6 +89,7 @@ function CheckoutPageInner() {
     });
 
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
+    const isAllGreenItems = items.every((item) => item.condition === "GREEN");
 
     // NEW: Calculate estimate using new system
     const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
@@ -97,7 +99,16 @@ function CheckoutPageInner() {
         currentStep === "review" && !!formData.venue_city_id
     );
 
-    console.log("estimateData", estimateData);
+    // Calculate minimum allowed date (Today + 6 days)
+    // "disable prev data also 5 days after current date. measn including current and 5 days after today will be disable."
+    const calculateMinDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 6);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     // NEW: Get countries
     const { data: countriesData } = useGetCountries();
@@ -467,7 +478,6 @@ function CheckoutPageInner() {
                                                 id="eventStartDate"
                                                 type="date"
                                                 value={formData.event_start_date}
-                                                min={new Date().toISOString().split("T")[0]}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
@@ -475,6 +485,7 @@ function CheckoutPageInner() {
                                                     })
                                                 }
                                                 required
+                                                min={calculateMinDate()}
                                                 className="h-12 font-mono"
                                             />
                                         </div>
@@ -497,7 +508,7 @@ function CheckoutPageInner() {
                                                     })
                                                 }
                                                 required
-                                                min={formData.event_start_date}
+                                                min={formData.event_start_date || calculateMinDate()}
                                                 className="h-12 font-mono"
                                             />
                                         </div>
@@ -1233,6 +1244,19 @@ function CheckoutPageInner() {
                                         </div>
                                     </Card>
                                 )}
+
+                            {!isAllGreenItems && (
+                                <Card className="p-6 bg-red-500/10 border-red-500">
+                                    <div className="flex items-start gap-3">
+                                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                                        <div className="flex-1">
+                                            <p className="font-medium mb-1 text-red-500">
+                                                Your order includes damaged {hasRebrandItems && "and rebrand"} items. Please consider couple of days for assets maintenance {hasRebrandItems && "and rebrand"}.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
