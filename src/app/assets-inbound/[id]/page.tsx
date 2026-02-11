@@ -50,7 +50,7 @@ export default function InboundRequestDetailsPage({
   const handleDownloadCostEstimate = async () => {
     try {
       const blob = await downloadCostEstimate.mutateAsync({
-        id,
+        id: request?.inbound_request_id,
         platformId: platform.platform_id
       });
       const url = URL.createObjectURL(blob);

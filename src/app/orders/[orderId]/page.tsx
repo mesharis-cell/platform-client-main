@@ -75,7 +75,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const handleDownloadCostEstimate = async () => {
         try {
             const pdfBlob = await downloadCostEstimate.mutateAsync({
-                orderId: orderData?.data?.id,
+                orderId: orderData?.data?.order_id,
                 platformId: platform.platform_id,
             });
 

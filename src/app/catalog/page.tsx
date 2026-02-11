@@ -547,16 +547,17 @@ function CatalogPageInner() {
                                                                 </Badge>
                                                             )}
                                                         {/* Availability Badge */}
+
                                                         <Badge
                                                             variant="default"
                                                             className={cn(
                                                                 "backdrop-blur-md border border-border/50 font-mono text-xs",
-                                                                item.status === "AVAILABLE"
+                                                                item.status === "AVAILABLE" && item.availableQuantity > 0
                                                                     ? "bg-green-500 hover:bg-green-600"
                                                                     : "bg-primary"
                                                             )}
                                                         >
-                                                            {item.status}
+                                                            {(item.availableQuantity < 1 && item.status === 'AVAILABLE') ? 'Out of Stock' : item.status}
                                                         </Badge>
                                                     </div>
                                                 )}
