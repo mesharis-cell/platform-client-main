@@ -67,7 +67,9 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             availableQuantity: asset.available_quantity,
             totalQuantity: asset.total_quantity,
             condition: asset.condition,
+            condition_notes: asset.condition_notes,
             refurbDaysEstimate: asset.refurb_days_estimate,
+            lastScannedAt: asset.last_scanned_at,
             volume: asset.volume_per_unit,
             weight: asset.weight_per_unit,
             dimensionLength: asset.dimensions?.length,
@@ -106,10 +108,34 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 
 async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsResponse> {
     try {
-        const response = await apiClient.get<CatalogAssetDetailsResponse>(
-            `/client/v1/catalog/assets/${id}`
-        );
-        return response.data;
+        const response = await apiClient.get(`/operations/v1/asset/${id}`);
+        const asset = response.data.data;
+
+        // Transform to match CatalogAssetDetails type
+        return {
+            success: true,
+            asset: {
+                id: asset.id,
+                name: asset.name,
+                description: asset.description,
+                category: asset.category,
+                images: asset.images || [],
+                brand: asset.brand_details || null,
+                company: asset.company_details || null,
+                availableQuantity: asset.available_quantity,
+                totalQuantity: asset.total_quantity,
+                condition: asset.condition,
+                conditionNotes: asset.condition_notes,
+                refurbDaysEstimate: asset.refurb_days_estimate,
+                lastScannedAt: asset.last_scanned_at,
+                volume: asset.volume_per_unit,
+                weight: asset.weight_per_unit,
+                dimensionLength: asset.dimensions?.length,
+                dimensionWidth: asset.dimensions?.width,
+                dimensionHeight: asset.dimensions?.height,
+                handlingTags: asset.handling_tags || [],
+            },
+        };
     } catch (error) {
         throwApiError(error);
     }
@@ -204,6 +230,18 @@ export function useAssetVersions(assetId: string | null) {
             if (!assetId) return [];
             const res = await apiClient.get(`/operations/v1/asset/${assetId}/versions`);
             return res.data?.data || [];
+        },
+        enabled: !!assetId,
+    });
+}
+
+export function useAssetConditionHistory(assetId: string | null) {
+    return useQuery({
+        queryKey: ["asset-condition-history", assetId],
+        queryFn: async () => {
+            if (!assetId) return [];
+            const res = await apiClient.get(`/operations/v1/asset/${assetId}`);
+            return res.data?.data?.condition_history || [];
         },
         enabled: !!assetId,
     });

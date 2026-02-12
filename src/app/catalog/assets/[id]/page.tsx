@@ -5,9 +5,9 @@
  * Dedicated page for individual asset with full specifications and add-to-cart
  */
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCatalogAsset, useAssetVersions } from "@/hooks/use-catalog";
+import { useCatalogAsset, useAssetVersions, useAssetConditionHistory } from "@/hooks/use-catalog";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,9 @@ import {
     Minus,
     ChevronLeft,
     ChevronRight,
+    Wrench,
+    AlertCircle,
+    Clock,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,8 +35,8 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AddWithRebrandButton } from "@/components/rebrand/AddWithRebrandButton";
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const router = useRouter();
     const { data, isLoading } = useCatalogAsset(id);
     const { addItem } = useCart();
@@ -42,6 +45,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
 
     const asset = data?.asset;
     const { data: versions } = useAssetVersions(asset?.id || null);
+    const { data: conditionHistory } = useAssetConditionHistory(asset?.id || null);
 
     const handleAddToCart = async (rebrandData?: any) => {
         if (!asset) return;
@@ -401,6 +405,167 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                             )}
                         </div>
                     </div>
+
+                    {/* Condition & Maintenance */}
+                    {asset && (
+                        <div className="mt-8">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4 flex items-center gap-2">
+                                        <Wrench className="w-4 h-4" />
+                                        Condition & Maintenance
+                                    </h3>
+                                    <div
+                                        className={`rounded-lg p-4 border mb-4 ${
+                                            asset.condition === "RED"
+                                                ? "bg-destructive/10 border-destructive/30"
+                                                : asset.condition === "ORANGE"
+                                                  ? "bg-orange-500/10 border-orange-500/30"
+                                                  : "bg-green-500/10 border-green-500/30"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Badge
+                                                className={`font-mono ${
+                                                    asset.condition === "RED"
+                                                        ? "bg-destructive"
+                                                        : asset.condition === "ORANGE"
+                                                          ? "bg-orange-500"
+                                                          : "bg-green-500"
+                                                }`}
+                                            >
+                                                {asset.condition === "RED" ? (
+                                                    <>
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Damaged / In Maintenance
+                                                    </>
+                                                ) : asset.condition === "ORANGE" ? (
+                                                    <>
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Minor Issues
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                        Good Condition
+                                                    </>
+                                                )}
+                                            </Badge>
+                                        </div>
+                                        {asset.conditionNotes && (
+                                            <p className="text-sm text-foreground mb-2">
+                                                {asset.conditionNotes}
+                                            </p>
+                                        )}
+                                        {asset.refurbDaysEstimate &&
+                                            asset.condition !== "GREEN" && (
+                                                <p className="text-sm font-mono mb-2">
+                                                    <span className="text-muted-foreground">
+                                                        Est. refurb time:
+                                                    </span>{" "}
+                                                    <span className="font-bold">
+                                                        {asset.refurbDaysEstimate} days
+                                                    </span>
+                                                </p>
+                                            )}
+                                        {asset.lastScannedAt && (
+                                            <p className="text-xs font-mono text-muted-foreground">
+                                                Last scanned:{" "}
+                                                {new Date(asset.lastScannedAt).toLocaleDateString()}{" "}
+                                                at{" "}
+                                                {new Date(asset.lastScannedAt).toLocaleTimeString(
+                                                    [],
+                                                    { hour: "2-digit", minute: "2-digit" }
+                                                )}
+                                            </p>
+                                        )}
+                                        {asset.condition === "RED" && (
+                                            <p className="text-xs font-mono text-destructive mt-2">
+                                                This asset is currently unavailable for booking
+                                            </p>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {/* Condition History */}
+                    {conditionHistory && conditionHistory.length > 0 && (
+                        <div className="mt-8">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4 flex items-center gap-2">
+                                        <Clock className="w-4 h-4" />
+                                        Condition History
+                                    </h3>
+                                    <div className="space-y-1 relative">
+                                        {conditionHistory.map((entry: any, idx: number) => {
+                                            const isFirst = idx === 0;
+                                            return (
+                                                <div
+                                                    key={entry.id || idx}
+                                                    className="flex gap-3 py-2"
+                                                >
+                                                    <div className="flex flex-col items-center">
+                                                        <div
+                                                            className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
+                                                                entry.condition === "RED"
+                                                                    ? "bg-destructive"
+                                                                    : entry.condition === "ORANGE"
+                                                                      ? "bg-orange-500"
+                                                                      : "bg-green-500"
+                                                            } ${isFirst ? "ring-4 ring-primary/20" : ""}`}
+                                                        />
+                                                        {idx < conditionHistory.length - 1 && (
+                                                            <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 pb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge
+                                                                className={`text-xs font-mono ${
+                                                                    entry.condition === "RED"
+                                                                        ? "bg-destructive"
+                                                                        : entry.condition ===
+                                                                            "ORANGE"
+                                                                          ? "bg-orange-500"
+                                                                          : "bg-green-500"
+                                                                }`}
+                                                            >
+                                                                {entry.condition}
+                                                            </Badge>
+                                                            {isFirst && (
+                                                                <span className="text-xs font-mono text-muted-foreground">
+                                                                    Current
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {entry.notes && (
+                                                            <p className="text-sm text-muted-foreground mt-1">
+                                                                {entry.notes}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-xs font-mono text-muted-foreground mt-0.5">
+                                                            {new Date(
+                                                                entry.timestamp
+                                                            ).toLocaleDateString()}{" "}
+                                                            {new Date(
+                                                                entry.timestamp
+                                                            ).toLocaleTimeString([], {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
 
                     {/* Version History */}
                     {versions && versions.length > 0 && (

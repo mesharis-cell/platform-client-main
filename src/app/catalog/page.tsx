@@ -37,6 +37,7 @@ import {
     CheckCircle,
     Clock,
     Cuboid,
+    Eye,
     Grid3x3,
     Layers,
     List,
@@ -52,6 +53,8 @@ import {
     XCircle,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
@@ -461,324 +464,351 @@ function CatalogPageInner() {
                                             duration: 0.3,
                                         }}
                                     >
-                                        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full">
-                                            {/* Image with Overlay */}
-                                            <div
-                                                className="aspect-3/2 bg-muted relative overflow-hidden"
-                                                onClick={() => setSelectedItem(item)}
+                                        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full relative">
+                                            {/* Eye icon for quick preview */}
+                                            <Button
+                                                size="icon"
+                                                variant="secondary"
+                                                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setSelectedItem(item);
+                                                }}
                                             >
-                                                {item.images.length > 0 ? (
-                                                    <Image
-                                                        src={item.images[0]}
-                                                        alt={item.name}
-                                                        fill
-                                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-linear-gradient-to-br from-muted to-muted/50">
-                                                        {item.type === "collection" ? (
-                                                            <Layers className="w-20 h-20 text-muted-foreground/20" />
-                                                        ) : (
-                                                            <Package className="w-20 h-20 text-muted-foreground/20" />
-                                                        )}
-                                                    </div>
-                                                )}
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
 
-                                                {/* Type Badge */}
-                                                <div className="absolute top-3 left-3">
-                                                    <Badge
-                                                        className={cn(
-                                                            "backdrop-blur-md bg-primary/80 border border-border/50 font-mono text-xs"
-                                                        )}
-                                                    >
-                                                        {item.type === "collection" ? (
-                                                            <>
-                                                                <Layers className="w-3 h-3 mr-1.5" />
-                                                                Collection
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Package className="w-3 h-3 mr-1.5" />
-                                                                Asset
-                                                            </>
-                                                        )}
-                                                    </Badge>
-                                                </div>
-                                                <div className="absolute top-10 left-3">
-                                                    <Badge
-                                                        variant="default"
-                                                        className={cn(
-                                                            "border border-border/50 font-mono text-xs"
-                                                        )}
-                                                    >
-                                                        {item.type === "asset" && (
-                                                            <>{item.tracking_method}</>
-                                                        )}
-                                                    </Badge>
-                                                </div>
-
-                                                {/* Availability & Condition Badges */}
-                                                {item.type === "asset" && (
-                                                    <div className="absolute top-3 right-3 flex flex-col gap-2">
-                                                        {/* Condition Badge */}
-                                                        {item.condition &&
-                                                            item.condition !== "GREEN" && (
-                                                                <Badge
-                                                                    variant={
-                                                                        item.condition === "RED"
-                                                                            ? "destructive"
-                                                                            : "default"
-                                                                    }
-                                                                    className={`backdrop-blur-md border border-border/50 font-mono text-xs ${
-                                                                        item.condition === "ORANGE"
-                                                                            ? "bg-orange-500 hover:bg-orange-600"
-                                                                            : ""
-                                                                    }`}
-                                                                >
-                                                                    {item.condition === "RED" ? (
-                                                                        <>
-                                                                            <AlertCircle className="w-3 h-3 mr-1.5" />
-                                                                            Damaged
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <AlertCircle className="w-3 h-3 mr-1.5" />
-                                                                            Minor Issues
-                                                                        </>
-                                                                    )}
-                                                                </Badge>
+                                            <Link
+                                                href={`/catalog/assets/${item.id}`}
+                                                className="block cursor-pointer"
+                                            >
+                                                {/* Image with Overlay */}
+                                                <div className="aspect-3/2 bg-muted relative overflow-hidden">
+                                                    {item.images.length > 0 ? (
+                                                        <Image
+                                                            src={item.images[0]}
+                                                            alt={item.name}
+                                                            fill
+                                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-linear-gradient-to-br from-muted to-muted/50">
+                                                            {item.type === "collection" ? (
+                                                                <Layers className="w-20 h-20 text-muted-foreground/20" />
+                                                            ) : (
+                                                                <Package className="w-20 h-20 text-muted-foreground/20" />
                                                             )}
-                                                        {/* Availability Badge */}
+                                                        </div>
+                                                    )}
 
+                                                    {/* Type Badge */}
+                                                    <div className="absolute top-3 left-3">
+                                                        <Badge
+                                                            className={cn(
+                                                                "backdrop-blur-md bg-primary/80 border border-border/50 font-mono text-xs"
+                                                            )}
+                                                        >
+                                                            {item.type === "collection" ? (
+                                                                <>
+                                                                    <Layers className="w-3 h-3 mr-1.5" />
+                                                                    Collection
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Package className="w-3 h-3 mr-1.5" />
+                                                                    Asset
+                                                                </>
+                                                            )}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="absolute top-10 left-3">
                                                         <Badge
                                                             variant="default"
                                                             className={cn(
-                                                                "backdrop-blur-md border border-border/50 font-mono text-xs",
-                                                                item.status === "AVAILABLE" &&
-                                                                    item.availableQuantity > 0
-                                                                    ? "bg-green-500 hover:bg-green-600"
-                                                                    : "bg-primary"
+                                                                "border border-border/50 font-mono text-xs"
                                                             )}
                                                         >
-                                                            {item.availableQuantity < 1 &&
-                                                            item.status === "AVAILABLE"
-                                                                ? "Out of Stock"
-                                                                : item.status}
+                                                            {item.type === "asset" && (
+                                                                <>{item.tracking_method}</>
+                                                            )}
                                                         </Badge>
                                                     </div>
-                                                )}
 
-                                                {/* Item Count for Collections */}
-                                                {item.type === "collection" && (
-                                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs"
-                                                        >
-                                                            {item.itemCount}{" "}
-                                                            {item.itemCount === 1
-                                                                ? "item"
-                                                                : "items"}
-                                                        </Badge>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs"
-                                                        >
-                                                            Customizable
-                                                        </Badge>
-                                                    </div>
-                                                )}
+                                                    {/* Availability & Condition Badges */}
+                                                    {item.type === "asset" && (
+                                                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                                            {/* Condition Badge */}
+                                                            {item.condition &&
+                                                                item.condition !== "GREEN" && (
+                                                                    <Badge
+                                                                        variant={
+                                                                            item.condition === "RED"
+                                                                                ? "destructive"
+                                                                                : "default"
+                                                                        }
+                                                                        className={`backdrop-blur-md border border-border/50 font-mono text-xs ${
+                                                                            item.condition ===
+                                                                            "ORANGE"
+                                                                                ? "bg-orange-500 hover:bg-orange-600"
+                                                                                : ""
+                                                                        }`}
+                                                                    >
+                                                                        {item.condition ===
+                                                                        "RED" ? (
+                                                                            <>
+                                                                                <AlertCircle className="w-3 h-3 mr-1.5" />
+                                                                                Damaged
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <AlertCircle className="w-3 h-3 mr-1.5" />
+                                                                                Minor Issues
+                                                                            </>
+                                                                        )}
+                                                                    </Badge>
+                                                                )}
+                                                            {/* Availability Badge */}
 
-                                                {/* Hover Overlay with Quick Add */}
-                                                {item.type === "asset" &&
-                                                    item.status === "AVAILABLE" &&
-                                                    item.availableQuantity > 0 && (
-                                                        <div className="absolute inset-0 bg-linear-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                                                            <Button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleAddToCart(item, 1);
-                                                                }}
-                                                                className="font-mono uppercase tracking-wide gap-2 shadow-lg"
-                                                                size="sm"
+                                                            <Badge
+                                                                variant="default"
+                                                                className={cn(
+                                                                    "backdrop-blur-md border border-border/50 font-mono text-xs",
+                                                                    item.status === "AVAILABLE" &&
+                                                                        item.availableQuantity > 0
+                                                                        ? "bg-green-500 hover:bg-green-600"
+                                                                        : "bg-primary"
+                                                                )}
                                                             >
-                                                                <Plus className="w-4 h-4" />
-                                                                Quick Add
-                                                            </Button>
+                                                                {item.availableQuantity < 1 &&
+                                                                item.status === "AVAILABLE"
+                                                                    ? "Out of Stock"
+                                                                    : item.status}
+                                                            </Badge>
                                                         </div>
                                                     )}
-                                            </div>
 
-                                            {/* Content */}
-                                            <CardContent className="p-4 space-y-2.5">
-                                                <div>
-                                                    <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                                                        {item.name}
-                                                    </h3>
-                                                    {item.description && (
-                                                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                                                            {item.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Tags & Condition Info */}
-                                                <div className="space-y-2">
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {item.brand && (
+                                                    {/* Item Count for Collections */}
+                                                    {item.type === "collection" && (
+                                                        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
                                                             <Badge
                                                                 variant="outline"
-                                                                className="gap-1.5 font-mono text-xs border-border/50"
+                                                                className="backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs"
                                                             >
-                                                                <Tag className="w-3 h-3" />
-                                                                {item.brand.name}
+                                                                {item.itemCount}{" "}
+                                                                {item.itemCount === 1
+                                                                    ? "item"
+                                                                    : "items"}
                                                             </Badge>
-                                                        )}
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="font-mono text-xs border-border/50"
-                                                        >
-                                                            {item.category}
-                                                        </Badge>
-                                                    </div>
-
-                                                    {/* Refurb Estimate for Damaged Items */}
-                                                    {item.type === "asset" &&
-                                                        item.refurbDaysEstimate && (
-                                                            <div className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded border border-border/30">
-                                                                🔧 Refurb: ~
-                                                                {item.refurbDaysEstimate} days
-                                                            </div>
-                                                        )}
-                                                </div>
-
-                                                {/* Dimensions (for assets) */}
-                                                {item.type === "asset" && (
-                                                    <div className="pt-2 mt-2 border-t border-border/30">
-                                                        <div className="grid grid-cols-5 gap-1.5 text-xs">
-                                                            <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
-                                                                <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
-                                                                    L
-                                                                </div>
-                                                                <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionLength
-                                                                    ).toFixed(0)}
-                                                                </div>
-                                                                <div className="text-[8px] text-muted-foreground">
-                                                                    cm
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
-                                                                <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
-                                                                    W
-                                                                </div>
-                                                                <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionWidth
-                                                                    ).toFixed(0)}
-                                                                </div>
-                                                                <div className="text-[8px] text-muted-foreground">
-                                                                    cm
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
-                                                                <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
-                                                                    H
-                                                                </div>
-                                                                <div className="font-bold font-mono text-xs">
-                                                                    {Number(
-                                                                        item.dimensionHeight
-                                                                    ).toFixed(0)}
-                                                                </div>
-                                                                <div className="text-[8px] text-muted-foreground">
-                                                                    cm
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-center p-1.5 bg-primary/10 rounded-md border border-primary/30">
-                                                                <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
-                                                                    WT
-                                                                </div>
-                                                                <div className="font-bold font-mono text-xs text-primary">
-                                                                    {Number(item.weight).toFixed(1)}
-                                                                </div>
-                                                                <div className="text-[8px] text-primary/70">
-                                                                    kg
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-center p-1.5 bg-secondary/10 rounded-md border border-secondary/30">
-                                                                <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
-                                                                    VOL
-                                                                </div>
-                                                                <div className="font-bold font-mono text-xs">
-                                                                    {Number(item.volume).toFixed(2)}
-                                                                </div>
-                                                                <div className="text-[8px] text-secondary/70">
-                                                                    m³
-                                                                </div>
-                                                            </div>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="backdrop-blur-md bg-background/90 border border-border/50 font-mono text-xs"
+                                                            >
+                                                                Customizable
+                                                            </Badge>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                {/* Actions */}
-                                                <div className="pt-2">
-                                                    {item.type === "asset" ? (
-                                                        item.availableQuantity > 0 &&
-                                                        item.status === "AVAILABLE" ? (
-                                                            <div className="space-y-2">
+                                                    {/* Hover Overlay with Quick Add */}
+                                                    {item.type === "asset" &&
+                                                        item.status === "AVAILABLE" &&
+                                                        item.availableQuantity > 0 && (
+                                                            <div className="absolute inset-0 bg-linear-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                                                                 <Button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleAddToCart(item, 1);
                                                                     }}
-                                                                    variant="outline"
-                                                                    className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                                                    className="font-mono uppercase tracking-wide gap-2 shadow-lg"
+                                                                    size="sm"
                                                                 >
-                                                                    <ShoppingCart className="w-4 h-4" />
-                                                                    Add to Cart
-                                                                </Button>
-                                                                <Button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleAddWithRebrand(item);
-                                                                    }}
-                                                                    variant="outline"
-                                                                    className="w-full gap-2 font-mono hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all"
-                                                                >
-                                                                    <RefreshCw className="w-4 h-4" />
-                                                                    Add with Rebranding
+                                                                    <Plus className="w-4 h-4" />
+                                                                    Quick Add
                                                                 </Button>
                                                             </div>
+                                                        )}
+                                                </div>
+
+                                                {/* Content */}
+                                                <CardContent className="p-4 space-y-2.5">
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-1">
+                                                            {item.name}
+                                                        </h3>
+                                                        {item.description && (
+                                                            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Tags & Condition Info */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {item.brand && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="gap-1.5 font-mono text-xs border-border/50"
+                                                                >
+                                                                    <Tag className="w-3 h-3" />
+                                                                    {item.brand.name}
+                                                                </Badge>
+                                                            )}
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="font-mono text-xs border-border/50"
+                                                            >
+                                                                {item.category}
+                                                            </Badge>
+                                                        </div>
+
+                                                        {/* Refurb Estimate for Damaged Items */}
+                                                        {item.type === "asset" &&
+                                                            item.refurbDaysEstimate && (
+                                                                <div className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded border border-border/30">
+                                                                    🔧 Refurb: ~
+                                                                    {item.refurbDaysEstimate} days
+                                                                </div>
+                                                            )}
+                                                    </div>
+
+                                                    {/* Dimensions (for assets) */}
+                                                    {item.type === "asset" && (
+                                                        <div className="pt-2 mt-2 border-t border-border/30">
+                                                            <div className="grid grid-cols-5 gap-1.5 text-xs">
+                                                                <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
+                                                                    <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
+                                                                        L
+                                                                    </div>
+                                                                    <div className="font-bold font-mono text-xs">
+                                                                        {Number(
+                                                                            item.dimensionLength
+                                                                        ).toFixed(0)}
+                                                                    </div>
+                                                                    <div className="text-[8px] text-muted-foreground">
+                                                                        cm
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
+                                                                    <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
+                                                                        W
+                                                                    </div>
+                                                                    <div className="font-bold font-mono text-xs">
+                                                                        {Number(
+                                                                            item.dimensionWidth
+                                                                        ).toFixed(0)}
+                                                                    </div>
+                                                                    <div className="text-[8px] text-muted-foreground">
+                                                                        cm
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-center p-1.5 bg-muted/50 rounded-md border border-border/40">
+                                                                    <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
+                                                                        H
+                                                                    </div>
+                                                                    <div className="font-bold font-mono text-xs">
+                                                                        {Number(
+                                                                            item.dimensionHeight
+                                                                        ).toFixed(0)}
+                                                                    </div>
+                                                                    <div className="text-[8px] text-muted-foreground">
+                                                                        cm
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-center p-1.5 bg-primary/10 rounded-md border border-primary/30">
+                                                                    <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
+                                                                        WT
+                                                                    </div>
+                                                                    <div className="font-bold font-mono text-xs text-primary">
+                                                                        {Number(
+                                                                            item.weight
+                                                                        ).toFixed(1)}
+                                                                    </div>
+                                                                    <div className="text-[8px] text-primary/70">
+                                                                        kg
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-center p-1.5 bg-secondary/10 rounded-md border border-secondary/30">
+                                                                    <div className="text-[9px] text-muted-foreground uppercase font-mono mb-0.5">
+                                                                        VOL
+                                                                    </div>
+                                                                    <div className="font-bold font-mono text-xs">
+                                                                        {Number(
+                                                                            item.volume
+                                                                        ).toFixed(2)}
+                                                                    </div>
+                                                                    <div className="text-[8px] text-secondary/70">
+                                                                        m³
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Actions */}
+                                                    <div className="pt-2">
+                                                        {item.type === "asset" ? (
+                                                            item.availableQuantity > 0 &&
+                                                            item.status === "AVAILABLE" ? (
+                                                                <div className="space-y-2">
+                                                                    <Button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleAddToCart(
+                                                                                item,
+                                                                                1
+                                                                            );
+                                                                        }}
+                                                                        variant="outline"
+                                                                        className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                                                    >
+                                                                        <ShoppingCart className="w-4 h-4" />
+                                                                        Add to Cart
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleAddWithRebrand(
+                                                                                item
+                                                                            );
+                                                                        }}
+                                                                        variant="outline"
+                                                                        className="w-full gap-2 font-mono hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all"
+                                                                    >
+                                                                        <RefreshCw className="w-4 h-4" />
+                                                                        Add with Rebranding
+                                                                    </Button>
+                                                                </div>
+                                                            ) : (
+                                                                <Button
+                                                                    disabled
+                                                                    variant="outline"
+                                                                    className="w-full gap-2 font-mono"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                    {item.availableQuantity < 1
+                                                                        ? "Out of Stock"
+                                                                        : getAssetStatusText(
+                                                                              item.status
+                                                                          )}
+                                                                </Button>
+                                                            )
                                                         ) : (
                                                             <Button
-                                                                disabled
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedItem(item);
+                                                                }}
                                                                 variant="outline"
-                                                                className="w-full gap-2 font-mono"
+                                                                className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                                                             >
-                                                                <XCircle className="w-4 h-4" />
-                                                                {item.availableQuantity < 1
-                                                                    ? "Out of Stock"
-                                                                    : getAssetStatusText(
-                                                                          item.status
-                                                                      )}
+                                                                <Layers className="w-4 h-4" />
+                                                                View Collection
                                                             </Button>
-                                                        )
-                                                    ) : (
-                                                        <Button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedItem(item);
-                                                            }}
-                                                            variant="outline"
-                                                            className="w-full gap-2 font-mono hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
-                                                        >
-                                                            <Layers className="w-4 h-4" />
-                                                            View Collection
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </CardContent>
+                                                        )}
+                                                    </div>
+                                                </CardContent>
+                                            </Link>
                                         </Card>
                                     </motion.div>
                                 ))}
@@ -804,227 +834,258 @@ function CatalogPageInner() {
                                             duration: 0.3,
                                         }}
                                     >
-                                        <Card className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30">
-                                            <CardContent className="p-6">
-                                                <div className="flex gap-6">
-                                                    {/* Thumbnail */}
-                                                    <div
-                                                        className="w-40 h-40 rounded-lg overflow-hidden border border-border shrink-0 bg-muted cursor-pointer"
-                                                        onClick={() => setSelectedItem(item)}
-                                                    >
-                                                        {item.images.length > 0 ? (
-                                                            <Image
-                                                                src={item.images[0]}
-                                                                alt={item.name}
-                                                                width={160}
-                                                                height={160}
-                                                                className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-linear-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                                                                {item.type === "collection" ? (
-                                                                    <Layers className="w-16 h-16 text-muted-foreground/20" />
-                                                                ) : (
-                                                                    <Package className="w-16 h-16 text-muted-foreground/20" />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                        <Card className="overflow-hidden hover:shadow-lg transition-all group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 relative">
+                                            {/* Eye icon for quick preview */}
+                                            <Button
+                                                size="icon"
+                                                variant="secondary"
+                                                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setSelectedItem(item);
+                                                }}
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
 
-                                                    {/* Details */}
-                                                    <div className="flex-1 flex flex-col">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-start justify-between mb-3">
-                                                                <div className="flex-1 min-w-0">
-                                                                    <h3
-                                                                        className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors cursor-pointer"
-                                                                        onClick={() =>
-                                                                            setSelectedItem(item)
-                                                                        }
-                                                                    >
-                                                                        {item.name}
-                                                                    </h3>
-                                                                    {item.description && (
-                                                                        <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl leading-relaxed">
-                                                                            {item.description}
-                                                                        </p>
+                                            <Link
+                                                href={`/catalog/assets/${item.id}`}
+                                                className="block"
+                                            >
+                                                <CardContent className="p-6">
+                                                    <div className="flex gap-6">
+                                                        {/* Thumbnail */}
+                                                        <div className="w-40 h-40 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                            {item.images.length > 0 ? (
+                                                                <Image
+                                                                    src={item.images[0]}
+                                                                    alt={item.name}
+                                                                    width={160}
+                                                                    height={160}
+                                                                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-linear-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                                                                    {item.type === "collection" ? (
+                                                                        <Layers className="w-16 h-16 text-muted-foreground/20" />
+                                                                    ) : (
+                                                                        <Package className="w-16 h-16 text-muted-foreground/20" />
                                                                     )}
                                                                 </div>
+                                                            )}
+                                                        </div>
 
-                                                                <Badge
-                                                                    variant={
-                                                                        item.type === "collection"
-                                                                            ? "default"
-                                                                            : "secondary"
-                                                                    }
-                                                                    className="ml-4 font-mono"
-                                                                >
-                                                                    {item.type === "collection" ? (
-                                                                        <>
-                                                                            <Layers className="w-3 h-3 mr-1.5" />
-                                                                            Collection
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <Package className="w-3 h-3 mr-1.5" />
-                                                                            Asset
-                                                                        </>
-                                                                    )}
-                                                                </Badge>
-                                                            </div>
+                                                        {/* Details */}
+                                                        <div className="flex-1 flex flex-col">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-start justify-between mb-3">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <h3
+                                                                            className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors cursor-pointer"
+                                                                            onClick={() =>
+                                                                                setSelectedItem(
+                                                                                    item
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {item.name}
+                                                                        </h3>
+                                                                        {item.description && (
+                                                                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl leading-relaxed">
+                                                                                {item.description}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
 
-                                                            {/* Tags and Specs */}
-                                                            <div className="space-y-3 mt-4">
-                                                                <div className="flex flex-wrap items-center gap-2">
-                                                                    {item.brand && (
+                                                                    <Badge
+                                                                        variant={
+                                                                            item.type ===
+                                                                            "collection"
+                                                                                ? "default"
+                                                                                : "secondary"
+                                                                        }
+                                                                        className="ml-4 font-mono"
+                                                                    >
+                                                                        {item.type ===
+                                                                        "collection" ? (
+                                                                            <>
+                                                                                <Layers className="w-3 h-3 mr-1.5" />
+                                                                                Collection
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Package className="w-3 h-3 mr-1.5" />
+                                                                                Asset
+                                                                            </>
+                                                                        )}
+                                                                    </Badge>
+                                                                </div>
+
+                                                                {/* Tags and Specs */}
+                                                                <div className="space-y-3 mt-4">
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        {item.brand && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="gap-1.5 font-mono border-border/50"
+                                                                            >
+                                                                                <Tag className="w-3 h-3" />
+                                                                                {item.brand.name}
+                                                                            </Badge>
+                                                                        )}
                                                                         <Badge
                                                                             variant="outline"
-                                                                            className="gap-1.5 font-mono border-border/50"
+                                                                            className="font-mono border-border/50"
                                                                         >
-                                                                            <Tag className="w-3 h-3" />
-                                                                            {item.brand.name}
+                                                                            {item.category}
                                                                         </Badge>
-                                                                    )}
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="font-mono border-border/50"
-                                                                    >
-                                                                        {item.category}
-                                                                    </Badge>
 
-                                                                    {item.type === "asset" ? (
-                                                                        <Badge
-                                                                            variant={
-                                                                                item.availableQuantity >
-                                                                                0
-                                                                                    ? "default"
-                                                                                    : "destructive"
-                                                                            }
-                                                                            className="font-mono"
-                                                                        >
-                                                                            {item.availableQuantity >
-                                                                            0 ? (
-                                                                                <>
-                                                                                    <CheckCircle className="w-3 h-3 mr-1.5" />
-                                                                                    {
-                                                                                        item.availableQuantity
-                                                                                    }{" "}
-                                                                                    Available
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <XCircle className="w-3 h-3 mr-1.5" />
-                                                                                    Out of Stock
-                                                                                </>
-                                                                            )}
-                                                                        </Badge>
-                                                                    ) : (
-                                                                        <Badge
-                                                                            variant="secondary"
-                                                                            className="font-mono"
-                                                                        >
-                                                                            {item.itemCount}{" "}
-                                                                            {item.itemCount === 1
-                                                                                ? "item"
-                                                                                : "items"}
-                                                                        </Badge>
+                                                                        {item.type === "asset" ? (
+                                                                            <Badge
+                                                                                variant={
+                                                                                    item.availableQuantity >
+                                                                                    0
+                                                                                        ? "default"
+                                                                                        : "destructive"
+                                                                                }
+                                                                                className="font-mono"
+                                                                            >
+                                                                                {item.availableQuantity >
+                                                                                0 ? (
+                                                                                    <>
+                                                                                        <CheckCircle className="w-3 h-3 mr-1.5" />
+                                                                                        {
+                                                                                            item.availableQuantity
+                                                                                        }{" "}
+                                                                                        Available
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <XCircle className="w-3 h-3 mr-1.5" />
+                                                                                        Out of Stock
+                                                                                    </>
+                                                                                )}
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className="font-mono"
+                                                                            >
+                                                                                {item.itemCount}{" "}
+                                                                                {item.itemCount ===
+                                                                                1
+                                                                                    ? "item"
+                                                                                    : "items"}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Dimensions Grid (for assets) */}
+                                                                    {item.type === "asset" && (
+                                                                        <div className="grid grid-cols-5 gap-2 max-w-md">
+                                                                            <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
+                                                                                <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
+                                                                                    Length
+                                                                                </div>
+                                                                                <div className="font-bold font-mono text-sm">
+                                                                                    {Number(
+                                                                                        item.dimensionLength
+                                                                                    ).toFixed(
+                                                                                        0
+                                                                                    )}{" "}
+                                                                                    cm
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
+                                                                                <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
+                                                                                    Width
+                                                                                </div>
+                                                                                <div className="font-bold font-mono text-sm">
+                                                                                    {Number(
+                                                                                        item.dimensionWidth
+                                                                                    ).toFixed(
+                                                                                        0
+                                                                                    )}{" "}
+                                                                                    cm
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
+                                                                                <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
+                                                                                    Height
+                                                                                </div>
+                                                                                <div className="font-bold font-mono text-sm">
+                                                                                    {Number(
+                                                                                        item.dimensionHeight
+                                                                                    ).toFixed(
+                                                                                        0
+                                                                                    )}{" "}
+                                                                                    cm
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-center p-2 bg-primary/10 rounded border border-primary/20">
+                                                                                <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
+                                                                                    Weight
+                                                                                </div>
+                                                                                <div className="font-bold font-mono text-sm text-primary">
+                                                                                    {Number(
+                                                                                        item.weight
+                                                                                    ).toFixed(
+                                                                                        1
+                                                                                    )}{" "}
+                                                                                    kg
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-center p-2 bg-secondary/10 rounded border border-secondary/20">
+                                                                                <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
+                                                                                    Volume
+                                                                                </div>
+                                                                                <div className="font-bold font-mono text-sm text-secondary">
+                                                                                    {Number(
+                                                                                        item.volume
+                                                                                    ).toFixed(
+                                                                                        2
+                                                                                    )}{" "}
+                                                                                    m³
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                     )}
                                                                 </div>
+                                                            </div>
 
-                                                                {/* Dimensions Grid (for assets) */}
-                                                                {item.type === "asset" && (
-                                                                    <div className="grid grid-cols-5 gap-2 max-w-md">
-                                                                        <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
-                                                                            <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
-                                                                                Length
-                                                                            </div>
-                                                                            <div className="font-bold font-mono text-sm">
-                                                                                {Number(
-                                                                                    item.dimensionLength
-                                                                                ).toFixed(0)}{" "}
-                                                                                cm
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
-                                                                            <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
-                                                                                Width
-                                                                            </div>
-                                                                            <div className="font-bold font-mono text-sm">
-                                                                                {Number(
-                                                                                    item.dimensionWidth
-                                                                                ).toFixed(0)}{" "}
-                                                                                cm
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="text-center p-2 bg-muted/50 rounded border border-border/30">
-                                                                            <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
-                                                                                Height
-                                                                            </div>
-                                                                            <div className="font-bold font-mono text-sm">
-                                                                                {Number(
-                                                                                    item.dimensionHeight
-                                                                                ).toFixed(0)}{" "}
-                                                                                cm
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="text-center p-2 bg-primary/10 rounded border border-primary/20">
-                                                                            <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
-                                                                                Weight
-                                                                            </div>
-                                                                            <div className="font-bold font-mono text-sm text-primary">
-                                                                                {Number(
-                                                                                    item.weight
-                                                                                ).toFixed(1)}{" "}
-                                                                                kg
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="text-center p-2 bg-secondary/10 rounded border border-secondary/20">
-                                                                            <div className="text-xs text-muted-foreground uppercase font-mono mb-0.5">
-                                                                                Volume
-                                                                            </div>
-                                                                            <div className="font-bold font-mono text-sm text-secondary">
-                                                                                {Number(
-                                                                                    item.volume
-                                                                                ).toFixed(2)}{" "}
-                                                                                m³
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
+                                                            {/* Action Button */}
+                                                            <div className="mt-4 flex gap-3">
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        setSelectedItem(item)
+                                                                    }
+                                                                    variant="outline"
+                                                                    className="flex-1 gap-2 font-mono"
+                                                                >
+                                                                    View Details
+                                                                </Button>
+                                                                {item.type === "asset" &&
+                                                                    item.availableQuantity > 0 && (
+                                                                        <Button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleAddToCart(
+                                                                                    item,
+                                                                                    1
+                                                                                );
+                                                                            }}
+                                                                            className="gap-2 font-mono"
+                                                                        >
+                                                                            <Plus className="w-4 h-4" />
+                                                                            Add to Cart
+                                                                        </Button>
+                                                                    )}
                                                             </div>
                                                         </div>
-
-                                                        {/* Action Button */}
-                                                        <div className="mt-4 flex gap-3">
-                                                            <Button
-                                                                onClick={() =>
-                                                                    setSelectedItem(item)
-                                                                }
-                                                                variant="outline"
-                                                                className="flex-1 gap-2 font-mono"
-                                                            >
-                                                                View Details
-                                                            </Button>
-                                                            {item.type === "asset" &&
-                                                                item.availableQuantity > 0 && (
-                                                                    <Button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleAddToCart(
-                                                                                item,
-                                                                                1
-                                                                            );
-                                                                        }}
-                                                                        className="gap-2 font-mono"
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                        Add to Cart
-                                                                    </Button>
-                                                                )}
-                                                        </div>
                                                     </div>
-                                                </div>
-                                            </CardContent>
+                                                </CardContent>
+                                            </Link>
                                         </Card>
                                     </motion.div>
                                 ))}
@@ -1279,6 +1340,74 @@ function CatalogPageInner() {
                                                     </div>
                                                 </div>
                                             )}
+                                    </div>
+                                )}
+
+                                {/* Condition & Maintenance Section (for assets only) */}
+                                {selectedItem.type === "asset" && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground font-mono flex items-center gap-2">
+                                            <Wrench className="w-4 h-4" />
+                                            Condition & Maintenance
+                                        </h3>
+                                        <div
+                                            className={`rounded-lg p-4 border ${
+                                                selectedItem.condition === "RED"
+                                                    ? "bg-destructive/10 border-destructive/30"
+                                                    : selectedItem.condition === "ORANGE"
+                                                      ? "bg-orange-500/10 border-orange-500/30"
+                                                      : "bg-green-500/10 border-green-500/30"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Badge
+                                                    className={`font-mono ${
+                                                        selectedItem.condition === "RED"
+                                                            ? "bg-destructive"
+                                                            : selectedItem.condition === "ORANGE"
+                                                              ? "bg-orange-500"
+                                                              : "bg-green-500"
+                                                    }`}
+                                                >
+                                                    {selectedItem.condition === "RED"
+                                                        ? "Damaged / In Maintenance"
+                                                        : selectedItem.condition === "ORANGE"
+                                                          ? "Minor Issues"
+                                                          : "Good Condition"}
+                                                </Badge>
+                                            </div>
+                                            {selectedItem.condition_notes && (
+                                                <p className="text-sm text-muted-foreground mb-2">
+                                                    {selectedItem.condition_notes}
+                                                </p>
+                                            )}
+                                            {selectedItem.refurbDaysEstimate &&
+                                                selectedItem.condition !== "GREEN" && (
+                                                    <p className="text-xs font-mono">
+                                                        Est. refurb time:{" "}
+                                                        <span className="font-bold">
+                                                            {selectedItem.refurbDaysEstimate} days
+                                                        </span>
+                                                    </p>
+                                                )}
+                                            {selectedItem.lastScannedAt && (
+                                                <p className="text-xs font-mono text-muted-foreground mt-2">
+                                                    Last scanned:{" "}
+                                                    {new Date(
+                                                        selectedItem.lastScannedAt
+                                                    ).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Link href={`/catalog/assets/${selectedItem.id}`}>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full font-mono gap-2"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                View Full Details
+                                            </Button>
+                                        </Link>
                                     </div>
                                 )}
 

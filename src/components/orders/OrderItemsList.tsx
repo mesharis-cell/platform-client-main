@@ -5,11 +5,13 @@
  * Displays the list of order items with dimensions, totals, and reskin status
  */
 
-import { Package, Paintbrush, CheckCircle2, XCircle } from "lucide-react";
+import { Package, Paintbrush, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Condition } from "@/types";
+import Image from "next/image";
+import Link from "next/link";
 
 interface ReskinList {
     id: string;
@@ -49,9 +51,11 @@ interface OrderItem {
     };
     asset?: {
         condition: Condition;
+        condition_notes?: string | null;
         id: string;
         name: string;
         refurbishment_days_estimate: number | null;
+        images?: string[];
     };
 }
 
@@ -206,34 +210,51 @@ const OrderItemCard = ({
     ];
 
     return (
-        <div className={`p-4 border rounded-lg transition-colors ${styles.containerClass}`}>
-            <div className="flex items-start gap-4">
-                <div className="text-xl font-bold font-mono text-muted-foreground w-8 shrink-0">
-                    {String(index + 1).padStart(2, "0")}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="font-semibold">{item.order_item.asset_name}</div>
-                        {status !== "none" && statusForReskin.includes(orderStatus) && (
-                            <Badge className={`font-mono text-[10px] gap-1 ${styles.badgeClass}`}>
-                                {status === "pending" && <Paintbrush className="w-3 h-3" />}
-                                {status === "completed" && <CheckCircle2 className="w-3 h-3" />}
-                                {status === "cancelled" && <XCircle className="w-3 h-3" />}
-                                {styles.badgeText}
-                            </Badge>
-                        )}
+        <Link href={`/catalog/assets/${item.asset.id}`} className="block">
+            <div
+                className={`p-4 border rounded-lg transition-colors hover:border-primary/50 ${styles.containerClass}`}
+            >
+                <div className="flex items-start gap-4">
+                    <div className="text-xl font-bold font-mono text-muted-foreground w-8 shrink-0">
+                        {String(index + 1).padStart(2, "0")}
                     </div>
-
-                    {/* Cancellation reason */}
-                    {status === "cancelled" && reskin?.cancellation_reason && (
-                        <div className="mb-2 p-2 bg-destructive/5 border border-destructive/20 rounded text-xs text-destructive">
-                            <span className="font-semibold">Reason:</span>{" "}
-                            {reskin.cancellation_reason}
+                    {/* Thumbnail */}
+                    {item.asset?.images && item.asset.images.length > 0 && (
+                        <div className="w-20 h-20 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                            <Image
+                                src={item.asset.images[0]}
+                                alt={item.order_item.asset_name}
+                                width={80}
+                                height={80}
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="font-semibold">{item.order_item.asset_name}</div>
+                            {status !== "none" && statusForReskin.includes(orderStatus) && (
+                                <Badge
+                                    className={`font-mono text-[10px] gap-1 ${styles.badgeClass}`}
+                                >
+                                    {status === "pending" && <Paintbrush className="w-3 h-3" />}
+                                    {status === "completed" && <CheckCircle2 className="w-3 h-3" />}
+                                    {status === "cancelled" && <XCircle className="w-3 h-3" />}
+                                    {styles.badgeText}
+                                </Badge>
+                            )}
+                        </div>
 
-                    {/* Compact dimensions */}
-                    {/* <div className="grid grid-cols-5 gap-2 mb-2">
+                        {/* Cancellation reason */}
+                        {status === "cancelled" && reskin?.cancellation_reason && (
+                            <div className="mb-2 p-2 bg-destructive/5 border border-destructive/20 rounded text-xs text-destructive">
+                                <span className="font-semibold">Reason:</span>{" "}
+                                {reskin.cancellation_reason}
+                            </div>
+                        )}
+
+                        {/* Compact dimensions */}
+                        {/* <div className="grid grid-cols-5 gap-2 mb-2">
             {item.asset?.dimension_length && (
               <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
                 <div className="text-[9px] text-muted-foreground font-mono uppercase">
@@ -307,39 +328,68 @@ const OrderItemCard = ({
             </div>
           </div> */}
 
-                    {/* Quantity line */}
-                    <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
-                        <span>
-                            Qty:{" "}
-                            <span className="font-bold text-foreground">
-                                {item.order_item.quantity}
+                        {/* Quantity line */}
+                        <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
+                            <span>
+                                Qty:{" "}
+                                <span className="font-bold text-foreground">
+                                    {item.order_item.quantity}
+                                </span>
                             </span>
-                        </span>
-                        <span>•</span>
-                        <span>
-                            Total:{" "}
-                            <span className="font-bold">
-                                {Number(item.order_item.total_volume).toFixed(2)} m³
+                            <span>•</span>
+                            <span>
+                                Total:{" "}
+                                <span className="font-bold">
+                                    {Number(item.order_item.total_volume).toFixed(2)} m³
+                                </span>
                             </span>
-                        </span>
-                        <span>•</span>
-                        <span>
-                            <span className="font-bold text-primary">
-                                {Number(item.order_item.total_weight).toFixed(1)} kg
+                            <span>•</span>
+                            <span>
+                                <span className="font-bold text-primary">
+                                    {Number(item.order_item.total_weight).toFixed(1)} kg
+                                </span>
                             </span>
-                        </span>
-                    </div>
-
-                    {item.asset.condition !== "GREEN" && statusForReskin.includes(orderStatus) && (
-                        <div className="mt-2 flex items-center gap-3 text-xs font-mono bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg p-2">
-                            <p>
-                                This assets is damaged. Estimated refurbishment{" "}
-                                {item.asset.refurbishment_days_estimate} days
-                            </p>
                         </div>
-                    )}
+
+                        {/* Condition section */}
+                        {item.asset && item.asset.condition !== "GREEN" && (
+                            <div
+                                className={`mt-2 rounded-lg p-3 border ${
+                                    item.asset.condition === "RED"
+                                        ? "bg-destructive/10 border-destructive/30"
+                                        : "bg-orange-500/10 border-orange-500/30"
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Badge
+                                        className={`font-mono text-xs ${
+                                            item.asset.condition === "RED"
+                                                ? "bg-destructive"
+                                                : "bg-orange-500"
+                                        }`}
+                                    >
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                        {item.asset.condition === "RED"
+                                            ? "Damaged"
+                                            : "Minor Issues"}
+                                    </Badge>
+                                    {item.asset.refurbishment_days_estimate && (
+                                        <span className="text-xs font-mono text-muted-foreground">
+                                            Est. {item.asset.refurbishment_days_estimate} days
+                                            refurb
+                                        </span>
+                                    )}
+                                </div>
+                                {item.asset.condition_notes && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {item.asset.condition_notes}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 };

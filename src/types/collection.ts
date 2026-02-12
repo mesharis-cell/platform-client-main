@@ -151,7 +151,9 @@ export interface CatalogAssetItem {
     availableQuantity: number;
     totalQuantity: number;
     condition: Condition;
+    condition_notes?: string | null;
     refurbDaysEstimate?: number | null; // Feedback #2: Days needed for refurbishment
+    lastScannedAt?: string | null;
     volume: string; // decimal as string
     weight: string; // decimal as string
     dimensionLength: string; // decimal as string (cm)
@@ -218,7 +220,9 @@ export interface CatalogAssetDetails {
     availableQuantity: number;
     totalQuantity: number;
     condition: Condition;
+    conditionNotes?: string | null;
     refurbDaysEstimate?: number | null; // Feedback #2: Days needed for refurbishment
+    lastScannedAt?: string | null;
     volume: string; // decimal as string
     weight: string; // decimal as string
     dimensionLength: string; // decimal as string
