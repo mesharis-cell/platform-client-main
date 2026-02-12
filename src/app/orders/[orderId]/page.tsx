@@ -202,8 +202,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isInUse ||
         isAwaitingReturn ||
         isClosed;
-    const showDeliveryTracking =
-        isInTransit || isDelivered || isInUse || isAwaitingReturn || isClosed;
     const isFulfillmentStage =
         isConfirmed ||
         isInPreparation ||
@@ -582,8 +580,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 </motion.div>
                             )}
 
-                            {/* Delivery Tracking Section */}
-                            {showDeliveryTracking && (
+                            {/* Order Status Timeline */}
+                            {order.order_status_history && order.order_status_history.length > 0 && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -591,181 +589,45 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 >
                                     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
                                         <div className="flex items-center gap-2 mb-6">
-                                            <Truck className="w-5 h-5 text-primary" />
+                                            <Clock className="w-5 h-5 text-primary" />
                                             <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
-                                                Delivery Status
+                                                Order Timeline
                                             </h3>
                                         </div>
 
-                                        {/* Delivery Timeline */}
-                                        <div className="space-y-4">
-                                            {/* Confirmed */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
-                                                        isAwaitingReturn ||
-                                                        isInUse ||
-                                                        isDelivered ||
-                                                        isInTransit ||
-                                                        isReadyForDelivery ||
-                                                        isInPreparation ||
-                                                        isConfirmed
-                                                        ? "bg-green-500 text-white"
-                                                        : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <CheckCircle2 className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">Order Confirmed</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Items reserved for your event
-                                                    </p>
-                                                </div>
-                                            </div>
+                                        <div className="space-y-1 relative">
+                                            {[...order.order_status_history]
+                                                .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                                                .map((entry: any, index: number) => {
+                                                    const isFirst = index === 0;
+                                                    const label = entry.status_label || entry.status;
+                                                    const ts = new Date(entry.timestamp);
 
-                                            {/* In Preparation */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
-                                                        isAwaitingReturn ||
-                                                        isInUse ||
-                                                        isDelivered ||
-                                                        isInTransit ||
-                                                        isReadyForDelivery ||
-                                                        isInPreparation
-                                                        ? "bg-green-500 text-white"
-                                                        : isConfirmed
-                                                            ? "bg-primary text-white animate-pulse"
-                                                            : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <BoxIcon className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">Preparing Items</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Gathering from warehouse
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* In Transit */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
-                                                        isAwaitingReturn ||
-                                                        isInUse ||
-                                                        isDelivered ||
-                                                        isInTransit
-                                                        ? "bg-green-500 text-white"
-                                                        : isReadyForDelivery
-                                                            ? "bg-primary text-white animate-pulse"
-                                                            : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <Truck className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">In Transit</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        On the way to venue
-                                                    </p>
-                                                    {order.delivery_window?.start &&
-                                                        (isInTransit || isReadyForDelivery) && (
-                                                            <p className="text-xs font-mono text-primary mt-1">
-                                                                ETA:{" "}
-                                                                {new Date(
-                                                                    order.delivery_window?.start
-                                                                ).toLocaleDateString()}{" "}
-                                                                {new Date(
-                                                                    order.delivery_window?.start
-                                                                ).toLocaleTimeString([], {
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit",
-                                                                })}
-                                                            </p>
-                                                        )}
-                                                </div>
-                                            </div>
-
-                                            {/* Delivered */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed ||
-                                                        isAwaitingReturn ||
-                                                        isInUse ||
-                                                        isDelivered
-                                                        ? "bg-green-500 text-white"
-                                                        : isInTransit
-                                                            ? "bg-primary text-white animate-pulse"
-                                                            : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <CheckCircle2 className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">Delivered</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Items at venue
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Event Complete / Awaiting Return */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed || isAwaitingReturn
-                                                        ? "bg-green-500 text-white"
-                                                        : isInUse
-                                                            ? "bg-primary text-white animate-pulse"
-                                                            : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <Clock className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">Awaiting Pickup</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Items ready for return
-                                                    </p>
-                                                    {order.pickup_window?.start &&
-                                                        (isAwaitingReturn || isInUse) && (
-                                                            <p className="text-xs font-mono text-primary mt-1">
-                                                                Pickup:{" "}
-                                                                {new Date(
-                                                                    order.pickup_window?.start
-                                                                ).toLocaleDateString()}{" "}
-                                                                {new Date(
-                                                                    order.pickup_window?.start
-                                                                ).toLocaleTimeString([], {
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit",
-                                                                })}
-                                                            </p>
-                                                        )}
-                                                </div>
-                                            </div>
-
-                                            {/* Completed */}
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isClosed
-                                                        ? "bg-green-500 text-white"
-                                                        : isAwaitingReturn
-                                                            ? "bg-primary text-white animate-pulse"
-                                                            : "bg-muted text-muted-foreground"
-                                                        }`}
-                                                >
-                                                    <Archive className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">Order Complete</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        All items returned
-                                                    </p>
-                                                </div>
-                                            </div>
+                                                    return (
+                                                        <div key={entry.id || index} className="flex gap-3 py-2">
+                                                            <div className="flex flex-col items-center">
+                                                                <div
+                                                                    className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
+                                                                        isFirst
+                                                                            ? "bg-primary ring-4 ring-primary/20"
+                                                                            : "bg-muted-foreground/40"
+                                                                    }`}
+                                                                />
+                                                                {index < order.order_status_history.length - 1 && (
+                                                                    <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 pb-2">
+                                                                <p className={`text-sm font-semibold font-mono ${isFirst ? "text-primary" : "text-muted-foreground"}`}>
+                                                                    {label}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                                    {ts.toLocaleDateString()} {ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                         </div>
                                     </Card>
                                 </motion.div>

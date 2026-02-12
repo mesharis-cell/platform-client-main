@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCatalogAsset } from "@/hooks/use-catalog";
+import { useCatalogAsset, useAssetVersions } from "@/hooks/use-catalog";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const asset = data?.asset;
+    const { data: versions } = useAssetVersions(asset?.id || null);
 
     const handleAddToCart = async (rebrandData?: any) => {
         if (!asset) return;
@@ -399,6 +400,47 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                             )}
                         </div>
                     </div>
+
+                    {/* Version History */}
+                    {versions && versions.length > 0 && (
+                        <div className="mt-8">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4">
+                                        Version History
+                                    </h3>
+                                    <div className="space-y-1 relative">
+                                        {versions.map((v: any, idx: number) => {
+                                            const snap = v.snapshot || {};
+                                            const isFirst = idx === 0;
+                                            return (
+                                                <div key={v.id} className="flex gap-3 py-2">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isFirst ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/40"}`} />
+                                                        {idx < versions.length - 1 && <div className="w-px flex-1 bg-border min-h-[20px]" />}
+                                                    </div>
+                                                    <div className="flex-1 pb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-mono font-bold text-muted-foreground">v{v.version_number}</span>
+                                                            <span className="text-sm font-semibold">{v.reason}</span>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                                            {new Date(v.created_at).toLocaleDateString()} {new Date(v.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                        </p>
+                                                        {snap.images?.[0] && (
+                                                            <div className="mt-2 w-16 h-12 rounded overflow-hidden bg-muted">
+                                                                <img src={snap.images[0]} alt="Snapshot" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                 </div>
             </div>
         </ClientNav>
