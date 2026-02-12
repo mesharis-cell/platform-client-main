@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { PlatformProvider } from "@/contexts/platform-context";
 import { AuthProvider } from "@/contexts/user-context";
+import { CartProvider } from "@/contexts/cart-context";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     const [queryClient] = useState(
@@ -28,20 +29,22 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <PlatformProvider>
                 <AuthProvider>
                     <QueryClientProvider client={queryClient}>
-                        <ThemeProvider
-                            attribute="class"
-                            defaultTheme="light"
-                            enableSystem
-                            disableTransitionOnChange
-                        >
-                            <NextTopLoader
-                                easing="ease"
-                                showSpinner={false}
-                                color="var(--primary)"
-                            />
-                            {children}
-                            <Toaster position="top-center" richColors />
-                        </ThemeProvider>
+                        <CartProvider>
+                            <ThemeProvider
+                                attribute="class"
+                                defaultTheme="light"
+                                enableSystem
+                                disableTransitionOnChange
+                            >
+                                <NextTopLoader
+                                    easing="ease"
+                                    showSpinner={false}
+                                    color="var(--primary)"
+                                />
+                                {children}
+                                <Toaster position="top-center" richColors />
+                            </ThemeProvider>
+                        </CartProvider>
                     </QueryClientProvider>
                 </AuthProvider>
             </PlatformProvider>
