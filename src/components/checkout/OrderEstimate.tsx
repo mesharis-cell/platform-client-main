@@ -32,7 +32,8 @@ export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps)
             {/* Transport */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Transport ({estimate.transport.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
+                    Transport (
+                    {estimate.transport.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
                 </span>
                 <span className="font-mono">{transportSubtotal.toFixed(2)} AED</span>
             </div>
@@ -42,9 +43,7 @@ export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps)
             {/* Subtotal */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-mono font-semibold">
-                    {totalEstimate.toFixed(2)} AED
-                </span>
+                <span className="font-mono font-semibold">{totalEstimate.toFixed(2)} AED</span>
             </div>
 
             {/* Margin (Service Fee) */}

@@ -43,7 +43,9 @@ async function fetchInboundRequest(id: string): Promise<InboundRequestDetailsRes
 }
 
 // Create inbound request
-async function createInboundRequest(data: CreateInboundRequestPayload): Promise<InboundRequestList> {
+async function createInboundRequest(
+    data: CreateInboundRequestPayload
+): Promise<InboundRequestList> {
     try {
         const response = await apiClient.post(`/client/v1/inbound-request`, data);
         return response.data;
@@ -68,10 +70,13 @@ async function updateInboundRequest(
 async function approveOrDeclineQuote(
     id: string,
     status: "DECLINED" | "CONFIRMED",
-    note?: string,
+    note?: string
 ): Promise<InboundRequestList> {
     try {
-        const response = await apiClient.post(`/client/v1/inbound-request/${id}/approve-or-decline-quote`, { status, note });
+        const response = await apiClient.post(
+            `/client/v1/inbound-request/${id}/approve-or-decline-quote`,
+            { status, note }
+        );
         return response.data;
     } catch (error) {
         throwApiError(error);
@@ -158,7 +163,6 @@ export function useApproveOrDeclineQuote() {
     });
 }
 
-
 export function useDeleteInboundRequest() {
     const queryClient = useQueryClient();
 
@@ -171,11 +175,20 @@ export function useDeleteInboundRequest() {
 }
 
 // Download Cost Estimate
-async function downloadInboundCostEstimate({ id, platformId }: { id: string; platformId: string }): Promise<Blob> {
+async function downloadInboundCostEstimate({
+    id,
+    platformId,
+}: {
+    id: string;
+    platformId: string;
+}): Promise<Blob> {
     try {
-        const response = await apiClient.get(`/client/v1/invoice/download-ir-cost-estimate-pdf/${id}?pid=${platformId}`, {
-            responseType: "blob",
-        });
+        const response = await apiClient.get(
+            `/client/v1/invoice/download-ir-cost-estimate-pdf/${id}?pid=${platformId}`,
+            {
+                responseType: "blob",
+            }
+        );
         return response.data;
     } catch (error) {
         throwApiError(error);
@@ -189,12 +202,21 @@ export function useDownloadInboundCostEstimate() {
 }
 
 // Download Invoice
-async function downloadInboundInvoice({ invoiceId, platformId }: { invoiceId: string; platformId: string }): Promise<Blob> {
+async function downloadInboundInvoice({
+    invoiceId,
+    platformId,
+}: {
+    invoiceId: string;
+    platformId: string;
+}): Promise<Blob> {
     try {
         // Shared endpoint with Orders
-        const response = await apiClient.get(`/client/v1/invoice/download-pdf/${invoiceId}?pid=${platformId}`, {
-            responseType: "blob",
-        });
+        const response = await apiClient.get(
+            `/client/v1/invoice/download-pdf/${invoiceId}?pid=${platformId}`,
+            {
+                responseType: "blob",
+            }
+        );
         return response.data;
     } catch (error) {
         throwApiError(error);

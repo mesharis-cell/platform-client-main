@@ -21,9 +21,7 @@ export const assetKeys = {
 };
 
 // Fetch assets list
-async function fetchAssets(
-    params?: Record<string, string>
-): Promise<AssetsListResponse> {
+async function fetchAssets(params?: Record<string, string>): Promise<AssetsListResponse> {
     const searchParams = new URLSearchParams(params);
     try {
         const response = await apiClient.get(`/operations/v1/asset?${searchParams}`);

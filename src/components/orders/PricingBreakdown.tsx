@@ -31,14 +31,18 @@ export function PricingBreakdown({
 
     const marginAmount = pricing?.margin?.percent;
 
-    const basePrice = Number(pricing?.base_ops_total) + (Number(pricing?.base_ops_total) * (marginAmount / 100));
-    const transportPrice = Number(pricing?.transport.final_rate) + (Number(pricing?.transport.final_rate) * (marginAmount / 100));
-    const catalogPrice = Number(pricing?.line_items?.catalog_total) + (Number(pricing?.line_items?.catalog_total) * (marginAmount / 100));
-    const customPrice = Number(pricing?.line_items?.custom_total)
+    const basePrice =
+        Number(pricing?.base_ops_total) + Number(pricing?.base_ops_total) * (marginAmount / 100);
+    const transportPrice =
+        Number(pricing?.transport.final_rate) +
+        Number(pricing?.transport.final_rate) * (marginAmount / 100);
+    const catalogPrice =
+        Number(pricing?.line_items?.catalog_total) +
+        Number(pricing?.line_items?.catalog_total) * (marginAmount / 100);
+    const customPrice = Number(pricing?.line_items?.custom_total);
 
     const servicePrice = catalogPrice + customPrice;
     const total = basePrice + transportPrice + servicePrice;
-
 
     return (
         <div className="border border-border rounded-lg p-6 space-y-4">
@@ -84,9 +88,7 @@ export function PricingBreakdown({
 
             {/* Margin (Service Fee) */}
             <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                    Service Fee (Including Reskin)
-                </span>
+                <span className="text-muted-foreground">Service Fee (Including Reskin)</span>
                 <span className="font-mono">{servicePrice.toFixed(2)} AED</span>
             </div>
 

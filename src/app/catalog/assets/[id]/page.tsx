@@ -145,7 +145,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                             onClick={() =>
                                                 setSelectedImageIndex(
                                                     (selectedImageIndex - 1 + asset.images.length) %
-                                                    asset.images.length
+                                                        asset.images.length
                                                 )
                                             }
                                             className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -173,10 +173,11 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
-                                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
+                                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                                                index === selectedImageIndex
                                                     ? "border-primary"
                                                     : "border-border hover:border-border/80"
-                                                }`}
+                                            }`}
                                         >
                                             <Image
                                                 src={image}
@@ -294,8 +295,8 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                                 asset.condition === "GREEN"
                                                     ? "default"
                                                     : asset.condition === "ORANGE"
-                                                        ? "secondary"
-                                                        : "destructive"
+                                                      ? "secondary"
+                                                      : "destructive"
                                             }
                                             className="font-mono"
                                         >
@@ -416,20 +417,40 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                                             return (
                                                 <div key={v.id} className="flex gap-3 py-2">
                                                     <div className="flex flex-col items-center">
-                                                        <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isFirst ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/40"}`} />
-                                                        {idx < versions.length - 1 && <div className="w-px flex-1 bg-border min-h-[20px]" />}
+                                                        <div
+                                                            className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isFirst ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/40"}`}
+                                                        />
+                                                        {idx < versions.length - 1 && (
+                                                            <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                        )}
                                                     </div>
                                                     <div className="flex-1 pb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-mono font-bold text-muted-foreground">v{v.version_number}</span>
-                                                            <span className="text-sm font-semibold">{v.reason}</span>
+                                                            <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                                v{v.version_number}
+                                                            </span>
+                                                            <span className="text-sm font-semibold">
+                                                                {v.reason}
+                                                            </span>
                                                         </div>
                                                         <p className="text-xs text-muted-foreground mt-0.5">
-                                                            {new Date(v.created_at).toLocaleDateString()} {new Date(v.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                            {new Date(
+                                                                v.created_at
+                                                            ).toLocaleDateString()}{" "}
+                                                            {new Date(
+                                                                v.created_at
+                                                            ).toLocaleTimeString([], {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            })}
                                                         </p>
                                                         {snap.images?.[0] && (
                                                             <div className="mt-2 w-16 h-12 rounded overflow-hidden bg-muted">
-                                                                <img src={snap.images[0]} alt="Snapshot" className="w-full h-full object-cover" />
+                                                                <img
+                                                                    src={snap.images[0]}
+                                                                    alt="Snapshot"
+                                                                    className="w-full h-full object-cover"
+                                                                />
                                                             </div>
                                                         )}
                                                     </div>

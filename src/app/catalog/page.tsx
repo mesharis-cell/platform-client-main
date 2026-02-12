@@ -85,7 +85,7 @@ function CatalogPageInner() {
     const [selectedQuantity, setSelectedQuantity] = useState(1);
     const [rebrandModalOpen, setRebrandModalOpen] = useState(false);
     const [rebrandAsset, setRebrandAsset] = useState<CatalogAssetItem | null>(null);
-    const { user } = useToken()
+    const { user } = useToken();
 
     const { addItem, addItemWithRebrand } = useCart();
 
@@ -383,19 +383,21 @@ function CatalogPageInner() {
                         <div className="flex border border-border/50 rounded-lg p-1 bg-card/50">
                             <button
                                 onClick={() => setLayoutMode("grid")}
-                                className={`p-2 rounded transition-all ${layoutMode === "grid"
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "hover:bg-muted text-muted-foreground"
-                                    }`}
+                                className={`p-2 rounded transition-all ${
+                                    layoutMode === "grid"
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "hover:bg-muted text-muted-foreground"
+                                }`}
                             >
                                 <Grid3x3 className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setLayoutMode("list")}
-                                className={`p-2 rounded transition-all ${layoutMode === "list"
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "hover:bg-muted text-muted-foreground"
-                                    }`}
+                                className={`p-2 rounded transition-all ${
+                                    layoutMode === "list"
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "hover:bg-muted text-muted-foreground"
+                                }`}
                             >
                                 <List className="w-4 h-4" />
                             </button>
@@ -459,8 +461,7 @@ function CatalogPageInner() {
                                             duration: 0.3,
                                         }}
                                     >
-                                        <Card
-                                            className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full">
+                                        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 h-full">
                                             {/* Image with Overlay */}
                                             <div
                                                 className="aspect-3/2 bg-muted relative overflow-hidden"
@@ -528,10 +529,11 @@ function CatalogPageInner() {
                                                                             ? "destructive"
                                                                             : "default"
                                                                     }
-                                                                    className={`backdrop-blur-md border border-border/50 font-mono text-xs ${item.condition === "ORANGE"
-                                                                        ? "bg-orange-500 hover:bg-orange-600"
-                                                                        : ""
-                                                                        }`}
+                                                                    className={`backdrop-blur-md border border-border/50 font-mono text-xs ${
+                                                                        item.condition === "ORANGE"
+                                                                            ? "bg-orange-500 hover:bg-orange-600"
+                                                                            : ""
+                                                                    }`}
                                                                 >
                                                                     {item.condition === "RED" ? (
                                                                         <>
@@ -552,12 +554,16 @@ function CatalogPageInner() {
                                                             variant="default"
                                                             className={cn(
                                                                 "backdrop-blur-md border border-border/50 font-mono text-xs",
-                                                                item.status === "AVAILABLE" && item.availableQuantity > 0
+                                                                item.status === "AVAILABLE" &&
+                                                                    item.availableQuantity > 0
                                                                     ? "bg-green-500 hover:bg-green-600"
                                                                     : "bg-primary"
                                                             )}
                                                         >
-                                                            {(item.availableQuantity < 1 && item.status === 'AVAILABLE') ? 'Out of Stock' : item.status}
+                                                            {item.availableQuantity < 1 &&
+                                                            item.status === "AVAILABLE"
+                                                                ? "Out of Stock"
+                                                                : item.status}
                                                         </Badge>
                                                     </div>
                                                 )}
@@ -655,7 +661,9 @@ function CatalogPageInner() {
                                                                     L
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(item.dimensionLength).toFixed(0)}
+                                                                    {Number(
+                                                                        item.dimensionLength
+                                                                    ).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -666,7 +674,9 @@ function CatalogPageInner() {
                                                                     W
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(item.dimensionWidth).toFixed(0)}
+                                                                    {Number(
+                                                                        item.dimensionWidth
+                                                                    ).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -677,7 +687,9 @@ function CatalogPageInner() {
                                                                     H
                                                                 </div>
                                                                 <div className="font-bold font-mono text-xs">
-                                                                    {Number(item.dimensionHeight).toFixed(0)}
+                                                                    {Number(
+                                                                        item.dimensionHeight
+                                                                    ).toFixed(0)}
                                                                 </div>
                                                                 <div className="text-[8px] text-muted-foreground">
                                                                     cm
@@ -712,7 +724,8 @@ function CatalogPageInner() {
                                                 {/* Actions */}
                                                 <div className="pt-2">
                                                     {item.type === "asset" ? (
-                                                        item.availableQuantity > 0 && item.status === "AVAILABLE" ? (
+                                                        item.availableQuantity > 0 &&
+                                                        item.status === "AVAILABLE" ? (
                                                             <div className="space-y-2">
                                                                 <Button
                                                                     onClick={(e) => {
@@ -744,7 +757,11 @@ function CatalogPageInner() {
                                                                 className="w-full gap-2 font-mono"
                                                             >
                                                                 <XCircle className="w-4 h-4" />
-                                                                {item.availableQuantity < 1 ? "Out of Stock" : getAssetStatusText(item.status)}
+                                                                {item.availableQuantity < 1
+                                                                    ? "Out of Stock"
+                                                                    : getAssetStatusText(
+                                                                          item.status
+                                                                      )}
                                                             </Button>
                                                         )
                                                     ) : (
@@ -879,14 +896,14 @@ function CatalogPageInner() {
                                                                         <Badge
                                                                             variant={
                                                                                 item.availableQuantity >
-                                                                                    0
+                                                                                0
                                                                                     ? "default"
                                                                                     : "destructive"
                                                                             }
                                                                             className="font-mono"
                                                                         >
                                                                             {item.availableQuantity >
-                                                                                0 ? (
+                                                                            0 ? (
                                                                                 <>
                                                                                     <CheckCircle className="w-3 h-3 mr-1.5" />
                                                                                     {
@@ -1070,10 +1087,11 @@ function CatalogPageInner() {
                                                                 ? "destructive"
                                                                 : "default"
                                                         }
-                                                        className={`font-mono ${selectedItem.condition === "ORANGE"
-                                                            ? "bg-orange-500 hover:bg-orange-600"
-                                                            : ""
-                                                            }`}
+                                                        className={`font-mono ${
+                                                            selectedItem.condition === "ORANGE"
+                                                                ? "bg-orange-500 hover:bg-orange-600"
+                                                                : ""
+                                                        }`}
                                                     >
                                                         {selectedItem.condition === "RED" ? (
                                                             <>
@@ -1113,10 +1131,11 @@ function CatalogPageInner() {
                                         {selectedItem.images.slice(0, 4).map((image, index) => (
                                             <div
                                                 key={index}
-                                                className={`rounded-lg overflow-hidden border border-border relative ${index === 0 && selectedItem.images.length > 1
-                                                    ? "col-span-2 aspect-21/9"
-                                                    : "aspect-square"
-                                                    }`}
+                                                className={`rounded-lg overflow-hidden border border-border relative ${
+                                                    index === 0 && selectedItem.images.length > 1
+                                                        ? "col-span-2 aspect-21/9"
+                                                        : "aspect-square"
+                                                }`}
                                             >
                                                 <Image
                                                     src={image}
@@ -1237,7 +1256,7 @@ function CatalogPageInner() {
                                                         {selectedItem.refurbDaysEstimate &&
                                                             (selectedItem.condition === "ORANGE" ||
                                                                 selectedItem.condition ===
-                                                                "RED") && (
+                                                                    "RED") && (
                                                                 <div className="col-span-2 bg-amber-500/10 rounded-lg p-4 border border-amber-500/20">
                                                                     <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
                                                                         Estimated Refurb Time

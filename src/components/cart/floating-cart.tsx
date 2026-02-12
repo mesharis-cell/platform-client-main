@@ -67,11 +67,11 @@ export function FloatingCart() {
     // Get initial rebrand data for editing
     const initialRebrandData = editingItem
         ? {
-            isReskinRequest: editingItem.isReskinRequest || false,
-            reskinTargetBrandId: editingItem.reskinTargetBrandId,
-            reskinTargetBrandCustom: editingItem.reskinTargetBrandCustom,
-            reskinNotes: editingItem.reskinNotes,
-        }
+              isReskinRequest: editingItem.isReskinRequest || false,
+              reskinTargetBrandId: editingItem.reskinTargetBrandId,
+              reskinTargetBrandCustom: editingItem.reskinTargetBrandCustom,
+              reskinNotes: editingItem.reskinNotes,
+          }
         : undefined;
 
     return (
@@ -297,7 +297,9 @@ export function FloatingCart() {
                                                                     handleEditRebrand(item.assetId)
                                                                 }
                                                                 onRemove={() =>
-                                                                    handleRemoveRebrand(item.assetId)
+                                                                    handleRemoveRebrand(
+                                                                        item.assetId
+                                                                    )
                                                                 }
                                                             />
                                                         </div>

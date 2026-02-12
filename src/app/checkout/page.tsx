@@ -92,7 +92,12 @@ function CheckoutPageInner() {
     const isAllGreenItems = items.every((item) => item.condition === "GREEN");
 
     // NEW: Calculate estimate using new system
-    const { data: estimateData, isLoading: isEstimateLoading, isError: isEstimateError, error: estimateError } = useCalculateEstimate(
+    const {
+        data: estimateData,
+        isLoading: isEstimateLoading,
+        isError: isEstimateError,
+        error: estimateError,
+    } = useCalculateEstimate(
         items,
         formData.venue_city_id,
         formData.trip_type,
@@ -105,8 +110,8 @@ function CheckoutPageInner() {
         const date = new Date();
         date.setDate(date.getDate() + 6);
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
     };
 
@@ -115,7 +120,8 @@ function CheckoutPageInner() {
 
     // NEW: Get cities based on selected country
     const cities = formData.venue_country_id
-        ? countriesData?.data?.find((country) => country.id === formData.venue_country_id)?.cities ?? []
+        ? (countriesData?.data?.find((country) => country.id === formData.venue_country_id)
+              ?.cities ?? [])
         : [];
 
     // Validate cart availability before review step
@@ -241,7 +247,9 @@ function CheckoutPageInner() {
                 })),
                 ...formData,
                 // Send ID if from dropdown, or custom text if custom mode
-                venue_country_id: useCustomCountry ? formData.venue_country_id : formData.venue_country_id,
+                venue_country_id: useCustomCountry
+                    ? formData.venue_country_id
+                    : formData.venue_country_id,
                 venue_city_id: useCustomCity ? formData.venue_city_id : formData.venue_city_id,
                 venue_city_name: undefined,
                 venue_country_name: undefined,
@@ -295,8 +303,7 @@ function CheckoutPageInner() {
         );
     }
 
-    console.log('items from checkout......', items);
-
+    console.log("items from checkout......", items);
 
     return (
         <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background">
@@ -313,12 +320,13 @@ function CheckoutPageInner() {
                                 <div key={step.key} className="flex items-center flex-1">
                                     <div className="flex items-center gap-3">
                                         <div
-                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
-                                                ? "bg-primary border-primary text-primary-foreground"
-                                                : isActive
-                                                    ? "bg-primary/10 border-primary text-primary"
-                                                    : "bg-muted border-border text-muted-foreground"
-                                                }`}
+                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                                isCompleted
+                                                    ? "bg-primary border-primary text-primary-foreground"
+                                                    : isActive
+                                                      ? "bg-primary/10 border-primary text-primary"
+                                                      : "bg-muted border-border text-muted-foreground"
+                                            }`}
                                         >
                                             {isCompleted ? (
                                                 <Check className="h-5 w-5" />
@@ -330,10 +338,11 @@ function CheckoutPageInner() {
                                             className={`hidden sm:block ${index < STEPS.length - 1 ? "" : ""}`}
                                         >
                                             <p
-                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${isActive
-                                                    ? "text-foreground"
-                                                    : "text-muted-foreground"
-                                                    }`}
+                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${
+                                                    isActive
+                                                        ? "text-foreground"
+                                                        : "text-muted-foreground"
+                                                }`}
                                             >
                                                 {step.label}
                                             </p>
@@ -344,8 +353,9 @@ function CheckoutPageInner() {
                                     </div>
                                     {index < STEPS.length - 1 && (
                                         <div
-                                            className={`flex-1 h-0.5 mx-4 transition-colors ${isCompleted ? "bg-primary" : "bg-border"
-                                                }`}
+                                            className={`flex-1 h-0.5 mx-4 transition-colors ${
+                                                isCompleted ? "bg-primary" : "bg-border"
+                                            }`}
                                         />
                                     )}
                                 </div>
@@ -357,23 +367,32 @@ function CheckoutPageInner() {
 
             {/* warning if any item condition is red or orange */}
 
-            {items.length > 0 && <div className="max-w-5xl mx-auto px-8 pt-10">
-                {items.some((item) => item.condition === "RED" || item.condition === "ORANGE") && (
-                    <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <AlertCircle className="h-5 w-5 text-yellow-400" />
-                            </div>
-                            <div className="ml-3">
-                                <h3 className="text-sm font-medium text-yellow-800">Maintenance Required</h3>
-                                <div className="mt-2 text-sm text-yellow-700">
-                                    <p>Your order contain item(s) require maintenance. It may require some time to prepare.</p>
+            {items.length > 0 && (
+                <div className="max-w-5xl mx-auto px-8 pt-10">
+                    {items.some(
+                        (item) => item.condition === "RED" || item.condition === "ORANGE"
+                    ) && (
+                        <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <AlertCircle className="h-5 w-5 text-yellow-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-yellow-800">
+                                        Maintenance Required
+                                    </h3>
+                                    <div className="mt-2 text-sm text-yellow-700">
+                                        <p>
+                                            Your order contain item(s) require maintenance. It may
+                                            require some time to prepare.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>}
+                    )}
+                </div>
+            )}
 
             {/* Content */}
             <div className="max-w-5xl mx-auto px-8 py-10">
@@ -429,14 +448,14 @@ function CheckoutPageInner() {
                                                     <span>•</span>
                                                     <span>{item.weight} kg each</span>
                                                 </div>
-                                                {
-                                                    (item.condition === "RED" || item.condition === "ORANGE") && (
-                                                        <p className="text-xs text-red-500 font-mono">
-                                                            Attention: This item requires maintenance <br />
-                                                            Condition: {item.condition}
-                                                        </p>
-                                                    )
-                                                }
+                                                {(item.condition === "RED" ||
+                                                    item.condition === "ORANGE") && (
+                                                    <p className="text-xs text-red-500 font-mono">
+                                                        Attention: This item requires maintenance{" "}
+                                                        <br />
+                                                        Condition: {item.condition}
+                                                    </p>
+                                                )}
                                                 {item.fromCollectionName && (
                                                     <p className="text-xs text-muted-foreground font-mono">
                                                         From collection: {item.fromCollectionName}
@@ -539,7 +558,9 @@ function CheckoutPageInner() {
                                                     })
                                                 }
                                                 required
-                                                min={formData.event_start_date || calculateMinDate()}
+                                                min={
+                                                    formData.event_start_date || calculateMinDate()
+                                                }
                                                 className="h-12 font-mono"
                                             />
                                         </div>
@@ -561,7 +582,7 @@ function CheckoutPageInner() {
                                                                 new Date(
                                                                     formData.event_start_date
                                                                 ).getTime()) /
-                                                            (1000 * 60 * 60 * 24)
+                                                                (1000 * 60 * 60 * 24)
                                                         ) + 1}{" "}
                                                         days
                                                     </p>
@@ -614,7 +635,9 @@ function CheckoutPageInner() {
                                                 <SelectValue placeholder="Select Transport Trip Type" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="ROUND_TRIP">Round Trip</SelectItem>
+                                                <SelectItem value="ROUND_TRIP">
+                                                    Round Trip
+                                                </SelectItem>
                                                 <SelectItem value="ONE_WAY">One Way</SelectItem>
                                             </SelectContent>
                                         </Select>
@@ -664,12 +687,16 @@ function CheckoutPageInner() {
                                                                 venue_city_name: "",
                                                             });
                                                         } else {
-                                                            const selectedCountry = countriesData?.data?.find((c) => c.id === value);
+                                                            const selectedCountry =
+                                                                countriesData?.data?.find(
+                                                                    (c) => c.id === value
+                                                                );
                                                             setUseCustomCity(false);
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_country_id: value,
-                                                                venue_country_name: selectedCountry?.name || "",
+                                                                venue_country_name:
+                                                                    selectedCountry?.name || "",
                                                                 venue_city_id: "",
                                                                 venue_city_name: "",
                                                             });
@@ -753,11 +780,14 @@ function CheckoutPageInner() {
                                                                 venue_city_name: "",
                                                             });
                                                         } else {
-                                                            const selectedCity = cities.find((c) => c.id === value);
+                                                            const selectedCity = cities.find(
+                                                                (c) => c.id === value
+                                                            );
                                                             setFormData({
                                                                 ...formData,
                                                                 venue_city_id: value,
-                                                                venue_city_name: selectedCity?.name || "",
+                                                                venue_city_name:
+                                                                    selectedCity?.name || "",
                                                             });
                                                         }
                                                     }}
@@ -1140,7 +1170,8 @@ function CheckoutPageInner() {
                                                     Location
                                                 </p>
                                                 <p className="font-medium">
-                                                    {formData.venue_city_name}, {formData.venue_country_name}
+                                                    {formData.venue_city_name},{" "}
+                                                    {formData.venue_country_name}
                                                 </p>
                                             </div>
                                             <div>
@@ -1269,7 +1300,10 @@ function CheckoutPageInner() {
                                             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium mb-1">
-                                                    Unable to Calculate Estimate for <b>{formData.venue_city_name}</b>, You will receive a custom quote via email within 24-48 hours after submitting your order.
+                                                    Unable to Calculate Estimate for{" "}
+                                                    <b>{formData.venue_city_name}</b>, You will
+                                                    receive a custom quote via email within 24-48
+                                                    hours after submitting your order.
                                                 </p>
                                             </div>
                                         </div>
@@ -1282,7 +1316,10 @@ function CheckoutPageInner() {
                                         <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                                         <div className="flex-1">
                                             <p className="font-medium mb-1 text-red-500">
-                                                Your order includes damaged {hasRebrandItems && "and rebrand"} items. Please consider couple of days for assets maintenance {hasRebrandItems && "and rebrand"}.
+                                                Your order includes damaged{" "}
+                                                {hasRebrandItems && "and rebrand"} items. Please
+                                                consider couple of days for assets maintenance{" "}
+                                                {hasRebrandItems && "and rebrand"}.
                                             </p>
                                         </div>
                                     </div>

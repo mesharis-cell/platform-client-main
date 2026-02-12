@@ -27,7 +27,7 @@ export interface InboundRequestItem {
         status: string;
         total_quantity: number;
         available_quantity: number;
-    }
+    };
     asset_id: string | null;
     item_id?: string | null;
     inbound_request_id: string;
@@ -63,21 +63,24 @@ export interface InboundRequestList {
     company: {
         id: string;
         name: string;
-    },
+    };
     requester: {
         id: string;
         name: string;
         email: string;
-    },
+    };
     request_pricing: {
         final_total: string;
-    },
+    };
     created_at: string;
     updated_at: string;
 }
 
 // Create Inbound Request Item (client-provided fields only)
-export type CreateInboundRequestItem = Omit<InboundRequestItem, "id" | "inbound_request_id" | "created_asset_id" | "created_at" | "updated_at">;
+export type CreateInboundRequestItem = Omit<
+    InboundRequestItem,
+    "id" | "inbound_request_id" | "created_asset_id" | "created_at" | "updated_at"
+>;
 
 // Create Inbound Request Payload
 export interface CreateInboundRequestPayload {
@@ -127,17 +130,17 @@ export interface InboundRequestDetails {
     company: {
         id: string;
         name: string;
-    },
+    };
     requester: {
         id: string;
         name: string;
         email: string;
-    },
+    };
     request_pricing: {
         final_total: string;
         logistics_sub_total: string;
         service_fee: string;
-    },
+    };
     items: InboundRequestItem[];
     invoice?: {
         id: string;

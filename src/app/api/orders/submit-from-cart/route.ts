@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!PLATFORM_ID) {
-            return NextResponse.json(
-                { message: "Platform ID not configured" },
-                { status: 500 }
-            );
+            return NextResponse.json({ message: "Platform ID not configured" }, { status: 500 });
         }
 
         const response = await fetch(`${BACKEND_URL}/client/v1/order/submit-from-cart`, {
@@ -43,9 +40,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(data);
     } catch (error) {
         console.error("Submit order proxy error:", error);
-        return NextResponse.json(
-            { message: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

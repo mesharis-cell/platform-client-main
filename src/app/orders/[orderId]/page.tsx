@@ -212,7 +212,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isAwaitingReturn ||
         isClosed;
 
-    const cancelledReskinRequests = order?.reskin_requests?.filter((reskinRequest) => reskinRequest.cancelled_at !== null);
+    const cancelledReskinRequests = order?.reskin_requests?.filter(
+        (reskinRequest) => reskinRequest.cancelled_at !== null
+    );
 
     const { total } = getOrderPrice(order?.order_pricing);
 
@@ -296,19 +298,22 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             "We are calculating pricing based on your event details and logistics requirements."}
                                         {isPendingApproval &&
                                             "Our management team is reviewing the pricing. You will receive your quote shortly."}
-                                        {isQuoted &&
+                                        {isQuoted && (
                                             <>
                                                 <p>
-                                                    Your quote is ready! Review the pricing below and approve or decline.
+                                                    Your quote is ready! Review the pricing below
+                                                    and approve or decline.
                                                 </p>
 
                                                 {cancelledReskinRequests?.length > 0 && (
                                                     <p className="font-semibold text-red-500">
-                                                        {cancelledReskinRequests?.length} Reskin requests have been cancelled. Review the new quote below.
+                                                        {cancelledReskinRequests?.length} Reskin
+                                                        requests have been cancelled. Review the new
+                                                        quote below.
                                                     </p>
                                                 )}
                                             </>
-                                        }
+                                        )}
                                         {isApproved &&
                                             "Your order is proceeding to invoicing. We will begin fulfillment preparations."}
                                         {isDeclined &&
@@ -337,22 +342,23 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     </p>
                                 </div>
                                 <div
-                                    className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${isApproved || isPaid || isDelivered || isClosed
-                                        ? "bg-green-500"
-                                        : isDeclined
-                                            ? "bg-destructive"
-                                            : isQuoted || isInvoiced
+                                    className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${
+                                        isApproved || isPaid || isDelivered || isClosed
+                                            ? "bg-green-500"
+                                            : isDeclined
+                                              ? "bg-destructive"
+                                              : isQuoted || isInvoiced
                                                 ? "bg-amber-500"
                                                 : isPendingApproval
-                                                    ? "bg-orange-500"
-                                                    : isInTransit
-                                                        ? "bg-violet-500"
-                                                        : isInPreparation
-                                                            ? "bg-cyan-500"
-                                                            : isAwaitingReturn
-                                                                ? "bg-rose-500"
-                                                                : "bg-primary"
-                                        }`}
+                                                  ? "bg-orange-500"
+                                                  : isInTransit
+                                                    ? "bg-violet-500"
+                                                    : isInPreparation
+                                                      ? "bg-cyan-500"
+                                                      : isAwaitingReturn
+                                                        ? "bg-rose-500"
+                                                        : "bg-primary"
+                                    }`}
                                 >
                                     {(isSubmitted || isPricingReview) && (
                                         <CheckCircle2 className="w-10 h-10 text-white" />
@@ -533,7 +539,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             <Badge
                                                 className={`font-mono text-xs ${order?.invoice?.invoice_paid_at ? "bg-green-500/10 text-green-600 border-green-500/30" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}
                                             >
-                                                {order?.invoice?.invoice_paid_at ? "PAID" : "PENDING"}
+                                                {order?.invoice?.invoice_paid_at
+                                                    ? "PAID"
+                                                    : "PENDING"}
                                             </Badge>
                                         </div>
 
@@ -560,8 +568,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     Total Amount
                                                 </span>
                                                 <span className="text-2xl font-bold font-mono text-primary">
-                                                    AED{" "}
-                                                    {total}
+                                                    AED {total}
                                                 </span>
                                             </div>
                                         </div>
@@ -581,57 +588,75 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                             )}
 
                             {/* Order Status Timeline */}
-                            {order.order_status_history && order.order_status_history.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.35 }}
-                                >
-                                    <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                        <div className="flex items-center gap-2 mb-6">
-                                            <Clock className="w-5 h-5 text-primary" />
-                                            <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
-                                                Order Timeline
-                                            </h3>
-                                        </div>
+                            {order.order_status_history &&
+                                order.order_status_history.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.35 }}
+                                    >
+                                        <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                                            <div className="flex items-center gap-2 mb-6">
+                                                <Clock className="w-5 h-5 text-primary" />
+                                                <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
+                                                    Order Timeline
+                                                </h3>
+                                            </div>
 
-                                        <div className="space-y-1 relative">
-                                            {[...order.order_status_history]
-                                                .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                                                .map((entry: any, index: number) => {
-                                                    const isFirst = index === 0;
-                                                    const label = entry.status_label || entry.status;
-                                                    const ts = new Date(entry.timestamp);
+                                            <div className="space-y-1 relative">
+                                                {[...order.order_status_history]
+                                                    .sort(
+                                                        (a: any, b: any) =>
+                                                            new Date(b.timestamp).getTime() -
+                                                            new Date(a.timestamp).getTime()
+                                                    )
+                                                    .map((entry: any, index: number) => {
+                                                        const isFirst = index === 0;
+                                                        const label =
+                                                            entry.status_label || entry.status;
+                                                        const ts = new Date(entry.timestamp);
 
-                                                    return (
-                                                        <div key={entry.id || index} className="flex gap-3 py-2">
-                                                            <div className="flex flex-col items-center">
-                                                                <div
-                                                                    className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
-                                                                        isFirst
-                                                                            ? "bg-primary ring-4 ring-primary/20"
-                                                                            : "bg-muted-foreground/40"
-                                                                    }`}
-                                                                />
-                                                                {index < order.order_status_history.length - 1 && (
-                                                                    <div className="w-px flex-1 bg-border min-h-[20px]" />
-                                                                )}
+                                                        return (
+                                                            <div
+                                                                key={entry.id || index}
+                                                                className="flex gap-3 py-2"
+                                                            >
+                                                                <div className="flex flex-col items-center">
+                                                                    <div
+                                                                        className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
+                                                                            isFirst
+                                                                                ? "bg-primary ring-4 ring-primary/20"
+                                                                                : "bg-muted-foreground/40"
+                                                                        }`}
+                                                                    />
+                                                                    {index <
+                                                                        order.order_status_history
+                                                                            .length -
+                                                                            1 && (
+                                                                        <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 pb-2">
+                                                                    <p
+                                                                        className={`text-sm font-semibold font-mono ${isFirst ? "text-primary" : "text-muted-foreground"}`}
+                                                                    >
+                                                                        {label}
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                                        {ts.toLocaleDateString()}{" "}
+                                                                        {ts.toLocaleTimeString([], {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        })}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                            <div className="flex-1 pb-2">
-                                                                <p className={`text-sm font-semibold font-mono ${isFirst ? "text-primary" : "text-muted-foreground"}`}>
-                                                                    {label}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                                    {ts.toLocaleDateString()} {ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                        </div>
-                                    </Card>
-                                </motion.div>
-                            )}
+                                                        );
+                                                    })}
+                                            </div>
+                                        </Card>
+                                    </motion.div>
+                                )}
 
                             {/* Order Items */}
                             <motion.div
@@ -926,8 +951,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             <p className="font-mono font-semibold">
                                                 {order.event_start_date
                                                     ? new Date(
-                                                        order.event_start_date
-                                                    ).toLocaleDateString()
+                                                          order.event_start_date
+                                                      ).toLocaleDateString()
                                                     : "N/A"}
                                             </p>
                                         </div>
@@ -938,8 +963,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             <p className="font-mono font-semibold">
                                                 {order.event_end_date
                                                     ? new Date(
-                                                        order.event_end_date
-                                                    ).toLocaleDateString()
+                                                          order.event_end_date
+                                                      ).toLocaleDateString()
                                                     : "N/A"}
                                             </p>
                                         </div>
@@ -964,7 +989,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         <span className="font-semibold">{order.venue_name}</span>,
                                         <span className="text-xs text-muted-foreground leading-relaxed">
                                             {order.venue_location?.address}
-                                        </span>,
+                                        </span>
+                                        ,
                                         <span className="text-xs text-muted-foreground leading-relaxed">
                                             {order.venue_city}
                                         </span>
@@ -1062,7 +1088,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         </Button>
                     </motion.div>
                 </div>
-
             </div>
         </ClientNav>
     );

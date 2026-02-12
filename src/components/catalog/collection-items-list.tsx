@@ -126,10 +126,11 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                 {collection.items.map((item) => (
                     <div
                         key={item.id}
-                        className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${item.availableQuantity > 0
-                            ? "border-border bg-card hover:border-primary/30"
-                            : "border-destructive/30 bg-destructive/5"
-                            }`}
+                        className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
+                            item.availableQuantity > 0
+                                ? "border-border bg-card hover:border-primary/30"
+                                : "border-destructive/30 bg-destructive/5"
+                        }`}
                     >
                         {/* Thumbnail */}
                         <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">

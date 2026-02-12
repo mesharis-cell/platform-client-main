@@ -148,10 +148,11 @@ export function CollectionCustomizer({
                         return (
                             <div
                                 key={item.id}
-                                className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${isSelected
-                                    ? "border-primary bg-primary/5"
-                                    : "border-border bg-card"
-                                    } ${!item.isAvailable ? "opacity-50" : ""}`}
+                                className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
+                                    isSelected
+                                        ? "border-primary bg-primary/5"
+                                        : "border-border bg-card"
+                                } ${!item.isAvailable ? "opacity-50" : ""}`}
                             >
                                 {/* Checkbox */}
                                 <div className="flex items-center pt-1">

@@ -51,14 +51,14 @@ export interface Asset {
     updatedAt: string;
 }
 
-export interface AssetsListResponse{
+export interface AssetsListResponse {
     success: boolean;
     message: string;
     meta: {
         total: number;
         page: number;
         limit: number;
-    }
+    };
     data: {
         id: string;
         platform_id: string;
@@ -80,7 +80,7 @@ export interface AssetsListResponse{
             width: number;
             height: number;
             length: number;
-        },
+        };
         volume_per_unit: string;
         condition: Condition;
         condition_notes: string | null;
@@ -99,22 +99,22 @@ export interface AssetsListResponse{
             id: string;
             name: string;
             domain: string;
-        },
+        };
         warehouse: {
             id: string;
             name: string;
             city: string;
             country: string;
-        },
+        };
         zone: {
             id: string;
             name: string;
-        },
+        };
         brand: {
             id: string;
             name: string;
-        }
-}[]
+        };
+    }[];
 }
 
 // Asset with related entity details (for detail view)

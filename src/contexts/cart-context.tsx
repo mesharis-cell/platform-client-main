@@ -122,7 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            console.log(assetDetails, "asset details...")
+            console.log(assetDetails, "asset details...");
 
             setAddingItems((prev) => new Set(prev).add(assetId));
             setIsLoading(true);
@@ -375,12 +375,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const newItems = items.map((i) =>
                 i.assetId === assetId
                     ? {
-                        ...i,
-                        isReskinRequest: false,
-                        reskinTargetBrandId: undefined,
-                        reskinTargetBrandCustom: undefined,
-                        reskinNotes: undefined,
-                    }
+                          ...i,
+                          isReskinRequest: false,
+                          reskinTargetBrandId: undefined,
+                          reskinTargetBrandCustom: undefined,
+                          reskinNotes: undefined,
+                      }
                     : i
             );
             setItems(newItems);
