@@ -33,7 +33,7 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                 <CardContent className="p-0">
                     <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/40">
                         {/* Main Total Display - Takes up 1 column */}
-                        <div className="md:col-span-1 p-6 flex flex-col justify-center bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+                        <div className="md:col-span-1 p-6 flex flex-col justify-center bg-linear-to-br from-primary/5 via-transparent to-transparent">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
                                     <DollarSign className="w-6 h-6" />
@@ -75,14 +75,14 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                                     </span>
                                 </div>
 
-                                {/* Service Fee */}
+                                {/* Operational Services */}
                                 <div className="flex items-center justify-between group p-2 -mx-2 rounded-lg hover:bg-muted/40 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 rounded-md bg-muted/50 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-all duration-300">
                                             <FileText className="w-4 h-4" />
                                         </div>
                                         <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                                            Service Fee
+                                            Operational Services
                                         </span>
                                     </div>
                                     <span className="font-mono text-sm font-medium tracking-tight">

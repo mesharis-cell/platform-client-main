@@ -22,6 +22,7 @@ import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { PricingBreakdown } from "./PricingBreakdown";
 import type { OrderPricing, OrderLineItem } from "@/types/hybrid-pricing";
 import type { Order } from "@/types/order";
+import { getOrderPrice } from "@/lib/utils/helper";
 
 interface QuoteReviewSectionProps {
     order: Order;
@@ -77,20 +78,7 @@ export function QuoteReviewSection({
         }
     };
 
-    const marginAmount = pricing?.margin?.percent;
-
-    const basePrice =
-        Number(pricing?.base_ops_total) + Number(pricing?.base_ops_total) * (marginAmount / 100);
-    const transportPrice =
-        Number(pricing?.transport.final_rate) +
-        Number(pricing?.transport.final_rate) * (marginAmount / 100);
-    const catalogPrice =
-        Number(pricing?.line_items?.catalog_total) +
-        Number(pricing?.line_items?.catalog_total) * (marginAmount / 100);
-    const customPrice = Number(pricing?.line_items?.custom_total);
-
-    const logisticsSubTotal = basePrice + transportPrice;
-    const total = logisticsSubTotal + catalogPrice + customPrice;
+    const { total } = getOrderPrice(pricing);
 
     return (
         <div className="space-y-6">

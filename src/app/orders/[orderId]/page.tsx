@@ -604,55 +604,72 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             </div>
 
                                             <div className="space-y-1 relative">
-                                                {[...order.order_status_history]
-                                                    .sort(
+                                                {(() => {
+                                                    const sortedHistory = [
+                                                        ...order.order_status_history,
+                                                    ].sort(
                                                         (a: any, b: any) =>
                                                             new Date(b.timestamp).getTime() -
                                                             new Date(a.timestamp).getTime()
-                                                    )
-                                                    .map((entry: any, index: number) => {
-                                                        const isFirst = index === 0;
-                                                        const label =
-                                                            entry.status_label || entry.status;
-                                                        const ts = new Date(entry.timestamp);
-
-                                                        return (
-                                                            <div
-                                                                key={entry.id || index}
-                                                                className="flex gap-3 py-2"
-                                                            >
-                                                                <div className="flex flex-col items-center">
-                                                                    <div
-                                                                        className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
-                                                                            isFirst
-                                                                                ? "bg-primary ring-4 ring-primary/20"
-                                                                                : "bg-muted-foreground/40"
-                                                                        }`}
-                                                                    />
-                                                                    {index <
-                                                                        order.order_status_history
-                                                                            .length -
-                                                                            1 && (
-                                                                        <div className="w-px flex-1 bg-border min-h-[20px]" />
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 pb-2">
-                                                                    <p
-                                                                        className={`text-sm font-semibold font-mono ${isFirst ? "text-primary" : "text-muted-foreground"}`}
-                                                                    >
-                                                                        {label}
-                                                                    </p>
-                                                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                                                        {ts.toLocaleDateString()}{" "}
-                                                                        {ts.toLocaleTimeString([], {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        })}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
+                                                    );
+                                                    const currentStatusIndex =
+                                                        sortedHistory.findIndex(
+                                                            (entry: any) =>
+                                                                entry.status === order.order_status
                                                         );
-                                                    })}
+                                                    const activeIndex =
+                                                        currentStatusIndex >= 0
+                                                            ? currentStatusIndex
+                                                            : 0;
+
+                                                    return sortedHistory.map(
+                                                        (entry: any, index: number) => {
+                                                            const isFirst = index === activeIndex;
+                                                            const label =
+                                                                entry.status_label || entry.status;
+                                                            const ts = new Date(entry.timestamp);
+
+                                                            return (
+                                                                <div
+                                                                    key={entry.id || index}
+                                                                    className="flex gap-3 py-2"
+                                                                >
+                                                                    <div className="flex flex-col items-center">
+                                                                        <div
+                                                                            className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
+                                                                                isFirst
+                                                                                    ? "bg-primary ring-4 ring-primary/20"
+                                                                                    : "bg-muted-foreground/40"
+                                                                            }`}
+                                                                        />
+                                                                        {index <
+                                                                            sortedHistory.length -
+                                                                                1 && (
+                                                                            <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 pb-2">
+                                                                        <p
+                                                                            className={`text-sm font-semibold font-mono ${isFirst ? "text-primary" : "text-muted-foreground"}`}
+                                                                        >
+                                                                            {label}
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                                                            {ts.toLocaleDateString()}{" "}
+                                                                            {ts.toLocaleTimeString(
+                                                                                [],
+                                                                                {
+                                                                                    hour: "2-digit",
+                                                                                    minute: "2-digit",
+                                                                                }
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                    );
+                                                })()}
                                             </div>
                                         </Card>
                                     </motion.div>

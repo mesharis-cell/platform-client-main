@@ -21,28 +21,24 @@ export function PricingBreakdown({
     order,
     showTitle = true,
 }: PricingBreakdownProps) {
-    // Separate catalog and custom line items
-    const catalogItems = lineItems.filter(
-        (item) => item.lineItemType === "CATALOG" && !item.isVoided
-    );
-    const customItems = lineItems.filter(
-        (item) => item.lineItemType === "CUSTOM" && !item.isVoided
-    );
+    const activeLineItems = lineItems.filter((item) => !item.isVoided);
+    const marginPercent = Number(pricing?.margin?.percent || 0);
+    const roundCurrency = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+    const applyMargin = (baseValue: number) => roundCurrency(baseValue * (1 + marginPercent / 100));
 
-    const marginAmount = pricing?.margin?.percent;
+    const basePrice = applyMargin(Number(pricing?.base_ops_total || 0));
+    const transportPrice = applyMargin(Number(pricing?.transport?.final_rate || 0));
+    const catalogPrice = applyMargin(Number(pricing?.line_items?.catalog_total || 0));
+    const customPrice = applyMargin(Number(pricing?.line_items?.custom_total || 0));
+    const operationalServicesTotal = roundCurrency(catalogPrice + customPrice);
+    const total = roundCurrency(basePrice + transportPrice + operationalServicesTotal);
+    const hasReskinLine = activeLineItems.some((item) => item.category === "RESKIN");
 
-    const basePrice =
-        Number(pricing?.base_ops_total) + Number(pricing?.base_ops_total) * (marginAmount / 100);
-    const transportPrice =
-        Number(pricing?.transport.final_rate) +
-        Number(pricing?.transport.final_rate) * (marginAmount / 100);
-    const catalogPrice =
-        Number(pricing?.line_items?.catalog_total) +
-        Number(pricing?.line_items?.catalog_total) * (marginAmount / 100);
-    const customPrice = Number(pricing?.line_items?.custom_total);
-
-    const servicePrice = catalogPrice + customPrice;
-    const total = basePrice + transportPrice + servicePrice;
+    const serviceLines = activeLineItems.map((item) => ({
+        id: item.id,
+        description: item.description,
+        total: applyMargin(Number(item.total || 0)),
+    }));
 
     return (
         <div className="border border-border rounded-lg p-6 space-y-4">
@@ -65,19 +61,6 @@ export function PricingBreakdown({
                 <span className="font-mono">{transportPrice.toFixed(2)} AED</span>
             </div>
 
-            {/* Catalog Line Items */}
-            {catalogItems.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                        {item.description}
-                        {item.quantity && ` (${item.quantity} ${item.unit})`}
-                    </span>
-                    <span className="font-mono">{item.total.toFixed(2)} AED</span>
-                </div>
-            ))}
-
-            <div className="border-t border-border my-2"></div>
-
             {/* Logistics Subtotal */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -86,17 +69,17 @@ export function PricingBreakdown({
                 </span>
             </div>
 
-            {/* Margin (Service Fee) */}
+            {/* Operational Services Total */}
             <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Service Fee (Including Reskin)</span>
-                <span className="font-mono">{servicePrice.toFixed(2)} AED</span>
+                <span className="text-muted-foreground">Operational Services</span>
+                <span className="font-mono">{operationalServicesTotal.toFixed(2)} AED</span>
             </div>
 
-            {/* Custom Line Items (if any) */}
-            {customItems.length > 0 && (
+            {/* Service Lines */}
+            {serviceLines.length > 0 && (
                 <>
                     <div className="border-t border-border my-2"></div>
-                    {customItems.map((item) => (
+                    {serviceLines.map((item) => (
                         <div key={item.id} className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{item.description}</span>
                             <span className="font-mono">{item.total.toFixed(2)} AED</span>
@@ -115,7 +98,7 @@ export function PricingBreakdown({
                 </span>
             </div>
 
-            {customItems.some((item) => item.category === "RESKIN") && (
+            {hasReskinLine && (
                 <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3 mt-4">
                     <p className="text-xs text-blue-800 dark:text-blue-300">
                         ℹ️ This quote includes custom rebranding work which will be completed before
