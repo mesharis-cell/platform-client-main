@@ -10,6 +10,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PrintQrAction } from "@/components/qr/PrintQrAction";
 import { useOrderScanEvents } from "@/hooks/use-scanning";
 import {
     PackageCheck,
@@ -39,7 +40,13 @@ export function ScanActivityTimeline({ orderId }: ScanActivityTimelineProps) {
         );
     }
 
-    if (!scanData || scanData.scanEvents.length === 0) {
+    const events: any[] = Array.isArray((scanData as any)?.data)
+        ? (scanData as any).data
+        : Array.isArray((scanData as any)?.scanEvents)
+          ? (scanData as any).scanEvents
+          : [];
+
+    if (events.length === 0) {
         return (
             <Card className="p-6 text-center">
                 <div className="text-sm text-muted-foreground font-mono">
@@ -71,6 +78,22 @@ export function ScanActivityTimeline({ orderId }: ScanActivityTimelineProps) {
         return variants[condition as keyof typeof variants] || "";
     };
 
+    const getDamageEntries = (event: any): Array<{ url: string; description?: string }> => {
+        const structuredEntries = event.damage_report_entries || event.damageReportEntries;
+        if (Array.isArray(structuredEntries) && structuredEntries.length > 0) {
+            return structuredEntries
+                .map((entry: any) => {
+                    if (!entry?.url) return null;
+                    return {
+                        url: entry.url,
+                        description: entry.description || undefined,
+                    };
+                })
+                .filter((entry: any) => entry !== null);
+        }
+        return (event.photos || []).map((url: string) => ({ url }));
+    };
+
     return (
         <div className="space-y-4">
             {/* Summary stats */}
@@ -83,7 +106,7 @@ export function ScanActivityTimeline({ orderId }: ScanActivityTimelineProps) {
                         <div>
                             <div className="text-2xl font-bold font-mono">
                                 {
-                                    scanData.scanEvents.filter((e) => e.scanType === "OUTBOUND")
+                                    events.filter((e) => (e.scan_type || e.scanType) === "OUTBOUND")
                                         .length
                                 }
                             </div>
@@ -101,7 +124,10 @@ export function ScanActivityTimeline({ orderId }: ScanActivityTimelineProps) {
                         </div>
                         <div>
                             <div className="text-2xl font-bold font-mono">
-                                {scanData.scanEvents.filter((e) => e.scanType === "INBOUND").length}
+                                {
+                                    events.filter((e) => (e.scan_type || e.scanType) === "INBOUND")
+                                        .length
+                                }
                             </div>
                             <div className="text-xs text-muted-foreground font-mono">
                                 Inbound Scans
@@ -117,98 +143,125 @@ export function ScanActivityTimeline({ orderId }: ScanActivityTimelineProps) {
                     SCAN TIMELINE
                 </h3>
                 <div className="space-y-4">
-                    {scanData.scanEvents.map((event, idx) => (
-                        <div
-                            key={event.id}
-                            className="relative pl-8 pb-4 border-l-2 border-border last:border-l-0 last:pb-0"
-                        >
-                            {/* Timeline dot */}
-                            <div className="absolute left-0 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                    {events.map((event, idx) => {
+                        const scanType = event.scan_type || event.scanType;
+                        const discrepancyReason =
+                            event.discrepancy_reason || event.discrepancyReason;
+                        const scannedAt = event.scanned_at || event.scannedAt;
+                        const scannedByName =
+                            event?.scanned_by_user?.name || event?.scannedByUser?.name || "-";
+                        const assetName =
+                            event?.asset?.name || event?.assetDetails?.assetName || "Unknown";
+                        const qrCode = event?.asset?.qr_code || event?.assetDetails?.qrCode || "-";
+                        const trackingMethod =
+                            event?.asset?.tracking_method ||
+                            event?.assetDetails?.trackingMethod ||
+                            "-";
+                        const damageEntries = getDamageEntries(event);
 
-                            {/* Event content */}
-                            <div className="space-y-2">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    event.scanType === "OUTBOUND"
-                                                        ? "border-primary/30 text-primary"
-                                                        : "border-secondary/30 text-secondary"
-                                                }
-                                            >
-                                                {event.scanType}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className={getConditionBadge(event.condition)}
-                                            >
-                                                {getConditionIcon(event.condition)}
-                                                {event.condition}
-                                            </Badge>
-                                        </div>
-                                        <div className="font-mono text-sm font-bold">
-                                            {event.assetDetails.assetName}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground font-mono">
-                                            QR: {event.assetDetails.qrCode} • Qty: {event.quantity}{" "}
-                                            • {event.assetDetails.trackingMethod}
-                                        </div>
-                                    </div>
-                                    <div className="text-right text-xs">
-                                        <div className="text-muted-foreground font-mono">
-                                            {format(new Date(event.scannedAt), "MMM d, HH:mm")}
-                                        </div>
-                                        <div className="text-muted-foreground">
-                                            by {event.scannedByUser.name}
-                                        </div>
-                                    </div>
-                                </div>
+                        return (
+                            <div
+                                key={event.id}
+                                className="relative pl-8 pb-4 border-l-2 border-border last:border-l-0 last:pb-0"
+                            >
+                                {/* Timeline dot */}
+                                <div className="absolute left-0 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-background" />
 
-                                {/* Notes */}
-                                {event.notes && (
-                                    <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                                        {event.notes}
-                                    </div>
-                                )}
-
-                                {/* Discrepancy */}
-                                {event.discrepancyReason && (
-                                    <div className="flex items-center gap-2 text-sm text-amber-600">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        <span className="font-mono font-bold">
-                                            Discrepancy: {event.discrepancyReason}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* Photos */}
-                                {event.photos.length > 0 && (
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                                            <Camera className="w-4 h-4" />
-                                            {event.photos.length} photo(s)
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {event.photos.map((photo, photoIdx) => (
-                                                <div
-                                                    key={photoIdx}
-                                                    className="aspect-square bg-muted rounded-lg overflow-hidden border border-border"
+                                {/* Event content */}
+                                <div className="space-y-2">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={
+                                                        scanType === "OUTBOUND"
+                                                            ? "border-primary/30 text-primary"
+                                                            : "border-secondary/30 text-secondary"
+                                                    }
                                                 >
-                                                    <img
-                                                        src={photo}
-                                                        alt={`Scan photo ${photoIdx + 1}`}
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                    {scanType}
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={getConditionBadge(event.condition)}
+                                                >
+                                                    {getConditionIcon(event.condition)}
+                                                    {event.condition}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-mono text-sm font-bold">
+                                                    {assetName}
                                                 </div>
-                                            ))}
+                                                <PrintQrAction
+                                                    qrCode={qrCode}
+                                                    assetName={assetName}
+                                                />
+                                            </div>
+                                            <div className="text-xs text-muted-foreground font-mono">
+                                                QR: {qrCode} • Qty: {event.quantity} •{" "}
+                                                {trackingMethod}
+                                            </div>
+                                        </div>
+                                        <div className="text-right text-xs">
+                                            <div className="text-muted-foreground font-mono">
+                                                {format(new Date(scannedAt), "MMM d, HH:mm")}
+                                            </div>
+                                            <div className="text-muted-foreground">
+                                                by {scannedByName}
+                                            </div>
                                         </div>
                                     </div>
-                                )}
+
+                                    {/* Notes */}
+                                    {event.notes && (
+                                        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                                            {event.notes}
+                                        </div>
+                                    )}
+
+                                    {/* Discrepancy */}
+                                    {discrepancyReason && (
+                                        <div className="flex items-center gap-2 text-sm text-amber-600">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            <span className="font-mono font-bold">
+                                                Discrepancy: {discrepancyReason}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Damage photos */}
+                                    {damageEntries.length > 0 && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+                                                <Camera className="w-4 h-4" />
+                                                {damageEntries.length} photo(s)
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {damageEntries.map((entry, photoIdx) => (
+                                                    <div key={photoIdx} className="space-y-1">
+                                                        <div className="aspect-square bg-muted rounded-lg overflow-hidden border border-border">
+                                                            <img
+                                                                src={entry.url}
+                                                                alt={`Scan photo ${photoIdx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        {entry.description && (
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                {entry.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </Card>
         </div>

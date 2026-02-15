@@ -1,4 +1,5 @@
 "use client";
+/* global globalThis */
 
 /**
  * Phase 9: Invoice Management React Query Hooks
@@ -157,19 +158,24 @@ export function useDownloadInvoice() {
             // Get PDF blob
             const blob = await response.blob();
 
-            if (typeof window === "undefined" || typeof document === "undefined") {
+            const runtimeGlobal =
+                typeof globalThis !== "undefined"
+                    ? (globalThis as unknown as Record<string, unknown>)
+                    : undefined;
+            const doc = runtimeGlobal?.["document"] as Document | undefined;
+            if (!doc) {
                 return { success: false };
             }
 
             // Create download link
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            const a = doc.createElement("a");
             a.href = url;
             a.download = `${invoiceNumber}.pdf`;
-            document.body.appendChild(a);
+            doc.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            doc.body.removeChild(a);
 
             return { success: true };
         },

@@ -6,6 +6,7 @@
  */
 
 import { useRouter } from "next/navigation";
+import { use } from "react";
 import { useCatalogCollection } from "@/hooks/use-catalog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +18,8 @@ import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { CollectionItemsList } from "@/components/catalog/collection-items-list";
 
-export default function CollectionDetailPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function CollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const router = useRouter();
     const { data, isLoading } = useCatalogCollection(id);
 

@@ -29,6 +29,8 @@ interface RebrandData {
     reskinNotes?: string;
 }
 
+type MaintenanceDecision = "FIX_IN_ORDER" | "USE_AS_IS";
+
 interface CartContextType {
     items: LocalCartItem[];
     itemCount: number;
@@ -46,6 +48,10 @@ interface CartContextType {
         quantity: number,
         assetDetails: Partial<LocalCartItem>,
         rebrandData: RebrandData
+    ) => void;
+    updateItemMaintenanceDecision: (
+        assetId: string,
+        maintenanceDecision?: MaintenanceDecision
     ) => void;
     updateItemRebrand: (assetId: string, rebrandData: RebrandData) => void;
     removeItemRebrand: (assetId: string) => void;
@@ -342,6 +348,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         [addingItems, openCart]
     );
 
+    const updateItemMaintenanceDecision = useCallback(
+        (assetId: string, maintenanceDecision?: MaintenanceDecision) => {
+            const item = items.find((i) => i.assetId === assetId);
+            if (!item) return;
+
+            const newItems = items.map((i) =>
+                i.assetId === assetId ? { ...i, maintenanceDecision } : i
+            );
+            setItems(newItems);
+            saveCart(newItems);
+        },
+        [items]
+    );
+
     // Update rebrand data for existing item
     const updateItemRebrand = useCallback(
         (assetId: string, rebrandData: RebrandData) => {
@@ -413,6 +433,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 toggleCart,
                 addItem,
                 addItemWithRebrand,
+                updateItemMaintenanceDecision,
                 updateItemRebrand,
                 removeItemRebrand,
                 removeItem,

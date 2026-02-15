@@ -45,6 +45,7 @@ export function getStatusDisplayText(status: OrderStatus): string {
         DELIVERED: "Delivered",
         IN_USE: "In Use",
         AWAITING_RETURN: "Awaiting Return",
+        RETURN_IN_TRANSIT: "Return In Transit",
         CLOSED: "Completed",
         CANCELLED: "Cancelled",
     };
@@ -58,6 +59,7 @@ export function getFinancialStatusText(status: FinancialStatus): string {
     const map: Record<FinancialStatus, string> = {
         PENDING_QUOTE: "Pending Quote",
         QUOTE_SENT: "Quote Sent",
+        QUOTE_REVISED: "Quote Revised",
         QUOTE_ACCEPTED: "Quote Accepted",
         PENDING_INVOICE: "Pending Invoice",
         INVOICED: "Invoiced",
@@ -99,6 +101,7 @@ export function getStatusProgress(status: OrderStatus): number {
         DELIVERED: 70,
         IN_USE: 80,
         AWAITING_RETURN: 85,
+        RETURN_IN_TRANSIT: 90,
         CLOSED: 100,
         DECLINED: 0,
         CANCELLED: 0,

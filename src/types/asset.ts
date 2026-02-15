@@ -147,6 +147,10 @@ export interface AssetConditionHistoryEntry {
     condition: Condition;
     notes?: string;
     photos: string[];
+    damage_report_entries?: Array<{
+        url: string;
+        description?: string;
+    }>;
     updatedBy: string;
     timestamp: string;
 }
@@ -293,6 +297,11 @@ export interface AssetsDetails {
         condition: Condition;
         updated_by: string;
         timestamp: string;
+        photos?: string[];
+        damage_report_entries?: Array<{
+            url: string;
+            description?: string;
+        }>;
     }[];
     handling_tags: string[];
 

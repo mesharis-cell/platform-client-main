@@ -25,6 +25,7 @@ export type OrderStatus =
     | "DELIVERED"
     | "IN_USE"
     | "AWAITING_RETURN"
+    | "RETURN_IN_TRANSIT"
     | "CLOSED"
     | "CANCELLED";
 
@@ -32,11 +33,14 @@ export type OrderStatus =
 export type FinancialStatus =
     | "PENDING_QUOTE"
     | "QUOTE_SENT"
+    | "QUOTE_REVISED"
     | "QUOTE_ACCEPTED"
     | "PENDING_INVOICE"
     | "INVOICED"
     | "PAID"
     | "CANCELLED";
+
+export type MaintenanceDecision = "FIX_IN_ORDER" | "USE_AS_IS";
 
 // ============================================================
 // Order Types
@@ -256,6 +260,10 @@ export interface OrderItem {
     totalWeight: string; // decimal as string (quantity * weight)
     condition: Condition;
     handlingTags: HandlingTag[];
+    maintenanceDecision?: MaintenanceDecision | null;
+    requiresMaintenance?: boolean;
+    maintenanceRefurbDaysSnapshot?: number | null;
+    maintenanceDecisionLockedAt?: Date | null;
     fromCollection?: string | null;
     fromCollectionName?: string | null;
     createdAt: Date;

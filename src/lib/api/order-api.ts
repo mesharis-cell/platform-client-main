@@ -17,6 +17,7 @@ export interface SubmitOrderPayload {
         reskin_target_brand_id?: string;
         reskin_target_brand_custom?: string;
         reskin_notes?: string;
+        maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS";
     }>;
     brand_id?: string;
     trip_type?: TripType; // NEW

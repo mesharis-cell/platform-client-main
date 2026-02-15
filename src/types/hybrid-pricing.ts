@@ -3,12 +3,24 @@
  */
 
 export type TripType = "ONE_WAY" | "ROUND_TRIP";
-export type VehicleType = "STANDARD" | "7_TON" | "10_TON";
+
+export interface VehicleType {
+    id: string;
+    name: string;
+    vehicle_size?: number | null;
+    platform_id?: string | null;
+    is_default?: boolean;
+    is_active?: boolean;
+    display_order?: number;
+    description?: string | null;
+}
+
+export type VehicleTypeRef = string | VehicleType;
 
 export interface TransportRateLookup {
     emirate: string;
     tripType: TripType;
-    vehicleType: VehicleType;
+    vehicleType: VehicleTypeRef;
     rate: number;
 }
 
@@ -21,7 +33,7 @@ export interface OrderEstimate {
     transport: {
         city: string;
         trip_type: TripType;
-        vehicle_type: VehicleType;
+        vehicle_type: VehicleTypeRef;
         rate: number;
     };
     logistics_subtotal: number;
@@ -44,7 +56,7 @@ export interface OrderPricing {
     transport: {
         emirate: string;
         trip_type: TripType;
-        vehicle_type: VehicleType;
+        vehicle_type: VehicleTypeRef;
         system_rate: number;
         final_rate: number;
         vehicle_changed: boolean;

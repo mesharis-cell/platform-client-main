@@ -15,7 +15,16 @@ import { useCompany } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { LayoutDashboard, Grid3x3, LogOut, ShoppingCart, Box, Calendar, Lock } from "lucide-react";
+import {
+    LayoutDashboard,
+    Grid3x3,
+    LogOut,
+    ShoppingCart,
+    Box,
+    Calendar,
+    Lock,
+    ClipboardList,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,6 +33,7 @@ const clientNav = [
     { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard },
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
+    { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
     { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
     { name: "Assets Inbound", href: "/assets-inbound", icon: Box },
     { name: "Reset Password", href: "/reset-password", icon: Lock },

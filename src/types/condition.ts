@@ -61,6 +61,10 @@ export interface ConditionHistoryEntry {
     condition: Condition;
     notes: string | null;
     photos: string[];
+    damageReportEntries?: Array<{
+        url: string;
+        description?: string;
+    }>;
     updatedBy: {
         id: string;
         name: string;

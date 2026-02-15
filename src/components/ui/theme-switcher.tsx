@@ -55,14 +55,17 @@ export const ThemeSwitcher = ({
             event: React.MouseEvent<HTMLButtonElement>
         ) => {
             const button = event.currentTarget;
+            const doc = typeof window !== "undefined" ? window.document : undefined;
+            const win = typeof window !== "undefined" ? window : undefined;
+            const startViewTransition = doc?.startViewTransition?.bind(doc);
 
             // Check if View Transitions API is supported
-            if (!document.startViewTransition || !button) {
+            if (!startViewTransition || !button || !doc || !win) {
                 setTheme(themeKey);
                 return;
             }
 
-            await document.startViewTransition(() => {
+            await startViewTransition(() => {
                 flushSync(() => {
                     setTheme(themeKey);
                 });
@@ -72,11 +75,11 @@ export const ThemeSwitcher = ({
             const x = left + width / 2;
             const y = top + height / 2;
             const maxRadius = Math.hypot(
-                Math.max(left, window.innerWidth - left),
-                Math.max(top, window.innerHeight - top)
+                Math.max(left, win.innerWidth - left),
+                Math.max(top, win.innerHeight - top)
             );
 
-            document.documentElement.animate(
+            doc.documentElement.animate(
                 {
                     clipPath: [
                         `circle(0px at ${x}px ${y}px)`,

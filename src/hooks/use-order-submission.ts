@@ -17,6 +17,7 @@ interface CartItem {
     reskinTargetBrandId?: string;
     reskinTargetBrandCustom?: string;
     reskinNotes?: string;
+    maintenanceDecision?: "FIX_IN_ORDER" | "USE_AS_IS";
 }
 
 interface OrderSubmissionData {
@@ -93,6 +94,7 @@ export function useSubmitOrder() {
                     reskin_target_brand_id: item.reskinTargetBrandId,
                     reskin_target_brand_custom: item.reskinTargetBrandCustom,
                     reskin_notes: item.reskinNotes,
+                    maintenance_decision: item.maintenanceDecision,
                 })),
                 trip_type: data.tripType,
                 event_start_date: data.eventData.startDate,

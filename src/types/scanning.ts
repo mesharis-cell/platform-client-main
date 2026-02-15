@@ -29,6 +29,7 @@ export interface ScanEvent {
     condition: "GREEN" | "ORANGE" | "RED";
     notes: string | null;
     photos: string[]; // Array of photo URLs
+    damageReportEntries?: Array<{ url: string; description?: string }>;
     discrepancyReason: DiscrepancyReason | null;
     scannedBy: string; // userId
     scannedAt: Date;
@@ -43,6 +44,7 @@ export interface ScanEventWithDetails {
     condition: "GREEN" | "ORANGE" | "RED";
     notes: string | null;
     photos: string[]; // Array of photo URLs
+    damageReportEntries?: Array<{ url: string; description?: string }>;
     discrepancyReason: DiscrepancyReason | null;
     scannedBy: string; // userId
     scannedAt: Date;

@@ -8,6 +8,8 @@
  */
 
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
+import { OrangeDecisionCard } from "@/components/checkout/OrangeDecisionCard";
+import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
 import { ClientNav } from "@/components/client-nav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,6 +48,10 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
 import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
 import { useToken } from "@/lib/auth/use-token";
+import {
+    useMaintenanceFeasibilityCheck,
+    type MaintenanceFeasibilityIssue,
+} from "@/hooks/use-feasibility-check";
 
 type Step = "cart" | "event" | "venue" | "contact" | "review";
 
@@ -59,15 +65,28 @@ const STEPS: { key: Step; label: string; icon: any }[] = [
 
 function CheckoutPageInner() {
     const router = useRouter();
-    const { items, itemCount, totalVolume, totalWeight, clearCart, isInitialized } = useCart();
+    const {
+        items,
+        itemCount,
+        totalVolume,
+        totalWeight,
+        clearCart,
+        isInitialized,
+        updateItemMaintenanceDecision,
+    } = useCart();
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
     const [useCustomCountry, setUseCustomCountry] = useState(false);
     const [useCustomCity, setUseCustomCity] = useState(false);
+    const [maintenanceFeasibilityIssues, setMaintenanceFeasibilityIssues] = useState<
+        MaintenanceFeasibilityIssue[]
+    >([]);
+    const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
 
     // Mutations
     const submitMutation = useSubmitOrderFromCart();
+    const maintenanceFeasibilityCheck = useMaintenanceFeasibilityCheck();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -90,6 +109,9 @@ function CheckoutPageInner() {
 
     const hasRebrandItems = items.some((item) => item.isReskinRequest);
     const isAllGreenItems = items.every((item) => item.condition === "GREEN");
+    const orangeItems = items.filter((item) => item.condition === "ORANGE");
+    const redItems = items.filter((item) => item.condition === "RED");
+    const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
 
     // NEW: Calculate estimate using new system
     const {
@@ -164,6 +186,12 @@ function CheckoutPageInner() {
         validateAvailability();
     }, [items, currentStep]);
 
+    useEffect(() => {
+        if (redItems.length > 0) return;
+        setHasCheckedMaintenanceFeasibility(false);
+        setMaintenanceFeasibilityIssues([]);
+    }, [redItems.length]);
+
     // Estimate is now handled by useCalculateEstimate hook above
 
     // Redirect if cart is empty
@@ -201,10 +229,34 @@ function CheckoutPageInner() {
         }
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (!canProceed()) {
             toast.error("Please fill all required fields");
             return;
+        }
+
+        if (currentStep === "event" && redItems.length > 0) {
+            try {
+                const result = await maintenanceFeasibilityCheck.mutateAsync({
+                    items: redItems.map((item) => ({
+                        asset_id: item.assetId,
+                        maintenance_decision: "FIX_IN_ORDER",
+                    })),
+                    event_start_date: formData.event_start_date,
+                });
+                setHasCheckedMaintenanceFeasibility(true);
+                setMaintenanceFeasibilityIssues(result.issues || []);
+
+                if (!result.feasible) {
+                    toast.error(
+                        "Some maintenance items cannot be completed before event. Choose a later start date."
+                    );
+                    return;
+                }
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Failed feasibility check");
+                return;
+            }
         }
 
         const nextIndex = currentStepIndex + 1;
@@ -221,6 +273,10 @@ function CheckoutPageInner() {
     };
 
     const handleSubmit = async () => {
+        if (missingOrangeDecisions.length > 0) {
+            toast.error("Select a maintenance decision for all ORANGE items before submitting");
+            return;
+        }
         if (availabilityIssues.length > 0) {
             toast.error("Please resolve availability issues before submitting");
             return;
@@ -233,6 +289,24 @@ function CheckoutPageInner() {
 
         setIsSubmitting(true);
         try {
+            const maintenanceResult = await maintenanceFeasibilityCheck.mutateAsync({
+                items: items.map((item) => ({
+                    asset_id: item.assetId,
+                    maintenance_decision: item.maintenanceDecision,
+                })),
+                event_start_date: formData.event_start_date,
+            });
+
+            setHasCheckedMaintenanceFeasibility(true);
+            setMaintenanceFeasibilityIssues(maintenanceResult.issues || []);
+            if (!maintenanceResult.feasible) {
+                const details = maintenanceResult.issues
+                    .map((issue) => `${issue.asset_name}: ${issue.earliest_feasible_date}`)
+                    .join(" | ");
+                toast.error(`Maintenance timeline is not feasible. ${details}`);
+                return;
+            }
+
             // For payload: send ID if from dropdown, or name if custom
             const submitData = {
                 items: items.map((item) => ({
@@ -244,6 +318,7 @@ function CheckoutPageInner() {
                     reskin_target_brand_id: item.reskinTargetBrandId,
                     reskin_target_brand_custom: item.reskinTargetBrandCustom,
                     reskin_notes: item.reskinNotes,
+                    maintenance_decision: item.maintenanceDecision,
                 })),
                 ...formData,
                 // Send ID if from dropdown, or custom text if custom mode
@@ -374,7 +449,7 @@ function CheckoutPageInner() {
                     ) && (
                         <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
                             <div className="flex items-center">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                     <AlertCircle className="h-5 w-5 text-yellow-400" />
                                 </div>
                                 <div className="ml-3">
@@ -528,12 +603,14 @@ function CheckoutPageInner() {
                                                 id="eventStartDate"
                                                 type="date"
                                                 value={formData.event_start_date}
-                                                onChange={(e) =>
+                                                onChange={(e) => {
                                                     setFormData({
                                                         ...formData,
                                                         event_start_date: e.target.value,
-                                                    })
-                                                }
+                                                    });
+                                                    setHasCheckedMaintenanceFeasibility(false);
+                                                    setMaintenanceFeasibilityIssues([]);
+                                                }}
                                                 required
                                                 min={calculateMinDate()}
                                                 className="h-12 font-mono"
@@ -551,12 +628,14 @@ function CheckoutPageInner() {
                                                 id="eventEndDate"
                                                 type="date"
                                                 value={formData.event_end_date}
-                                                onChange={(e) =>
+                                                onChange={(e) => {
                                                     setFormData({
                                                         ...formData,
                                                         event_end_date: e.target.value,
-                                                    })
-                                                }
+                                                    });
+                                                    setHasCheckedMaintenanceFeasibility(false);
+                                                    setMaintenanceFeasibilityIssues([]);
+                                                }}
                                                 required
                                                 min={
                                                     formData.event_start_date || calculateMinDate()
@@ -588,6 +667,23 @@ function CheckoutPageInner() {
                                                     </p>
                                                 </div>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {redItems.length > 0 && (
+                                        <div className="space-y-3">
+                                            <Card className="p-4 border-red-300 bg-red-50/40">
+                                                <p className="text-sm text-red-800">
+                                                    Your cart includes RED items. These are fix-only
+                                                    items and must pass feasibility before you can
+                                                    continue.
+                                                </p>
+                                            </Card>
+                                            <RedFeasibilityAlert
+                                                issues={maintenanceFeasibilityIssues}
+                                                hasChecked={hasCheckedMaintenanceFeasibility}
+                                                isChecking={maintenanceFeasibilityCheck.isPending}
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -1044,6 +1140,44 @@ function CheckoutPageInner() {
                                 </p>
                             </div>
 
+                            {orangeItems.length > 0 && (
+                                <Card className="p-6 border-amber-300 bg-amber-50/40 space-y-4">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-amber-900">
+                                            ORANGE Item Decisions Required
+                                        </h3>
+                                        <p className="text-sm text-amber-800">
+                                            Choose fix-or-use for each ORANGE item before submit.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {orangeItems.map((item) => (
+                                            <OrangeDecisionCard
+                                                key={item.assetId}
+                                                assetName={item.assetName}
+                                                decision={item.maintenanceDecision}
+                                                onDecisionChange={(decision) => {
+                                                    setHasCheckedMaintenanceFeasibility(false);
+                                                    setMaintenanceFeasibilityIssues([]);
+                                                    updateItemMaintenanceDecision(
+                                                        item.assetId,
+                                                        decision
+                                                    );
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {missingOrangeDecisions.length > 0 && (
+                                        <p className="text-sm text-destructive font-medium">
+                                            {missingOrangeDecisions.length} ORANGE item(s) still
+                                            need a decision.
+                                        </p>
+                                    )}
+                                </Card>
+                            )}
+
                             {/* Order Summary */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Items */}
@@ -1349,7 +1483,12 @@ function CheckoutPageInner() {
                     {currentStep === "review" ? (
                         <Button
                             onClick={handleSubmit}
-                            disabled={isSubmitting || availabilityIssues.length > 0}
+                            disabled={
+                                isSubmitting ||
+                                availabilityIssues.length > 0 ||
+                                missingOrangeDecisions.length > 0 ||
+                                (redItems.length > 0 && !hasCheckedMaintenanceFeasibility)
+                            }
                             className="gap-2 font-mono uppercase tracking-wide"
                             size="lg"
                         >
@@ -1359,7 +1498,7 @@ function CheckoutPageInner() {
                     ) : (
                         <Button
                             onClick={handleNext}
-                            disabled={!canProceed()}
+                            disabled={!canProceed() || maintenanceFeasibilityCheck.isPending}
                             className="gap-2 font-mono"
                             size="lg"
                         >

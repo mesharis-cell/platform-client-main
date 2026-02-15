@@ -1,4 +1,5 @@
 "use client";
+/* global globalThis */
 
 /**
  * Phase 6: Order Management React Query Hooks
@@ -260,14 +261,21 @@ export function useExportOrders() {
 
             // Get blob and create download link
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const runtimeGlobal =
+                typeof globalThis !== "undefined"
+                    ? (globalThis as unknown as Record<string, unknown>)
+                    : undefined;
+            const doc = runtimeGlobal?.["document"] as Document | undefined;
+            if (!doc) return false;
+
+            const url = URL.createObjectURL(blob);
+            const a = doc.createElement("a");
             a.href = url;
             a.download = `orders-export-${new Date().toISOString().split("T")[0]}.csv`;
-            document.body.appendChild(a);
+            doc.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            doc.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
             return true;
         },

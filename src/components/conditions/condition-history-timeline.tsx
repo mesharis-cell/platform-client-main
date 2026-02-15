@@ -80,6 +80,24 @@ export function ConditionHistoryTimeline({ history, assetName }: ConditionHistor
         }
     };
 
+    const getDamageEntries = (
+        entry: ConditionHistoryEntry
+    ): Array<{ url: string; description?: string }> => {
+        const structuredEntries = entry.damageReportEntries || (entry as any).damage_report_entries;
+        if (Array.isArray(structuredEntries) && structuredEntries.length > 0) {
+            const normalized: Array<{ url: string; description?: string }> = [];
+            structuredEntries.forEach((item: any) => {
+                if (!item?.url) return;
+                normalized.push({
+                    url: item.url,
+                    description: item.description || undefined,
+                });
+            });
+            return normalized;
+        }
+        return (entry.photos || []).map((url) => ({ url }));
+    };
+
     if (history.length === 0) {
         return (
             <div className="rounded-lg border border-dashed p-8 text-center">
@@ -99,6 +117,7 @@ export function ConditionHistoryTimeline({ history, assetName }: ConditionHistor
                 {history.map((entry, index) => {
                     const isExpanded = expandedEntries.has(entry.id);
                     const isFirst = index === 0;
+                    const damageEntries = getDamageEntries(entry);
 
                     return (
                         <div key={entry.id} className="relative">
@@ -147,7 +166,7 @@ export function ConditionHistoryTimeline({ history, assetName }: ConditionHistor
                                             </div>
                                         </div>
 
-                                        {(entry.notes || entry.photos.length > 0) && (
+                                        {(entry.notes || damageEntries.length > 0) && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -184,39 +203,44 @@ export function ConditionHistoryTimeline({ history, assetName }: ConditionHistor
                                                 </div>
                                             )}
 
-                                            {entry.photos.length > 0 && (
+                                            {damageEntries.length > 0 && (
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                                                         <ImageIcon className="h-3 w-3" />
-                                                        Damage Photos ({entry.photos.length})
+                                                        Damage Photos ({damageEntries.length})
                                                     </div>
                                                     <div className="grid gap-2 sm:grid-cols-3">
-                                                        {entry.photos.map(
-                                                            (photoUrl, photoIndex) => (
-                                                                <Dialog key={photoIndex}>
-                                                                    <DialogTrigger asChild>
-                                                                        <button className="group relative aspect-square overflow-hidden rounded-md border bg-muted transition-all hover:border-primary hover:ring-2 hover:ring-primary/20">
-                                                                            <Image
-                                                                                src={photoUrl}
-                                                                                alt={`Damage photo ${photoIndex + 1}`}
-                                                                                fill
-                                                                                className="object-cover transition-transform group-hover:scale-110"
-                                                                            />
-                                                                        </button>
-                                                                    </DialogTrigger>
-                                                                    <DialogContent className="max-w-3xl">
+                                                        {damageEntries.map((photo, photoIndex) => (
+                                                            <Dialog key={photoIndex}>
+                                                                <DialogTrigger asChild>
+                                                                    <button className="group relative aspect-square overflow-hidden rounded-md border bg-muted transition-all hover:border-primary hover:ring-2 hover:ring-primary/20">
+                                                                        <Image
+                                                                            src={photo.url}
+                                                                            alt={`Damage photo ${photoIndex + 1}`}
+                                                                            fill
+                                                                            className="object-cover transition-transform group-hover:scale-110"
+                                                                        />
+                                                                    </button>
+                                                                </DialogTrigger>
+                                                                <DialogContent className="max-w-3xl">
+                                                                    <div className="space-y-2">
                                                                         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                                                                             <Image
-                                                                                src={photoUrl}
+                                                                                src={photo.url}
                                                                                 alt={`Damage photo ${photoIndex + 1}`}
                                                                                 fill
                                                                                 className="object-contain"
                                                                             />
                                                                         </div>
-                                                                    </DialogContent>
-                                                                </Dialog>
-                                                            )
-                                                        )}
+                                                                        {photo.description && (
+                                                                            <p className="text-sm text-muted-foreground">
+                                                                                {photo.description}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             )}

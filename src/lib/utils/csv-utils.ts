@@ -1,4 +1,5 @@
 "use client";
+/* global globalThis */
 
 /**
  * CSV Utilities for Bulk Asset Upload
@@ -192,7 +193,12 @@ export function downloadCSVTemplate(
     exampleZoneId?: string,
     exampleBrandId?: string
 ): void {
-    if (typeof document === "undefined") return;
+    const runtimeGlobal =
+        typeof globalThis !== "undefined"
+            ? (globalThis as unknown as Record<string, unknown>)
+            : undefined;
+    const doc = runtimeGlobal?.["document"] as Document | undefined;
+    if (!doc) return;
 
     const csv = generateCSVTemplate(
         exampleCompanyId,
@@ -202,16 +208,17 @@ export function downloadCSVTemplate(
     );
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
+    const link = doc.createElement("a");
     const url = URL.createObjectURL(blob);
     const date = new Date().toISOString().split("T")[0];
 
     link.setAttribute("href", url);
     link.setAttribute("download", `asset-upload-template-${date}.csv`);
     link.style.visibility = "hidden";
-    document.body.appendChild(link);
+    doc.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    doc.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 /**
@@ -221,7 +228,12 @@ export function exportErrorsToCSV(
     errors: RowValidationError[],
     fileName: string = "asset-upload-errors.csv"
 ): void {
-    if (typeof document === "undefined") return;
+    const runtimeGlobal =
+        typeof globalThis !== "undefined"
+            ? (globalThis as unknown as Record<string, unknown>)
+            : undefined;
+    const doc = runtimeGlobal?.["document"] as Document | undefined;
+    if (!doc) return;
 
     const csvData = errors.map((error) => ({
         row: error.row,
@@ -232,15 +244,16 @@ export function exportErrorsToCSV(
     const csv = Papa.unparse(csvData);
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
+    const link = doc.createElement("a");
     const url = URL.createObjectURL(blob);
 
     link.setAttribute("href", url);
     link.setAttribute("download", fileName);
     link.style.visibility = "hidden";
-    document.body.appendChild(link);
+    doc.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    doc.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 /**
