@@ -17,7 +17,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const APPROVABLE_COMMERCIAL_STATUSES = new Set(["PENDING_QUOTE", "QUOTED"]);
+const APPROVABLE_COMMERCIAL_STATUSES = new Set(["QUOTED"]);
 
 export default function ClientServiceRequestDetailsPage() {
     const params = useParams<{ id: string }>();

@@ -3,6 +3,7 @@
 import { apiClient } from "@/lib/api/api-client";
 import { throwApiError } from "@/lib/utils/throw-api-error";
 import type {
+    CreateServiceRequestInput,
     ListServiceRequestsParams,
     ServiceRequestDetailsResponse,
     ServiceRequestListResponse,
@@ -56,6 +57,28 @@ export function useClientServiceRequestDetails(id: string | null) {
             }
         },
         enabled: !!id,
+    });
+}
+
+export function useCreateServiceRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: CreateServiceRequestInput) => {
+            try {
+                const response = await apiClient.post("/client/v1/service-request", {
+                    ...payload,
+                    billing_mode: "CLIENT_BILLABLE",
+                });
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: serviceRequestKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: ["client-dashboard-summary"] });
+        },
     });
 }
 

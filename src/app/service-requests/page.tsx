@@ -1,8 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -12,11 +14,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientNav } from "@/components/client-nav";
-import { useClientServiceRequests } from "@/hooks/use-service-requests";
-import type { ServiceRequestStatus } from "@/types/service-request";
+import { useClientServiceRequests, useCreateServiceRequest } from "@/hooks/use-service-requests";
+import type { ServiceRequestStatus, ServiceRequestType } from "@/types/service-request";
 import { Search, Wrench, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const STATUS_FILTERS: Array<ServiceRequestStatus | "all"> = [
     "all",
@@ -28,9 +31,20 @@ const STATUS_FILTERS: Array<ServiceRequestStatus | "all"> = [
     "CANCELLED",
 ];
 
+const REQUEST_TYPES: ServiceRequestType[] = ["MAINTENANCE", "RESKIN", "REFURBISHMENT", "CUSTOM"];
+
 export default function ClientServiceRequestsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | "all">("all");
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [requestType, setRequestType] = useState<ServiceRequestType>("MAINTENANCE");
+    const [requestedStartAt, setRequestedStartAt] = useState("");
+    const [requestedDueAt, setRequestedDueAt] = useState("");
+    const [itemName, setItemName] = useState("");
+    const [itemQuantity, setItemQuantity] = useState(1);
+    const [itemNotes, setItemNotes] = useState("");
+    const [itemRefurbDays, setItemRefurbDays] = useState("");
 
     const filters = useMemo(
         () => ({
@@ -43,12 +57,54 @@ export default function ClientServiceRequestsPage() {
     );
 
     const { data, isLoading, error } = useClientServiceRequests(filters);
+    const createServiceRequest = useCreateServiceRequest();
     const requests = data?.data ?? [];
     const activeFilters = (searchTerm ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
 
     const clearFilters = () => {
         setSearchTerm("");
         setStatusFilter("all");
+    };
+
+    const handleCreateServiceRequest = async () => {
+        if (!title.trim()) return toast.error("Request title is required");
+        if (!itemName.trim()) return toast.error("At least one item name is required");
+
+        try {
+            await createServiceRequest.mutateAsync({
+                request_type: requestType,
+                title: title.trim(),
+                description: description.trim() || undefined,
+                requested_start_at: requestedStartAt
+                    ? new Date(requestedStartAt).toISOString()
+                    : undefined,
+                requested_due_at: requestedDueAt ? new Date(requestedDueAt).toISOString() : undefined,
+                items: [
+                    {
+                        asset_name: itemName.trim(),
+                        quantity: Math.max(1, Number(itemQuantity) || 1),
+                        notes: itemNotes.trim() || undefined,
+                        refurb_days_estimate:
+                            itemRefurbDays.trim() === ""
+                                ? undefined
+                                : Math.max(0, Number(itemRefurbDays) || 0),
+                    },
+                ],
+            });
+
+            setTitle("");
+            setDescription("");
+            setRequestType("MAINTENANCE");
+            setRequestedStartAt("");
+            setRequestedDueAt("");
+            setItemName("");
+            setItemQuantity(1);
+            setItemNotes("");
+            setItemRefurbDays("");
+            toast.success("Service request created");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create service request");
+        }
     };
 
     return (
@@ -60,6 +116,81 @@ export default function ClientServiceRequestsPage() {
                         Track standalone maintenance, reskin, and refurbishment requests
                     </p>
                 </div>
+
+                <Card className="bg-card/80 border-border/40">
+                    <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 className="text-base font-semibold">Create Service Request</h2>
+                            <Button
+                                onClick={handleCreateServiceRequest}
+                                disabled={createServiceRequest.isPending}
+                            >
+                                {createServiceRequest.isPending ? "Creating..." : "Create Request"}
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <Input
+                                placeholder="Request title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
+                            <Select
+                                value={requestType}
+                                onValueChange={(value) => setRequestType(value as ServiceRequestType)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {REQUEST_TYPES.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type.replace(/_/g, " ")}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Input
+                                type="datetime-local"
+                                value={requestedStartAt}
+                                onChange={(e) => setRequestedStartAt(e.target.value)}
+                            />
+                            <Input
+                                type="datetime-local"
+                                value={requestedDueAt}
+                                onChange={(e) => setRequestedDueAt(e.target.value)}
+                            />
+                            <Input
+                                placeholder="Item name"
+                                value={itemName}
+                                onChange={(e) => setItemName(e.target.value)}
+                            />
+                            <Input
+                                type="number"
+                                min={1}
+                                placeholder="Quantity"
+                                value={itemQuantity}
+                                onChange={(e) => setItemQuantity(Number(e.target.value) || 1)}
+                            />
+                            <Input
+                                type="number"
+                                min={0}
+                                placeholder="Refurb days (optional)"
+                                value={itemRefurbDays}
+                                onChange={(e) => setItemRefurbDays(e.target.value)}
+                            />
+                            <Input
+                                placeholder="Item notes (optional)"
+                                value={itemNotes}
+                                onChange={(e) => setItemNotes(e.target.value)}
+                            />
+                        </div>
+                        <Textarea
+                            placeholder="Request description (optional)"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                    </CardContent>
+                </Card>
 
                 <Card className="bg-card/80 border-border/40">
                     <CardContent className="pt-6">

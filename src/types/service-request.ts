@@ -89,3 +89,22 @@ export interface ListServiceRequestsParams {
     request_type?: ServiceRequestType;
     billing_mode?: ServiceRequestBillingMode;
 }
+
+export interface CreateServiceRequestItemInput {
+    asset_id?: string;
+    asset_name: string;
+    quantity: number;
+    notes?: string;
+    refurb_days_estimate?: number;
+}
+
+export interface CreateServiceRequestInput {
+    company_id?: string;
+    request_type: ServiceRequestType;
+    billing_mode?: ServiceRequestBillingMode;
+    title: string;
+    description?: string;
+    requested_start_at?: string;
+    requested_due_at?: string;
+    items: CreateServiceRequestItemInput[];
+}
