@@ -27,8 +27,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClientNav } from "@/components/client-nav";
 import { useClientServiceRequests, useCreateServiceRequest } from "@/hooks/use-service-requests";
 import { useCatalogAsset } from "@/hooks/use-catalog";
+import { useSearchAssets } from "@/hooks/use-assets";
+import { useToken } from "@/lib/auth/use-token";
 import type { ServiceRequestStatus, ServiceRequestType } from "@/types/service-request";
-import { Search, Wrench, X, Plus, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+    Search,
+    Wrench,
+    X,
+    Plus,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 
@@ -75,6 +86,7 @@ export default function ClientServiceRequestsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | "all">("all");
 
+    const { user } = useToken();
     const [createOpen, setCreateOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -82,6 +94,8 @@ export default function ClientServiceRequestsPage() {
     const [requestedStartAt, setRequestedStartAt] = useState("");
     const [requestedDueAt, setRequestedDueAt] = useState("");
     const [itemName, setItemName] = useState("");
+    const [assetSearchQuery, setAssetSearchQuery] = useState("");
+    const [showAssetDropdown, setShowAssetDropdown] = useState(false);
     const [relatedAssetId, setRelatedAssetId] = useState("");
     const [itemQuantity, setItemQuantity] = useState(1);
     const [itemNotes, setItemNotes] = useState("");
@@ -89,6 +103,11 @@ export default function ClientServiceRequestsPage() {
     const { data: prefilledAssetData, isLoading: loadingPrefilledAsset } = useCatalogAsset(
         prefilledAssetId || undefined
     );
+    const { data: assetSearchResults, isLoading: isSearchingAssets } = useSearchAssets(
+        assetSearchQuery,
+        user?.company_id
+    );
+    const searchedAssets = assetSearchResults?.data ?? [];
     const prefilledAsset = prefilledAssetData?.asset;
     const hasPrefilledAsset = Boolean(prefilledAssetId && prefilledAsset);
 
@@ -132,6 +151,8 @@ export default function ClientServiceRequestsPage() {
         setRequestedStartAt("");
         setRequestedDueAt("");
         setItemName(prefilledAsset?.name || "");
+        setAssetSearchQuery("");
+        setShowAssetDropdown(false);
         setRelatedAssetId(prefilledAssetId || "");
         setItemQuantity(1);
         setItemNotes("");
@@ -140,7 +161,9 @@ export default function ClientServiceRequestsPage() {
 
     const handleCreate = async () => {
         if (!title.trim()) return toast.error("Request title is required");
-        if (!itemName.trim()) return toast.error("At least one item name is required");
+        if (!relatedAssetId && !hasPrefilledAsset)
+            return toast.error("Please select an asset to service");
+        if (!itemName.trim()) return toast.error("Item name is required");
 
         try {
             await createServiceRequest.mutateAsync({
@@ -155,7 +178,7 @@ export default function ClientServiceRequestsPage() {
                     : undefined,
                 items: [
                     {
-                        asset_id: hasPrefilledAsset ? relatedAssetId : undefined,
+                        asset_id: relatedAssetId || undefined,
                         asset_name: itemName.trim(),
                         quantity: Math.max(1, Number(itemQuantity) || 1),
                         notes: itemNotes.trim() || undefined,
@@ -210,32 +233,6 @@ export default function ClientServiceRequestsPage() {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {prefilledAssetId && (
-                                            <div className="md:col-span-2 rounded-md border border-primary/20 bg-primary/5 p-3">
-                                                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                                                    Related Asset
-                                                </Label>
-                                                {loadingPrefilledAsset ? (
-                                                    <p className="text-sm mt-1">
-                                                        Loading asset details...
-                                                    </p>
-                                                ) : prefilledAsset ? (
-                                                    <div className="mt-1">
-                                                        <p className="font-semibold">
-                                                            {prefilledAsset.name}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground font-mono">
-                                                            Asset ID: {prefilledAsset.id}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm mt-1 text-destructive">
-                                                        Prefilled asset not found. You can still
-                                                        submit the request manually.
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
                                         <div className="md:col-span-2">
                                             <Label>
                                                 Title <span className="text-destructive">*</span>
@@ -266,18 +263,134 @@ export default function ClientServiceRequestsPage() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div>
+                                        {/* Asset picker */}
+                                        <div className="md:col-span-2">
                                             <Label>
-                                                Item Name{" "}
+                                                Asset to Service{" "}
                                                 <span className="text-destructive">*</span>
                                             </Label>
-                                            <Input
-                                                value={itemName}
-                                                onChange={(e) => setItemName(e.target.value)}
-                                                placeholder="Backbar unit"
-                                                readOnly={hasPrefilledAsset}
-                                                disabled={hasPrefilledAsset}
-                                            />
+                                            {hasPrefilledAsset ? (
+                                                <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
+                                                    {loadingPrefilledAsset ? (
+                                                        <span className="text-sm">Loading...</span>
+                                                    ) : (
+                                                        <>
+                                                            <div>
+                                                                <p className="font-semibold text-sm">
+                                                                    {prefilledAsset?.name}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    {prefilledAsset?.id}
+                                                                </p>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ) : relatedAssetId ? (
+                                                <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-semibold text-sm">
+                                                            {itemName}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground font-mono">
+                                                            {relatedAssetId}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setRelatedAssetId("");
+                                                            setItemName("");
+                                                            setAssetSearchQuery("");
+                                                        }}
+                                                        className="text-muted-foreground hover:text-destructive transition-colors"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="relative mt-1">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                        <Input
+                                                            placeholder="Search your assets..."
+                                                            value={assetSearchQuery}
+                                                            onChange={(e) => {
+                                                                setAssetSearchQuery(e.target.value);
+                                                                setShowAssetDropdown(
+                                                                    e.target.value.length >= 2
+                                                                );
+                                                            }}
+                                                            onFocus={() =>
+                                                                assetSearchQuery.length >= 2 &&
+                                                                setShowAssetDropdown(true)
+                                                            }
+                                                            onBlur={() =>
+                                                                setTimeout(
+                                                                    () =>
+                                                                        setShowAssetDropdown(false),
+                                                                    200
+                                                                )
+                                                            }
+                                                            className="pl-9"
+                                                        />
+                                                        {isSearchingAssets && (
+                                                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                                                        )}
+                                                    </div>
+                                                    {showAssetDropdown && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                                                            {searchedAssets.length > 0 ? (
+                                                                searchedAssets.map((asset) => (
+                                                                    <button
+                                                                        key={asset.id}
+                                                                        type="button"
+                                                                        className="w-full px-3 py-2.5 text-left hover:bg-muted transition-colors flex items-center gap-3"
+                                                                        onClick={() => {
+                                                                            setRelatedAssetId(
+                                                                                asset.id
+                                                                            );
+                                                                            setItemName(asset.name);
+                                                                            setAssetSearchQuery("");
+                                                                            setShowAssetDropdown(
+                                                                                false
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        {asset.images?.[0] ? (
+                                                                            <img
+                                                                                src={
+                                                                                    asset.images[0]
+                                                                                }
+                                                                                alt={asset.name}
+                                                                                className="w-9 h-9 rounded object-cover border"
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="w-9 h-9 rounded bg-muted flex items-center justify-center shrink-0">
+                                                                                <Wrench className="h-4 w-4 text-muted-foreground" />
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="text-sm font-medium truncate">
+                                                                                {asset.name}
+                                                                            </p>
+                                                                            <p className="text-xs text-muted-foreground">
+                                                                                {asset.category}
+                                                                            </p>
+                                                                        </div>
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <p className="p-3 text-sm text-muted-foreground text-center">
+                                                                    {assetSearchQuery.length < 2
+                                                                        ? "Type at least 2 characters to search"
+                                                                        : "No assets found"}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <Label>Quantity</Label>

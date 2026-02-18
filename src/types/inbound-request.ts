@@ -79,7 +79,7 @@ export interface InboundRequestList {
 // Create Inbound Request Item (client-provided fields only)
 export type CreateInboundRequestItem = Omit<
     InboundRequestItem,
-    "id" | "inbound_request_id" | "created_asset_id" | "created_at" | "updated_at"
+    "id" | "inbound_request_id" | "asset_id" | "created_asset_id" | "created_at" | "updated_at"
 >;
 
 // Create Inbound Request Payload
