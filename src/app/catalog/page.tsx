@@ -77,6 +77,7 @@ const getAssetStatusText = (status: AssetStatus) => {
 };
 
 function CatalogPageInner() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrand, setSelectedBrand] = useState<string>("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -120,6 +121,9 @@ function CatalogPageInner() {
     };
 
     const hasActiveFilters = searchQuery || selectedBrand || selectedCategory || viewType !== "all";
+
+    const navigateToServiceRequest = (assetId: string) =>
+        router.push(`/service-requests?asset_id=${assetId}`);
 
     const handleAddToCart = async (item: CatalogAssetItem, quantity: number = 1) => {
         if (item.availableQuantity < quantity) {
@@ -778,20 +782,50 @@ function CatalogPageInner() {
                                                                         <RefreshCw className="w-4 h-4" />
                                                                         Add with Rebranding
                                                                     </Button>
+                                                                    <Button
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            navigateToServiceRequest(
+                                                                                item.id
+                                                                            );
+                                                                        }}
+                                                                        variant="ghost"
+                                                                        className="w-full gap-2 font-mono border border-border/50 hover:border-primary hover:text-primary"
+                                                                    >
+                                                                        <Wrench className="w-4 h-4" />
+                                                                        Request Service
+                                                                    </Button>
                                                                 </div>
                                                             ) : (
-                                                                <Button
-                                                                    disabled
-                                                                    variant="outline"
-                                                                    className="w-full gap-2 font-mono"
-                                                                >
-                                                                    <XCircle className="w-4 h-4" />
-                                                                    {item.availableQuantity < 1
-                                                                        ? "Out of Stock"
-                                                                        : getAssetStatusText(
-                                                                              item.status
-                                                                          )}
-                                                                </Button>
+                                                                <div className="space-y-2">
+                                                                    <Button
+                                                                        disabled
+                                                                        variant="outline"
+                                                                        className="w-full gap-2 font-mono"
+                                                                    >
+                                                                        <XCircle className="w-4 h-4" />
+                                                                        {item.availableQuantity < 1
+                                                                            ? "Out of Stock"
+                                                                            : getAssetStatusText(
+                                                                                  item.status
+                                                                              )}
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            navigateToServiceRequest(
+                                                                                item.id
+                                                                            );
+                                                                        }}
+                                                                        variant="ghost"
+                                                                        className="w-full gap-2 font-mono border border-border/50 hover:border-primary hover:text-primary"
+                                                                    >
+                                                                        <Wrench className="w-4 h-4" />
+                                                                        Request Service
+                                                                    </Button>
+                                                                </div>
                                                             )
                                                         ) : (
                                                             <Button
@@ -1055,7 +1089,7 @@ function CatalogPageInner() {
                                                             </div>
 
                                                             {/* Action Button */}
-                                                            <div className="mt-4 flex gap-3">
+                                                            <div className="mt-4 flex gap-3 flex-wrap">
                                                                 <Button
                                                                     onClick={() =>
                                                                         setSelectedItem(item)
@@ -1081,6 +1115,22 @@ function CatalogPageInner() {
                                                                             Add to Cart
                                                                         </Button>
                                                                     )}
+                                                                {item.type === "asset" && (
+                                                                    <Button
+                                                                        onClick={(event) => {
+                                                                            event.preventDefault();
+                                                                            event.stopPropagation();
+                                                                            navigateToServiceRequest(
+                                                                                item.id
+                                                                            );
+                                                                        }}
+                                                                        variant="ghost"
+                                                                        className="gap-2 font-mono border border-border/50 hover:border-primary hover:text-primary"
+                                                                    >
+                                                                        <Wrench className="w-4 h-4" />
+                                                                        Request Service
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>

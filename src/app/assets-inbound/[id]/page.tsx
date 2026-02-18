@@ -134,7 +134,7 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
                         </div>
                         <h2 className="text-2xl font-bold mb-3">Request Not Found</h2>
                         <p className="text-muted-foreground mb-6">
-                            The inbound request you&apos;re looking for doesn&apos;t exist or has
+                            The new stock request you&apos;re looking for doesn&apos;t exist or has
                             been removed.
                         </p>
                         <Button

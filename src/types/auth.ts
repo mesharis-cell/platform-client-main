@@ -64,7 +64,6 @@ export type Permission =
     | "pricing_tiers:set_base_price"
     // Pricing & Quoting (Phase 8)
     | "pricing:review"
-    | "pricing:approve_standard"
     | "pricing:adjust"
     | "pricing:view_breakdown"
     | "pricing:pmg_review_adjustment"
@@ -259,7 +258,6 @@ export const PERMISSION_TEMPLATES: Record<
             "orders:update",
             "orders:add_time_windows", // Phase 10
             "pricing:review",
-            "pricing:approve_standard",
             "pricing:adjust",
             "lifecycle:progress_status", // Phase 10
             "lifecycle:receive_notifications", // Phase 10

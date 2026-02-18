@@ -46,8 +46,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
-import { useGetCountries, usePricingTierLocations } from "@/hooks/use-pricing-tiers";
+import { useGetCountries } from "@/hooks/use-pricing-tiers";
 import { useToken } from "@/lib/auth/use-token";
+import { useCompany } from "@/hooks/use-companies";
 import {
     useMaintenanceFeasibilityCheck,
     type MaintenanceFeasibilityIssue,
@@ -65,6 +66,8 @@ const STEPS: { key: Step; label: string; icon: any }[] = [
 
 function CheckoutPageInner() {
     const router = useRouter();
+    const { user } = useToken();
+    const { data: companyData } = useCompany(user?.company_id || undefined);
     const {
         items,
         itemCount,
@@ -83,6 +86,8 @@ function CheckoutPageInner() {
         MaintenanceFeasibilityIssue[]
     >([]);
     const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
+    const isEstimateFeatureEnabled =
+        companyData?.data?.features?.show_estimate_on_order_creation === true;
 
     // Mutations
     const submitMutation = useSubmitOrderFromCart();
@@ -118,12 +123,11 @@ function CheckoutPageInner() {
         data: estimateData,
         isLoading: isEstimateLoading,
         isError: isEstimateError,
-        error: estimateError,
     } = useCalculateEstimate(
         items,
         formData.venue_city_id,
         formData.trip_type,
-        currentStep === "review" && !!formData.venue_city_id
+        currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
 
     // Calculate minimum allowed date (Today + 6 days)
@@ -1404,7 +1408,9 @@ function CheckoutPageInner() {
                             )}
 
                             {/* NEW: Hybrid Pricing Estimate */}
-                            {availabilityIssues.length === 0 && estimateData?.data && (
+                            {isEstimateFeatureEnabled &&
+                                availabilityIssues.length === 0 &&
+                                estimateData?.data && (
                                 <OrderEstimate
                                     estimate={estimateData.data.estimate}
                                     hasRebrandItems={hasRebrandItems}
@@ -1412,7 +1418,8 @@ function CheckoutPageInner() {
                             )}
 
                             {/* Loading Estimate */}
-                            {availabilityIssues.length === 0 &&
+                            {isEstimateFeatureEnabled &&
+                                availabilityIssues.length === 0 &&
                                 isEstimateLoading &&
                                 formData.venue_city_id && (
                                     <Card className="p-6 bg-muted/30 border-border">
@@ -1426,7 +1433,8 @@ function CheckoutPageInner() {
                                 )}
 
                             {/* Estimate Error */}
-                            {availabilityIssues.length === 0 &&
+                            {isEstimateFeatureEnabled &&
+                                availabilityIssues.length === 0 &&
                                 isEstimateError &&
                                 formData.venue_city_id && (
                                     <Card className="p-6 bg-muted/30 border-border">

@@ -12,12 +12,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // Types for client order operations
 interface ClientOrderListParams {
     status?: string;
+    financialStatus?: string;
     search?: string;
     dateFrom?: string;
     dateTo?: string;
     brand?: string;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
 }
 
 interface ClientOrder {
@@ -131,8 +134,12 @@ export function useClientOrders(params: ClientOrderListParams = {}) {
                 if (params.dateFrom) queryParams.append("dateFrom", params.dateFrom);
                 if (params.dateTo) queryParams.append("dateTo", params.dateTo);
                 if (params.brand) queryParams.append("brand", params.brand);
+                if (params.financialStatus)
+                    queryParams.append("financial_status", params.financialStatus);
                 if (params.page) queryParams.append("page", params.page.toString());
                 if (params.limit) queryParams.append("limit", params.limit.toString());
+                if (params.sortBy) queryParams.append("sort_by", params.sortBy);
+                if (params.sortOrder) queryParams.append("sort_order", params.sortOrder);
 
                 const response = await apiClient.get(
                     `/client/v1/order/my?${queryParams.toString()}`

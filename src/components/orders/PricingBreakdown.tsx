@@ -27,11 +27,10 @@ export function PricingBreakdown({
     const applyMargin = (baseValue: number) => roundCurrency(baseValue * (1 + marginPercent / 100));
 
     const basePrice = applyMargin(Number(pricing?.base_ops_total || 0));
-    const transportPrice = applyMargin(Number(pricing?.transport?.final_rate || 0));
     const catalogPrice = applyMargin(Number(pricing?.line_items?.catalog_total || 0));
     const customPrice = applyMargin(Number(pricing?.line_items?.custom_total || 0));
     const operationalServicesTotal = roundCurrency(catalogPrice + customPrice);
-    const total = roundCurrency(basePrice + transportPrice + operationalServicesTotal);
+    const total = roundCurrency(basePrice + operationalServicesTotal);
     const hasReskinLine = activeLineItems.some((item) => item.category === "RESKIN");
 
     const serviceLines = activeLineItems.map((item) => ({
@@ -52,20 +51,11 @@ export function PricingBreakdown({
                 <span className="font-mono">{basePrice.toFixed(2)} AED</span>
             </div>
 
-            {/* Transport */}
-            <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                    Transport ({order.venue_city},{" "}
-                    {order.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
-                </span>
-                <span className="font-mono">{transportPrice.toFixed(2)} AED</span>
-            </div>
-
             {/* Logistics Subtotal */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-mono font-semibold">
-                    {(Number(basePrice) + Number(transportPrice)).toFixed(2)} AED
+                    {Number(basePrice).toFixed(2)} AED
                 </span>
             </div>
 

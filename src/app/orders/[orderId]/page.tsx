@@ -58,6 +58,7 @@ const costEstimatedStatus = [
     "DELIVERED",
     "IN_USE",
     "AWAITING_RETURN",
+    "RETURN_IN_TRANSIT",
     "CLOSED",
 ];
 
@@ -166,6 +167,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         DELIVERED: "bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/30",
         IN_USE: "bg-pink-500/10 text-pink-600 border-pink-500/30",
         AWAITING_RETURN: "bg-rose-500/10 text-rose-600 border-rose-500/30",
+        RETURN_IN_TRANSIT: "bg-orange-500/10 text-orange-600 border-orange-500/30",
         CLOSED: "bg-slate-600/10 text-slate-700 border-slate-600/20",
     };
 
@@ -185,6 +187,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isDelivered = order.order_status === "DELIVERED";
     const isInUse = order.order_status === "IN_USE";
     const isAwaitingReturn = order.order_status === "AWAITING_RETURN";
+    const isReturnInTransit = order.order_status === "RETURN_IN_TRANSIT";
     const isClosed = order.order_status === "CLOSED";
     const isAwaitingFabrication = order.order_status === "AWAITING_FABRICATION";
     const isCancelled = order.order_status === "CANCELLED";
@@ -201,6 +204,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isDelivered ||
         isInUse ||
         isAwaitingReturn ||
+        isReturnInTransit ||
         isClosed;
     const isFulfillmentStage =
         isConfirmed ||
@@ -210,6 +214,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isDelivered ||
         isInUse ||
         isAwaitingReturn ||
+        isReturnInTransit ||
         isClosed;
 
     const cancelledReskinRequests = order?.reskin_requests?.filter(
@@ -289,6 +294,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isDelivered && "Delivered"}
                                         {isInUse && "Enjoy Your Event!"}
                                         {isAwaitingReturn && "Pickup Scheduled"}
+                                        {isReturnInTransit && "Items Returning"}
                                         {isClosed && "Order Complete"}
                                     </h1>
                                     <p className="text-muted-foreground leading-relaxed">
@@ -335,6 +341,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             "Your event is in progress. We hope everything goes wonderfully!"}
                                         {isAwaitingReturn &&
                                             "Your event is complete. Items will be picked up during the scheduled window."}
+                                        {isReturnInTransit &&
+                                            "Your items are currently in transit back to our warehouse."}
                                         {isClosed &&
                                             "All items returned. Thank you for choosing us!"}
                                         {isAwaitingFabrication &&
@@ -357,6 +365,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                       ? "bg-cyan-500"
                                                       : isAwaitingReturn
                                                         ? "bg-rose-500"
+                                                        : isReturnInTransit
+                                                          ? "bg-orange-500"
                                                         : "bg-primary"
                                     }`}
                                 >
@@ -388,6 +398,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     )}
                                     {isInUse && <PartyPopper className="w-10 h-10 text-white" />}
                                     {isAwaitingReturn && <Clock className="w-10 h-10 text-white" />}
+                                    {isReturnInTransit && <Truck className="w-10 h-10 text-white" />}
                                     {isClosed && <Archive className="w-10 h-10 text-white" />}
                                 </div>
                             </div>

@@ -20,6 +20,10 @@ export interface Company {
             secondary_color: string;
         };
     };
+    features?: {
+        show_estimate_on_order_creation?: boolean;
+        [key: string]: boolean | string | number | null | undefined;
+    };
     platform_margin_percent: string;
     contact_email: string | null;
     contact_phone: string | null;

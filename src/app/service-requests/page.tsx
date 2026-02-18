@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientNav } from "@/components/client-nav";
 import { useClientServiceRequests, useCreateServiceRequest } from "@/hooks/use-service-requests";
+import { useCatalogAsset } from "@/hooks/use-catalog";
 import type { ServiceRequestStatus, ServiceRequestType } from "@/types/service-request";
 import { Search, Wrench, X, Plus, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 const STATUS_FILTERS: Array<ServiceRequestStatus | "all"> = [
     "all",
@@ -66,6 +68,8 @@ const COMMERCIAL_STATUS_CONFIG: Record<string, { label: string; color: string }>
 };
 
 export default function ClientServiceRequestsPage() {
+    const searchParams = useSearchParams();
+    const prefilledAssetId = searchParams.get("asset_id") || "";
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
     const [searchTerm, setSearchTerm] = useState("");
@@ -78,9 +82,15 @@ export default function ClientServiceRequestsPage() {
     const [requestedStartAt, setRequestedStartAt] = useState("");
     const [requestedDueAt, setRequestedDueAt] = useState("");
     const [itemName, setItemName] = useState("");
+    const [relatedAssetId, setRelatedAssetId] = useState("");
     const [itemQuantity, setItemQuantity] = useState(1);
     const [itemNotes, setItemNotes] = useState("");
     const [itemRefurbDays, setItemRefurbDays] = useState("");
+    const { data: prefilledAssetData, isLoading: loadingPrefilledAsset } = useCatalogAsset(
+        prefilledAssetId || undefined
+    );
+    const prefilledAsset = prefilledAssetData?.asset;
+    const hasPrefilledAsset = Boolean(prefilledAssetId && prefilledAsset);
 
     const filters = useMemo(
         () => ({
@@ -104,13 +114,25 @@ export default function ClientServiceRequestsPage() {
         setPage(1);
     };
 
+    useEffect(() => {
+        if (!prefilledAssetId) return;
+        setCreateOpen(true);
+        setRelatedAssetId(prefilledAssetId);
+    }, [prefilledAssetId]);
+
+    useEffect(() => {
+        if (!prefilledAsset?.name) return;
+        setItemName(prefilledAsset.name);
+    }, [prefilledAsset?.name]);
+
     const resetCreateForm = () => {
         setTitle("");
         setDescription("");
         setRequestType("MAINTENANCE");
         setRequestedStartAt("");
         setRequestedDueAt("");
-        setItemName("");
+        setItemName(prefilledAsset?.name || "");
+        setRelatedAssetId(prefilledAssetId || "");
         setItemQuantity(1);
         setItemNotes("");
         setItemRefurbDays("");
@@ -133,6 +155,7 @@ export default function ClientServiceRequestsPage() {
                     : undefined,
                 items: [
                     {
+                        asset_id: hasPrefilledAsset ? relatedAssetId : undefined,
                         asset_name: itemName.trim(),
                         quantity: Math.max(1, Number(itemQuantity) || 1),
                         notes: itemNotes.trim() || undefined,
@@ -187,6 +210,30 @@ export default function ClientServiceRequestsPage() {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {prefilledAssetId && (
+                                            <div className="md:col-span-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+                                                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                    Related Asset
+                                                </Label>
+                                                {loadingPrefilledAsset ? (
+                                                    <p className="text-sm mt-1">Loading asset details...</p>
+                                                ) : prefilledAsset ? (
+                                                    <div className="mt-1">
+                                                        <p className="font-semibold">
+                                                            {prefilledAsset.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground font-mono">
+                                                            Asset ID: {prefilledAsset.id}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm mt-1 text-destructive">
+                                                        Prefilled asset not found. You can still submit
+                                                        the request manually.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="md:col-span-2">
                                             <Label>
                                                 Title <span className="text-destructive">*</span>
@@ -226,6 +273,8 @@ export default function ClientServiceRequestsPage() {
                                                 value={itemName}
                                                 onChange={(e) => setItemName(e.target.value)}
                                                 placeholder="Backbar unit"
+                                                readOnly={hasPrefilledAsset}
+                                                disabled={hasPrefilledAsset}
                                             />
                                         </div>
                                         <div>

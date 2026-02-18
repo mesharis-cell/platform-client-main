@@ -403,6 +403,22 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                 </Card>
                             )}
+
+                            <Card className="p-6 bg-card/50 border-border/50">
+                                <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide text-muted-foreground font-mono">
+                                    Service
+                                </h3>
+                                <Button
+                                    variant="outline"
+                                    className="w-full gap-2 font-mono"
+                                    onClick={() =>
+                                        router.push(`/service-requests?asset_id=${asset.id}`)
+                                    }
+                                >
+                                    <Wrench className="w-4 h-4" />
+                                    Request Service
+                                </Button>
+                            </Card>
                         </div>
                     </div>
 

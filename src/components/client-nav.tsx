@@ -8,7 +8,14 @@
 
 import { FloatingCart } from "@/components/cart/floating-cart";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCompany } from "@/hooks/use-companies";
@@ -20,6 +27,7 @@ import {
     Grid3x3,
     LogOut,
     ShoppingCart,
+    FileText,
     Box,
     Calendar,
     Lock,
@@ -33,10 +41,10 @@ const clientNav = [
     { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard },
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
+    { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
     { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
+    { name: "New Stock Request", href: "/assets-inbound", icon: Box },
     { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
-    { name: "Assets Inbound", href: "/assets-inbound", icon: Box },
-    { name: "Reset Password", href: "/reset-password", icon: Lock },
 ];
 
 interface ClientNavProps {
@@ -211,11 +219,40 @@ function ClientNavInner({ children }: ClientNavProps) {
                     ) : (
                         <>
                             <div className="flex items-center gap-3 px-2 py-1">
-                                <Avatar className="h-10 w-10 border-2 border-primary/20">
-                                    <AvatarFallback className="bg-primary/10 text-primary font-mono text-sm font-bold">
-                                        {user?.name?.charAt(0).toUpperCase() || "C"}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="rounded-full border-2 border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <Avatar className="h-10 w-10">
+                                                <AvatarFallback className="bg-primary/10 text-primary font-mono text-sm font-bold">
+                                                    {user?.name?.charAt(0).toUpperCase() || "C"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent side="top" align="start">
+                                        <DropdownMenuLabel className="font-mono text-xs uppercase tracking-wide">
+                                            {user?.name || "Client User"}
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onSelect={() => router.push("/reset-password")}
+                                            className="font-mono text-xs uppercase tracking-wide"
+                                        >
+                                            <Lock className="h-3.5 w-3.5 mr-2" />
+                                            Reset Password
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={handleSignOut}
+                                            className="font-mono text-xs uppercase tracking-wide text-destructive focus:text-destructive"
+                                        >
+                                            <LogOut className="h-3.5 w-3.5 mr-2" />
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-mono font-semibold truncate">
                                         {user?.name || "Client User"}
@@ -225,15 +262,6 @@ function ClientNavInner({ children }: ClientNavProps) {
                                     </p>
                                 </div>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleSignOut}
-                                className="w-full font-mono text-xs uppercase tracking-wide hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
-                            >
-                                <LogOut className="h-3.5 w-3.5 mr-2" />
-                                Sign Out
-                            </Button>
                         </>
                     )}
                 </div>
