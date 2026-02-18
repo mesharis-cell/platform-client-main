@@ -54,9 +54,7 @@ export function PricingBreakdown({
             {/* Logistics Subtotal */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-mono font-semibold">
-                    {Number(basePrice).toFixed(2)} AED
-                </span>
+                <span className="font-mono font-semibold">{Number(basePrice).toFixed(2)} AED</span>
             </div>
 
             {/* Operational Services Total */}

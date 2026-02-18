@@ -367,7 +367,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                         ? "bg-rose-500"
                                                         : isReturnInTransit
                                                           ? "bg-orange-500"
-                                                        : "bg-primary"
+                                                          : "bg-primary"
                                     }`}
                                 >
                                     {(isSubmitted || isPricingReview) && (
@@ -398,7 +398,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     )}
                                     {isInUse && <PartyPopper className="w-10 h-10 text-white" />}
                                     {isAwaitingReturn && <Clock className="w-10 h-10 text-white" />}
-                                    {isReturnInTransit && <Truck className="w-10 h-10 text-white" />}
+                                    {isReturnInTransit && (
+                                        <Truck className="w-10 h-10 text-white" />
+                                    )}
                                     {isClosed && <Archive className="w-10 h-10 text-white" />}
                                 </div>
                             </div>

@@ -101,8 +101,7 @@ export default function QuotesEstimatesPage() {
                     Boolean(order?.quote_sent_at)
             )
             .sort(
-                (a, b) =>
-                    new Date(getDateSent(b)).getTime() - new Date(getDateSent(a)).getTime()
+                (a, b) => new Date(getDateSent(b)).getTime() - new Date(getDateSent(a)).getTime()
             );
     }, [data?.data]);
 
@@ -197,7 +196,9 @@ export default function QuotesEstimatesPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {paginatedOrders.map((order) => {
-                                            const reviewStatus = getQuoteReviewStatus(order?.order_status);
+                                            const reviewStatus = getQuoteReviewStatus(
+                                                order?.order_status
+                                            );
                                             return (
                                                 <TableRow key={order?.id}>
                                                     <TableCell>
@@ -212,11 +213,14 @@ export default function QuotesEstimatesPage() {
                                                         </Link>
                                                     </TableCell>
                                                     <TableCell className="font-medium">
-                                                        {order?.event_name || order?.venue_name || "N/A"}
+                                                        {order?.event_name ||
+                                                            order?.venue_name ||
+                                                            "N/A"}
                                                     </TableCell>
                                                     <TableCell>
                                                         {formatDate(
-                                                            order?.event_start_date || order?.event_end_date
+                                                            order?.event_start_date ||
+                                                                order?.event_end_date
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
@@ -230,7 +234,9 @@ export default function QuotesEstimatesPage() {
                                                     <TableCell className="font-mono">
                                                         {formatCurrency(getEstimateAmount(order))}
                                                     </TableCell>
-                                                    <TableCell>{formatDate(getDateSent(order))}</TableCell>
+                                                    <TableCell>
+                                                        {formatDate(getDateSent(order))}
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button
                                                             variant="outline"
@@ -263,8 +269,8 @@ export default function QuotesEstimatesPage() {
                                         <div className="flex items-center justify-between">
                                             <p className="text-sm text-muted-foreground">
                                                 Showing {(currentPage - 1) * limit + 1} to{" "}
-                                                {Math.min(currentPage * limit, quoteOrders.length)} of{" "}
-                                                {quoteOrders.length} estimates
+                                                {Math.min(currentPage * limit, quoteOrders.length)}{" "}
+                                                of {quoteOrders.length} estimates
                                             </p>
                                             <div className="flex gap-2">
                                                 <Button

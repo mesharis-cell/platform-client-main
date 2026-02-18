@@ -1411,11 +1411,11 @@ function CheckoutPageInner() {
                             {isEstimateFeatureEnabled &&
                                 availabilityIssues.length === 0 &&
                                 estimateData?.data && (
-                                <OrderEstimate
-                                    estimate={estimateData.data.estimate}
-                                    hasRebrandItems={hasRebrandItems}
-                                />
-                            )}
+                                    <OrderEstimate
+                                        estimate={estimateData.data.estimate}
+                                        hasRebrandItems={hasRebrandItems}
+                                    />
+                                )}
 
                             {/* Loading Estimate */}
                             {isEstimateFeatureEnabled &&

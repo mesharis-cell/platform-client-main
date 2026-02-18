@@ -216,7 +216,9 @@ export default function ClientServiceRequestsPage() {
                                                     Related Asset
                                                 </Label>
                                                 {loadingPrefilledAsset ? (
-                                                    <p className="text-sm mt-1">Loading asset details...</p>
+                                                    <p className="text-sm mt-1">
+                                                        Loading asset details...
+                                                    </p>
                                                 ) : prefilledAsset ? (
                                                     <div className="mt-1">
                                                         <p className="font-semibold">
@@ -228,8 +230,8 @@ export default function ClientServiceRequestsPage() {
                                                     </div>
                                                 ) : (
                                                     <p className="text-sm mt-1 text-destructive">
-                                                        Prefilled asset not found. You can still submit
-                                                        the request manually.
+                                                        Prefilled asset not found. You can still
+                                                        submit the request manually.
                                                     </p>
                                                 )}
                                             </div>
