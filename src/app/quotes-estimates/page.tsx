@@ -112,7 +112,7 @@ export default function QuotesEstimatesPage() {
         return quoteOrders.slice(start, start + limit);
     }, [quoteOrders, currentPage]);
 
-    const handleDownloadCostEstimate = async (orderId: string) => {
+    const handleDownloadCostEstimate = async (orderUuid: string, orderReadableId: string) => {
         if (!platform?.platform_id) {
             toast.error("Platform context is missing. Please refresh and try again.");
             return;
@@ -120,13 +120,13 @@ export default function QuotesEstimatesPage() {
 
         try {
             const pdfBlob = await downloadCostEstimate.mutateAsync({
-                orderId,
+                orderId: orderUuid,
                 platformId: platform.platform_id,
             });
             const url = URL.createObjectURL(pdfBlob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `cost-estimate-${orderId}.pdf`;
+            link.download = `cost-estimate-${orderReadableId}.pdf`;
             link.click();
             URL.revokeObjectURL(url);
         } catch (downloadError: any) {
@@ -242,14 +242,17 @@ export default function QuotesEstimatesPage() {
                                                             variant="outline"
                                                             size="sm"
                                                             className="gap-2"
-                                                            onClick={() =>
+                                                            onClick={() => {
+                                                                if (!order?.id || !order?.order_id)
+                                                                    return;
                                                                 handleDownloadCostEstimate(
-                                                                    order?.order_id
-                                                                )
-                                                            }
+                                                                    order.id,
+                                                                    order.order_id
+                                                                );
+                                                            }}
                                                             disabled={
                                                                 downloadCostEstimate.isPending ||
-                                                                !order?.order_id
+                                                                !order?.id
                                                             }
                                                         >
                                                             <Download className="h-4 w-4" />

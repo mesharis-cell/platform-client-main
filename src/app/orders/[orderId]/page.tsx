@@ -75,9 +75,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const invoicingEnabled = platform?.features?.enable_kadence_invoicing === true;
 
     const handleDownloadCostEstimate = async () => {
+        if (!order?.id || !platform?.platform_id) {
+            toast.error("Order context is missing. Please refresh and try again.");
+            return;
+        }
+
         try {
             const pdfBlob = await downloadCostEstimate.mutateAsync({
-                orderId: orderData?.data?.order_id,
+                orderId: order.id,
                 platformId: platform.platform_id,
             });
 
