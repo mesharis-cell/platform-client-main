@@ -1198,8 +1198,6 @@ function CheckoutPageInner() {
                                                 assetName={item.assetName}
                                                 decision={item.maintenanceDecision}
                                                 onDecisionChange={(decision) => {
-                                                    setHasCheckedMaintenanceFeasibility(false);
-                                                    setMaintenanceFeasibilityIssues([]);
                                                     updateItemMaintenanceDecision(
                                                         item.assetId,
                                                         decision

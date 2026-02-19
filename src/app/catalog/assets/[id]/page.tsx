@@ -485,11 +485,6 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                             </p>
                                         )}
-                                        {asset.condition === "RED" && (
-                                            <p className="text-xs font-mono text-destructive mt-2">
-                                                This asset is currently unavailable for booking
-                                            </p>
-                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
