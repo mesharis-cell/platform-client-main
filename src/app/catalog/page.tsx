@@ -581,6 +581,7 @@ function CatalogPageInner() {
                                                             <div className="absolute inset-0 bg-linear-gradient-to-t from-background/95 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                                                                 <Button
                                                                     onClick={(e) => {
+                                                                        e.preventDefault();
                                                                         e.stopPropagation();
                                                                         handleAddToCart(item, 1);
                                                                     }}
@@ -718,6 +719,7 @@ function CatalogPageInner() {
                                                                 <div className="space-y-2">
                                                                     <Button
                                                                         onClick={(e) => {
+                                                                            e.preventDefault();
                                                                             e.stopPropagation();
                                                                             handleAddToCart(
                                                                                 item,
@@ -778,6 +780,7 @@ function CatalogPageInner() {
                                                         ) : (
                                                             <Button
                                                                 onClick={(e) => {
+                                                                    e.preventDefault();
                                                                     e.stopPropagation();
                                                                     setSelectedItem(item);
                                                                 }}
@@ -1039,9 +1042,11 @@ function CatalogPageInner() {
                                                             {/* Action Button */}
                                                             <div className="mt-4 flex gap-3 flex-wrap">
                                                                 <Button
-                                                                    onClick={() =>
-                                                                        setSelectedItem(item)
-                                                                    }
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        setSelectedItem(item);
+                                                                    }}
                                                                     variant="outline"
                                                                     className="flex-1 gap-2 font-mono"
                                                                 >
@@ -1051,6 +1056,7 @@ function CatalogPageInner() {
                                                                     item.availableQuantity > 0 && (
                                                                         <Button
                                                                             onClick={(e) => {
+                                                                                e.preventDefault();
                                                                                 e.stopPropagation();
                                                                                 handleAddToCart(
                                                                                     item,
