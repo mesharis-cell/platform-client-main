@@ -83,10 +83,6 @@ export interface ReskinRequest {
         handling_tags: string[];
         from_collection: string | null;
         from_collection_name: string | null;
-        is_reskin_request: boolean;
-        reskin_target_brand_id: string | null;
-        reskin_target_brand_custom: string | null;
-        reskin_notes: string | null;
         created_at: Date;
     };
     original_asset: {
@@ -218,8 +214,6 @@ export interface Order {
     trip_type?: string | null;
     transport_vehicle_type?: string | null;
     venue_city?: string | null;
-
-    reskin_requests?: ReskinRequest[];
     // Timestamps
     createdAt: Date;
     updatedAt: Date;

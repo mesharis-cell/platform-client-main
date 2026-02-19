@@ -12,11 +12,6 @@ export interface SubmitOrderPayload {
         asset_id: string;
         quantity: number;
         from_collection_id?: string;
-        // NEW: Rebrand fields
-        is_reskin_request?: boolean;
-        reskin_target_brand_id?: string;
-        reskin_target_brand_custom?: string;
-        reskin_notes?: string;
         maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS";
     }>;
     brand_id?: string;
@@ -35,7 +30,7 @@ export interface SubmitOrderPayload {
 }
 
 /**
- * Submit order with hybrid pricing and rebrand support
+ * Submit order with hybrid pricing
  */
 export async function submitOrder(payload: SubmitOrderPayload) {
     const response = await fetch("/api/orders/submit-from-cart", {

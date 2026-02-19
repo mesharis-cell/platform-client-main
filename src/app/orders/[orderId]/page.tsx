@@ -219,10 +219,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isReturnInTransit ||
         isClosed;
 
-    const cancelledReskinRequests = order?.reskin_requests?.filter(
-        (reskinRequest) => reskinRequest.cancelled_at !== null
-    );
-
     const { total } = getOrderPrice(order?.order_pricing);
 
     return (
@@ -312,14 +308,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     Your quote is ready! Review the pricing below
                                                     and approve or decline.
                                                 </p>
-
-                                                {cancelledReskinRequests?.length > 0 && (
-                                                    <p className="font-semibold text-red-500">
-                                                        {cancelledReskinRequests?.length} Reskin
-                                                        requests have been cancelled. Review the new
-                                                        quote below.
-                                                    </p>
-                                                )}
                                             </>
                                         )}
                                         {isApproved &&
@@ -444,11 +432,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 cancellationReason={order.cancellation_reason}
                                 cancellationNotes={order.cancellation_notes}
                                 cancelledAt={order.cancelled_at}
-                                pendingReskinCount={
-                                    order.reskin_requests?.filter(
-                                        (r: any) => !r.completed_at && !r.cancelled_at
-                                    ).length || 0
-                                }
+                                pendingReskinCount={0}
                             />
                         </motion.div>
                     )}
@@ -467,11 +451,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         order={order}
                                         pricing={order.order_pricing}
                                         lineItems={order.line_items || []}
-                                        hasReskinRequests={
-                                            order.reskin_requests?.some(
-                                                (r: any) => !r.cancelled_at
-                                            ) || false
-                                        }
                                         onApprove={async () => {
                                             await approveQuote.mutateAsync({ orderId: order.id });
                                         }}
@@ -754,7 +733,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 <OrderItemsList
                                     items={order.items}
                                     orderStatus={order.order_status}
-                                    reskinList={order.reskin_requests}
                                     calculatedTotals={order.calculated_totals}
                                 />
                             </motion.div>

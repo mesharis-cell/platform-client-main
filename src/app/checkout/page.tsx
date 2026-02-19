@@ -112,7 +112,6 @@ function CheckoutPageInner() {
         trip_type: "ROUND_TRIP" as TripType, // NEW
     });
 
-    const hasRebrandItems = items.some((item) => item.isReskinRequest);
     const isAllGreenItems = items.every((item) => item.condition === "GREEN");
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
@@ -317,11 +316,6 @@ function CheckoutPageInner() {
                     asset_id: item.assetId,
                     quantity: item.quantity,
                     from_collection_id: item.fromCollection,
-                    // Include reskin fields
-                    is_reskin_request: item.isReskinRequest || false,
-                    reskin_target_brand_id: item.reskinTargetBrandId,
-                    reskin_target_brand_custom: item.reskinTargetBrandCustom,
-                    reskin_notes: item.reskinNotes,
                     maintenance_decision: item.maintenanceDecision,
                 })),
                 ...formData,
@@ -1413,7 +1407,7 @@ function CheckoutPageInner() {
                                 estimateData?.data && (
                                     <OrderEstimate
                                         estimate={estimateData.data.estimate}
-                                        hasRebrandItems={hasRebrandItems}
+                                        hasRebrandItems={false}
                                     />
                                 )}
 
@@ -1458,10 +1452,8 @@ function CheckoutPageInner() {
                                         <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                                         <div className="flex-1">
                                             <p className="font-medium mb-1 text-red-500">
-                                                Your order includes damaged{" "}
-                                                {hasRebrandItems && "and rebrand"} items. Please
-                                                consider couple of days for assets maintenance{" "}
-                                                {hasRebrandItems && "and rebrand"}.
+                                                Your order includes damaged items. Please consider a
+                                                couple of extra days for maintenance.
                                             </p>
                                         </div>
                                     </div>

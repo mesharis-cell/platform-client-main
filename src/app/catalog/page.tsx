@@ -44,7 +44,6 @@ import {
     Minus,
     Package,
     Plus,
-    RefreshCw,
     Search,
     ShoppingCart,
     Tag,
@@ -57,7 +56,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
 import { useToken } from "@/lib/auth/use-token";
 import { AssetStatus } from "@/types";
 
@@ -87,11 +85,9 @@ function CatalogPageInner() {
         CatalogAssetItem | CatalogCollectionItem | null
     >(null);
     const [selectedQuantity, setSelectedQuantity] = useState(1);
-    const [rebrandModalOpen, setRebrandModalOpen] = useState(false);
-    const [rebrandAsset, setRebrandAsset] = useState<CatalogAssetItem | null>(null);
     const { user } = useToken();
 
-    const { addItem, addItemWithRebrand } = useCart();
+    const { addItem } = useCart();
 
     // Fetch catalog data
     const { data: catalogData, isLoading } = useCatalog({
@@ -144,41 +140,6 @@ function CatalogPageInner() {
             image: item.images[0],
             condition: item.condition,
         });
-    };
-
-    const handleAddWithRebrand = (item: CatalogAssetItem) => {
-        setRebrandAsset(item);
-        setRebrandModalOpen(true);
-    };
-
-    const handleRebrandSubmit = (rebrandData: RebrandData) => {
-        if (!rebrandAsset) return;
-
-        if (rebrandAsset.availableQuantity < 1) {
-            toast.error("Not enough quantity available");
-            return;
-        }
-
-        addItemWithRebrand(
-            rebrandAsset.id,
-            1,
-            {
-                assetName: rebrandAsset.name,
-                availableQuantity: rebrandAsset.availableQuantity,
-                volume: Number(rebrandAsset.volume),
-                weight: Number(rebrandAsset.weight),
-                dimensionLength: Number(rebrandAsset.dimensionLength),
-                dimensionWidth: Number(rebrandAsset.dimensionWidth),
-                dimensionHeight: Number(rebrandAsset.dimensionHeight),
-                category: rebrandAsset.category,
-                image: rebrandAsset.images[0],
-                condition: rebrandAsset.condition,
-            },
-            rebrandData
-        );
-
-        setRebrandModalOpen(false);
-        setRebrandAsset(null);
     };
 
     return (
@@ -768,19 +729,6 @@ function CatalogPageInner() {
                                                                     >
                                                                         <ShoppingCart className="w-4 h-4" />
                                                                         Add to Cart
-                                                                    </Button>
-                                                                    <Button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleAddWithRebrand(
-                                                                                item
-                                                                            );
-                                                                        }}
-                                                                        variant="outline"
-                                                                        className="w-full gap-2 font-mono hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all"
-                                                                    >
-                                                                        <RefreshCw className="w-4 h-4" />
-                                                                        Add with Rebranding
                                                                     </Button>
                                                                     <Button
                                                                         onClick={(e) => {
@@ -1545,16 +1493,6 @@ function CatalogPageInner() {
                     )}
                 </DialogContent>
             </Dialog>
-
-            {/* Rebrand Modal */}
-            <RebrandModal
-                open={rebrandModalOpen}
-                onOpenChange={setRebrandModalOpen}
-                assetName={rebrandAsset?.name || ""}
-                brands={brands}
-                onSubmit={handleRebrandSubmit}
-                mode="add"
-            />
         </div>
     );
 }

@@ -12,15 +12,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Cuboid, Minus, Package, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { RebrandItemBadge } from "@/components/rebrand/RebrandItemBadge";
-import { RebrandModal, type RebrandData } from "@/components/rebrand/RebrandModal";
-import { useBrands } from "@/hooks/use-brands";
-import { useState } from "react";
 
 export function FloatingCart() {
-    const [rebrandModalOpen, setRebrandModalOpen] = useState(false);
-    const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
-
     const {
         items,
         itemCount,
@@ -30,12 +23,7 @@ export function FloatingCart() {
         closeCart,
         removeItem,
         updateQuantity,
-        updateItemRebrand,
-        removeItemRebrand,
     } = useCart();
-
-    const { data: brandsData } = useBrands({ limit: "100" });
-    const brands = brandsData?.data || [];
 
     const router = useRouter();
 
@@ -43,36 +31,6 @@ export function FloatingCart() {
         closeCart();
         router.push("/checkout");
     };
-
-    const handleEditRebrand = (assetId: string) => {
-        setEditingAssetId(assetId);
-        setRebrandModalOpen(true);
-    };
-
-    const handleRemoveRebrand = (assetId: string) => {
-        removeItemRebrand(assetId);
-    };
-
-    const handleRebrandUpdate = (rebrandData: RebrandData) => {
-        if (editingAssetId) {
-            updateItemRebrand(editingAssetId, rebrandData);
-            setRebrandModalOpen(false);
-            setEditingAssetId(null);
-        }
-    };
-
-    // Get item name for modal
-    const editingItem = items.find((item) => item.assetId === editingAssetId);
-
-    // Get initial rebrand data for editing
-    const initialRebrandData = editingItem
-        ? {
-              isReskinRequest: editingItem.isReskinRequest || false,
-              reskinTargetBrandId: editingItem.reskinTargetBrandId,
-              reskinTargetBrandCustom: editingItem.reskinTargetBrandCustom,
-              reskinNotes: editingItem.reskinNotes,
-          }
-        : undefined;
 
     return (
         <AnimatePresence>
@@ -273,37 +231,6 @@ export function FloatingCart() {
                                                             of {item.availableQuantity} available
                                                         </span>
                                                     </div>
-
-                                                    {/* Rebrand Badge */}
-                                                    {(item as any).isReskinRequest && (
-                                                        <div className="mt-3">
-                                                            <RebrandItemBadge
-                                                                targetBrandName={
-                                                                    (item as any)
-                                                                        .reskinTargetBrandCustom ||
-                                                                    brands.find(
-                                                                        (b) =>
-                                                                            b.id ===
-                                                                            (item as any)
-                                                                                .reskinTargetBrandId
-                                                                    )?.name ||
-                                                                    "Unknown Brand"
-                                                                }
-                                                                clientNotes={
-                                                                    (item as any).reskinNotes || ""
-                                                                }
-                                                                showActions={true}
-                                                                onEdit={() =>
-                                                                    handleEditRebrand(item.assetId)
-                                                                }
-                                                                onRemove={() =>
-                                                                    handleRemoveRebrand(
-                                                                        item.assetId
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -367,17 +294,6 @@ export function FloatingCart() {
                             </div>
                         )}
                     </motion.div>
-
-                    {/* Rebrand Edit Modal */}
-                    <RebrandModal
-                        open={rebrandModalOpen}
-                        onOpenChange={setRebrandModalOpen}
-                        assetName={editingItem?.assetName || ""}
-                        brands={brands}
-                        initialData={initialRebrandData}
-                        onSubmit={handleRebrandUpdate}
-                        mode="edit"
-                    />
                 </>
             )}
         </AnimatePresence>

@@ -10,7 +10,7 @@ import { TransportSelector } from "./TransportSelector";
 import { OrderEstimate } from "./OrderEstimate";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { hasRebrandRequests, calculateTotalVolume } from "@/lib/cart-helpers";
+import { calculateTotalVolume } from "@/lib/cart-helpers";
 import { submitOrder, calculateEstimate } from "@/lib/api/order-api";
 import type { TripType, OrderEstimate as OrderEstimateType } from "@/types/hybrid-pricing";
 
@@ -79,11 +79,6 @@ export function CheckoutIntegrationExample({
                     asset_id: item.assetId,
                     quantity: item.quantity,
                     from_collection_id: item.fromCollectionId,
-                    // NEW: Rebrand fields
-                    is_reskin_request: item.isReskinRequest || false,
-                    reskin_target_brand_id: item.reskinTargetBrandId,
-                    reskin_target_brand_custom: item.reskinTargetBrandCustom,
-                    reskin_notes: item.reskinNotes,
                 })),
                 trip_type: tripType, // NEW
                 event_start_date: eventData.startDate,
@@ -117,12 +112,6 @@ export function CheckoutIntegrationExample({
                 <p className="text-sm text-muted-foreground">
                     Total Volume: {calculateTotalVolume(cart).toFixed(1)} m³
                 </p>
-                {hasRebrandRequests(cart) && (
-                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                        🔄 Includes {cart.filter((i) => i.isReskinRequest).length} rebrand
-                        request(s)
-                    </p>
-                )}
             </div>
 
             {/* Step 2: Transport Selection */}
@@ -132,7 +121,7 @@ export function CheckoutIntegrationExample({
             {estimateLoading ? (
                 <p className="text-sm text-muted-foreground">Calculating estimate...</p>
             ) : estimate ? (
-                <OrderEstimate estimate={estimate} hasRebrandItems={hasRebrandRequests(cart)} />
+                <OrderEstimate estimate={estimate} hasRebrandItems={false} />
             ) : null}
 
             {/* Step 4: Submit Button */}
@@ -144,17 +133,6 @@ export function CheckoutIntegrationExample({
                     {submitting ? "Submitting Order..." : "Submit Order"}
                 </Button>
             </div>
-
-            {/* Disclaimer */}
-            {hasRebrandRequests(cart) && (
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-4">
-                    <p className="text-sm text-amber-800 dark:text-amber-300">
-                        ⚠️ This order includes rebranding requests. Rebranding costs will be added
-                        to your final quote during order review. Final price may be higher than this
-                        estimate.
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

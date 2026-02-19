@@ -33,7 +33,6 @@ import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { AddWithRebrandButton } from "@/components/rebrand/AddWithRebrandButton";
 
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -47,7 +46,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     const { data: versions } = useAssetVersions(asset?.id || null);
     const { data: conditionHistory } = useAssetConditionHistory(asset?.id || null);
 
-    const handleAddToCart = async (rebrandData?: any) => {
+    const handleAddToCart = async () => {
         if (!asset) return;
 
         if (asset.availableQuantity < selectedQuantity) {
@@ -62,7 +61,6 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             weight: Number(asset.weight),
             image: asset.images[0],
             condition: asset.condition,
-            ...rebrandData, // Add rebrand data if provided
         });
 
         setSelectedQuantity(1);
@@ -392,14 +390,6 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                             <ShoppingCart className="w-5 h-5" />
                                             Add {selectedQuantity} to Cart
                                         </Button>
-
-                                        <AddWithRebrandButton
-                                            asset={{ id: asset.id, name: asset.name }}
-                                            companyBrands={asset.company?.brands || []}
-                                            onAddToCart={(rebrandData) => {
-                                                handleAddToCart(rebrandData);
-                                            }}
-                                        />
                                     </div>
                                 </Card>
                             )}
