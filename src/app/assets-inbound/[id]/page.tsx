@@ -46,6 +46,7 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
     }
 
     const { platform } = usePlatform();
+    const invoicingEnabled = platform?.features?.enable_kadence_invoicing === true;
     const downloadCostEstimate = useDownloadInboundCostEstimate();
     const downloadInvoice = useDownloadInboundInvoice();
 
@@ -87,7 +88,7 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
     const showCostEstimate =
         request &&
         ["CONFIRMED", "DECLINED", "COMPLETED", "CANCELLED"].includes(request.request_status);
-    const showInvoice = request && request.request_status === "COMPLETED";
+    const showInvoice = invoicingEnabled && request && request.request_status === "COMPLETED";
 
     console.log("request", request);
     console.log("showCostEstimate", showCostEstimate);

@@ -19,6 +19,10 @@ export type ServiceRequestCommercialStatus =
     | "CANCELLED";
 
 export type ServiceRequestBillingMode = "INTERNAL_ONLY" | "CLIENT_BILLABLE";
+export type ServiceRequestLinkMode =
+    | "STANDALONE"
+    | "BUNDLED_WITH_ORDER"
+    | "SEPARATE_CHANGE_REQUEST";
 
 export interface ServiceRequestItem {
     id: string;
@@ -52,10 +56,20 @@ export interface ServiceRequest {
     company_id: string;
     request_type: ServiceRequestType;
     billing_mode: ServiceRequestBillingMode;
+    link_mode: ServiceRequestLinkMode;
+    blocks_fulfillment: boolean;
     request_status: ServiceRequestStatus;
     commercial_status: ServiceRequestCommercialStatus;
     title: string;
     description: string | null;
+    related_asset_id: string | null;
+    related_order_id: string | null;
+    related_order_item_id: string | null;
+    request_pricing_id: string | null;
+    client_sell_override_total: string | null;
+    concession_reason: string | null;
+    concession_approved_by: string | null;
+    concession_applied_at: string | null;
     requested_start_at: string | null;
     requested_due_at: string | null;
     created_at: string;
@@ -102,9 +116,19 @@ export interface CreateServiceRequestInput {
     company_id?: string;
     request_type: ServiceRequestType;
     billing_mode?: ServiceRequestBillingMode;
+    link_mode?: ServiceRequestLinkMode;
+    blocks_fulfillment?: boolean;
     title: string;
     description?: string;
+    related_asset_id?: string;
+    related_order_id?: string;
+    related_order_item_id?: string;
     requested_start_at?: string;
     requested_due_at?: string;
     items: CreateServiceRequestItemInput[];
+}
+
+export interface RespondServiceRequestQuotePayload {
+    action: "APPROVE" | "DECLINE" | "REQUEST_REVISION";
+    note?: string;
 }

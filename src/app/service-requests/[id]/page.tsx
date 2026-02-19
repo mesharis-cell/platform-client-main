@@ -12,8 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    useApproveServiceRequestQuote,
     useClientServiceRequestDetails,
+    useRespondServiceRequestQuote,
 } from "@/hooks/use-service-requests";
 import {
     AlertCircle,
@@ -93,25 +93,32 @@ export default function ClientServiceRequestDetailsPage() {
     const router = useRouter();
     const routeId = Array.isArray(params?.id) ? params.id[0] : params?.id;
     const { data, isLoading, refetch } = useClientServiceRequestDetails(routeId || null);
-    const approveQuote = useApproveServiceRequestQuote();
+    const respondQuote = useRespondServiceRequestQuote();
     const [approvalNote, setApprovalNote] = useState("");
     const request = data?.data;
 
     const canApprove =
         request?.billing_mode === "CLIENT_BILLABLE" && request.commercial_status === "QUOTED";
 
-    const handleApprove = async () => {
+    const handleRespond = async (action: "APPROVE" | "DECLINE" | "REQUEST_REVISION") => {
         if (!request) return;
         try {
-            await approveQuote.mutateAsync({
+            await respondQuote.mutateAsync({
                 id: request.id,
+                action,
                 note: approvalNote.trim() || undefined,
             });
             setApprovalNote("");
-            toast.success("Quote approved");
+            const successMessage =
+                action === "APPROVE"
+                    ? "Quote approved"
+                    : action === "DECLINE"
+                      ? "Quote declined and returned for revision"
+                      : "Revision requested";
+            toast.success(successMessage);
             refetch();
         } catch (err: any) {
-            toast.error(err.message || "Failed to approve quote");
+            toast.error(err.message || "Failed to submit response");
         }
     };
 
@@ -279,15 +286,35 @@ export default function ClientServiceRequestDetailsPage() {
                                                     placeholder="Any acceptance notes..."
                                                 />
                                             </div>
-                                            <Button
-                                                onClick={handleApprove}
-                                                disabled={approveQuote.isPending}
-                                                className="font-mono"
-                                            >
-                                                {approveQuote.isPending
-                                                    ? "Approving..."
-                                                    : "Approve Quote"}
-                                            </Button>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Button
+                                                    onClick={() => handleRespond("APPROVE")}
+                                                    disabled={respondQuote.isPending}
+                                                    className="font-mono"
+                                                >
+                                                    {respondQuote.isPending
+                                                        ? "Submitting..."
+                                                        : "Approve Quote"}
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        handleRespond("REQUEST_REVISION")
+                                                    }
+                                                    disabled={respondQuote.isPending}
+                                                    className="font-mono"
+                                                >
+                                                    Request Revision
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={() => handleRespond("DECLINE")}
+                                                    disabled={respondQuote.isPending}
+                                                    className="font-mono"
+                                                >
+                                                    Decline (Non-Terminal)
+                                                </Button>
+                                            </div>
                                         </div>
                                     </Card>
                                 </motion.div>

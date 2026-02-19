@@ -72,6 +72,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const downloadInvoice = useDownloadInvoice();
     const downloadCostEstimate = useDownloadCostEstimate();
     const { platform } = usePlatform();
+    const invoicingEnabled = platform?.features?.enable_kadence_invoicing === true;
 
     const handleDownloadCostEstimate = async () => {
         try {
@@ -195,17 +196,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined;
     const showInvoiceSection =
-        isInvoiced ||
-        isPaid ||
-        isConfirmed ||
-        isInPreparation ||
-        isReadyForDelivery ||
-        isInTransit ||
-        isDelivered ||
-        isInUse ||
-        isAwaitingReturn ||
-        isReturnInTransit ||
-        isClosed;
+        invoicingEnabled &&
+        (isInvoiced ||
+            isPaid ||
+            isConfirmed ||
+            isInPreparation ||
+            isReadyForDelivery ||
+            isInTransit ||
+            isDelivered ||
+            isInUse ||
+            isAwaitingReturn ||
+            isReturnInTransit ||
+            isClosed);
     const isFulfillmentStage =
         isConfirmed ||
         isInPreparation ||
@@ -689,6 +691,61 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 )}
 
                             {/* Order Items */}
+                            {Array.isArray((order as any)?.linked_service_requests) &&
+                                (order as any).linked_service_requests.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.35 }}
+                                    >
+                                        <Card className="bg-card/50 backdrop-blur-sm border-border/40">
+                                            <CardHeader>
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <FileText className="h-5 w-5 text-primary" />
+                                                    Linked Service Requests
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3">
+                                                {(order as any).linked_service_requests.map(
+                                                    (sr: any) => (
+                                                        <div
+                                                            key={sr.id}
+                                                            className="border rounded-lg p-3 bg-muted/10"
+                                                        >
+                                                            <div className="flex items-center justify-between gap-3">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        router.push(
+                                                                            `/service-requests/${sr.id}`
+                                                                        )
+                                                                    }
+                                                                    className="text-sm font-mono text-primary hover:underline"
+                                                                >
+                                                                    {sr.service_request_id}
+                                                                </button>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge className="font-mono text-[10px] border">
+                                                                        {sr.request_status}
+                                                                    </Badge>
+                                                                    <Badge className="font-mono text-[10px] border">
+                                                                        {sr.commercial_status}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground mt-2 font-mono">
+                                                                {sr.request_type} |{" "}
+                                                                {typeof sr.total === "string"
+                                                                    ? `AED ${Number(sr.total).toFixed(2)}`
+                                                                    : "Total hidden"}
+                                                            </p>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                )}
+
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}

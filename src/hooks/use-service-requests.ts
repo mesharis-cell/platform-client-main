@@ -5,6 +5,7 @@ import { throwApiError } from "@/lib/utils/throw-api-error";
 import type {
     CreateServiceRequestInput,
     ListServiceRequestsParams,
+    RespondServiceRequestQuotePayload,
     ServiceRequestDetailsResponse,
     ServiceRequestListResponse,
 } from "@/types/service-request";
@@ -89,8 +90,40 @@ export function useApproveServiceRequestQuote() {
         mutationFn: async ({ id, note }: { id: string; note?: string }) => {
             try {
                 const response = await apiClient.post(
-                    `/client/v1/service-request/${id}/approve-quote`,
+                    `/client/v1/service-request/${id}/quote-response`,
                     {
+                        action: "APPROVE",
+                        note,
+                    }
+                );
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
+            }
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: serviceRequestKeys.detail(variables.id) });
+            queryClient.invalidateQueries({ queryKey: serviceRequestKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: ["client-orders"] });
+            queryClient.invalidateQueries({ queryKey: ["client-dashboard-summary"] });
+        },
+    });
+}
+
+export function useRespondServiceRequestQuote() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            note,
+        }: { id: string } & RespondServiceRequestQuotePayload) => {
+            try {
+                const response = await apiClient.post(
+                    `/client/v1/service-request/${id}/quote-response`,
+                    {
+                        action,
                         note,
                     }
                 );
