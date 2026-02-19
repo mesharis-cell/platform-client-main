@@ -27,7 +27,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
-import type { TripType } from "@/types/hybrid-pricing";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     AlertCircle,
@@ -93,9 +92,11 @@ function CheckoutPageInner() {
     const submitMutation = useSubmitOrderFromCart();
     const maintenanceFeasibilityCheck = useMaintenanceFeasibilityCheck();
 
+    const CHECKOUT_STORAGE_KEY = "kadence_checkout_form";
+
     // Form state
     const [formData, setFormData] = useState({
-        brand_id: undefined,
+        brand_id: undefined as string | undefined,
         event_start_date: "",
         event_end_date: "",
         venue_name: "",
@@ -109,8 +110,40 @@ function CheckoutPageInner() {
         contact_email: "",
         contact_phone: "",
         special_instructions: "",
-        trip_type: "ROUND_TRIP" as TripType, // NEW
     });
+
+    // Restore checkout state from localStorage on mount
+    useEffect(() => {
+        if (!isInitialized) return;
+        try {
+            const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
+            if (!saved) return;
+            const { step, form } = JSON.parse(saved);
+            if (form) setFormData((prev) => ({ ...prev, ...form }));
+            if (step && items.length > 0) setCurrentStep(step);
+        } catch (_) {
+            // ignore malformed localStorage data
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isInitialized]);
+
+    // Auto-fill contact from user token if empty
+    useEffect(() => {
+        if (!user) return;
+        setFormData((prev) => ({
+            ...prev,
+            contact_name: prev.contact_name || (user as any).name || "",
+            contact_email: prev.contact_email || (user as any).email || "",
+        }));
+    }, [user]);
+
+    // Persist to localStorage on every change
+    useEffect(() => {
+        localStorage.setItem(
+            CHECKOUT_STORAGE_KEY,
+            JSON.stringify({ step: currentStep, form: formData })
+        );
+    }, [currentStep, formData]);
 
     const isAllGreenItems = items.every((item) => item.condition === "GREEN");
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
@@ -125,7 +158,7 @@ function CheckoutPageInner() {
     } = useCalculateEstimate(
         items,
         formData.venue_city_id,
-        formData.trip_type,
+        "ROUND_TRIP",
         currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
 
@@ -231,7 +264,11 @@ function CheckoutPageInner() {
                     formData.venue_address
                 );
             case "contact":
-                return formData.contact_name && formData.contact_email && formData.contact_phone;
+                return (
+                    formData.contact_name &&
+                    formData.contact_phone &&
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
+                );
             case "review":
                 return true;
             default:
@@ -241,7 +278,15 @@ function CheckoutPageInner() {
 
     const handleNext = async () => {
         if (!canProceed()) {
-            toast.error("Please fill all required fields");
+            if (
+                currentStep === "contact" &&
+                formData.contact_email &&
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
+            ) {
+                toast.error("Please enter a valid email address");
+            } else {
+                toast.error("Please fill all required fields");
+            }
             return;
         }
 
@@ -317,23 +362,31 @@ function CheckoutPageInner() {
                 return;
             }
 
-            // For payload: send ID if from dropdown, or name if custom
             const submitData = {
+                ...(formData.brand_id ? { brand_id: formData.brand_id } : {}),
                 items: items.map((item) => ({
                     asset_id: item.assetId,
                     quantity: item.quantity,
-                    from_collection_id: item.fromCollection,
-                    maintenance_decision: item.maintenanceDecision,
+                    ...(item.fromCollection ? { from_collection_id: item.fromCollection } : {}),
+                    ...(item.maintenanceDecision
+                        ? { maintenance_decision: item.maintenanceDecision }
+                        : {}),
                 })),
-                ...formData,
-                // Send ID if from dropdown, or custom text if custom mode
-                venue_country_id: useCustomCountry
-                    ? formData.venue_country_id
-                    : formData.venue_country_id,
-                venue_city_id: useCustomCity ? formData.venue_city_id : formData.venue_city_id,
-                venue_city_name: undefined,
-                venue_country_name: undefined,
-                trip_type: formData.trip_type, // Include trip type
+                event_start_date: formData.event_start_date,
+                event_end_date: formData.event_end_date,
+                venue_name: formData.venue_name,
+                venue_country_id: formData.venue_country_id,
+                venue_city_id: formData.venue_city_id,
+                venue_address: formData.venue_address,
+                ...(formData.venue_access_notes
+                    ? { venue_access_notes: formData.venue_access_notes }
+                    : {}),
+                contact_name: formData.contact_name,
+                contact_email: formData.contact_email,
+                contact_phone: formData.contact_phone,
+                ...(formData.special_instructions
+                    ? { special_instructions: formData.special_instructions }
+                    : {}),
             };
 
             const result = await submitMutation.mutateAsync(submitData);
@@ -342,6 +395,7 @@ function CheckoutPageInner() {
                 description: `Order ID: ${result.orderId}`,
             });
 
+            localStorage.removeItem(CHECKOUT_STORAGE_KEY);
             clearCart();
             router.push(`/orders/${result.orderId}`);
         } catch (error) {
