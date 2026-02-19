@@ -13,9 +13,24 @@ interface OrderEstimateProps {
 }
 
 export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps) {
-    const logisticsSubtotal = estimate.base_operations.total + estimate.margin.base_ops_amount;
-    const transportSubtotal = estimate.transport.rate + estimate.margin.transport_rate_amount;
-    const totalEstimate = logisticsSubtotal + transportSubtotal;
+    const marginPercent = Number(estimate.margin?.percent || 0);
+    const baseOpsTotal = Number(estimate.base_operations?.total || 0);
+    const transportRate = Number(
+        estimate.transport?.rate ?? estimate.suggested_transport?.estimated_rate ?? 0
+    );
+    const hasMarginBreakdown =
+        typeof estimate.margin?.base_ops_amount === "number" &&
+        typeof estimate.margin?.transport_rate_amount === "number";
+    const logisticsSubtotal = hasMarginBreakdown
+        ? baseOpsTotal + Number(estimate.margin.base_ops_amount)
+        : baseOpsTotal * (1 + marginPercent / 100);
+    const transportSubtotal = hasMarginBreakdown
+        ? transportRate + Number(estimate.margin.transport_rate_amount)
+        : transportRate * (1 + marginPercent / 100);
+    const totalEstimate = Number(
+        estimate.estimate_total || (logisticsSubtotal + transportSubtotal).toFixed(2)
+    );
+    const tripType = estimate.transport?.trip_type || "ROUND_TRIP";
 
     return (
         <div className="border border-border rounded-lg p-6 space-y-3">
@@ -32,8 +47,7 @@ export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps)
             {/* Transport */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Transport (
-                    {estimate.transport.trip_type === "ROUND_TRIP" ? "Round-trip" : "One-way"})
+                    Transport ({tripType === "ROUND_TRIP" ? "Round-trip" : "One-way"})
                 </span>
                 <span className="font-mono">{transportSubtotal.toFixed(2)} AED</span>
             </div>

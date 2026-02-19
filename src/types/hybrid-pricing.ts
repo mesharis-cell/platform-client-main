@@ -30,20 +30,27 @@ export interface OrderEstimate {
         rate: number;
         total: number;
     };
-    transport: {
+    transport?: {
         city: string;
         trip_type: TripType;
         vehicle_type: VehicleTypeRef;
         rate: number;
     };
+    suggested_transport?: {
+        city: string;
+        vehicle_type: VehicleTypeRef;
+        estimated_rate: number;
+        note?: string;
+    };
     logistics_subtotal: number;
     margin: {
         percent: number;
-        total_amount: number;
-        base_ops_amount: number;
-        transport_rate_amount: number;
+        total_amount?: number;
+        base_ops_amount?: number;
+        transport_rate_amount?: number;
     };
     estimate_total: number;
+    disclaimer?: string;
 }
 
 export interface OrderPricing {

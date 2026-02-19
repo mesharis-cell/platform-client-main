@@ -161,7 +161,7 @@ function CheckoutPageInner() {
                 });
 
                 if (!response.data.success) {
-                    console.error("Failed to validate availability");
+                    setAvailabilityIssues([]);
                     return;
                 }
 
@@ -182,7 +182,14 @@ function CheckoutPageInner() {
 
                 setAvailabilityIssues(issues);
             } catch (error) {
-                console.error("Error validating availability:", error);
+                const status = (error as any)?.response?.status;
+                if (status === 403) {
+                    // Fallback for legacy CLIENT users missing availability permission;
+                    // order submission still validates availability on the backend.
+                    setAvailabilityIssues([]);
+                    return;
+                }
+                setAvailabilityIssues([]);
             }
         };
 
@@ -375,8 +382,6 @@ function CheckoutPageInner() {
             </div>
         );
     }
-
-    console.log("items from checkout......", items);
 
     return (
         <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background">
@@ -709,32 +714,15 @@ function CheckoutPageInner() {
                             <Card className="p-8 bg-card/50 border-border/50">
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="venueName"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Transport Trip Type
+                                        <Label className="font-mono uppercase text-xs tracking-wide">
+                                            Transport
                                         </Label>
-                                        <Select
-                                            value={formData.trip_type}
-                                            onValueChange={(value) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    trip_type: value as TripType,
-                                                })
-                                            }
-                                            required
-                                        >
-                                            <SelectTrigger className="h-12">
-                                                <SelectValue placeholder="Select Transport Trip Type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="ROUND_TRIP">
-                                                    Round Trip
-                                                </SelectItem>
-                                                <SelectItem value="ONE_WAY">One Way</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
+                                            Round Trip (default)
+                                        </div>
+                                        <p className="text-xs text-muted-foreground font-mono">
+                                            Transport mode is set to round trip for client checkout.
+                                        </p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label
