@@ -1,5 +1,10 @@
 // Phase 3: Asset Management & QR Code Generation TypeScript Types
 
+export interface AssetImage {
+    url: string;
+    note?: string;
+}
+
 // Tracking Method
 export type TrackingMethod = "INDIVIDUAL" | "BATCH";
 
@@ -26,7 +31,7 @@ export interface Asset {
     name: string;
     description?: string;
     category: AssetCategory;
-    images: string[];
+    images: AssetImage[];
     trackingMethod: TrackingMethod;
     totalQuantity: number;
     availableQuantity: number;
@@ -69,7 +74,7 @@ export interface AssetsListResponse {
         name: string;
         description: string | null;
         category: string;
-        images: string[];
+        images: AssetImage[];
         tracking_method: TrackingMethod;
         total_quantity: number;
         available_quantity: number;
@@ -164,7 +169,7 @@ export interface CreateAssetRequest {
     name: string;
     description?: string;
     category: AssetCategory;
-    images: string[]; // array of uploaded image URLs
+    images: AssetImage[]; // array of uploaded image objects
     trackingMethod: TrackingMethod;
     totalQuantity: number;
     availableQuantity?: number;
@@ -189,7 +194,7 @@ export interface UpdateAssetRequest {
     name?: string;
     description?: string;
     category?: AssetCategory;
-    images?: string[]; // replace existing images
+    images?: AssetImage[]; // replace existing images
     totalQuantity?: number; // adjust total quantity
     packaging?: string;
     weight?: number; // kg
@@ -269,7 +274,7 @@ export interface AssetsDetails {
     description: string | null;
     category: string;
 
-    images: string[];
+    images: AssetImage[];
 
     tracking_method: TrackingMethod;
 

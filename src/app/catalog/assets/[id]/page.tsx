@@ -59,7 +59,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             availableQuantity: asset.availableQuantity,
             volume: Number(asset.volume),
             weight: Number(asset.weight),
-            image: asset.images[0],
+            image: asset.images[0]?.url,
             condition: asset.condition,
         });
 
@@ -128,7 +128,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="aspect-square rounded-xl overflow-hidden border border-border bg-muted relative">
                                 {asset.images.length > 0 ? (
                                     <Image
-                                        src={asset.images[selectedImageIndex]}
+                                        src={asset.images[selectedImageIndex].url}
                                         alt={asset.name}
                                         fill
                                         className="object-cover"
@@ -168,6 +168,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                             </div>
 
+                            {/* Image note caption */}
+                            {asset.images[selectedImageIndex]?.note && (
+                                <p className="text-xs text-muted-foreground italic">
+                                    {asset.images[selectedImageIndex].note}
+                                </p>
+                            )}
+
                             {/* Thumbnails */}
                             {asset.images.length > 1 && (
                                 <div className="grid grid-cols-4 gap-3">
@@ -182,7 +189,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                             }`}
                                         >
                                             <Image
-                                                src={image}
+                                                src={image.url}
                                                 alt={`${asset.name} ${index + 1}`}
                                                 width={100}
                                                 height={100}
