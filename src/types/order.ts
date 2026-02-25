@@ -4,125 +4,238 @@
  * Type definitions for order management, cart operations, and order submission workflows.
  */
 
-import { Condition, HandlingTag } from './asset'
+import { Condition, HandlingTag } from "./asset";
 
 // ============================================================
 // Enums
 // ============================================================
 
 export type OrderStatus =
-	| 'DRAFT'
-	| 'SUBMITTED'
-	| 'PRICING_REVIEW'
-	| 'PENDING_APPROVAL'
-	| 'QUOTED'
-	| 'DECLINED'
-	| 'CONFIRMED'
-	| 'IN_PREPARATION'
-	| 'READY_FOR_DELIVERY'
-	| 'IN_TRANSIT'
-	| 'DELIVERED'
-	| 'IN_USE'
-	| 'AWAITING_RETURN'
-	| 'CLOSED'
+    | "DRAFT"
+    | "SUBMITTED"
+    | "PRICING_REVIEW"
+    | "PENDING_APPROVAL"
+    | "QUOTED"
+    | "DECLINED"
+    | "CONFIRMED"
+    | "AWAITING_FABRICATION"
+    | "IN_PREPARATION"
+    | "READY_FOR_DELIVERY"
+    | "IN_TRANSIT"
+    | "DELIVERED"
+    | "IN_USE"
+    | "AWAITING_RETURN"
+    | "RETURN_IN_TRANSIT"
+    | "CLOSED"
+    | "CANCELLED";
 
 // Feedback #1: Add separate financial status type
 export type FinancialStatus =
-	| 'PENDING_QUOTE'
-	| 'QUOTE_SENT'
-	| 'QUOTE_ACCEPTED'
-	| 'PENDING_INVOICE'
-	| 'INVOICED'
-	| 'PAID'
+    | "PENDING_QUOTE"
+    | "QUOTE_SENT"
+    | "QUOTE_REVISED"
+    | "QUOTE_ACCEPTED"
+    | "PENDING_INVOICE"
+    | "INVOICED"
+    | "PAID"
+    | "CANCELLED";
+
+export type MaintenanceDecision = "FIX_IN_ORDER" | "USE_AS_IS";
 
 // ============================================================
 // Order Types
 // ============================================================
 
+export interface ReskinRequest {
+    id: string;
+    platform_id: string;
+    order_id: string;
+    order_item_id: string;
+    original_asset_id: string;
+    original_asset_name: string;
+    target_brand_id: string;
+    target_brand_custom: string | null;
+    client_notes: string;
+    admin_notes: string | null;
+    new_asset_id: string | null;
+    new_asset_name: string | null;
+    completed_at: Date | null;
+    completed_by: string | null;
+    completion_notes: string | null;
+    completion_photos: string[];
+    cancelled_at: Date | null;
+    cancelled_by: string | null;
+    cancellation_reason: string;
+    created_at: Date;
+    updated_at: Date;
+    order_item: {
+        id: string;
+        platform_id: string;
+        order_id: string;
+        asset_id: string;
+        asset_name: string;
+        quantity: number;
+        volume_per_unit: string;
+        weight_per_unit: string;
+        total_volume: string;
+        total_weight: string;
+        condition_notes: string | null;
+        handling_tags: string[];
+        from_collection: string | null;
+        from_collection_name: string | null;
+        created_at: Date;
+    };
+    original_asset: {
+        id: string;
+        platform_id: string;
+        company_id: string;
+        warehouse_id: string;
+        zone_id: string;
+        brand_id: string | null;
+        name: string;
+        description: string;
+        category: string;
+        images: string[];
+        tracking_method: string;
+        total_quantity: number;
+        available_quantity: number;
+        qr_code: string;
+        packaging: string;
+        weight_per_unit: string;
+        dimensions: {
+            width: number;
+            height: number;
+            length: number;
+        };
+        volume_per_unit: string;
+        condition: string;
+        condition_notes: string | null;
+        refurb_days_estimate: string | null;
+        condition_history: [];
+        handling_tags: string[];
+        status: string;
+        last_scanned_at: Date | null;
+        last_scanned_by: string | null;
+        transformed_from: string | null;
+        transformed_to: string | null;
+        created_at: Date;
+        updated_at: Date;
+        deleted_at: Date | null;
+    };
+    target_brand: {
+        id: string;
+        platform_id: string;
+        company_id: string;
+        name: string;
+        description: string;
+        logo_url: string;
+        is_active: boolean;
+        created_at: Date;
+        updated_at: Date;
+    };
+    new_asset: string | null;
+    status: string;
+}
+
 export interface Order {
-	id: string
-	orderId: string // Human-readable order ID (e.g., "ORD-20241109-001")
-	company: string
-	companyName?: string // Populated via join
-	brand?: string | null
-	brandName?: string | null // Populated via join
-	userId: string
-	userName?: string // Populated via join
-	userEmail?: string // Populated via join
-	// Contact information
-	contactName?: string | null
-	contactEmail?: string | null
-	contactPhone?: string | null
-	// Event details
-	eventStartDate?: Date | null
-	eventEndDate?: Date | null
-	// Venue information
-	venueName?: string | null
-	venueCountry?: string | null
-	venueCity?: string | null
-	venueAddress?: string | null
-	venueAccessNotes?: string | null
-	// Special instructions
-	specialInstructions?: string | null
-	// Calculated totals
-	calculatedVolume: string // decimal as string
-	calculatedWeight: string // decimal as string
-	// Pricing tier reference
-	pricingTier?: string | null
-	// Pricing fields (Phase 8)
-	a2BasePrice?: string | null
-	a2AdjustedPrice?: string | null
-	a2AdjustmentReason?: string | null
-	a2AdjustedAt?: Date | null
-	a2AdjustedBy?: string | null
-	pmgMarginPercent?: string | null
-	pmgMarginAmount?: string | null
-	pmgReviewedAt?: Date | null
-	pmgReviewedBy?: string | null
-	pmgReviewNotes?: string | null
-	finalTotalPrice?: string | null
-	quoteSentAt?: Date | null
-	// Invoice fields (Phase 9)
-	invoiceNumber?: string | null
-	invoiceGeneratedAt?: Date | null
-	invoicePdfUrl?: string | null
-	invoicePaidAt?: Date | null
-	paymentMethod?: string | null
-	paymentReference?: string | null
-	// Time windows (Phase 10)
-	deliveryWindowStart?: Date | null
-	deliveryWindowEnd?: Date | null
-	pickupWindowStart?: Date | null
-	pickupWindowEnd?: Date | null
-	// Truck photos (Phase 11)
-	truckPhotos: string[]
-	// Job number (Phase 7)
-	jobNumber?: string | null
-	// Status (Feedback #1: Separate financial from fulfillment)
-	status: OrderStatus
-	financialStatus: FinancialStatus
-	// Timestamps
-	createdAt: Date
-	updatedAt: Date
-	deletedAt?: Date | null
+    id: string;
+    orderId: string; // Human-readable order ID (e.g., "ORD-20241109-001")
+    company: string;
+    companyName?: string; // Populated via join
+    brand?: string | null;
+    brandName?: string | null; // Populated via join
+    userId: string;
+    userName?: string; // Populated via join
+    userEmail?: string; // Populated via join
+    // Contact information
+    contactName?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    // Event details
+    eventStartDate?: Date | null;
+    eventEndDate?: Date | null;
+    // Venue information
+    venueName?: string | null;
+    venueCountry?: string | null;
+    venueCity?: string | null;
+    venueAddress?: string | null;
+    venueAccessNotes?: string | null;
+    // Special instructions
+    specialInstructions?: string | null;
+    // Calculated totals
+    calculated_totals: {
+        volume: string; // decimal as string
+        weight: string; // decimal as string
+    };
+    // Pricing tier reference
+    pricingTier?: string | null;
+    // Pricing fields (Phase 8)
+    a2BasePrice?: string | null;
+    a2AdjustedPrice?: string | null;
+    a2AdjustmentReason?: string | null;
+    a2AdjustedAt?: Date | null;
+    a2AdjustedBy?: string | null;
+    pmgMarginPercent?: string | null;
+    pmgMarginAmount?: string | null;
+    pmgReviewedAt?: Date | null;
+    pmgReviewedBy?: string | null;
+    pmgReviewNotes?: string | null;
+    finalTotalPrice?: string | null;
+    quoteSentAt?: Date | null;
+    // Invoice fields (Phase 9)
+    invoiceNumber?: string | null;
+    invoiceGeneratedAt?: Date | null;
+    invoicePdfUrl?: string | null;
+    invoicePaidAt?: Date | null;
+    paymentMethod?: string | null;
+    paymentReference?: string | null;
+    // Time windows (Phase 10)
+    deliveryWindowStart?: Date | null;
+    deliveryWindowEnd?: Date | null;
+    pickupWindowStart?: Date | null;
+    pickupWindowEnd?: Date | null;
+    invoice: {
+        id: string;
+        invoice_id: string;
+        invoice_pdf_url: string;
+        invoice_paid_at: Date | null;
+        payment_method: string | null;
+        payment_reference: string | null;
+        created_at: Date;
+        updated_at: Date;
+    };
+    // Truck photos (Phase 11)
+    truckPhotos: string[];
+    // Job number (Phase 7)
+    jobNumber?: string | null;
+    // Status (Feedback #1: Separate financial from fulfillment)
+    status: OrderStatus;
+    financialStatus: FinancialStatus;
+    trip_type?: string | null;
+    transport_vehicle_type?: string | null;
+    venue_city?: string | null;
+    // Timestamps
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt?: Date | null;
 }
 
 export interface OrderWithDetails extends Order {
-	items: OrderItemWithAsset[]
-	itemCount: number
-	pricingTierDetails?: {
-		country: string
-		city: string
-		volumeMin: string
-		volumeMax: string
-		basePrice: string
-	} | null
-	pricingBreakdown?: {
-		showBreakdown: boolean
-		a2BasePrice?: string | null
-		pmgMarginPercent?: string | null
-		pmgMarginAmount?: string | null
-	} | null
+    items: OrderItemWithAsset[];
+    itemCount: number;
+    pricingTierDetails?: {
+        country: string;
+        city: string;
+        volumeMin: string;
+        volumeMax: string;
+        basePrice: string;
+    } | null;
+    pricingBreakdown?: {
+        showBreakdown: boolean;
+        a2BasePrice?: string | null;
+        pmgMarginPercent?: string | null;
+        pmgMarginAmount?: string | null;
+    } | null;
 }
 
 // ============================================================
@@ -130,32 +243,36 @@ export interface OrderWithDetails extends Order {
 // ============================================================
 
 export interface OrderItem {
-	id: string
-	order: string
-	asset: string
-	assetName: string // Denormalized
-	quantity: number
-	volume: string // decimal as string (per unit)
-	weight: string // decimal as string (per unit)
-	totalVolume: string // decimal as string (quantity * volume)
-	totalWeight: string // decimal as string (quantity * weight)
-	condition: Condition
-	handlingTags: HandlingTag[]
-	fromCollection?: string | null
-	fromCollectionName?: string | null
-	createdAt: Date
+    id: string;
+    order: string;
+    asset: string;
+    assetName: string; // Denormalized
+    quantity: number;
+    volume: string; // decimal as string (per unit)
+    weight: string; // decimal as string (per unit)
+    totalVolume: string; // decimal as string (quantity * volume)
+    totalWeight: string; // decimal as string (quantity * weight)
+    condition: Condition;
+    handlingTags: HandlingTag[];
+    maintenanceDecision?: MaintenanceDecision | null;
+    requiresMaintenance?: boolean;
+    maintenanceRefurbDaysSnapshot?: number | null;
+    maintenanceDecisionLockedAt?: Date | null;
+    fromCollection?: string | null;
+    fromCollectionName?: string | null;
+    createdAt: Date;
 }
 
 export interface OrderItemWithAsset extends OrderItem {
-	assetDetails?: {
-		id: string
-		name: string
-		images: string[]
-		category: string
-		qrCode: string
-		trackingMethod: 'INDIVIDUAL' | 'BATCH'
-		status: 'AVAILABLE' | 'BOOKED' | 'OUT' | 'IN_MAINTENANCE'
-	}
+    assetDetails?: {
+        id: string;
+        name: string;
+        images: string[];
+        category: string;
+        qrCode: string;
+        trackingMethod: "INDIVIDUAL" | "BATCH";
+        status: "AVAILABLE" | "BOOKED" | "OUT" | "IN_MAINTENANCE";
+    };
 }
 
 // ============================================================
@@ -164,107 +281,107 @@ export interface OrderItemWithAsset extends OrderItem {
 
 // Draft order creation/update
 export interface CreateDraftOrderRequest {
-	items: DraftOrderItem[]
-	brand?: string // Optional primary brand
+    items: DraftOrderItem[];
+    brand?: string; // Optional primary brand
 }
 
 export interface DraftOrderItem {
-	assetId: string
-	quantity: number
-	fromCollectionId?: string
+    assetId: string;
+    quantity: number;
+    fromCollectionId?: string;
 }
 
 export interface DraftOrderResponse {
-	draftId: string
-	items: OrderItemWithAsset[]
-	calculatedVolume: string
-	calculatedWeight: string
-	itemCount: number
+    draftId: string;
+    items: OrderItemWithAsset[];
+    calculatedVolume: string;
+    calculatedWeight: string;
+    itemCount: number;
 }
 
 // Add items to existing draft
 export interface AddItemsToDraftRequest {
-	items: DraftOrderItem[]
+    items: DraftOrderItem[];
 }
 
 // Update item quantity
 export interface UpdateOrderItemQuantityRequest {
-	quantity: number
+    quantity: number;
 }
 
 // Add collection to cart
 export interface AddCollectionToCartRequest {
-	draftId?: string // Optional - create new if not provided
+    draftId?: string; // Optional - create new if not provided
 }
 
 export interface AddCollectionToCartResponse {
-	draftId: string
-	addedItems: OrderItemWithAsset[]
-	calculatedVolume: string
-	calculatedWeight: string
-	itemCount: number
+    draftId: string;
+    addedItems: OrderItemWithAsset[];
+    calculatedVolume: string;
+    calculatedWeight: string;
+    itemCount: number;
 }
 
 // Estimated price calculation
 export interface EstimatedPriceRequest {
-	venueCountry: string
-	venueCity: string
+    venueCountry: string;
+    venueCity: string;
 }
 
 export interface EstimatedPriceResponse {
-	estimatedPrice: string
-	pricingTier: {
-		id: string
-		country: string
-		city: string
-		volumeMin: string
-		volumeMax: string
-		basePrice: string
-	} | null
-	a2BasePrice: string
-	pmgMarginPercent: string
-	pmgMarginAmount: string
-	calculatedVolume: string
-	note: string
+    estimatedPrice: string;
+    pricingTier: {
+        id: string;
+        country: string;
+        city: string;
+        volumeMin: string;
+        volumeMax: string;
+        basePrice: string;
+    } | null;
+    a2BasePrice: string;
+    pmgMarginPercent: string;
+    pmgMarginAmount: string;
+    calculatedVolume: string;
+    note: string;
 }
 
 // Order submission
 export interface SubmitOrderRequest {
-	eventStartDate: string // ISO date string
-	eventEndDate: string // ISO date string
-	venueName: string
-	venueCountry: string
-	venueCity: string
-	venueAddress: string
-	venueAccessNotes?: string
-	contactName: string
-	contactEmail: string
-	contactPhone: string
-	specialInstructions?: string
-	brand?: string // Optional primary brand
+    eventStartDate: string; // ISO date string
+    eventEndDate: string; // ISO date string
+    venueName: string;
+    venueCountry: string;
+    venueCity: string;
+    venueAddress: string;
+    venueAccessNotes?: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    specialInstructions?: string;
+    brand?: string; // Optional primary brand
 }
 
 export interface SubmitOrderResponse {
-	orderId: string
-	status: OrderStatus
-	submittedAt: Date
-	message: string
+    orderId: string;
+    status: OrderStatus;
+    submittedAt: Date;
+    message: string;
 }
 
 // List user orders
 export interface MyOrdersListParams {
-	status?: OrderStatus
-	limit?: number
-	offset?: number
-	sortBy?: 'createdAt' | 'eventStartDate' | 'orderId'
-	sortOrder?: 'asc' | 'desc'
+    status?: OrderStatus;
+    limit?: number;
+    offset?: number;
+    sortBy?: "createdAt" | "eventStartDate" | "orderId";
+    sortOrder?: "asc" | "desc";
 }
 
 export interface MyOrdersListResponse {
-	orders: Order[]
-	total: number
-	limit: number
-	offset: number
+    orders: Order[];
+    total: number;
+    limit: number;
+    offset: number;
 }
 
 // ============================================================
@@ -273,225 +390,223 @@ export interface MyOrdersListResponse {
 
 // Invoice metadata from order
 export interface InvoiceMetadata {
-	invoiceNumber: string
-	invoiceGeneratedAt: string // ISO timestamp
-	invoicePdfUrl: string
-	invoicePaidAt: string | null // ISO timestamp or null
-	paymentMethod: string | null
-	paymentReference: string | null
-	isPaid: boolean
-	orderId: string
-	finalTotalPrice: string
+    invoiceNumber: string;
+    invoiceGeneratedAt: string; // ISO timestamp
+    invoicePdfUrl: string;
+    invoicePaidAt: string | null; // ISO timestamp or null
+    paymentMethod: string | null;
+    paymentReference: string | null;
+    isPaid: boolean;
+    orderId: string;
+    finalTotalPrice: string;
 }
 
 // Generate invoice request
 export interface GenerateInvoiceRequest {
-	orderId: string
-	regenerate?: boolean
+    orderId: string;
+    regenerate?: boolean;
 }
 
 // Generate invoice response
 export interface GenerateInvoiceResponse {
-	success: boolean
-	invoice: {
-		invoiceNumber: string
-		invoicePdfUrl: string
-		invoiceGeneratedAt: string // ISO timestamp
-		orderId: string
-	}
+    success: boolean;
+    invoice: {
+        invoiceNumber: string;
+        invoicePdfUrl: string;
+        invoiceGeneratedAt: string; // ISO timestamp
+        orderId: string;
+    };
 }
 
 // Send invoice email request
 export interface SendInvoiceEmailRequest {
-	orderId: string
-	recipientOverride?: string
+    orderId: string;
+    recipientOverride?: string;
 }
 
 // Send invoice email response
 export interface SendInvoiceEmailResponse {
-	success: boolean
-	emailSent: boolean
-	sentTo: string[]
-	sentAt: string // ISO timestamp
+    success: boolean;
+    emailSent: boolean;
+    sentTo: string[];
+    sentAt: string; // ISO timestamp
 }
 
 // Confirm payment request
 export interface ConfirmPaymentRequest {
-	paymentMethod: string
-	paymentReference: string
-	paymentDate: string // ISO date string
-	notes?: string
+    paymentMethod: string;
+    paymentReference: string;
+    paymentDate: string; // ISO date string
+    notes?: string;
 }
 
 // Confirm payment response
 export interface ConfirmPaymentResponse {
-	success: boolean
-	invoice: {
-		invoiceNumber: string
-		invoicePaidAt: string // ISO timestamp
-		paymentMethod: string
-		paymentReference: string
-	}
+    success: boolean;
+    invoice: {
+        invoiceNumber: string;
+        invoicePaidAt: string; // ISO timestamp
+        paymentMethod: string;
+        paymentReference: string;
+    };
 }
 
 // Invoice list params
 export interface InvoiceListParams {
-	company?: string
-	isPaid?: boolean
-	dateFrom?: string // ISO date
-	dateTo?: string // ISO date
-	page?: number
-	limit?: number
-	sortBy?: 'invoiceGeneratedAt' | 'invoicePaidAt' | 'finalTotalPrice'
-	sortOrder?: 'asc' | 'desc'
+    company?: string;
+    isPaid?: boolean;
+    dateFrom?: string; // ISO date
+    dateTo?: string; // ISO date
+    page?: number;
+    limit?: number;
+    sortBy?: "invoiceGeneratedAt" | "invoicePaidAt" | "finalTotalPrice";
+    sortOrder?: "asc" | "desc";
 }
 
 // Invoice list item
 export interface InvoiceListItem {
-	invoiceNumber: string
-	orderId: string
-	orderIdReadable: string
-	company: {
-		id: string
-		name: string
-	}
-	contactName: string
-	invoiceGeneratedAt: string
-	invoicePaidAt: string | null
-	paymentMethod: string | null
-	finalTotalPrice: string
-	isPaid: boolean
+    invoiceNumber: string;
+    orderId: string;
+    orderIdReadable: string;
+    company: {
+        id: string;
+        name: string;
+    };
+    contactName: string;
+    invoiceGeneratedAt: string;
+    invoicePaidAt: string | null;
+    paymentMethod: string | null;
+    finalTotalPrice: string;
+    isPaid: boolean;
 }
 
 // Invoice list response
 export interface InvoiceListResponse {
-	invoices: InvoiceListItem[]
-	pagination: {
-		total: number
-		page: number
-		limit: number
-		totalPages: number
-	}
+    invoices: InvoiceListItem[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 // ============================================================
 // Phase 10: Order Lifecycle & Notification Types
 // ============================================================
 
-export type NotificationStatus = 'QUEUED' | 'SENT' | 'FAILED' | 'RETRYING'
+export type NotificationStatus = "QUEUED" | "SENT" | "FAILED" | "RETRYING";
 
 export type NotificationType =
-	| 'ORDER_SUBMITTED'
-	| 'A2_APPROVED_STANDARD'
-	| 'A2_ADJUSTED_PRICING'
-	| 'QUOTE_SENT'
-	| 'QUOTE_APPROVED'
-	| 'QUOTE_DECLINED'
-	| 'INVOICE_GENERATED'
-	| 'PAYMENT_CONFIRMED'
-	| 'ORDER_CONFIRMED'
-	| 'READY_FOR_DELIVERY'
-	| 'IN_TRANSIT'
-	| 'DELIVERED'
-	| 'PICKUP_REMINDER'
-	| 'ORDER_CLOSED'
-	| 'TIME_WINDOWS_UPDATED'
+    | "ORDER_SUBMITTED"
+    | "QUOTE_SENT"
+    | "QUOTE_APPROVED"
+    | "QUOTE_DECLINED"
+    | "INVOICE_GENERATED"
+    | "PAYMENT_CONFIRMED"
+    | "ORDER_CONFIRMED"
+    | "READY_FOR_DELIVERY"
+    | "IN_TRANSIT"
+    | "DELIVERED"
+    | "PICKUP_REMINDER"
+    | "ORDER_CLOSED"
+    | "TIME_WINDOWS_UPDATED";
 
 export interface NotificationLog {
-	id: string
-	order: string
-	notificationType: NotificationType
-	recipients: {
-		to: string[]
-		cc?: string[]
-		bcc?: string[]
-	}
-	status: NotificationStatus
-	attempts: number
-	lastAttemptAt: Date
-	sentAt?: Date | null
-	messageId?: string | null
-	errorMessage?: string | null
-	createdAt: Date
+    id: string;
+    order: string;
+    notificationType: NotificationType;
+    recipients: {
+        to: string[];
+        cc?: string[];
+        bcc?: string[];
+    };
+    status: NotificationStatus;
+    attempts: number;
+    lastAttemptAt: Date;
+    sentAt?: Date | null;
+    messageId?: string | null;
+    errorMessage?: string | null;
+    createdAt: Date;
 }
 
 export interface NotificationLogWithOrder {
-	id: string
-	order: {
-		id: string
-		orderId: string
-		companyName: string
-	}
-	notificationType: NotificationType
-	recipients: {
-		to: string[]
-		cc?: string[]
-		bcc?: string[]
-	}
-	status: NotificationStatus
-	attempts: number
-	lastAttemptAt: Date
-	sentAt?: Date | null
-	messageId?: string | null
-	errorMessage?: string | null
-	createdAt: Date
+    id: string;
+    order: {
+        id: string;
+        orderId: string;
+        companyName: string;
+    };
+    notificationType: NotificationType;
+    recipients: {
+        to: string[];
+        cc?: string[];
+        bcc?: string[];
+    };
+    status: NotificationStatus;
+    attempts: number;
+    lastAttemptAt: Date;
+    sentAt?: Date | null;
+    messageId?: string | null;
+    errorMessage?: string | null;
+    createdAt: Date;
 }
 
 // Status Progression
 export interface ProgressStatusRequest {
-	newStatus: OrderStatus
-	notes?: string
+    newStatus: OrderStatus;
+    notes?: string;
 }
 
 export interface ProgressStatusResponse {
-	order: Order
-	message: string
+    order: Order;
+    message: string;
 }
 
 // Time Windows
 export interface TimeWindowsRequest {
-	deliveryWindowStart: string // ISO 8601 format
-	deliveryWindowEnd: string
-	pickupWindowStart: string
-	pickupWindowEnd: string
+    deliveryWindowStart: string; // ISO 8601 format
+    deliveryWindowEnd: string;
+    pickupWindowStart: string;
+    pickupWindowEnd: string;
 }
 
 export interface TimeWindowsResponse {
-	order: Order
-	message: string
+    order: Order;
+    message: string;
 }
 
 // Status History
 export interface StatusHistoryEntry {
-	id: string
-	status: OrderStatus
-	notes?: string | null
-	updatedBy: {
-		id: string
-		name: string
-		email: string
-	}
-	timestamp: Date
+    id: string;
+    status: OrderStatus;
+    notes?: string | null;
+    updatedBy: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    timestamp: Date;
 }
 
 export interface StatusHistoryResponse {
-	orderId: string
-	currentStatus: OrderStatus
-	history: StatusHistoryEntry[]
+    orderId: string;
+    currentStatus: OrderStatus;
+    history: StatusHistoryEntry[];
 }
 
 // Failed Notifications
 export interface FailedNotificationsParams {
-	status?: 'FAILED' | 'RETRYING'
-	notificationType?: string
-	orderId?: string
-	limit?: number
-	offset?: number
+    status?: "FAILED" | "RETRYING";
+    notificationType?: string;
+    orderId?: string;
+    limit?: number;
+    offset?: number;
 }
 
 export interface FailedNotificationsResponse {
-	total: number
-	notifications: NotificationLogWithOrder[]
+    total: number;
+    notifications: NotificationLogWithOrder[];
 }
 
 // Validation types are exported from types/phase2.ts to avoid duplicates

@@ -1,0 +1,67 @@
+/**
+ * Order API Client
+ * API wrapper for order submission and management
+ */
+
+import type { TripType } from "@/types/hybrid-pricing";
+import { throwApiError } from "../utils/throw-api-error";
+import { apiClient } from "./api-client";
+
+export interface SubmitOrderPayload {
+    items: Array<{
+        asset_id: string;
+        quantity: number;
+        from_collection_id?: string;
+        maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS";
+    }>;
+    brand_id?: string;
+    trip_type?: TripType; // NEW
+    event_start_date: string;
+    event_end_date: string;
+    venue_name: string;
+    venue_country_id: string;
+    venue_city_id: string;
+    venue_address: string;
+    venue_access_notes?: string;
+    contact_name: string;
+    contact_email: string;
+    contact_phone: string;
+    special_instructions?: string;
+}
+
+/**
+ * Submit order with hybrid pricing
+ */
+export async function submitOrder(payload: SubmitOrderPayload) {
+    const response = await fetch("/api/orders/submit-from-cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to submit order");
+    }
+
+    return response.json();
+}
+
+/**
+ * Calculate order estimate
+ */
+export async function calculateEstimate(data: {
+    items: Array<{ asset_id: string; quantity: number }>;
+    venue_city: string;
+    trip_type: TripType;
+}) {
+    try {
+        const response = await apiClient.post("/client/v1/order/estimate", data);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to calculate estimate:", error);
+        throwApiError(error);
+    }
+}
