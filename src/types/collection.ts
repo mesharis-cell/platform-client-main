@@ -1,6 +1,6 @@
 // Phase 4: Collections & Catalog System TypeScript Types
 
-import type { Condition, AssetStatus, HandlingTag, AssetCategory } from "./asset";
+import type { Condition, AssetStatus, HandlingTag, AssetCategory, AssetImage } from "./asset";
 
 // ========================================
 // Collection Types
@@ -206,7 +206,7 @@ export interface CatalogAssetDetails {
     name: string;
     description: string | null;
     category: string;
-    images: string[];
+    images: AssetImage[];
     brand: {
         id: string;
         name: string;
