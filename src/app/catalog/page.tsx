@@ -300,7 +300,7 @@ function CatalogPageInner() {
                             <SelectTrigger className="w-[200px] bg-card/50 border-border/50 font-mono">
                                 <SelectValue placeholder="All brands" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-72">
                                 <SelectItem value="_all_">All brands</SelectItem>
                                 {brands.map((brand) => (
                                     <SelectItem
