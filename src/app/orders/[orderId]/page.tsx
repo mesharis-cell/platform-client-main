@@ -163,15 +163,13 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         QUOTED: "bg-amber-500/10 text-amber-600 border-amber-500/30",
         APPROVED: "bg-green-500/10 text-green-600 border-green-500/30",
         DECLINED: "bg-destructive/10 text-destructive border-destructive/30",
-        INVOICED: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30",
-        PAID: "bg-green-500/10 text-green-600 border-green-500/30",
         CONFIRMED: "bg-teal-500/10 text-teal-600 border-teal-500/30",
         IN_PREPARATION: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30",
-        AWAITING_FABRICATION: "bg-blue-500/10 text-blue-600 border-blue-500/30",
         READY_FOR_DELIVERY: "bg-sky-500/10 text-sky-600 border-sky-500/30",
         IN_TRANSIT: "bg-violet-500/10 text-violet-600 border-violet-500/30",
         DELIVERED: "bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/30",
         IN_USE: "bg-pink-500/10 text-pink-600 border-pink-500/30",
+        DERIG: "bg-purple-500/10 text-purple-600 border-purple-500/30",
         AWAITING_RETURN: "bg-rose-500/10 text-rose-600 border-rose-500/30",
         RETURN_IN_TRANSIT: "bg-orange-500/10 text-orange-600 border-orange-500/30",
         CLOSED: "bg-slate-600/10 text-slate-700 border-slate-600/20",
@@ -184,8 +182,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isQuoted = order.order_status === "QUOTED";
     const isApproved = order.order_status === "APPROVED";
     const isDeclined = order.order_status === "DECLINED";
-    const isInvoiced = order.order_status === "INVOICED";
-    const isPaid = order.order_status === "PAID";
     const isConfirmed = order.order_status === "CONFIRMED";
     const isInPreparation = order.order_status === "IN_PREPARATION";
     const isReadyForDelivery = order.order_status === "READY_FOR_DELIVERY";
@@ -195,24 +191,11 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isAwaitingReturn = order.order_status === "AWAITING_RETURN";
     const isReturnInTransit = order.order_status === "RETURN_IN_TRANSIT";
     const isClosed = order.order_status === "CLOSED";
-    const isAwaitingFabrication = order.order_status === "AWAITING_FABRICATION";
     const isCancelled = order.order_status === "CANCELLED";
 
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined;
-    const showInvoiceSection =
-        invoicingEnabled &&
-        (isInvoiced ||
-            isPaid ||
-            isConfirmed ||
-            isInPreparation ||
-            isReadyForDelivery ||
-            isInTransit ||
-            isDelivered ||
-            isInUse ||
-            isAwaitingReturn ||
-            isReturnInTransit ||
-            isClosed);
+    const showInvoiceSection = false; // Invoicing parked — cost estimates used instead
     const isFulfillmentStage =
         isConfirmed ||
         isInPreparation ||
@@ -288,8 +271,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isQuoted && "Quote Ready"}
                                         {isApproved && "Quote Approved"}
                                         {isDeclined && "Quote Declined"}
-                                        {isInvoiced && "Invoice Ready"}
-                                        {isPaid && "Payment Confirmed"}
+                                        {false && "Invoice Ready"}
+                                        {false && "Payment Confirmed"}
                                         {isConfirmed && "Order Confirmed"}
                                         {isInPreparation && "Preparing Your Order"}
                                         {isReadyForDelivery && "Ready to Ship"}
@@ -319,9 +302,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             "Your order is proceeding to invoicing. We will begin fulfillment preparations."}
                                         {isDeclined &&
                                             "Your feedback has been received. Our team may reach out to discuss alternatives."}
-                                        {isInvoiced &&
+                                        {false &&
                                             "Your invoice is ready for payment. Download it below and proceed with payment."}
-                                        {isPaid &&
+                                        {false &&
                                             "Payment confirmed! We are setting up delivery schedules."}
                                         {isConfirmed &&
                                             "Your order has been confirmed. Items are being prepared for your event."}
@@ -340,17 +323,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             "Your items are currently in transit back to our warehouse."}
                                         {isClosed &&
                                             "All items returned. Thank you for choosing us!"}
-                                        {isAwaitingFabrication &&
+                                        {false &&
                                             "Your order is awaiting fabrication. We are working on it!"}
                                     </p>
                                 </div>
                                 <div
                                     className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${
-                                        isApproved || isPaid || isDelivered || isClosed
+                                        isApproved || false || isDelivered || isClosed
                                             ? "bg-green-500"
                                             : isDeclined
                                               ? "bg-destructive"
-                                              : isQuoted || isInvoiced
+                                              : isQuoted || false
                                                 ? "bg-amber-500"
                                                 : isPendingApproval
                                                   ? "bg-orange-500"
@@ -376,8 +359,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         <CheckCircle2 className="w-10 h-10 text-white" />
                                     )}
                                     {isDeclined && <XCircle className="w-10 h-10 text-white" />}
-                                    {isInvoiced && <FileText className="w-10 h-10 text-white" />}
-                                    {isPaid && <CheckCircle2 className="w-10 h-10 text-white" />}
+                                    {false && <FileText className="w-10 h-10 text-white" />}
+                                    {false && <CheckCircle2 className="w-10 h-10 text-white" />}
                                     {isConfirmed && (
                                         <CheckCircle2 className="w-10 h-10 text-white" />
                                     )}
@@ -425,7 +408,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     </motion.div>
 
                     {/* Status Banner for special states */}
-                    {(isAwaitingFabrication || isCancelled) && (
+                    {(false || isCancelled) && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -810,52 +793,11 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     <Card className="p-6 bg-green-500/5 border-green-500/20">
                                         <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
                                             <Loader className="w-4 h-4 animate-spin" />
-                                            What's Next
+                                            Order Confirmed
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
-                                            Your invoice is being generated and will be emailed to
-                                            you shortly. Once received, please process payment to
-                                            proceed with fulfillment.
-                                        </p>
-                                    </Card>
-                                </motion.div>
-                            )}
-
-                            {isInvoiced && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                >
-                                    <Card className="p-6 bg-amber-500/5 border-amber-500/20">
-                                        <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
-                                            <AlertCircle className="w-4 h-4" />
-                                            Action Required
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Please process payment for the invoice above. Once
-                                            payment is confirmed, we will schedule delivery and
-                                            begin fulfillment.
-                                        </p>
-                                    </Card>
-                                </motion.div>
-                            )}
-
-                            {isPaid && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                >
-                                    <Card className="p-6 bg-green-500/5 border-green-500/20">
-                                        <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
-                                            <CheckCircle2 className="w-4 h-4" />
-                                            What's Next
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Payment confirmed! Our operations team is coordinating
-                                            delivery schedules. You will receive delivery window
-                                            details shortly.
+                                            Great news! Your order is confirmed and our team will
+                                            be in touch with delivery schedule details shortly.
                                         </p>
                                     </Card>
                                 </motion.div>

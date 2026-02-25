@@ -31,6 +31,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
+import { ConditionHistoryTimeline } from "@/components/conditions/condition-history-timeline";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -507,69 +508,10 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         <Clock className="w-4 h-4" />
                                         Condition History
                                     </h3>
-                                    <div className="space-y-1 relative">
-                                        {conditionHistory.map((entry: any, idx: number) => {
-                                            const isFirst = idx === 0;
-                                            return (
-                                                <div
-                                                    key={entry.id || idx}
-                                                    className="flex gap-3 py-2"
-                                                >
-                                                    <div className="flex flex-col items-center">
-                                                        <div
-                                                            className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${
-                                                                entry.condition === "RED"
-                                                                    ? "bg-destructive"
-                                                                    : entry.condition === "ORANGE"
-                                                                      ? "bg-orange-500"
-                                                                      : "bg-green-500"
-                                                            } ${isFirst ? "ring-4 ring-primary/20" : ""}`}
-                                                        />
-                                                        {idx < conditionHistory.length - 1 && (
-                                                            <div className="w-px flex-1 bg-border min-h-[20px]" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 pb-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <Badge
-                                                                className={`text-xs font-mono ${
-                                                                    entry.condition === "RED"
-                                                                        ? "bg-destructive"
-                                                                        : entry.condition ===
-                                                                            "ORANGE"
-                                                                          ? "bg-orange-500"
-                                                                          : "bg-green-500"
-                                                                }`}
-                                                            >
-                                                                {entry.condition}
-                                                            </Badge>
-                                                            {isFirst && (
-                                                                <span className="text-xs font-mono text-muted-foreground">
-                                                                    Current
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {entry.notes && (
-                                                            <p className="text-sm text-muted-foreground mt-1">
-                                                                {entry.notes}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-xs font-mono text-muted-foreground mt-0.5">
-                                                            {new Date(
-                                                                entry.timestamp
-                                                            ).toLocaleDateString()}{" "}
-                                                            {new Date(
-                                                                entry.timestamp
-                                                            ).toLocaleTimeString([], {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                            })}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                    <ConditionHistoryTimeline
+                                        history={conditionHistory}
+                                        assetName={asset?.name ?? ""}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
