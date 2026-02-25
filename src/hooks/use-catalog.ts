@@ -27,6 +27,40 @@ export const catalogKeys = {
     collection: (id: string) => [...catalogKeys.collections(), id] as const,
 };
 
+type AssetImageShape = { url: string; note?: string };
+
+const normalizeImageUrls = (images: unknown): string[] => {
+    if (!Array.isArray(images)) return [];
+    return images
+        .map((image) => {
+            if (typeof image === "string") return image;
+            if (image && typeof image === "object" && typeof (image as any).url === "string") {
+                return (image as any).url as string;
+            }
+            return null;
+        })
+        .filter((url): url is string => Boolean(url));
+};
+
+const normalizeAssetImages = (images: unknown): AssetImageShape[] => {
+    if (!Array.isArray(images)) return [];
+    return images
+        .map((image) => {
+            if (typeof image === "string") return { url: image } satisfies AssetImageShape;
+            if (image && typeof image === "object" && typeof (image as any).url === "string") {
+                return {
+                    url: (image as any).url as string,
+                    note:
+                        typeof (image as any).note === "string"
+                            ? ((image as any).note as string)
+                            : undefined,
+                } satisfies AssetImageShape;
+            }
+            return null;
+        })
+        .filter((image): image is AssetImageShape => Boolean(image));
+};
+
 // ========================================
 // Fetch Functions
 // ========================================
@@ -56,7 +90,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             status: asset.status,
             description: asset.description,
             category: asset.category,
-            images: asset.images || [],
+            images: normalizeImageUrls(asset.images),
             brand: asset.brand
                 ? {
                       id: asset.brand.id,
@@ -83,7 +117,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             name: collection.name,
             description: collection.description,
             category: collection.category,
-            images: collection.images || [],
+            images: normalizeImageUrls(collection.images),
             brand: collection.brand
                 ? {
                       id: collection.brand.id,
@@ -119,7 +153,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
                 name: asset.name,
                 description: asset.description,
                 category: asset.category,
-                images: asset.images || [],
+                images: normalizeAssetImages(asset.images),
                 brand: asset.brand_details || null,
                 company: asset.company_details || null,
                 availableQuantity: asset.available_quantity,
@@ -151,7 +185,7 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
             id: item.asset.id,
             name: item.asset.name,
             category: item.asset.category,
-            images: item.asset.images || [],
+            images: normalizeImageUrls(item.asset.images),
             defaultQuantity: item.default_quantity,
             availableQuantity: item.asset.available_quantity,
             totalQuantity: item.asset.total_quantity,
@@ -183,7 +217,7 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
                 name: raw.name,
                 description: raw.description || null,
                 category: raw.category || null,
-                images: raw.images || [],
+                images: normalizeImageUrls(raw.images),
                 brand: raw.brand
                     ? {
                           id: raw.brand.id,
