@@ -1444,7 +1444,7 @@ function CheckoutPageInner() {
                             {/* NEW: Hybrid Pricing Estimate */}
                             {isEstimateFeatureEnabled &&
                                 availabilityIssues.length === 0 &&
-                                estimateData?.data && (
+                                estimateData?.data?.estimate?.base_operations && (
                                     <OrderEstimate
                                         estimate={estimateData.data.estimate}
                                         hasRebrandItems={false}
