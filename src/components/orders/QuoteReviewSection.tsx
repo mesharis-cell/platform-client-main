@@ -20,13 +20,12 @@ import {
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { PricingBreakdown } from "./PricingBreakdown";
-import type { OrderPricing, OrderLineItem } from "@/types/hybrid-pricing";
+import type { OrderLineItem } from "@/types/hybrid-pricing";
 import type { Order } from "@/types/order";
-import { getOrderPrice } from "@/lib/utils/helper";
 
 interface QuoteReviewSectionProps {
     order: Order;
-    pricing: OrderPricing;
+    pricing: Record<string, any>;
     lineItems: OrderLineItem[];
     hasReskinRequests?: boolean;
     onApprove: () => Promise<void>;
@@ -78,7 +77,7 @@ export function QuoteReviewSection({
         }
     };
 
-    const { total } = getOrderPrice(pricing);
+    const total = Number(pricing?.final_total || 0);
 
     return (
         <div className="space-y-6">

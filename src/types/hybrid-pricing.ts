@@ -4,26 +4,6 @@
 
 export type TripType = "ONE_WAY" | "ROUND_TRIP";
 
-export interface VehicleType {
-    id: string;
-    name: string;
-    vehicle_size?: number | null;
-    platform_id?: string | null;
-    is_default?: boolean;
-    is_active?: boolean;
-    display_order?: number;
-    description?: string | null;
-}
-
-export type VehicleTypeRef = string | VehicleType;
-
-export interface TransportRateLookup {
-    emirate: string;
-    tripType: TripType;
-    vehicleType: VehicleTypeRef;
-    rate: number;
-}
-
 export interface OrderEstimate {
     base_operations: {
         volume: number;
@@ -33,12 +13,12 @@ export interface OrderEstimate {
     transport?: {
         city: string;
         trip_type: TripType;
-        vehicle_type: VehicleTypeRef;
+        vehicle_type: string;
         rate: number;
     };
     suggested_transport?: {
         city: string;
-        vehicle_type: VehicleTypeRef;
+        vehicle_type: string;
         estimated_rate: number;
         note?: string;
     };
@@ -54,35 +34,9 @@ export interface OrderEstimate {
 }
 
 export interface OrderPricing {
-    base_ops_total: number;
-    base_operations: {
-        volume: number;
-        rate: number;
-        total: number;
-    };
-    transport: {
-        emirate: string;
-        trip_type: TripType;
-        vehicle_type: VehicleTypeRef;
-        system_rate: number;
-        final_rate: number;
-        vehicle_changed: boolean;
-        vehicle_change_reason: string | null;
-    };
-    line_items: {
-        catalog_total: number;
-        custom_total: number;
-    };
-    logistics_subtotal: number;
-    margin: {
-        percent: number;
-        amount: number;
-        is_override: boolean;
-        override_reason: string | null;
-    };
+    logistics_sub_total: number;
+    service_fee: number;
     final_total: number;
-    calculated_at: string;
-    calculated_by: string;
 }
 
 export interface OrderLineItem {

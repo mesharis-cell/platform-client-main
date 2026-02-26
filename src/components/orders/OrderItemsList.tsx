@@ -201,13 +201,7 @@ const OrderItemCard = ({
     const { status, reskin } = getReskinStatus(item, reskinList);
     const styles = getReskinStyles(status);
 
-    const statusForReskin = [
-        "PRICING_REVIEW",
-        "PENDING_APPROVAL",
-        "QUOTED",
-        "CONFIRMED",
-        "AWAITING_FABRICATION",
-    ];
+    const statusForReskin = ["PRICING_REVIEW", "PENDING_APPROVAL", "QUOTED", "CONFIRMED"];
 
     return (
         <Link href={`/catalog/assets/${item.asset.id}`} className="block">

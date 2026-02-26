@@ -90,9 +90,6 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
         ["CONFIRMED", "DECLINED", "COMPLETED", "CANCELLED"].includes(request.request_status);
     const showInvoice = invoicingEnabled && request && request.request_status === "COMPLETED";
 
-    console.log("request", request);
-    console.log("showCostEstimate", showCostEstimate);
-
     // Loading State
     if (isLoading) {
         return (
