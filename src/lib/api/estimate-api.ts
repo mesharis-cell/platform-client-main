@@ -36,27 +36,3 @@ export async function calculateEstimate(
     const result = await response.json();
     return result.data || result;
 }
-
-/**
- * Get transport rate for display
- */
-export async function getTransportRate(
-    emirate: string,
-    tripType: TripType,
-    vehicleType: string = "STANDARD"
-): Promise<number> {
-    const params = new URLSearchParams({
-        emirate,
-        trip_type: tripType,
-        vehicle_type: vehicleType,
-    });
-
-    const response = await fetch(`/api/pricing/transport-rate/lookup?${params}`);
-
-    if (!response.ok) {
-        throw new Error("Failed to get transport rate");
-    }
-
-    const result = await response.json();
-    return result.data?.rate || 0;
-}

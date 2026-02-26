@@ -796,8 +796,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                             Order Confirmed
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
-                                            Great news! Your order is confirmed and our team will
-                                            be in touch with delivery schedule details shortly.
+                                            Great news! Your order is confirmed and our team will be
+                                            in touch with delivery schedule details shortly.
                                         </p>
                                     </Card>
                                 </motion.div>
