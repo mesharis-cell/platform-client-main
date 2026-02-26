@@ -46,7 +46,6 @@ import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
 import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
 import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 import { OrderItemsList } from "@/components/orders/OrderItemsList";
-import { getOrderPrice } from "@/lib/utils/helper";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -207,7 +206,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isReturnInTransit ||
         isClosed;
 
-    const { total } = getOrderPrice(order?.order_pricing);
+    const total = Number(order?.order_pricing?.final_total || 0).toFixed(2);
 
     return (
         <ClientNav>
@@ -453,7 +452,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                             )}
 
                             {/* Quote Summary for Approved/Declined/Confirmed States */}
-                            {(isApproved || isDeclined || isConfirmed) && order?.pricing && (
+                            {(isApproved || isDeclined || isConfirmed) && order?.order_pricing && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -469,7 +468,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         <CardContent>
                                             <PricingBreakdown
                                                 order={order}
-                                                pricing={order.pricing}
+                                                pricing={order.order_pricing}
                                                 lineItems={order.line_items || []}
                                                 showTitle={false}
                                             />

@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText } from "luc
 import { ClientNav } from "@/components/client-nav";
 import { useClientOrders, useDownloadCostEstimate } from "@/hooks/use-client-orders";
 import { usePlatform } from "@/contexts/platform-context";
-import { getOrderPrice } from "@/lib/utils/helper";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,8 +69,6 @@ const getQuoteReviewStatus = (orderStatus?: string | null) => {
 };
 
 const getEstimateAmount = (order: any) => {
-    const computedTotal = Number(getOrderPrice(order?.order_pricing).total || 0);
-    if (computedTotal > 0) return computedTotal;
     const pricingTotal = Number(order?.order_pricing?.final_total || 0);
     if (pricingTotal > 0) return pricingTotal;
     return Number(order?.final_total_price || 0);

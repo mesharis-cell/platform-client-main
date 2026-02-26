@@ -127,7 +127,6 @@ function CatalogPageInner() {
             return;
         }
 
-        console.log("cart item item", item);
         addItem(item.id, quantity, {
             assetName: item.name,
             availableQuantity: item.availableQuantity,
