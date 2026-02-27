@@ -62,6 +62,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             weight: Number(asset.weight),
             image: asset.images[0]?.url,
             condition: asset.condition,
+            conditionNotes: asset.conditionNotes,
+            conditionImages: asset.images,
+            refurbDaysEstimate: asset.refurbDaysEstimate,
         });
 
         setSelectedQuantity(1);

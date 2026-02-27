@@ -138,6 +138,9 @@ function CatalogPageInner() {
             category: item.category,
             image: item.images[0],
             condition: item.condition,
+            conditionNotes: item.condition_notes,
+            conditionImages: item.images?.map((url: string) => ({ url })),
+            refurbDaysEstimate: item.refurbDaysEstimate,
         });
     };
 

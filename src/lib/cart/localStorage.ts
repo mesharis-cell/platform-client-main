@@ -32,6 +32,9 @@ export interface LocalCartItem {
     reskinTargetBrandCustom?: string;
     reskinNotes?: string;
     condition?: string;
+    conditionNotes?: string;
+    conditionImages?: { url: string; note?: string }[];
+    refurbDaysEstimate?: number;
     maintenanceDecision?: "FIX_IN_ORDER" | "USE_AS_IS";
 }
 
