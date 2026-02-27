@@ -49,7 +49,7 @@ type CreateAssetPayload = {
     name: string;
     description?: string;
     category: CreateAssetRequest["category"];
-    images: string[];
+    images: CreateAssetRequest["images"];
     tracking_method: CreateAssetRequest["trackingMethod"];
     total_quantity: number;
     available_quantity?: number;

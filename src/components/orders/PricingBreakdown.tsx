@@ -18,11 +18,38 @@ export function PricingBreakdown({
 }: PricingBreakdownProps) {
     if (!pricing) return null;
 
-    const activeLineItems = lineItems.filter((item) => !item.isVoided);
-    const logisticsTotal = Number(pricing.logistics_sub_total || 0);
-    const serviceFee = Number(pricing.service_fee || 0);
-    const finalTotal = Number(pricing.final_total || 0);
-    const hasReskinLine = activeLineItems.some((item) => item.category === "RESKIN");
+    const projectedLineItems = Array.isArray(pricing.breakdown_lines)
+        ? pricing.breakdown_lines.filter(
+              (line: any) => !line.is_voided && (line.billing_mode || "BILLABLE") === "BILLABLE"
+          )
+        : [];
+    const fallbackLineItems = lineItems
+        .filter((item) => !item.isVoided)
+        .map((item) => ({
+            line_id: item.id,
+            label: item.description,
+            category: item.category,
+            quantity: Number(item.quantity || 0),
+            unit: item.unit || "service",
+            total: Number(item.total || 0),
+        }));
+    const activeLineItems = projectedLineItems.length > 0 ? projectedLineItems : fallbackLineItems;
+    const logisticsTotal = Number(
+        pricing.totals?.base_ops_total ??
+            pricing.totals?.sell_base_ops_total ??
+            pricing.logistics_sub_total ??
+            0
+    );
+    const serviceFee = Number(
+        (pricing.totals?.rate_card_total ?? pricing.totals?.sell_rate_card_total ?? 0) +
+            (pricing.totals?.custom_total ?? pricing.totals?.sell_custom_total ?? 0) ||
+            pricing.service_fee ||
+            0
+    );
+    const finalTotal = Number(
+        pricing.totals?.total ?? pricing.totals?.sell_total ?? pricing.final_total ?? 0
+    );
+    const hasReskinLine = activeLineItems.some((item: any) => item.category === "RESKIN");
 
     return (
         <div className="border border-border rounded-lg p-6 space-y-4">
@@ -45,9 +72,11 @@ export function PricingBreakdown({
             {activeLineItems.length > 0 && (
                 <>
                     <div className="border-t border-border my-2"></div>
-                    {activeLineItems.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{item.description}</span>
+                    {activeLineItems.map((item: any) => (
+                        <div key={item.line_id || item.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">
+                                {item.label || item.description}
+                            </span>
                             <span className="font-mono">
                                 {Number(item.total || 0).toFixed(2)} AED
                             </span>

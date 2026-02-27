@@ -357,10 +357,11 @@ export default function ClientServiceRequestsPage() {
                                                                             );
                                                                         }}
                                                                     >
-                                                                        {asset.images?.[0] ? (
+                                                                        {asset.images?.[0]?.url ? (
                                                                             <img
                                                                                 src={
                                                                                     asset.images[0]
+                                                                                        .url
                                                                                 }
                                                                                 alt={asset.name}
                                                                                 className="w-9 h-9 rounded object-cover border"

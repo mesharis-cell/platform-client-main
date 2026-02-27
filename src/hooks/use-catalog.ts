@@ -44,21 +44,22 @@ const normalizeImageUrls = (images: unknown): string[] => {
 
 const normalizeAssetImages = (images: unknown): AssetImageShape[] => {
     if (!Array.isArray(images)) return [];
-    return images
-        .map((image) => {
-            if (typeof image === "string") return { url: image } satisfies AssetImageShape;
-            if (image && typeof image === "object" && typeof (image as any).url === "string") {
-                return {
-                    url: (image as any).url as string,
-                    note:
-                        typeof (image as any).note === "string"
-                            ? ((image as any).note as string)
-                            : undefined,
-                } satisfies AssetImageShape;
-            }
-            return null;
-        })
-        .filter((image): image is AssetImageShape => Boolean(image));
+    const normalized: AssetImageShape[] = [];
+    for (const image of images) {
+        if (typeof image === "string") {
+            normalized.push({ url: image });
+            continue;
+        }
+        if (image && typeof image === "object" && typeof (image as any).url === "string") {
+            const url = (image as any).url as string;
+            const note =
+                typeof (image as any).note === "string"
+                    ? ((image as any).note as string)
+                    : undefined;
+            normalized.push(note ? { url, note } : { url });
+        }
+    }
+    return normalized;
 };
 
 // ========================================

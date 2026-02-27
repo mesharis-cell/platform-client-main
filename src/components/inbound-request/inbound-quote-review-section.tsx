@@ -109,7 +109,7 @@ export function InboundQuoteReviewSection({
                             By accepting this quote, you confirm the total estimated cost of{" "}
                             <span className="font-bold font-mono text-lg">
                                 {parseFloat(
-                                    request.request_pricing.final_total || "0"
+                                    String(request.request_pricing.final_total || "0")
                                 ).toLocaleString()}{" "}
                                 AED
                             </span>

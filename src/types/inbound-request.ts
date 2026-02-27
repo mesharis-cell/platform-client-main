@@ -137,9 +137,30 @@ export interface InboundRequestDetails {
         email: string;
     };
     request_pricing: {
-        final_total: string;
-        logistics_sub_total: string;
-        service_fee: string;
+        breakdown_lines?: Array<{
+            line_id: string;
+            line_kind?: "BASE_OPS" | "RATE_CARD" | "CUSTOM";
+            label: string;
+            quantity: number;
+            unit: string;
+            unit_price?: number;
+            total?: number;
+            sell_unit_price?: number;
+            sell_total?: number;
+        }>;
+        totals?: {
+            base_ops_total?: number;
+            rate_card_total?: number;
+            custom_total?: number;
+            total?: number;
+            sell_base_ops_total?: number;
+            sell_rate_card_total?: number;
+            sell_custom_total?: number;
+            sell_total?: number;
+        };
+        final_total: string | number;
+        logistics_sub_total?: string | number;
+        service_fee?: string | number;
     };
     items: InboundRequestItem[];
     invoice?: {
