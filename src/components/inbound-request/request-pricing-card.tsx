@@ -7,9 +7,29 @@ import { Separator } from "@/components/ui/separator";
 
 interface RequestPricingCardProps {
     pricingOverview: {
-        final_total: string;
-        logistics_sub_total: string;
-        service_fee: string;
+        breakdown_lines?: Array<{
+            line_id: string;
+            label: string;
+            quantity: number;
+            unit: string;
+            total?: number;
+            unit_price?: number;
+            billing_mode?: string;
+            is_voided?: boolean;
+        }>;
+        totals?: {
+            base_ops_total?: number;
+            rate_card_total?: number;
+            custom_total?: number;
+            total?: number;
+            sell_base_ops_total?: number;
+            sell_rate_card_total?: number;
+            sell_custom_total?: number;
+            sell_total?: number;
+        };
+        final_total: string | number;
+        logistics_sub_total?: string | number;
+        service_fee?: string | number;
     };
 }
 
@@ -21,6 +41,33 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
             maximumFractionDigits: 2,
         });
     };
+    const lineItems = Array.isArray(pricingOverview.breakdown_lines)
+        ? pricingOverview.breakdown_lines.filter(
+              (line) => !line.is_voided && (line.billing_mode || "BILLABLE") === "BILLABLE"
+          )
+        : [];
+    const logisticsSubtotal = String(
+        pricingOverview.totals?.base_ops_total ??
+            pricingOverview.totals?.sell_base_ops_total ??
+            pricingOverview.logistics_sub_total ??
+            0
+    );
+    const serviceFee = String(
+        (pricingOverview.totals?.rate_card_total ??
+            pricingOverview.totals?.sell_rate_card_total ??
+            0) +
+            (pricingOverview.totals?.custom_total ??
+                pricingOverview.totals?.sell_custom_total ??
+                0) ||
+            pricingOverview.service_fee ||
+            0
+    );
+    const finalTotal = String(
+        pricingOverview.totals?.total ??
+            pricingOverview.totals?.sell_total ??
+            pricingOverview.final_total ??
+            0
+    );
 
     return (
         <motion.div
@@ -44,7 +91,7 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                             </div>
                             <div className="mt-2">
                                 <span className="text-3xl font-bold font-mono text-foreground tracking-tight block">
-                                    AED {formatCurrency(pricingOverview.final_total)}
+                                    AED {formatCurrency(finalTotal)}
                                 </span>
                                 <p className="text-xs text-muted-foreground mt-1.5 ml-0.5 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 block" />
@@ -71,7 +118,7 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                                         </span>
                                     </div>
                                     <span className="font-mono text-sm font-medium tracking-tight">
-                                        AED {formatCurrency(pricingOverview.logistics_sub_total)}
+                                        AED {formatCurrency(logisticsSubtotal)}
                                     </span>
                                 </div>
 
@@ -86,9 +133,30 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                                         </span>
                                     </div>
                                     <span className="font-mono text-sm font-medium tracking-tight">
-                                        AED {formatCurrency(pricingOverview.service_fee)}
+                                        AED {formatCurrency(serviceFee)}
                                     </span>
                                 </div>
+                                {lineItems.length > 0 && (
+                                    <div className="rounded border border-border/60 overflow-hidden mt-2">
+                                        <div className="grid grid-cols-12 bg-muted/30 px-3 py-2 text-xs font-medium">
+                                            <span className="col-span-8">Line</span>
+                                            <span className="col-span-4 text-right">Amount</span>
+                                        </div>
+                                        {lineItems.map((line) => (
+                                            <div
+                                                key={line.line_id}
+                                                className="grid grid-cols-12 px-3 py-2 text-xs border-t border-border/40"
+                                            >
+                                                <span className="col-span-8 truncate">
+                                                    {line.label} ({line.quantity} {line.unit})
+                                                </span>
+                                                <span className="col-span-4 text-right font-mono">
+                                                    AED {Number(line.total || 0).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <Separator className="bg-border/60 my-2" />
 
@@ -98,7 +166,7 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                                         Total
                                     </span>
                                     <span className="font-mono font-bold text-primary tracking-tight">
-                                        AED {formatCurrency(pricingOverview.final_total)}
+                                        AED {formatCurrency(finalTotal)}
                                     </span>
                                 </div>
                             </div>

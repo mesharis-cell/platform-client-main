@@ -419,7 +419,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 cancellationReason={order.cancellation_reason}
                                 cancellationNotes={order.cancellation_notes}
                                 cancelledAt={order.cancelled_at}
-                                pendingReskinCount={0}
                             />
                         </motion.div>
                     )}

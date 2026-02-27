@@ -59,7 +59,7 @@ const STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "cart", label: "Order Review", icon: ShoppingCart },
     { key: "event", label: "Event Details", icon: Calendar },
     { key: "venue", label: "Venue Info", icon: MapPin },
-    { key: "contact", label: "Contact", icon: User },
+    { key: "contact", label: "Point of Contact", icon: User },
     { key: "review", label: "Review", icon: FileText },
 ];
 
@@ -79,8 +79,6 @@ function CheckoutPageInner() {
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
-    const [useCustomCountry, setUseCustomCountry] = useState(false);
-    const [useCustomCity, setUseCustomCity] = useState(false);
     const [maintenanceFeasibilityIssues, setMaintenanceFeasibilityIssues] = useState<
         MaintenanceFeasibilityIssue[]
     >([]);
@@ -145,7 +143,6 @@ function CheckoutPageInner() {
         );
     }, [currentStep, formData]);
 
-    const isAllGreenItems = items.every((item) => item.condition === "GREEN");
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
     const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
@@ -173,10 +170,19 @@ function CheckoutPageInner() {
         return `${year}-${month}-${day}`;
     };
 
-    // NEW: Get countries
     const { data: countriesData } = useGetCountries();
 
-    // NEW: Get cities based on selected country
+    // Auto-select first country (UAE) when data loads
+    useEffect(() => {
+        if (!countriesData?.data?.length || formData.venue_country_id) return;
+        const first = countriesData.data[0];
+        setFormData((prev) => ({
+            ...prev,
+            venue_country_id: first.id,
+            venue_country_name: first.name,
+        }));
+    }, [countriesData?.data, formData.venue_country_id]);
+
     const cities = formData.venue_country_id
         ? (countriesData?.data?.find((country) => country.id === formData.venue_country_id)
               ?.cities ?? [])
@@ -505,20 +511,17 @@ function CheckoutPageInner() {
                         (item) => item.condition === "RED" || item.condition === "ORANGE"
                     ) && (
                         <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
-                            <div className="flex items-center">
-                                <div className="shrink-0">
-                                    <AlertCircle className="h-5 w-5 text-yellow-400" />
-                                </div>
-                                <div className="ml-3">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                                <div>
                                     <h3 className="text-sm font-medium text-yellow-800">
                                         Maintenance Required
                                     </h3>
-                                    <div className="mt-2 text-sm text-yellow-700">
-                                        <p>
-                                            Your order contain item(s) require maintenance. It may
-                                            require some time to prepare.
-                                        </p>
-                                    </div>
+                                    <p className="mt-1 text-sm text-yellow-700">
+                                        Some items in your order require maintenance before use.
+                                        You&apos;ll be asked to review their condition and confirm
+                                        how you&apos;d like to proceed during checkout.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -580,13 +583,31 @@ function CheckoutPageInner() {
                                                     <span>•</span>
                                                     <span>{item.weight} kg each</span>
                                                 </div>
-                                                {(item.condition === "RED" ||
-                                                    item.condition === "ORANGE") && (
-                                                    <p className="text-xs text-red-500 font-mono">
-                                                        Attention: This item requires maintenance{" "}
-                                                        <br />
-                                                        Condition: {item.condition}
-                                                    </p>
+                                                {item.condition === "RED" && (
+                                                    <div className="mt-1 space-y-1">
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                            <AlertCircle className="h-3 w-3" /> RED
+                                                            — Requires repair
+                                                        </span>
+                                                        {item.conditionNotes && (
+                                                            <p className="text-xs text-red-600 line-clamp-2">
+                                                                {item.conditionNotes}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {item.condition === "ORANGE" && (
+                                                    <div className="mt-1 space-y-1">
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                            <AlertCircle className="h-3 w-3" />{" "}
+                                                            ORANGE — Decision needed
+                                                        </span>
+                                                        {item.conditionNotes && (
+                                                            <p className="text-xs text-amber-600 line-clamp-2">
+                                                                {item.conditionNotes}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 )}
                                                 {item.fromCollectionName && (
                                                     <p className="text-xs text-muted-foreground font-mono">
@@ -806,95 +827,11 @@ function CheckoutPageInner() {
                                                 htmlFor="venueCountry"
                                                 className="font-mono uppercase text-xs tracking-wide"
                                             >
-                                                Country *
+                                                Country
                                             </Label>
-                                            {!useCustomCountry ? (
-                                                <Select
-                                                    value={formData.venue_country_id}
-                                                    onValueChange={(value) => {
-                                                        if (value === "_custom_") {
-                                                            setUseCustomCountry(true);
-                                                            setUseCustomCity(true);
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_country_id: "",
-                                                                venue_country_name: "",
-                                                                venue_city_id: "",
-                                                                venue_city_name: "",
-                                                            });
-                                                        } else {
-                                                            const selectedCountry =
-                                                                countriesData?.data?.find(
-                                                                    (c) => c.id === value
-                                                                );
-                                                            setUseCustomCity(false);
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_country_id: value,
-                                                                venue_country_name:
-                                                                    selectedCountry?.name || "",
-                                                                venue_city_id: "",
-                                                                venue_city_name: "",
-                                                            });
-                                                        }
-                                                    }}
-                                                >
-                                                    <SelectTrigger className="h-12 font-mono">
-                                                        <SelectValue placeholder="Select country" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {countriesData?.data?.map((country) => (
-                                                            <SelectItem
-                                                                key={country.id}
-                                                                value={country.id}
-                                                                className="font-mono"
-                                                            >
-                                                                {country.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                        {/* <SelectItem
-                                                            value="_custom_"
-                                                            className="font-mono text-primary"
-                                                        >
-                                                            + Enter custom location
-                                                        </SelectItem> */}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        id="venueCountry"
-                                                        value={formData.venue_country_id}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_country_id: e.target.value,
-                                                                venue_country_name: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="e.g., UAE"
-                                                        required
-                                                        className="h-12"
-                                                    />
-                                                    <Button
-                                                        variant="outline"
-                                                        onClick={() => {
-                                                            setUseCustomCountry(false);
-                                                            setUseCustomCity(false);
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_country_id: "",
-                                                                venue_country_name: "",
-                                                                venue_city_id: "",
-                                                                venue_city_name: "",
-                                                            });
-                                                        }}
-                                                        className="h-12 px-4"
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </div>
-                                            )}
+                                            <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
+                                                {formData.venue_country_name || "Loading..."}
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
@@ -904,94 +841,35 @@ function CheckoutPageInner() {
                                             >
                                                 City *
                                             </Label>
-                                            {!useCustomCity ? (
-                                                <Select
-                                                    value={formData.venue_city_id}
-                                                    onValueChange={(value) => {
-                                                        if (value === "_custom_") {
-                                                            setUseCustomCity(true);
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_city_id: "",
-                                                                venue_city_name: "",
-                                                            });
-                                                        } else {
-                                                            const selectedCity = cities.find(
-                                                                (c) => c.id === value
-                                                            );
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_city_id: value,
-                                                                venue_city_name:
-                                                                    selectedCity?.name || "",
-                                                            });
-                                                        }
-                                                    }}
-                                                    disabled={!formData.venue_country_id}
-                                                >
-                                                    <SelectTrigger className="h-12 font-mono">
-                                                        <SelectValue
-                                                            placeholder={
-                                                                formData.venue_country_id
-                                                                    ? "Select city"
-                                                                    : "Select country first"
-                                                            }
-                                                        />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {cities.map((city) => (
-                                                            <SelectItem
-                                                                key={city.id}
-                                                                value={city.id}
-                                                                className="font-mono"
-                                                            >
-                                                                {city.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                        {/* {cities.length > 0 && (
-                                                            <SelectItem
-                                                                value="_custom_"
-                                                                className="font-mono text-primary"
-                                                            >
-                                                                + Enter custom city
-                                                            </SelectItem>
-                                                        )} */}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        id="venueCity"
-                                                        value={formData.venue_city_id}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_city_id: e.target.value,
-                                                                venue_city_name: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="e.g., Dubai"
-                                                        required
-                                                        className="h-12"
-                                                    />
-                                                    {!useCustomCountry && (
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => {
-                                                                setUseCustomCity(false);
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    venue_city_id: "",
-                                                                    venue_city_name: "",
-                                                                });
-                                                            }}
-                                                            className="h-12 px-4"
+                                            <Select
+                                                value={formData.venue_city_id}
+                                                onValueChange={(value) => {
+                                                    const selectedCity = cities.find(
+                                                        (c) => c.id === value
+                                                    );
+                                                    setFormData({
+                                                        ...formData,
+                                                        venue_city_id: value,
+                                                        venue_city_name: selectedCity?.name || "",
+                                                    });
+                                                }}
+                                                disabled={!formData.venue_country_id}
+                                            >
+                                                <SelectTrigger className="h-12 font-mono">
+                                                    <SelectValue placeholder="Select city" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {cities.map((city) => (
+                                                        <SelectItem
+                                                            key={city.id}
+                                                            value={city.id}
+                                                            className="font-mono"
                                                         >
-                                                            Cancel
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            )}
+                                                            {city.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
 
@@ -1055,9 +933,10 @@ function CheckoutPageInner() {
                             className="space-y-6"
                         >
                             <div>
-                                <h2 className="text-3xl font-bold mb-2">Contact Information</h2>
+                                <h2 className="text-3xl font-bold mb-2">Point of Contact</h2>
                                 <p className="text-muted-foreground">
-                                    Who should we contact about this order?
+                                    Provide the on-site contact for this order. Our team will reach
+                                    out to this person for coordination and updates.
                                 </p>
                             </div>
 
@@ -1184,10 +1063,11 @@ function CheckoutPageInner() {
                                 <Card className="p-6 border-amber-300 bg-amber-50/40 space-y-4">
                                     <div>
                                         <h3 className="text-lg font-semibold text-amber-900">
-                                            ORANGE Item Decisions Required
+                                            Item Condition Review
                                         </h3>
                                         <p className="text-sm text-amber-800">
-                                            Choose fix-or-use for each ORANGE item before submit.
+                                            Review each item&apos;s condition and decide how to
+                                            proceed.
                                         </p>
                                     </div>
 
@@ -1196,6 +1076,10 @@ function CheckoutPageInner() {
                                             <OrangeDecisionCard
                                                 key={item.assetId}
                                                 assetName={item.assetName}
+                                                assetImage={item.image}
+                                                conditionNotes={item.conditionNotes}
+                                                conditionImages={item.conditionImages}
+                                                refurbDaysEstimate={item.refurbDaysEstimate}
                                                 decision={item.maintenanceDecision}
                                                 onDecisionChange={(decision) => {
                                                     updateItemMaintenanceDecision(
@@ -1209,8 +1093,8 @@ function CheckoutPageInner() {
 
                                     {missingOrangeDecisions.length > 0 && (
                                         <p className="text-sm text-destructive font-medium">
-                                            {missingOrangeDecisions.length} ORANGE item(s) still
-                                            need a decision.
+                                            {missingOrangeDecisions.length} item(s) still need a
+                                            decision.
                                         </p>
                                     )}
                                 </Card>
@@ -1485,20 +1369,6 @@ function CheckoutPageInner() {
                                         </div>
                                     </Card>
                                 )}
-
-                            {!isAllGreenItems && (
-                                <Card className="p-6 bg-red-500/10 border-red-500">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                                        <div className="flex-1">
-                                            <p className="font-medium mb-1 text-red-500">
-                                                Your order includes damaged items. Please consider a
-                                                couple of extra days for maintenance.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Card>
-                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

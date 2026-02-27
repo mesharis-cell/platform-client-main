@@ -34,6 +34,28 @@ export interface OrderEstimate {
 }
 
 export interface OrderPricing {
+    breakdown_lines?: Array<{
+        line_id: string;
+        line_kind?: "BASE_OPS" | "RATE_CARD" | "CUSTOM";
+        category?: string;
+        label: string;
+        quantity: number;
+        unit: string;
+        unit_price?: number;
+        total?: number;
+        sell_unit_price?: number;
+        sell_total?: number;
+    }>;
+    totals?: {
+        base_ops_total?: number;
+        rate_card_total?: number;
+        custom_total?: number;
+        total?: number;
+        sell_base_ops_total?: number;
+        sell_rate_card_total?: number;
+        sell_custom_total?: number;
+        sell_total?: number;
+    };
     logistics_sub_total: number;
     service_fee: number;
     final_total: number;
