@@ -189,7 +189,7 @@ export function ClientNav({ children }: ClientNavProps) {
 
                 {/* Bottom zone marker */}
                 <div className="absolute bottom-4 left-4 right-4 text-[9px] font-mono text-muted-foreground/30 tracking-[0.2em] uppercase text-center z-0">
-                    PMG Asset Fulfillment v1.0
+                    Platform Asset Fulfillment v1.0
                 </div>
             </aside>
 

@@ -167,8 +167,6 @@ export interface Order {
         volume: string; // decimal as string
         weight: string; // decimal as string
     };
-    // Pricing tier reference
-    pricingTier?: string | null;
     // Pricing fields (Phase 8)
     a2BasePrice?: string | null;
     a2AdjustedPrice?: string | null;
@@ -223,13 +221,6 @@ export interface Order {
 export interface OrderWithDetails extends Order {
     items: OrderItemWithAsset[];
     itemCount: number;
-    pricingTierDetails?: {
-        country: string;
-        city: string;
-        volumeMin: string;
-        volumeMax: string;
-        basePrice: string;
-    } | null;
     pricingBreakdown?: {
         showBreakdown: boolean;
         a2BasePrice?: string | null;
@@ -330,17 +321,6 @@ export interface EstimatedPriceRequest {
 
 export interface EstimatedPriceResponse {
     estimatedPrice: string;
-    pricingTier: {
-        id: string;
-        country: string;
-        city: string;
-        volumeMin: string;
-        volumeMax: string;
-        basePrice: string;
-    } | null;
-    a2BasePrice: string;
-    pmgMarginPercent: string;
-    pmgMarginAmount: string;
     calculatedVolume: string;
     note: string;
 }

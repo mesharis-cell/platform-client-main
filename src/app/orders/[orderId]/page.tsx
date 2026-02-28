@@ -46,6 +46,7 @@ import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
 import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
 import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 import { OrderItemsList } from "@/components/orders/OrderItemsList";
+import { ScanActivityTimeline } from "@/components/scanning/scan-activity-timeline";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -254,7 +255,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         <Badge
                                             className={`font-mono text-xs border ${statusColors[order?.order_status] || "bg-muted border-muted"}`}
                                         >
-                                            {order?.order_status.replace(/_/g, " ")}
+                                            {order?.order_status === "IN_USE"
+                                                ? "ON SITE"
+                                                : order?.order_status.replace(/_/g, " ")}
                                         </Badge>
                                         <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
@@ -277,7 +280,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isReadyForDelivery && "Ready to Ship"}
                                         {isInTransit && "On The Way"}
                                         {isDelivered && "Delivered"}
-                                        {isInUse && "Enjoy Your Event!"}
+                                        {isInUse && "On Site"}
                                         {isAwaitingReturn && "Pickup Scheduled"}
                                         {isReturnInTransit && "Items Returning"}
                                         {isClosed && "Order Complete"}
@@ -315,7 +318,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isDelivered &&
                                             "Items delivered successfully. Enjoy your event!"}
                                         {isInUse &&
-                                            "Your event is in progress. We hope everything goes wonderfully!"}
+                                            "Your assets are currently on site and in use at the venue."}
                                         {isAwaitingReturn &&
                                             "Your event is complete. Items will be picked up during the scheduled window."}
                                         {isReturnInTransit &&
@@ -605,8 +608,13 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     return sortedHistory.map(
                                                         (entry: any, index: number) => {
                                                             const isFirst = index === activeIndex;
-                                                            const label =
+                                                            const rawLabel =
                                                                 entry.status_label || entry.status;
+                                                            const label =
+                                                                rawLabel === "In Use" ||
+                                                                rawLabel === "IN_USE"
+                                                                    ? "On Site"
+                                                                    : rawLabel;
                                                             const ts = new Date(entry.timestamp);
 
                                                             return (
@@ -722,6 +730,24 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     calculatedTotals={order.calculated_totals}
                                 />
                             </motion.div>
+
+                            {isFulfillmentStage && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.45 }}
+                                >
+                                    <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Clock className="w-5 h-5 text-primary" />
+                                            <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
+                                                Scan Activity
+                                            </h3>
+                                        </div>
+                                        <ScanActivityTimeline orderId={order.order_id} />
+                                    </Card>
+                                </motion.div>
+                            )}
 
                             {/* What's Next Section - State-specific guidance */}
                             {(isSubmitted || isPricingReview || isPendingApproval) && (

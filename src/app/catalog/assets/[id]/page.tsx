@@ -27,6 +27,7 @@ import {
     Wrench,
     AlertCircle,
     Clock,
+    Camera,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,6 +47,11 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     const asset = data?.asset;
     const { data: versions } = useAssetVersions(asset?.id || null);
     const { data: conditionHistory } = useAssetConditionHistory(asset?.id || null);
+    const latestConditionEntry = conditionHistory?.[0];
+    const latestConditionPhotos =
+        latestConditionEntry?.damage_report_entries?.length > 0
+            ? latestConditionEntry.damage_report_entries
+            : (latestConditionEntry?.photos || []).map((url: string) => ({ url }));
 
     const handleAddToCart = async () => {
         if (!asset) return;
@@ -497,6 +503,79 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                             </p>
                                         )}
                                     </div>
+
+                                    {latestConditionEntry ? (
+                                        <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    Latest Condition Snapshot
+                                                </p>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="font-mono text-[11px]"
+                                                >
+                                                    {latestConditionEntry.condition}
+                                                </Badge>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">
+                                                        Captured At
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            latestConditionEntry.timestamp
+                                                        ).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">
+                                                        Captured By
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {latestConditionEntry.updated_by ||
+                                                            "System"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {latestConditionEntry.notes ? (
+                                                <p className="text-sm leading-relaxed">
+                                                    {latestConditionEntry.notes}
+                                                </p>
+                                            ) : null}
+                                            {latestConditionPhotos.length > 0 ? (
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 inline-flex items-center gap-1">
+                                                        <Camera className="h-3.5 w-3.5" />
+                                                        Condition Photos
+                                                    </p>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                        {latestConditionPhotos.map(
+                                                            (photo: any, index: number) => (
+                                                                <a
+                                                                    key={`${photo.url}-${index}`}
+                                                                    href={photo.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="aspect-square rounded-md overflow-hidden border border-border bg-muted"
+                                                                >
+                                                                    <img
+                                                                        src={photo.url}
+                                                                        alt={`Condition snapshot ${index + 1}`}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                </a>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground">
+                                                    No photos captured.
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : null}
                                 </CardContent>
                             </Card>
                         </div>
