@@ -36,10 +36,10 @@ export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps)
         <div className="border border-border rounded-lg p-6 space-y-3">
             <h3 className="text-lg font-semibold mb-4">Estimated Cost</h3>
 
-            {/* Base Operations */}
+            {/* Picking & Handling */}
             <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                    Logistics & Handling ({estimate.base_operations.volume.toFixed(4)} m³)
+                    Picking & Handling ({estimate.base_operations.volume.toFixed(4)} m³)
                 </span>
                 <span className="font-mono">{logisticsSubtotal.toFixed(2)} AED</span>
             </div>
@@ -59,14 +59,6 @@ export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps)
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-mono font-semibold">{totalEstimate.toFixed(2)} AED</span>
             </div>
-
-            {/* Margin (Service Fee) */}
-            {/* <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                    Service Fee ({estimate.margin.percent.toFixed(0)}%)
-                </span>
-                <span className="font-mono">{estimate.margin.amount.toFixed(2)} AED</span>
-            </div> */}
 
             <div className="border-t border-border my-2"></div>
 

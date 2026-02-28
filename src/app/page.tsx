@@ -118,7 +118,7 @@ export default function HomePage() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight font-mono uppercase">
-                                    {platform?.company_name || "PMG Platform"}
+                                    {platform?.company_name || "Platform Portal"}
                                 </h1>
                                 <p className="text-xs text-muted-foreground font-mono tracking-wider">
                                     Asset Fulfillment System
@@ -243,7 +243,7 @@ export default function HomePage() {
                     {/* Footer Info */}
                     <div className="mt-8 text-center animate-in fade-in duration-700 delay-300">
                         <p className="text-xs text-muted-foreground font-mono">
-                            PMG Asset Fulfillment Platform v1.0 • Secure Connection Active
+                            Platform Asset Fulfillment v1.0 • Secure Connection Active
                         </p>
                     </div>
                 </div>

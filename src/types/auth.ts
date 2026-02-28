@@ -55,13 +55,6 @@ export type Permission =
     | "collections:assign_assets"
     | "collections:check_availability"
     // Pricing Configuration (Phase 5)
-    | "pricing_tiers:create"
-    | "pricing_tiers:read"
-    | "pricing_tiers:update"
-    | "pricing_tiers:activate"
-    | "pricing_tiers:deactivate"
-    | "pricing_tiers:set_volume_range"
-    | "pricing_tiers:set_base_price"
     // Pricing & Quoting (Phase 8)
     | "pricing:review"
     | "pricing:adjust"
@@ -140,7 +133,6 @@ export type Permission =
     | "brands:*"
     | "assets:*"
     | "collections:*"
-    | "pricing_tiers:*"
     | "pricing:*"
     | "quotes:*"
     | "orders:*"
@@ -227,7 +219,6 @@ export const PERMISSION_TEMPLATES: Record<
             "brands:*",
             "warehouses:*",
             "zones:*",
-            "pricing_tiers:*",
             "orders:*",
             "pricing:*",
             "invoices:*",

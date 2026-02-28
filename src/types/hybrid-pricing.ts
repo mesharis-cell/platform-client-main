@@ -45,6 +45,7 @@ export interface OrderPricing {
         total?: number;
         sell_unit_price?: number;
         sell_total?: number;
+        client_price_visible?: boolean;
     }>;
     totals?: {
         base_ops_total?: number;
@@ -71,6 +72,7 @@ export interface OrderLineItem {
     unitRate: number | null;
     total: number;
     notes: string | null;
+    clientPriceVisible?: boolean;
     isVoided: boolean;
 }
 

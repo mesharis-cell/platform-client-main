@@ -40,9 +40,9 @@ export async function generateMetadata(): Promise<Metadata> {
             description: "Platform - Asset Management Platform",
             applicationName: "Platform",
             keywords: ["logistics", "asset management", "inventory", "tracking"],
-            authors: [{ name: "PMG Team" }],
-            creator: "PMG Team",
-            publisher: "PMG Team",
+            authors: [{ name: "Platform Team" }],
+            creator: "Platform Team",
+            publisher: "Platform Team",
             icons: {
                 icon: [
                     { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -77,9 +77,9 @@ export async function generateMetadata(): Promise<Metadata> {
             description: "Platform - Asset Management Platform",
             applicationName: "Platform",
             keywords: ["logistics", "asset management", "inventory", "tracking"],
-            authors: [{ name: "PMG Team" }],
-            creator: "PMG Team",
-            publisher: "PMG Team",
+            authors: [{ name: "Platform Team" }],
+            creator: "Platform Team",
+            publisher: "Platform Team",
             icons: {
                 icon: [
                     { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },

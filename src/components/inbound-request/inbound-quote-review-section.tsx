@@ -7,7 +7,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,7 +17,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { RequestPricingCard } from "@/components/inbound-request/request-pricing-card";
 import type { InboundRequestDetails } from "@/types/inbound-request";
 
@@ -68,21 +67,6 @@ export function InboundQuoteReviewSection({
 
     return (
         <div className="space-y-6">
-            {/* Quote Expiry Notice */}
-            <Card className="border-red-500/30 bg-red-50 mt-8">
-                <CardContent className="p-4 flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-red-600 shrink-0" />
-                    <div>
-                        <p className="text-sm font-semibold text-red-500">
-                            Please respond within 48 hours
-                        </p>
-                        <p className="text-xs text-red-500">
-                            This quote is valid for 48 hours from receipt.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Pricing Breakdown */}
             <RequestPricingCard pricingOverview={request.request_pricing} />
 

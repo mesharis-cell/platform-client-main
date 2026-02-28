@@ -6,6 +6,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/api-client";
 import type {
     StartOutboundScanRequest,
     StartOutboundScanResponse,
@@ -234,14 +235,16 @@ export function useOrderScanEvents(orderId: string) {
     return useQuery({
         queryKey: ["orderScanEvents", orderId],
         queryFn: async () => {
-            const response = await fetch(`/api/orders/${orderId}/scan-events`);
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to get order scan events");
+            try {
+                const response = await apiClient.get(`/client/v1/order/${orderId}/scan-events`);
+                return response.data as GetScanEventsResponse;
+            } catch (error: any) {
+                throw new Error(
+                    error?.response?.data?.message ||
+                        error?.message ||
+                        "Failed to get order scan events"
+                );
             }
-
-            return response.json() as Promise<GetScanEventsResponse>;
         },
         enabled: !!orderId,
     });

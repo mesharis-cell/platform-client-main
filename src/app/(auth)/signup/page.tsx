@@ -13,7 +13,7 @@ export default function SignupPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight font-mono uppercase">
-                            PMG Platform
+                            Platform Portal
                         </h1>
                         <p className="text-xs text-muted-foreground font-mono tracking-wider">
                             Asset Fulfillment System
@@ -25,8 +25,8 @@ export default function SignupPage() {
                         Registration Disabled
                     </h2>
                     <p className="text-muted-foreground font-mono text-sm mb-6">
-                        User accounts are created by PMG administrators only. Contact your system
-                        administrator to request access.
+                        User accounts are created by Platform administrators only. Contact your
+                        system administrator to request access.
                     </p>
                     <Link
                         href="/login"

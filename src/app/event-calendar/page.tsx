@@ -47,7 +47,7 @@ const STATUS_CONFIG: Record<
         color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
     },
     PENDING_APPROVAL: {
-        label: "PMG REVIEW",
+        label: "PLATFORM REVIEW",
         color: "bg-orange-500/10 text-orange-700 border-orange-500/20",
     },
     QUOTED: {
@@ -91,7 +91,7 @@ const STATUS_CONFIG: Record<
         color: "bg-fuchsia-500/10 text-fuchsia-700 border-fuchsia-500/20",
     },
     IN_USE: {
-        label: "IN USE",
+        label: "ON SITE",
         color: "bg-pink-500/10 text-pink-700 border-pink-500/20",
     },
     AWAITING_RETURN: {

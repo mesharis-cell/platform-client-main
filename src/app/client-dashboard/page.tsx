@@ -61,7 +61,7 @@ const ORDER_STATUS_CONFIG = {
         color: "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300",
     },
     IN_USE: {
-        label: "In Use",
+        label: "On Site",
         color: "bg-pink-100 text-pink-700 border-pink-300",
     },
     AWAITING_RETURN: {

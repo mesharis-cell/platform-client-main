@@ -42,7 +42,7 @@ export function getStatusDisplayText(status: OrderStatus): string {
         READY_FOR_DELIVERY: "Ready for Delivery",
         IN_TRANSIT: "In Transit",
         DELIVERED: "Delivered",
-        IN_USE: "In Use",
+        IN_USE: "On Site",
         DERIG: "Derigging",
         AWAITING_RETURN: "Awaiting Return",
         RETURN_IN_TRANSIT: "Return In Transit",

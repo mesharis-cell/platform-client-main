@@ -8,7 +8,7 @@
  */
 
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
-import { OrangeDecisionCard } from "@/components/checkout/OrangeDecisionCard";
+import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
 import { ClientNav } from "@/components/client-nav";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
-import { useGetCountries } from "@/hooks/use-pricing-tiers";
+import { useCountries } from "@/hooks/use-countries";
 import { useToken } from "@/lib/auth/use-token";
 import { useCompany } from "@/hooks/use-companies";
 import {
@@ -170,7 +170,7 @@ function CheckoutPageInner() {
         return `${year}-${month}-${day}`;
     };
 
-    const { data: countriesData } = useGetCountries();
+    const { data: countriesData } = useCountries();
 
     // Auto-select first country (UAE) when data loads
     useEffect(() => {
@@ -518,9 +518,9 @@ function CheckoutPageInner() {
                                         Maintenance Required
                                     </h3>
                                     <p className="mt-1 text-sm text-yellow-700">
-                                        Some items in your order require maintenance before use.
-                                        You&apos;ll be asked to review their condition and confirm
-                                        how you&apos;d like to proceed during checkout.
+                                        Your order includes item(s) that require maintenance. Please
+                                        review condition details and confirm your decision so our
+                                        team can proceed correctly.
                                     </p>
                                 </div>
                             </div>
@@ -1059,46 +1059,14 @@ function CheckoutPageInner() {
                                 </p>
                             </div>
 
-                            {orangeItems.length > 0 && (
-                                <Card className="p-6 border-amber-300 bg-amber-50/40 space-y-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-amber-900">
-                                            Item Condition Review
-                                        </h3>
-                                        <p className="text-sm text-amber-800">
-                                            Review each item&apos;s condition and decide how to
-                                            proceed.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {orangeItems.map((item) => (
-                                            <OrangeDecisionCard
-                                                key={item.assetId}
-                                                assetName={item.assetName}
-                                                assetImage={item.image}
-                                                conditionNotes={item.conditionNotes}
-                                                conditionImages={item.conditionImages}
-                                                refurbDaysEstimate={item.refurbDaysEstimate}
-                                                decision={item.maintenanceDecision}
-                                                onDecisionChange={(decision) => {
-                                                    updateItemMaintenanceDecision(
-                                                        item.assetId,
-                                                        decision
-                                                    );
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-
-                                    {missingOrangeDecisions.length > 0 && (
-                                        <p className="text-sm text-destructive font-medium">
-                                            {missingOrangeDecisions.length} item(s) still need a
-                                            decision.
-                                        </p>
-                                    )}
-                                </Card>
-                            )}
+                            {orangeItems.length > 0 ? (
+                                <MaintenanceDecisionCenter
+                                    items={orangeItems}
+                                    onDecisionChange={(assetId, decision) =>
+                                        updateItemMaintenanceDecision(assetId, decision)
+                                    }
+                                />
+                            ) : null}
 
                             {/* Order Summary */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

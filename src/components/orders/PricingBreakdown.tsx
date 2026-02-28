@@ -31,21 +31,9 @@ export function PricingBreakdown({
             category: item.category,
             quantity: Number(item.quantity || 0),
             unit: item.unit || "service",
-            total: Number(item.total || 0),
+            total: null,
         }));
     const activeLineItems = projectedLineItems.length > 0 ? projectedLineItems : fallbackLineItems;
-    const logisticsTotal = Number(
-        pricing.totals?.base_ops_total ??
-            pricing.totals?.sell_base_ops_total ??
-            pricing.logistics_sub_total ??
-            0
-    );
-    const serviceFee = Number(
-        (pricing.totals?.rate_card_total ?? pricing.totals?.sell_rate_card_total ?? 0) +
-            (pricing.totals?.custom_total ?? pricing.totals?.sell_custom_total ?? 0) ||
-            pricing.service_fee ||
-            0
-    );
     const finalTotal = Number(
         pricing.totals?.total ?? pricing.totals?.sell_total ?? pricing.final_total ?? 0
     );
@@ -55,34 +43,22 @@ export function PricingBreakdown({
         <div className="border border-border rounded-lg p-6 space-y-4">
             {showTitle && <h3 className="text-lg font-semibold mb-4">Cost Breakdown</h3>}
 
-            <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                    Logistics &amp; Handling ({order?.calculated_totals?.volume || "0"} m³)
-                </span>
-                <span className="font-mono">{logisticsTotal.toFixed(2)} AED</span>
-            </div>
-
-            {serviceFee > 0 && (
-                <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Service Fee</span>
-                    <span className="font-mono">{serviceFee.toFixed(2)} AED</span>
-                </div>
-            )}
-
-            {activeLineItems.length > 0 && (
-                <>
-                    <div className="border-t border-border my-2"></div>
-                    {activeLineItems.map((item: any) => (
-                        <div key={item.line_id || item.id} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                                {item.label || item.description}
-                            </span>
-                            <span className="font-mono">
-                                {Number(item.total || 0).toFixed(2)} AED
-                            </span>
-                        </div>
-                    ))}
-                </>
+            {activeLineItems.length > 0 ? (
+                activeLineItems.map((item: any) => (
+                    <div
+                        key={item.line_id || item.id}
+                        className="flex justify-between text-sm gap-3"
+                    >
+                        <span className="text-muted-foreground">
+                            {item.label || item.description}
+                        </span>
+                        {item.total === null || item.total === undefined ? null : (
+                            <span className="font-mono">{Number(item.total).toFixed(2)} AED</span>
+                        )}
+                    </div>
+                ))
+            ) : (
+                <p className="text-sm text-muted-foreground">No line items available.</p>
             )}
 
             <div className="border-t border-border my-2"></div>
