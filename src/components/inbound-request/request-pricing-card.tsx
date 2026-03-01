@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { DollarSign, Truck, FileText } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -26,10 +26,17 @@ interface RequestPricingCardProps {
             sell_rate_card_total?: number;
             sell_custom_total?: number;
             sell_total?: number;
+            subtotal?: number;
+            vat_percent?: number;
+            vat_amount?: number;
+            sell_total_with_vat?: number;
         };
         final_total: string | number;
-        logistics_sub_total?: string | number;
-        service_fee?: string | number;
+        subtotal?: string | number;
+        vat?: {
+            percent: number;
+            amount: number;
+        };
     };
 }
 
@@ -46,24 +53,22 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
               (line) => !line.is_voided && (line.billing_mode || "BILLABLE") === "BILLABLE"
           )
         : [];
-    const logisticsSubtotal = String(
-        pricingOverview.totals?.base_ops_total ??
-            pricingOverview.totals?.sell_base_ops_total ??
-            pricingOverview.logistics_sub_total ??
+    const subtotal = String(
+        pricingOverview.totals?.subtotal ??
+            pricingOverview.totals?.sell_total ??
+            pricingOverview.subtotal ??
+            pricingOverview.final_total ??
             0
     );
-    const serviceFee = String(
-        (pricingOverview.totals?.rate_card_total ??
-            pricingOverview.totals?.sell_rate_card_total ??
-            0) +
-            (pricingOverview.totals?.custom_total ??
-                pricingOverview.totals?.sell_custom_total ??
-                0) ||
-            pricingOverview.service_fee ||
-            0
+    const vatPercent = Number(
+        pricingOverview.totals?.vat_percent ?? pricingOverview.vat?.percent ?? 0
+    );
+    const vatAmount = String(
+        pricingOverview.totals?.vat_amount ?? pricingOverview.vat?.amount ?? 0
     );
     const finalTotal = String(
         pricingOverview.totals?.total ??
+            pricingOverview.totals?.sell_total_with_vat ??
             pricingOverview.totals?.sell_total ??
             pricingOverview.final_total ??
             0
@@ -107,35 +112,6 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                             </h3>
 
                             <div className="space-y-3">
-                                {/* Logistics Subtotal */}
-                                <div className="flex items-center justify-between group p-2 -mx-2 rounded-lg hover:bg-muted/40 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-md bg-muted/50 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-all duration-300">
-                                            <Truck className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                                            Logistics Subtotal
-                                        </span>
-                                    </div>
-                                    <span className="font-mono text-sm font-medium tracking-tight">
-                                        AED {formatCurrency(logisticsSubtotal)}
-                                    </span>
-                                </div>
-
-                                {/* Operational Services */}
-                                <div className="flex items-center justify-between group p-2 -mx-2 rounded-lg hover:bg-muted/40 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-md bg-muted/50 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-all duration-300">
-                                            <FileText className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                                            Operational Services
-                                        </span>
-                                    </div>
-                                    <span className="font-mono text-sm font-medium tracking-tight">
-                                        AED {formatCurrency(serviceFee)}
-                                    </span>
-                                </div>
                                 {lineItems.length > 0 && (
                                     <div className="rounded border border-border/60 overflow-hidden mt-2">
                                         <div className="grid grid-cols-12 bg-muted/30 px-3 py-2 text-xs font-medium">
@@ -159,6 +135,24 @@ export function RequestPricingCard({ pricingOverview }: RequestPricingCardProps)
                                 )}
 
                                 <Separator className="bg-border/60 my-2" />
+
+                                <div className="flex items-center justify-between px-2">
+                                    <span className="text-sm text-muted-foreground">Subtotal</span>
+                                    <span className="font-mono text-sm">
+                                        AED {formatCurrency(subtotal)}
+                                    </span>
+                                </div>
+
+                                {vatPercent > 0 && (
+                                    <div className="flex items-center justify-between px-2">
+                                        <span className="text-sm text-muted-foreground">
+                                            VAT ({vatPercent.toFixed(2)}%)
+                                        </span>
+                                        <span className="font-mono text-sm">
+                                            AED {formatCurrency(vatAmount)}
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Summary Row inside Breakdown */}
                                 <div className="flex items-center justify-between px-2 pt-1">

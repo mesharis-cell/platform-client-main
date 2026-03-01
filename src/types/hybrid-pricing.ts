@@ -56,9 +56,16 @@ export interface OrderPricing {
         sell_rate_card_total?: number;
         sell_custom_total?: number;
         sell_total?: number;
+        subtotal?: number;
+        vat_percent?: number;
+        vat_amount?: number;
+        sell_total_with_vat?: number;
     };
-    logistics_sub_total: number;
-    service_fee: number;
+    subtotal?: number;
+    vat?: {
+        percent: number;
+        amount: number;
+    };
     final_total: number;
 }
 

@@ -157,10 +157,17 @@ export interface InboundRequestDetails {
             sell_rate_card_total?: number;
             sell_custom_total?: number;
             sell_total?: number;
+            subtotal?: number;
+            vat_percent?: number;
+            vat_amount?: number;
+            sell_total_with_vat?: number;
         };
         final_total: string | number;
-        logistics_sub_total?: string | number;
-        service_fee?: string | number;
+        subtotal?: string | number;
+        vat?: {
+            percent: number;
+            amount: number;
+        };
     };
     items: InboundRequestItem[];
     invoice?: {
