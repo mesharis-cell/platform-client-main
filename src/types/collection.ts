@@ -275,3 +275,60 @@ export interface CatalogCollectionDetailsResponse {
     success: boolean;
     data: CatalogCollectionDetails;
 }
+
+export type AssetUsageEventType =
+    | "ORDER_USAGE"
+    | "SCAN_EVENT"
+    | "SERVICE_REQUEST"
+    | "CONDITION_UPDATE";
+
+export interface AssetUsageMediaItem {
+    url: string;
+    note?: string | null;
+    kind?: string | null;
+}
+
+export interface AssetUsageTimelineEntry {
+    id: string;
+    event_type: AssetUsageEventType;
+    occurred_at: string;
+    title: string;
+    subtitle?: string | null;
+    note?: string | null;
+    actor_name?: string | null;
+    condition?: Condition | null;
+    scan_type?: string | null;
+    order_id?: string | null;
+    order_readable_id?: string | null;
+    service_request_id?: string | null;
+    photos: AssetUsageMediaItem[];
+}
+
+export interface AssetUsageReport {
+    asset: {
+        id: string;
+        name: string;
+        company_id: string;
+        company_name: string | null;
+        condition: Condition;
+        status: string;
+        available_quantity: number;
+        total_quantity: number;
+        last_scanned_at: string | null;
+        condition_notes: string | null;
+        refurb_days_estimate: number | null;
+    };
+    summary: {
+        total_order_usages: number;
+        total_scan_events: number;
+        total_service_requests: number;
+        total_condition_updates: number;
+        latest_activity_at: string | null;
+    };
+    timeline: AssetUsageTimelineEntry[];
+}
+
+export interface AssetUsageReportResponse {
+    success: boolean;
+    data: AssetUsageReport;
+}
