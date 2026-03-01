@@ -34,8 +34,17 @@ export function PricingBreakdown({
             total: null,
         }));
     const activeLineItems = projectedLineItems.length > 0 ? projectedLineItems : fallbackLineItems;
+    const subtotal = Number(
+        pricing.subtotal ?? pricing.totals?.subtotal ?? pricing.totals?.sell_total ?? 0
+    );
+    const vatPercent = Number(pricing.vat?.percent ?? pricing.totals?.vat_percent ?? 0);
+    const vatAmount = Number(pricing.vat?.amount ?? pricing.totals?.vat_amount ?? 0);
     const finalTotal = Number(
-        pricing.totals?.total ?? pricing.totals?.sell_total ?? pricing.final_total ?? 0
+        pricing.totals?.total ??
+            pricing.totals?.sell_total_with_vat ??
+            pricing.final_total ??
+            pricing.totals?.sell_total ??
+            0
     );
     const hasReskinLine = activeLineItems.some((item: any) => item.category === "RESKIN");
 
@@ -59,6 +68,22 @@ export function PricingBreakdown({
                 ))
             ) : (
                 <p className="text-sm text-muted-foreground">No line items available.</p>
+            )}
+
+            <div className="border-t border-border my-2"></div>
+
+            {subtotal > 0 && (
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-mono">{subtotal.toFixed(2)} AED</span>
+                </div>
+            )}
+
+            {vatPercent > 0 && (
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">VAT ({vatPercent.toFixed(2)}%)</span>
+                    <span className="font-mono">{vatAmount.toFixed(2)} AED</span>
+                </div>
             )}
 
             <div className="border-t border-border my-2"></div>

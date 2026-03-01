@@ -9,6 +9,7 @@ import type {
     CatalogListResponse,
     CatalogAssetDetailsResponse,
     CatalogCollectionDetailsResponse,
+    AssetUsageReportResponse,
 } from "@/types/collection";
 import { throwApiError } from "@/lib/utils/throw-api-error";
 
@@ -23,6 +24,7 @@ export const catalogKeys = {
     details: () => [...catalogKeys.all, "detail"] as const,
     assets: () => [...catalogKeys.all, "assets"] as const,
     asset: (id: string) => [...catalogKeys.assets(), id] as const,
+    assetUsageReport: (id: string) => [...catalogKeys.assets(), id, "usage-report"] as const,
     collections: () => [...catalogKeys.all, "collections"] as const,
     collection: (id: string) => [...catalogKeys.collections(), id] as const,
 };
@@ -176,6 +178,18 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
     }
 }
 
+async function fetchAssetUsageReport(id: string): Promise<AssetUsageReportResponse> {
+    try {
+        const response = await apiClient.get(`/operations/v1/asset/${id}/usage-report`);
+        return {
+            success: true,
+            data: response.data.data,
+        };
+    } catch (error) {
+        throwApiError(error);
+    }
+}
+
 async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDetailsResponse> {
     try {
         const response = await apiClient.get(`/operations/v1/collection/${id}`);
@@ -277,6 +291,18 @@ export function useAssetConditionHistory(assetId: string | null) {
             if (!assetId) return [];
             const res = await apiClient.get(`/operations/v1/asset/${assetId}`);
             return res.data?.data?.condition_history || [];
+        },
+        enabled: !!assetId,
+    });
+}
+
+export function useAssetUsageReport(assetId: string | null) {
+    return useQuery({
+        queryKey: catalogKeys.assetUsageReport(assetId || ""),
+        queryFn: async () => {
+            if (!assetId) return null;
+            const res = await fetchAssetUsageReport(assetId);
+            return res.data;
         },
         enabled: !!assetId,
     });

@@ -7,12 +7,18 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCatalogAsset, useAssetVersions, useAssetConditionHistory } from "@/hooks/use-catalog";
+import {
+    useCatalogAsset,
+    useAssetVersions,
+    useAssetConditionHistory,
+    useAssetUsageReport,
+} from "@/hooks/use-catalog";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     ArrowLeft,
     ShoppingCart,
@@ -33,7 +39,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { ConditionHistoryTimeline } from "@/components/conditions/condition-history-timeline";
-import { motion } from "framer-motion";
+import { AssetUsageReport as AssetUsageReportPanel } from "@/components/assets/asset-usage-report";
 import { toast } from "sonner";
 
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -47,6 +53,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     const asset = data?.asset;
     const { data: versions } = useAssetVersions(asset?.id || null);
     const { data: conditionHistory } = useAssetConditionHistory(asset?.id || null);
+    const { data: usageReport, isLoading: isUsageReportLoading } = useAssetUsageReport(
+        asset?.id || null
+    );
     const latestConditionEntry = conditionHistory?.[0];
     const latestConditionPhotos =
         latestConditionEntry?.damage_report_entries?.length > 0
@@ -429,9 +438,30 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
 
-                    {/* Condition & Maintenance */}
-                    {asset && (
-                        <div className="mt-8">
+                    <Tabs defaultValue="usage-report" className="mt-8">
+                        <TabsList className="h-auto p-1 flex flex-wrap gap-1 bg-muted/40 border border-border">
+                            <TabsTrigger value="usage-report" className="font-mono">
+                                Usage Report
+                            </TabsTrigger>
+                            <TabsTrigger value="condition" className="font-mono">
+                                Condition
+                            </TabsTrigger>
+                            <TabsTrigger value="condition-history" className="font-mono">
+                                Condition History
+                            </TabsTrigger>
+                            <TabsTrigger value="versions" className="font-mono">
+                                Versions
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="usage-report" className="mt-4">
+                            <AssetUsageReportPanel
+                                report={usageReport}
+                                isLoading={isUsageReportLoading}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="condition" className="mt-4">
                             <Card>
                                 <CardContent className="p-6">
                                     <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -578,87 +608,93 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                     ) : null}
                                 </CardContent>
                             </Card>
-                        </div>
-                    )}
+                        </TabsContent>
 
-                    {/* Condition History */}
-                    {conditionHistory && conditionHistory.length > 0 && (
-                        <div className="mt-8">
+                        <TabsContent value="condition-history" className="mt-4">
                             <Card>
                                 <CardContent className="p-6">
                                     <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4 flex items-center gap-2">
                                         <Clock className="w-4 h-4" />
                                         Condition History
                                     </h3>
-                                    <ConditionHistoryTimeline
-                                        history={conditionHistory}
-                                        assetName={asset?.name ?? ""}
-                                    />
+                                    {conditionHistory && conditionHistory.length > 0 ? (
+                                        <ConditionHistoryTimeline
+                                            history={conditionHistory}
+                                            assetName={asset?.name ?? ""}
+                                        />
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                            No condition history available.
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
-                        </div>
-                    )}
+                        </TabsContent>
 
-                    {/* Version History */}
-                    {versions && versions.length > 0 && (
-                        <div className="mt-8">
+                        <TabsContent value="versions" className="mt-4">
                             <Card>
                                 <CardContent className="p-6">
                                     <h3 className="text-sm font-bold font-mono uppercase tracking-wide mb-4">
                                         Version History
                                     </h3>
-                                    <div className="space-y-1 relative">
-                                        {versions.map((v: any, idx: number) => {
-                                            const snap = v.snapshot || {};
-                                            const isFirst = idx === 0;
-                                            return (
-                                                <div key={v.id} className="flex gap-3 py-2">
-                                                    <div className="flex flex-col items-center">
-                                                        <div
-                                                            className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isFirst ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/40"}`}
-                                                        />
-                                                        {idx < versions.length - 1 && (
-                                                            <div className="w-px flex-1 bg-border min-h-[20px]" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 pb-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-mono font-bold text-muted-foreground">
-                                                                v{v.version_number}
-                                                            </span>
-                                                            <span className="text-sm font-semibold">
-                                                                {v.reason}
-                                                            </span>
+                                    {versions && versions.length > 0 ? (
+                                        <div className="space-y-1 relative">
+                                            {versions.map((v: any, idx: number) => {
+                                                const snap = v.snapshot || {};
+                                                const isFirst = idx === 0;
+                                                return (
+                                                    <div key={v.id} className="flex gap-3 py-2">
+                                                        <div className="flex flex-col items-center">
+                                                            <div
+                                                                className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ${isFirst ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/40"}`}
+                                                            />
+                                                            {idx < versions.length - 1 && (
+                                                                <div className="w-px flex-1 bg-border min-h-[20px]" />
+                                                            )}
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                                            {new Date(
-                                                                v.created_at
-                                                            ).toLocaleDateString()}{" "}
-                                                            {new Date(
-                                                                v.created_at
-                                                            ).toLocaleTimeString([], {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                            })}
-                                                        </p>
-                                                        {snap.images?.[0] && (
-                                                            <div className="mt-2 w-16 h-12 rounded overflow-hidden bg-muted">
-                                                                <img
-                                                                    src={snap.images[0]}
-                                                                    alt="Snapshot"
-                                                                    className="w-full h-full object-cover"
-                                                                />
+                                                        <div className="flex-1 pb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                                    v{v.version_number}
+                                                                </span>
+                                                                <span className="text-sm font-semibold">
+                                                                    {v.reason}
+                                                                </span>
                                                             </div>
-                                                        )}
+                                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                                {new Date(
+                                                                    v.created_at
+                                                                ).toLocaleDateString()}{" "}
+                                                                {new Date(
+                                                                    v.created_at
+                                                                ).toLocaleTimeString([], {
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit",
+                                                                })}
+                                                            </p>
+                                                            {snap.images?.[0] && (
+                                                                <div className="mt-2 w-16 h-12 rounded overflow-hidden bg-muted">
+                                                                    <img
+                                                                        src={snap.images[0]}
+                                                                        alt="Snapshot"
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                            No version history available.
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
-                        </div>
-                    )}
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
         </ClientNav>

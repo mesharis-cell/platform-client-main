@@ -12,10 +12,15 @@
 // Enums
 // ============================================================
 
-export type ScanType = "OUTBOUND" | "INBOUND";
+export type ScanType =
+    | "OUTBOUND"
+    | "INBOUND"
+    | "DERIG_CAPTURE"
+    | "OUTBOUND_TRUCK_PHOTOS"
+    | "RETURN_TRUCK_PHOTOS"
+    | "ON_SITE_CAPTURE";
 export type DiscrepancyReason = "BROKEN" | "LOST" | "OTHER";
 
-// Condition enum is already defined in asset.ts but re-exported here for convenience
 // ============================================================
 // Scan Event Types (Database Records)
 // ============================================================
@@ -26,10 +31,10 @@ export interface ScanEvent {
     asset: string; // assetId (uuid)
     scanType: ScanType;
     quantity: number;
-    condition: "GREEN" | "ORANGE" | "RED";
+    condition: "GREEN" | "ORANGE" | "RED" | null;
     notes: string | null;
     photos: string[]; // Array of photo URLs
-    damageReportEntries?: Array<{ url: string; description?: string }>;
+    damage_report_entries?: Array<{ url: string; description?: string }>;
     discrepancyReason: DiscrepancyReason | null;
     scannedBy: string; // userId
     scannedAt: Date;
@@ -37,31 +42,46 @@ export interface ScanEvent {
 
 export interface ScanEventWithDetails {
     id: string;
-    order: string; // orderId (uuid)
-    asset: string; // assetId (uuid)
-    scanType: ScanType;
+    scan_type: ScanType;
     quantity: number;
-    condition: "GREEN" | "ORANGE" | "RED";
+    condition: "GREEN" | "ORANGE" | "RED" | null;
     notes: string | null;
     photos: string[]; // Array of photo URLs
-    damageReportEntries?: Array<{ url: string; description?: string }>;
-    discrepancyReason: DiscrepancyReason | null;
-    scannedBy: string; // userId
-    scannedAt: Date;
+    damage_report_entries?: Array<{ url: string; description?: string }>;
+    media?: Array<{
+        id?: string;
+        url: string;
+        note?: string | null;
+        media_kind?: string;
+        sort_order?: number;
+    }>;
+    assets?: Array<{
+        asset_id: string;
+        quantity?: number;
+        asset?: {
+            id: string;
+            name: string;
+            qr_code: string;
+            tracking_method: "INDIVIDUAL" | "BATCH";
+        };
+    }>;
+    discrepancy_reason: DiscrepancyReason | null;
+    scanned_by: string; // userId
+    scanned_at: Date;
     // Extended details
-    assetDetails: {
-        assetId: string;
-        assetName: string;
-        qrCode: string;
-        trackingMethod: "INDIVIDUAL" | "BATCH";
+    asset: {
+        id: string;
+        name: string;
+        qr_code: string;
+        tracking_method: "INDIVIDUAL" | "BATCH";
     };
-    scannedByUser: {
+    scanned_by_user: {
         userId: string;
         name: string;
     };
-    orderDetails: {
-        orderId: string;
-        orderIdDisplay: string; // Human-readable (ORD-20241109-001)
+    order: {
+        id: string;
+        order_id: string; // Human-readable (ORD-20241109-001)
     };
 }
 
@@ -72,9 +92,9 @@ export interface ScanEventWithDetails {
 export interface ScanningSession {
     sessionId: string;
     orderId: string;
-    scanType: ScanType;
-    startedAt: Date;
-    startedBy: string; // userId
+    scan_type: ScanType;
+    started_at: Date;
+    started_by: string; // userId
     itemsScanned: ScannedItemProgress[];
     expiresAt: Date;
 }
@@ -138,7 +158,9 @@ export interface OutboundScanResponse {
 
 export interface UploadTruckPhotosRequest {
     sessionId: string;
-    photos: string[]; // Base64-encoded images
+    photos: string[]; // Uploaded image URLs
+    note?: string;
+    assetIds?: string[];
     tripPhase?: "OUTBOUND" | "RETURN";
 }
 
@@ -179,7 +201,11 @@ export interface InboundScanRequest {
     quantity?: number; // Required for BATCH tracking
     condition: "GREEN" | "ORANGE" | "RED";
     notes?: string; // Required if condition is ORANGE or RED
-    photos?: string[]; // Base64-encoded images (required if RED)
+    latestReturnImages: string[]; // Base64-encoded latest return images (min 2)
+    damageReportEntries?: Array<{
+        url: string;
+        description?: string;
+    }>;
     refurbDaysEstimate?: number; // Feedback #2: Required for ORANGE/RED
     discrepancyReason?: DiscrepancyReason; // If quantity < expected
 }
@@ -238,8 +264,9 @@ export interface GetSessionProgressResponse {
 // Scan History
 
 export interface GetScanEventsResponse {
-    orderId: string;
-    scanEvents: ScanEventWithDetails[];
+    // orderId: string
+    // scanEvents: ScanEventWithDetails[]
+    data: ScanEventWithDetails[];
 }
 
 export interface GetAssetScanHistoryResponse {
@@ -327,4 +354,58 @@ export interface ScanningError {
         field?: string;
         issue?: string;
     };
+}
+
+// ============================================================
+// API V2 Response Types (Snake Case)
+// ============================================================
+
+export interface APIOutboundAsset {
+    asset_id: string;
+    asset_name: string;
+    qr_code: string;
+    tracking_method: "INDIVIDUAL" | "BATCH";
+    required_quantity: number;
+    scanned_quantity: number;
+    is_complete: boolean;
+}
+
+export interface APIOutboundProgressData {
+    order_id: string;
+    order_status: string;
+    total_items: number;
+    items_scanned: number;
+    percent_complete: number;
+    assets: APIOutboundAsset[];
+}
+
+export interface APIOutboundProgressResponse {
+    data: APIOutboundProgressData;
+    message: string;
+    success: boolean;
+}
+
+export interface APIInboundAsset {
+    asset_id: string;
+    asset_name: string;
+    qr_code: string;
+    tracking_method: "INDIVIDUAL" | "BATCH";
+    required_quantity: number; // This is often "total expected to return"
+    scanned_quantity: number;
+    is_complete: boolean;
+}
+
+export interface APIInboundProgressData {
+    order_id: string;
+    order_status: string;
+    total_items: number;
+    items_scanned: number;
+    percent_complete: number;
+    assets: APIInboundAsset[];
+}
+
+export interface APIInboundProgressResponse {
+    data: APIInboundProgressData;
+    message: string;
+    success: boolean;
 }
