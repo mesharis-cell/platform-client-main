@@ -20,11 +20,22 @@ export function PricingBreakdown({
 
     const projectedLineItems = Array.isArray(pricing.breakdown_lines)
         ? pricing.breakdown_lines.filter(
-              (line: any) => !line.is_voided && (line.billing_mode || "BILLABLE") === "BILLABLE"
+              (line: any) =>
+                  !line.is_voided &&
+                  String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
+                  !(
+                      String(line.line_kind || "") === "CUSTOM" &&
+                      String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
+                  )
           )
         : [];
     const fallbackLineItems = lineItems
-        .filter((item) => !item.isVoided)
+        .filter((item: any) => {
+            if (item.isVoided) return false;
+            const lineItemType = String(item.line_item_type || item.lineItemType || "CATALOG");
+            const billingMode = String(item.billing_mode || item.billingMode || "BILLABLE");
+            return !(lineItemType === "CUSTOM" && billingMode === "NON_BILLABLE");
+        })
         .map((item) => ({
             line_id: item.id,
             label: item.description,

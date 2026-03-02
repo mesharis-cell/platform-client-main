@@ -37,6 +37,7 @@ export interface OrderPricing {
     breakdown_lines?: Array<{
         line_id: string;
         line_kind?: "BASE_OPS" | "RATE_CARD" | "CUSTOM";
+        billing_mode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
         category?: string;
         label: string;
         quantity: number;
@@ -72,11 +73,14 @@ export interface OrderPricing {
 export interface OrderLineItem {
     id: string;
     lineItemType: "CATALOG" | "CUSTOM";
+    line_item_type?: "CATALOG" | "CUSTOM";
     category: string;
     description: string;
     quantity: number | null;
     unit: string | null;
     unitRate: number | null;
+    billingMode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
+    billing_mode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
     total: number;
     notes: string | null;
     clientPriceVisible?: boolean;
