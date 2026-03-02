@@ -20,14 +20,14 @@ export function PricingBreakdown({
 
     const projectedLineItems = Array.isArray(pricing.breakdown_lines)
         ? pricing.breakdown_lines.filter(
-              (line: any) =>
-                  !line.is_voided &&
-                  String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
-                  !(
-                      String(line.line_kind || "") === "CUSTOM" &&
-                      String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
-                  )
-          )
+            (line: any) =>
+                !line.is_voided &&
+                String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
+                !(
+                    String(line.line_kind || "") === "CUSTOM" &&
+                    String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
+                )
+        )
         : [];
     const fallbackLineItems = lineItems
         .filter((item: any) => {
@@ -52,10 +52,10 @@ export function PricingBreakdown({
     const vatAmount = Number(pricing.vat?.amount ?? pricing.totals?.vat_amount ?? 0);
     const finalTotal = Number(
         pricing.totals?.total ??
-            pricing.totals?.sell_total_with_vat ??
-            pricing.final_total ??
-            pricing.totals?.sell_total ??
-            0
+        pricing.totals?.sell_total_with_vat ??
+        pricing.final_total ??
+        pricing.totals?.sell_total ??
+        0
     );
     const hasReskinLine = activeLineItems.some((item: any) => item.category === "RESKIN");
 
@@ -105,15 +105,6 @@ export function PricingBreakdown({
                     {finalTotal.toFixed(2)} AED
                 </span>
             </div>
-
-            {hasReskinLine && (
-                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3 mt-4">
-                    <p className="text-xs text-blue-800 dark:text-blue-300">
-                        This quote includes custom rebranding work which will be completed before
-                        delivery.
-                    </p>
-                </div>
-            )}
         </div>
     );
 }
