@@ -31,16 +31,10 @@ export const catalogKeys = {
 
 type AssetImageShape = { url: string; note?: string };
 
-const normalizeImageUrls = (images: unknown): string[] => {
+const normalizeCollectionImageUrls = (images: unknown): string[] => {
     if (!Array.isArray(images)) return [];
     return images
-        .map((image) => {
-            if (typeof image === "string") return image;
-            if (image && typeof image === "object" && typeof (image as any).url === "string") {
-                return (image as any).url as string;
-            }
-            return null;
-        })
+        .map((image) => (typeof image === "string" ? image : null))
         .filter((url): url is string => Boolean(url));
 };
 
@@ -48,10 +42,6 @@ const normalizeAssetImages = (images: unknown): AssetImageShape[] => {
     if (!Array.isArray(images)) return [];
     const normalized: AssetImageShape[] = [];
     for (const image of images) {
-        if (typeof image === "string") {
-            normalized.push({ url: image });
-            continue;
-        }
         if (image && typeof image === "object" && typeof (image as any).url === "string") {
             const url = (image as any).url as string;
             const note =
@@ -63,6 +53,9 @@ const normalizeAssetImages = (images: unknown): AssetImageShape[] => {
     }
     return normalized;
 };
+
+const normalizeAssetImageUrls = (images: unknown): string[] =>
+    normalizeAssetImages(images).map((image) => image.url);
 
 // ========================================
 // Fetch Functions
@@ -93,7 +86,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             status: asset.status,
             description: asset.description,
             category: asset.category,
-            images: normalizeImageUrls(asset.images),
+            images: normalizeAssetImageUrls(asset.images),
             brand: asset.brand
                 ? {
                       id: asset.brand.id,
@@ -120,7 +113,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             name: collection.name,
             description: collection.description,
             category: collection.category,
-            images: normalizeImageUrls(collection.images),
+            images: normalizeCollectionImageUrls(collection.images),
             brand: collection.brand
                 ? {
                       id: collection.brand.id,
@@ -200,7 +193,7 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
             id: item.asset.id,
             name: item.asset.name,
             category: item.asset.category,
-            images: normalizeImageUrls(item.asset.images),
+            images: normalizeAssetImageUrls(item.asset.images),
             defaultQuantity: item.default_quantity,
             availableQuantity: item.asset.available_quantity,
             totalQuantity: item.asset.total_quantity,
@@ -232,7 +225,7 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
                 name: raw.name,
                 description: raw.description || null,
                 category: raw.category || null,
-                images: normalizeImageUrls(raw.images),
+                images: normalizeCollectionImageUrls(raw.images),
                 brand: raw.brand
                     ? {
                           id: raw.brand.id,

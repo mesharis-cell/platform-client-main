@@ -20,14 +20,14 @@ export function PricingBreakdown({
 
     const projectedLineItems = Array.isArray(pricing.breakdown_lines)
         ? pricing.breakdown_lines.filter(
-            (line: any) =>
-                !line.is_voided &&
-                String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
-                !(
-                    String(line.line_kind || "") === "CUSTOM" &&
-                    String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
-                )
-        )
+              (line: any) =>
+                  !line.is_voided &&
+                  String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
+                  !(
+                      String(line.line_kind || "") === "CUSTOM" &&
+                      String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
+                  )
+          )
         : [];
     const fallbackLineItems = lineItems
         .filter((item: any) => {
@@ -52,10 +52,10 @@ export function PricingBreakdown({
     const vatAmount = Number(pricing.vat?.amount ?? pricing.totals?.vat_amount ?? 0);
     const finalTotal = Number(
         pricing.totals?.total ??
-        pricing.totals?.sell_total_with_vat ??
-        pricing.final_total ??
-        pricing.totals?.sell_total ??
-        0
+            pricing.totals?.sell_total_with_vat ??
+            pricing.final_total ??
+            pricing.totals?.sell_total ??
+            0
     );
     const hasReskinLine = activeLineItems.some((item: any) => item.category === "RESKIN");
 

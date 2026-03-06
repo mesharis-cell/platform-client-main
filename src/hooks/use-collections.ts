@@ -13,6 +13,7 @@ import type {
     UpdateCollectionItemRequest,
     CollectionAvailabilityResponse,
 } from "@/types/collection";
+import { uploadImages } from "@/lib/utils/upload-images";
 
 // ========================================
 // Collection Query Hooks
@@ -254,24 +255,7 @@ export function useRemoveCollectionItem(collectionId: string) {
 export function useUploadCollectionImages() {
     return useMutation({
         mutationFn: async (files: File[]) => {
-            const formData = new FormData();
-
-            files.forEach((file) => {
-                formData.append("images", file);
-            });
-
-            const response = await fetch("/api/uploads/collection-images", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to upload collection images");
-            }
-
-            const data = await response.json();
-            return data.urls as string[];
+            return uploadImages({ files, profile: "photo" });
         },
     });
 }
