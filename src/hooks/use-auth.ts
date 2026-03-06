@@ -1,30 +1,31 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/api-client";
 
 // Reset password request
 async function requestPasswordReset(email: string): Promise<void> {
-    const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to request password reset");
+    const response = await apiClient.post("/auth/forgot-password", { email });
+
+    if (!response.data.success) {
+        throw new Error(response.data.message || "Failed to request password reset");
     }
 }
 
 // Reset password confirm
-async function confirmPasswordReset(data: { token: string; newPassword: string }): Promise<void> {
-    const response = await fetch("/api/auth/reset-password/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+async function confirmPasswordReset(data: {
+    email: string;
+    otp: number;
+    newPassword: string;
+}): Promise<void> {
+    const response = await apiClient.post("/auth/forgot-password", {
+        email: data.email,
+        otp: data.otp,
+        new_password: data.newPassword,
     });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Invalid or expired reset token");
+
+    if (!response.data.success) {
+        throw new Error(response.data.message || "Invalid or expired reset token");
     }
 }
 
