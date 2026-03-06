@@ -19,6 +19,7 @@ import type {
     FilterByConditionResponse,
     UploadDamagePhotosResponse,
 } from "@/types/condition";
+import { uploadImages } from "@/lib/utils/upload-images";
 
 // ===== Update Condition =====
 
@@ -195,25 +196,12 @@ export function useFilterAssetsByCondition(params: FilterByConditionParams) {
 
 export function useUploadDamagePhotos() {
     return useMutation<UploadDamagePhotosResponse, Error, { files: File[]; assetId: string }>({
-        mutationFn: async ({ files, assetId }) => {
-            const formData = new FormData();
-            formData.append("assetId", assetId);
-
-            files.forEach((file) => {
-                formData.append("files", file);
-            });
-
-            const response = await fetch("/api/uploads/damage-photos", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to upload damage photos");
-            }
-
-            return response.json();
+        mutationFn: async ({ files, assetId: _assetId }) => {
+            const photoUrls = await uploadImages({ files, profile: "photo" });
+            return {
+                success: true,
+                photoUrls,
+            };
         },
     });
 }

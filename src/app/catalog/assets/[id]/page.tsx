@@ -675,7 +675,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                                             {snap.images?.[0] && (
                                                                 <div className="mt-2 w-16 h-12 rounded overflow-hidden bg-muted">
                                                                     <img
-                                                                        src={snap.images[0]}
+                                                                        src={snap.images[0]?.url}
                                                                         alt="Snapshot"
                                                                         className="w-full h-full object-cover"
                                                                     />

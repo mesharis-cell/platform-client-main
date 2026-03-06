@@ -466,11 +466,11 @@ export function EditInboundRequestDialog({
             // Upload all NEW images in a single batch request
             let allUploadedUrls: string[] = [];
             if (allFiles.length > 0) {
-                const uploadFormData = new FormData();
-                uploadFormData.append("companyId", user?.company_id);
-                allFiles.forEach((file) => uploadFormData.append("files", file));
-
-                const uploadResult = await uploadMutation.mutateAsync(uploadFormData);
+                const uploadResult = await uploadMutation.mutateAsync({
+                    files: allFiles,
+                    companyId: user?.company_id,
+                    profile: "photo",
+                });
                 allUploadedUrls = uploadResult.data?.imageUrls || [];
             }
 

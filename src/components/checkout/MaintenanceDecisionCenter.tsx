@@ -12,6 +12,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { ImageViewerModal, type ViewerImageItem } from "@/components/shared/image-viewer-modal";
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, Wrench } from "lucide-react";
 import Image from "next/image";
 
@@ -26,6 +27,9 @@ export function MaintenanceDecisionCenter({
 }: MaintenanceDecisionCenterProps) {
     const [modalOpen, setModalOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [viewerImages, setViewerImages] = useState<ViewerImageItem[]>([]);
+    const [viewerIndex, setViewerIndex] = useState(0);
 
     const unresolved = useMemo(
         () => items.filter((item) => !item.maintenanceDecision).length,
@@ -44,6 +48,19 @@ export function MaintenanceDecisionCenter({
     const moveIndex = (delta: number) => {
         const next = (activeIndex + delta + items.length) % items.length;
         setActiveIndex(next);
+    };
+
+    const openViewer = (
+        imageItems: ViewerImageItem[],
+        index: number,
+        fallback?: ViewerImageItem
+    ) => {
+        const safeImages = imageItems.length > 0 ? imageItems : fallback ? [fallback] : [];
+        if (safeImages.length === 0) return;
+        const bounded = Math.max(0, Math.min(index, safeImages.length - 1));
+        setViewerImages(safeImages);
+        setViewerIndex(bounded);
+        setViewerOpen(true);
     };
 
     return (
@@ -70,7 +87,20 @@ export function MaintenanceDecisionCenter({
                         className="rounded-md border border-amber-200 bg-background/70 p-3"
                     >
                         <div className="flex items-start gap-3">
-                            <div className="h-12 w-12 rounded-md overflow-hidden border border-amber-200 bg-muted shrink-0">
+                            <button
+                                type="button"
+                                className="h-12 w-12 rounded-md overflow-hidden border border-amber-200 bg-muted shrink-0 cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                                onClick={() =>
+                                    openViewer(
+                                        (item.conditionImages || []).map((image) => ({
+                                            url: image.url,
+                                            note: image.note,
+                                        })),
+                                        0,
+                                        item.image ? { url: item.image } : undefined
+                                    )
+                                }
+                            >
                                 {item.image ? (
                                     <Image
                                         src={item.image}
@@ -84,7 +114,7 @@ export function MaintenanceDecisionCenter({
                                         <AlertCircle className="h-4 w-4" />
                                     </div>
                                 )}
-                            </div>
+                            </button>
                             <div className="min-w-0 flex-1">
                                 <p className="font-medium text-sm truncate">{item.assetName}</p>
                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -206,7 +236,21 @@ export function MaintenanceDecisionCenter({
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             {activeItem.conditionImages.map((image, index) => (
                                                 <div key={index} className="space-y-1">
-                                                    <div className="aspect-square rounded-md overflow-hidden border border-border bg-muted">
+                                                    <button
+                                                        type="button"
+                                                        className="aspect-square w-full rounded-md overflow-hidden border border-border bg-muted cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                                                        onClick={() =>
+                                                            openViewer(
+                                                                activeItem.conditionImages!.map(
+                                                                    (itemImage) => ({
+                                                                        url: itemImage.url,
+                                                                        note: itemImage.note,
+                                                                    })
+                                                                ),
+                                                                index
+                                                            )
+                                                        }
+                                                    >
                                                         <img
                                                             src={image.url}
                                                             alt={
@@ -215,7 +259,7 @@ export function MaintenanceDecisionCenter({
                                                             }
                                                             className="h-full w-full object-cover"
                                                         />
-                                                    </div>
+                                                    </button>
                                                     {image.note ? (
                                                         <p className="text-[11px] text-muted-foreground line-clamp-2">
                                                             {image.note}
@@ -246,6 +290,14 @@ export function MaintenanceDecisionCenter({
                     ) : null}
                 </DialogContent>
             </Dialog>
+
+            <ImageViewerModal
+                open={viewerOpen}
+                onOpenChange={setViewerOpen}
+                images={viewerImages}
+                initialIndex={viewerIndex}
+                title={activeItem?.assetName || "Condition photos"}
+            />
         </Card>
     );
 }

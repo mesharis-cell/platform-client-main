@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Condition } from "@/types";
+import type { AssetImage } from "@/types/asset";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -55,7 +56,7 @@ interface OrderItem {
         id: string;
         name: string;
         refurbishment_days_estimate: number | null;
-        images?: string[];
+        images?: AssetImage[];
     };
 }
 
@@ -216,7 +217,7 @@ const OrderItemCard = ({
                     {item.asset?.images && item.asset.images.length > 0 && (
                         <div className="w-20 h-20 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
                             <Image
-                                src={item.asset.images[0]}
+                                src={item.asset.images[0]?.url}
                                 alt={item.order_item.asset_name}
                                 width={80}
                                 height={80}

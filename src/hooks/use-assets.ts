@@ -10,6 +10,7 @@ import type {
 } from "@/types/asset";
 import { apiClient } from "@/lib/api/api-client";
 import { throwApiError } from "@/lib/utils/throw-api-error";
+import { uploadImages, type UploadImagesInput } from "@/lib/utils/upload-images";
 
 // Query keys
 export const assetKeys = {
@@ -165,16 +166,16 @@ async function deleteAsset(id: string): Promise<void> {
 
 // Upload image
 async function uploadImage(
-    formData: FormData
+    input: UploadImagesInput
 ): Promise<{ data: { imageUrls: string[]; presignedUrl: string } }> {
     try {
-        const response = await apiClient.post("/operations/v1/upload/images", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
+        const imageUrls = await uploadImages(input);
+        return {
+            data: {
+                imageUrls,
+                presignedUrl: "",
             },
-        });
-
-        return response.data;
+        };
     } catch (error) {
         throwApiError(error);
     }
