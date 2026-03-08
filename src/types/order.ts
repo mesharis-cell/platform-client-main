@@ -41,6 +41,18 @@ export type FinancialStatus =
     | "CANCELLED";
 
 export type MaintenanceDecision = "FIX_IN_ORDER" | "USE_AS_IS";
+export type PermitOwner = "CLIENT" | "PLATFORM" | "UNKNOWN";
+
+export interface PermitRequirements {
+    requires_permit: boolean;
+    permit_owner: PermitOwner;
+    venue_contact_name?: string | null;
+    venue_contact_email?: string | null;
+    venue_contact_phone?: string | null;
+    requires_vehicle_docs?: boolean;
+    requires_staff_ids?: boolean;
+    notes?: string | null;
+}
 
 // ============================================================
 // Order Types
@@ -160,6 +172,7 @@ export interface Order {
     venueCity?: string | null;
     venueAddress?: string | null;
     venueAccessNotes?: string | null;
+    permitRequirements?: PermitRequirements | null;
     // Special instructions
     specialInstructions?: string | null;
     // Calculated totals

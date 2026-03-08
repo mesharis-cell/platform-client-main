@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
@@ -104,6 +105,14 @@ function CheckoutPageInner() {
         venue_city_name: "",
         venue_address: "",
         venue_access_notes: "",
+        requires_permit: false,
+        permit_owner: "UNKNOWN" as "CLIENT" | "PLATFORM" | "UNKNOWN",
+        permit_venue_contact_name: "",
+        permit_venue_contact_email: "",
+        permit_venue_contact_phone: "",
+        requires_vehicle_docs: false,
+        requires_staff_ids: false,
+        permit_notes: "",
         contact_name: "",
         contact_email: "",
         contact_phone: "",
@@ -263,11 +272,12 @@ function CheckoutPageInner() {
                     new Date(formData.event_start_date) <= new Date(formData.event_end_date)
                 );
             case "venue":
-                return (
+                return Boolean(
                     formData.venue_name &&
-                    formData.venue_country_id &&
-                    formData.venue_city_id &&
-                    formData.venue_address
+                        formData.venue_country_id &&
+                        formData.venue_city_id &&
+                        formData.venue_address &&
+                        (!formData.requires_permit || formData.permit_owner)
                 );
             case "contact":
                 return (
@@ -386,6 +396,28 @@ function CheckoutPageInner() {
                 venue_address: formData.venue_address,
                 ...(formData.venue_access_notes
                     ? { venue_access_notes: formData.venue_access_notes }
+                    : {}),
+                ...(formData.requires_permit
+                    ? {
+                          permit_requirements: {
+                              requires_permit: true,
+                              permit_owner: formData.permit_owner,
+                              ...(formData.permit_venue_contact_name
+                                  ? { venue_contact_name: formData.permit_venue_contact_name }
+                                  : {}),
+                              ...(formData.permit_venue_contact_email
+                                  ? { venue_contact_email: formData.permit_venue_contact_email }
+                                  : {}),
+                              ...(formData.permit_venue_contact_phone
+                                  ? { venue_contact_phone: formData.permit_venue_contact_phone }
+                                  : {}),
+                              ...(formData.requires_vehicle_docs
+                                  ? { requires_vehicle_docs: true }
+                                  : {}),
+                              ...(formData.requires_staff_ids ? { requires_staff_ids: true } : {}),
+                              ...(formData.permit_notes ? { notes: formData.permit_notes } : {}),
+                          },
+                      }
                     : {}),
                 contact_name: formData.contact_name,
                 contact_email: formData.contact_email,
@@ -917,6 +949,193 @@ function CheckoutPageInner() {
                                             className="font-mono text-sm"
                                         />
                                     </div>
+
+                                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
+                                        <div className="flex items-start gap-3">
+                                            <Checkbox
+                                                id="venueRequiresPermit"
+                                                checked={formData.requires_permit}
+                                                onCheckedChange={(checked) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        requires_permit: checked === true,
+                                                    })
+                                                }
+                                            />
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="venueRequiresPermit"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Venue requires permits or access coordination
+                                                </Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Share what you know now. Additional charges may
+                                                    apply depending on venue requirements.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {formData.requires_permit && (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Permit Owner *
+                                                    </Label>
+                                                    <Select
+                                                        value={formData.permit_owner}
+                                                        onValueChange={(value) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                permit_owner: value as
+                                                                    | "CLIENT"
+                                                                    | "PLATFORM"
+                                                                    | "UNKNOWN",
+                                                            })
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="h-12 font-mono">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="CLIENT">
+                                                                Client will arrange
+                                                            </SelectItem>
+                                                            <SelectItem value="PLATFORM">
+                                                                Platform should arrange
+                                                            </SelectItem>
+                                                            <SelectItem value="UNKNOWN">
+                                                                Not sure yet
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="font-mono uppercase text-xs tracking-wide">
+                                                            Venue Contact Name
+                                                        </Label>
+                                                        <Input
+                                                            value={
+                                                                formData.permit_venue_contact_name
+                                                            }
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    permit_venue_contact_name:
+                                                                        e.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="Venue operations contact"
+                                                            className="h-12"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="font-mono uppercase text-xs tracking-wide">
+                                                            Venue Contact Phone
+                                                        </Label>
+                                                        <Input
+                                                            value={
+                                                                formData.permit_venue_contact_phone
+                                                            }
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    permit_venue_contact_phone:
+                                                                        e.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="Phone number"
+                                                            className="h-12"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Venue Contact Email
+                                                    </Label>
+                                                    <Input
+                                                        type="email"
+                                                        value={formData.permit_venue_contact_email}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                permit_venue_contact_email:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder="venue@example.com"
+                                                        className="h-12"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
+                                                        <Checkbox
+                                                            checked={formData.requires_vehicle_docs}
+                                                            onCheckedChange={(checked) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    requires_vehicle_docs:
+                                                                        checked === true,
+                                                                })
+                                                            }
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm font-medium">
+                                                                Vehicle documents required
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Use this if venue access needs truck
+                                                                registration or driver docs.
+                                                            </p>
+                                                        </div>
+                                                    </label>
+                                                    <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
+                                                        <Checkbox
+                                                            checked={formData.requires_staff_ids}
+                                                            onCheckedChange={(checked) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    requires_staff_ids:
+                                                                        checked === true,
+                                                                })
+                                                            }
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm font-medium">
+                                                                Staff IDs required
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Use this if crew names, IDs, or
+                                                                passes are needed before entry.
+                                                            </p>
+                                                        </div>
+                                                    </label>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Permit Notes
+                                                    </Label>
+                                                    <Textarea
+                                                        value={formData.permit_notes}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                permit_notes: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder="Permit timing, loading bay rules, access windows, or anything the team should know."
+                                                        rows={3}
+                                                        className="font-mono text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </Card>
                         </motion.div>
@@ -1214,6 +1433,68 @@ function CheckoutPageInner() {
                                                     <p className="font-medium leading-relaxed">
                                                         {formData.venue_access_notes}
                                                     </p>
+                                                </div>
+                                            )}
+                                            {formData.requires_permit && (
+                                                <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
+                                                        Permit / Access Coordination
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formData.permit_owner === "CLIENT" &&
+                                                            "Client will arrange permits"}
+                                                        {formData.permit_owner === "PLATFORM" &&
+                                                            "Platform should arrange permits"}
+                                                        {formData.permit_owner === "UNKNOWN" &&
+                                                            "Permit ownership still to be confirmed"}
+                                                    </p>
+                                                    {(formData.permit_venue_contact_name ||
+                                                        formData.permit_venue_contact_email ||
+                                                        formData.permit_venue_contact_phone) && (
+                                                        <div className="text-sm space-y-1">
+                                                            {formData.permit_venue_contact_name && (
+                                                                <p>
+                                                                    Contact:{" "}
+                                                                    {
+                                                                        formData.permit_venue_contact_name
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                            {formData.permit_venue_contact_email && (
+                                                                <p>
+                                                                    Email:{" "}
+                                                                    {
+                                                                        formData.permit_venue_contact_email
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                            {formData.permit_venue_contact_phone && (
+                                                                <p>
+                                                                    Phone:{" "}
+                                                                    {
+                                                                        formData.permit_venue_contact_phone
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                                        {formData.requires_vehicle_docs && (
+                                                            <span className="rounded-full border px-2 py-1">
+                                                                Vehicle docs required
+                                                            </span>
+                                                        )}
+                                                        {formData.requires_staff_ids && (
+                                                            <span className="rounded-full border px-2 py-1">
+                                                                Staff IDs required
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {formData.permit_notes && (
+                                                        <p className="text-sm leading-relaxed">
+                                                            {formData.permit_notes}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

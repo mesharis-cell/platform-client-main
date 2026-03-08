@@ -47,6 +47,7 @@ import { QuoteReviewSection } from "@/components/orders/QuoteReviewSection";
 import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 import { OrderItemsList } from "@/components/orders/OrderItemsList";
 import { ScanActivityTimeline } from "@/components/scanning/scan-activity-timeline";
+import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -728,6 +729,117 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     items={order.items}
                                     orderStatus={order.order_status}
                                     calculatedTotals={order.calculated_totals}
+                                />
+                            </motion.div>
+
+                            {order.permit_requirements?.requires_permit && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.42 }}
+                                >
+                                    <Card className="bg-card/50 backdrop-blur-sm border-border/40">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <FileText className="h-5 w-5 text-primary" />
+                                                Permit / Access Coordination
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-3 text-sm">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                    Ownership
+                                                </p>
+                                                <p className="font-medium">
+                                                    {order.permit_requirements.permit_owner ===
+                                                        "CLIENT" && "Client will arrange permits"}
+                                                    {order.permit_requirements.permit_owner ===
+                                                        "PLATFORM" &&
+                                                        "Platform will coordinate permits"}
+                                                    {order.permit_requirements.permit_owner ===
+                                                        "UNKNOWN" &&
+                                                        "Permit ownership still to be confirmed"}
+                                                </p>
+                                            </div>
+                                            {(order.permit_requirements.venue_contact_name ||
+                                                order.permit_requirements.venue_contact_email ||
+                                                order.permit_requirements.venue_contact_phone) && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Venue Contact
+                                                    </p>
+                                                    <div className="space-y-1">
+                                                        {order.permit_requirements
+                                                            .venue_contact_name && (
+                                                            <p>
+                                                                {
+                                                                    order.permit_requirements
+                                                                        .venue_contact_name
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {order.permit_requirements
+                                                            .venue_contact_email && (
+                                                            <p>
+                                                                {
+                                                                    order.permit_requirements
+                                                                        .venue_contact_email
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {order.permit_requirements
+                                                            .venue_contact_phone && (
+                                                            <p>
+                                                                {
+                                                                    order.permit_requirements
+                                                                        .venue_contact_phone
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                                {order.permit_requirements
+                                                    .requires_vehicle_docs && (
+                                                    <span className="rounded-full border px-2 py-1">
+                                                        Vehicle documents required
+                                                    </span>
+                                                )}
+                                                {order.permit_requirements.requires_staff_ids && (
+                                                    <span className="rounded-full border px-2 py-1">
+                                                        Staff IDs required
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {order.permit_requirements.notes && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Notes
+                                                    </p>
+                                                    <p className="leading-relaxed">
+                                                        {order.permit_requirements.notes}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-muted-foreground font-mono">
+                                                Additional charges may apply depending on venue
+                                                permit requirements.
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            )}
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.43 }}
+                            >
+                                <EntityAttachmentsCard
+                                    entityType="ORDER"
+                                    entityId={order.id}
+                                    title="Supporting Documents"
                                 />
                             </motion.div>
 

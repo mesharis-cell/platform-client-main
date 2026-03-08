@@ -23,6 +23,16 @@ export interface SubmitOrderPayload {
     venue_city_id: string;
     venue_address: string;
     venue_access_notes?: string;
+    permit_requirements?: {
+        requires_permit: boolean;
+        permit_owner: "CLIENT" | "PLATFORM" | "UNKNOWN";
+        venue_contact_name?: string;
+        venue_contact_email?: string;
+        venue_contact_phone?: string;
+        requires_vehicle_docs?: boolean;
+        requires_staff_ids?: boolean;
+        notes?: string;
+    };
     contact_name: string;
     contact_email: string;
     contact_phone: string;

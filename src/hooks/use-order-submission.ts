@@ -33,6 +33,16 @@ interface OrderSubmissionData {
         city: string;
         address: string;
         accessNotes?: string;
+        permitRequirements?: {
+            requires_permit: boolean;
+            permit_owner: "CLIENT" | "PLATFORM" | "UNKNOWN";
+            venue_contact_name?: string;
+            venue_contact_email?: string;
+            venue_contact_phone?: string;
+            requires_vehicle_docs?: boolean;
+            requires_staff_ids?: boolean;
+            notes?: string;
+        };
     };
     contactData: {
         name: string;
@@ -100,6 +110,7 @@ export function useSubmitOrder() {
                 venue_city_id: data.venueData.city,
                 venue_address: data.venueData.address,
                 venue_access_notes: data.venueData.accessNotes,
+                permit_requirements: data.venueData.permitRequirements,
                 contact_name: data.contactData.name,
                 contact_email: data.contactData.email,
                 contact_phone: data.contactData.phone,
