@@ -30,6 +30,7 @@ import type { InboundRequestStatus } from "@/types/inbound-request";
 import { InboundQuoteReviewSection } from "@/components/inbound-request/inbound-quote-review-section";
 import { motion } from "framer-motion";
 import { AssetsFromInbound } from "@/components/inbound-request/assets-from-inbound";
+import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
 
 export default function InboundRequestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -230,6 +231,14 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
                                     )}
                                 </>
                             )}
+
+                            <div className="mt-6">
+                                <EntityAttachmentsCard
+                                    entityType="INBOUND_REQUEST"
+                                    entityId={request.id}
+                                    title="Supporting Documents"
+                                />
+                            </div>
                         </div>
 
                         {/* Right Column - Request Info */}

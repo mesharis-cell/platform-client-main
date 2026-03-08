@@ -27,6 +27,7 @@ import {
     Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
 
 const statusColors: Record<string, string> = {
     DRAFT: "bg-muted text-muted-foreground border-muted",
@@ -256,6 +257,19 @@ export default function ClientServiceRequestDetailsPage() {
                                 <ClipboardList className="h-12 w-12 text-primary/20" />
                             </div>
                         </Card>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.22 }}
+                        className="mb-6"
+                    >
+                        <EntityAttachmentsCard
+                            entityType="SERVICE_REQUEST"
+                            entityId={request.id}
+                            title="Supporting Documents"
+                        />
                     </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
