@@ -274,10 +274,10 @@ function CheckoutPageInner() {
             case "venue":
                 return Boolean(
                     formData.venue_name &&
-                        formData.venue_country_id &&
-                        formData.venue_city_id &&
-                        formData.venue_address &&
-                        (!formData.requires_permit || formData.permit_owner)
+                    formData.venue_country_id &&
+                    formData.venue_city_id &&
+                    formData.venue_address &&
+                    (!formData.requires_permit || formData.permit_owner)
                 );
             case "contact":
                 return (
@@ -812,9 +812,11 @@ function CheckoutPageInner() {
                             className="space-y-6"
                         >
                             <div>
-                                <h2 className="text-3xl font-bold mb-2">Venue Information</h2>
+                                <h2 className="text-3xl font-bold mb-2">
+                                    Installation Information
+                                </h2>
                                 <p className="text-muted-foreground">
-                                    Where will the event take place?
+                                    Where will the installation take place?
                                 </p>
                             </div>
 
@@ -999,10 +1001,10 @@ function CheckoutPageInner() {
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="CLIENT">
-                                                                Client will arrange
+                                                                I will arrange
                                                             </SelectItem>
                                                             <SelectItem value="PLATFORM">
-                                                                Platform should arrange
+                                                                You should arrange
                                                             </SelectItem>
                                                             <SelectItem value="UNKNOWN">
                                                                 Not sure yet

@@ -72,8 +72,10 @@ export interface OrderPricing {
 
 export interface OrderLineItem {
     id: string;
-    lineItemType: "CATALOG" | "CUSTOM";
-    line_item_type?: "CATALOG" | "CUSTOM";
+    lineItemType: "CATALOG" | "CUSTOM" | "SYSTEM";
+    line_item_type?: "CATALOG" | "CUSTOM" | "SYSTEM";
+    systemKey?: "BASE_OPS" | null;
+    system_key?: "BASE_OPS" | null;
     category: string;
     description: string;
     quantity: number | null;

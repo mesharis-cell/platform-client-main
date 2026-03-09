@@ -36,7 +36,7 @@ export function EntityAttachmentsCard({
 
                 {!isLoading && attachments.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                        No client-visible attachments have been added yet.
+                        No attachments have been added yet.
                     </p>
                 )}
 
