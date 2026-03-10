@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEntityAttachments, type AttachmentEntityType } from "@/hooks/use-attachments";
+import { usePlatform } from "@/contexts/platform-context";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,8 +16,13 @@ export function EntityAttachmentsCard({
     entityId: string | null;
     title?: string;
 }) {
+    const { platform } = usePlatform();
     const { data, isLoading } = useEntityAttachments(entityType, entityId);
     const attachments = data?.data || [];
+
+    if (platform?.features?.enable_attachments === false) {
+        return null;
+    }
 
     return (
         <Card className="bg-card/50 backdrop-blur-sm border-border/40">
