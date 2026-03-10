@@ -32,8 +32,8 @@ export function PricingBreakdown({
     const fallbackLineItems = lineItems
         .filter((item: any) => {
             if (item.isVoided) return false;
-            const lineItemType = String(item.line_item_type || item.lineItemType || "CATALOG");
-            const billingMode = String(item.billing_mode || item.billingMode || "BILLABLE");
+            const lineItemType = String(item.lineItemType || "CATALOG");
+            const billingMode = String(item.billingMode || "BILLABLE");
             return !(lineItemType === "CUSTOM" && billingMode === "NON_BILLABLE");
         })
         .map((item) => ({

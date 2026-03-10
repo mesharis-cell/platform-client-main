@@ -73,16 +73,13 @@ export interface OrderPricing {
 export interface OrderLineItem {
     id: string;
     lineItemType: "CATALOG" | "CUSTOM" | "SYSTEM";
-    line_item_type?: "CATALOG" | "CUSTOM" | "SYSTEM";
     systemKey?: "BASE_OPS" | null;
-    system_key?: "BASE_OPS" | null;
     category: string;
     description: string;
     quantity: number | null;
     unit: string | null;
     unitRate: number | null;
     billingMode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
-    billing_mode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
     total: number;
     notes: string | null;
     clientPriceVisible?: boolean;
