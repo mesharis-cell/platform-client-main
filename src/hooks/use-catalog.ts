@@ -70,13 +70,14 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
     if (params.search_term) searchParams.set("search_term", params.search_term);
     if (params.type) searchParams.set("type", params.type);
     if (params.limit) searchParams.set("limit", params.limit.toString());
-    if (params.offset) searchParams.set("offset", params.offset.toString());
+    if (params.page) searchParams.set("page", params.page.toString());
 
     const response = await apiClient.get(`/client/v1/catalog?${searchParams.toString()}`);
 
     // Transform the response to match the UI expectation
     const assets = response.data.data.assets || [];
     const collections = response.data.data.collections || [];
+    const meta = response.data.data.meta || {};
 
     const items = [
         ...assets.map((asset: any) => ({
@@ -121,18 +122,20 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                       logoUrl: collection.brand.logo_url,
                   }
                 : null,
-            itemCount: response.data.data.meta?.total_collections || 0,
+            itemCount: meta.total_collections || 0,
         })),
     ];
 
+    const total = (meta.total_assets || 0) + (meta.total_collections || 0);
+    const limit = meta.limit || 24;
+
     return {
         success: true,
-        items: items,
-        total:
-            (response.data.data.meta?.total_assets || 0) +
-            (response.data.data.meta?.total_collections || 0),
-        limit: response.data.data.meta?.limit || 100,
-        offset: response.data.data.meta?.page || 0,
+        items,
+        total,
+        limit,
+        page: meta.page || 1,
+        totalPages: Math.ceil(total / limit) || 1,
     };
 }
 

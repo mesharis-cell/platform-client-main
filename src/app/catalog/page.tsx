@@ -81,6 +81,7 @@ function CatalogPageInner() {
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [viewType, setViewType] = useState<"asset" | "collection" | "all">("all");
     const [layoutMode, setLayoutMode] = useState<"grid" | "list">("grid");
+    const [page, setPage] = useState(1);
     const [selectedItem, setSelectedItem] = useState<
         CatalogAssetItem | CatalogCollectionItem | null
     >(null);
@@ -89,13 +90,16 @@ function CatalogPageInner() {
 
     const { addItem } = useCart();
 
+    const ITEMS_PER_PAGE = 24;
+
     // Fetch catalog data
     const { data: catalogData, isLoading } = useCatalog({
         search_term: searchQuery || undefined,
         brand: selectedBrand && selectedBrand !== "_all_" ? selectedBrand : undefined,
         category: selectedCategory && selectedCategory !== "_all_" ? selectedCategory : undefined,
         type: viewType,
-        limit: 100,
+        limit: ITEMS_PER_PAGE,
+        page,
     });
 
     const { data: brandsData } = useBrands({ limit: "100", company_id: user?.company_id });
@@ -114,6 +118,7 @@ function CatalogPageInner() {
         setSelectedBrand("");
         setSelectedCategory("");
         setViewType("all");
+        setPage(1);
     };
 
     const hasActiveFilters = searchQuery || selectedBrand || selectedCategory || viewType !== "all";
@@ -245,7 +250,10 @@ function CatalogPageInner() {
                         <Input
                             placeholder="Search assets, collections, categories..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setPage(1);
+                            }}
                             className="pl-12 h-12 text-base bg-card/50 backdrop-blur-sm border-border/50 focus:border-primary/50 transition-colors"
                         />
                         {searchQuery && (
@@ -268,7 +276,10 @@ function CatalogPageInner() {
                         {/* View Type Tabs */}
                         <Tabs
                             value={viewType}
-                            onValueChange={(value) => setViewType(value as typeof viewType)}
+                            onValueChange={(value) => {
+                                setViewType(value as typeof viewType);
+                                setPage(1);
+                            }}
                         >
                             <TabsList className="bg-muted/50 border border-border">
                                 <TabsTrigger
@@ -298,7 +309,13 @@ function CatalogPageInner() {
                         <div className="h-8 w-px bg-border" />
 
                         {/* Brand Filter */}
-                        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                        <Select
+                            value={selectedBrand}
+                            onValueChange={(v) => {
+                                setSelectedBrand(v);
+                                setPage(1);
+                            }}
+                        >
                             <SelectTrigger className="w-[200px] bg-card/50 border-border/50 font-mono">
                                 <SelectValue placeholder="All brands" />
                             </SelectTrigger>
@@ -317,7 +334,13 @@ function CatalogPageInner() {
                         </Select>
 
                         {/* Category Filter */}
-                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <Select
+                            value={selectedCategory}
+                            onValueChange={(v) => {
+                                setSelectedCategory(v);
+                                setPage(1);
+                            }}
+                        >
                             <SelectTrigger className="w-[200px] bg-card/50 border-border/50 font-mono">
                                 <SelectValue placeholder="All categories" />
                             </SelectTrigger>
@@ -1100,14 +1123,42 @@ function CatalogPageInner() {
                     </AnimatePresence>
                 )}
 
-                {/* Results Count */}
+                {/* Results Count & Pagination */}
                 {items.length > 0 && (
-                    <div className="mt-10 text-center">
+                    <div className="mt-10 flex flex-col items-center gap-4">
                         <p className="text-sm text-muted-foreground font-mono">
                             Showing{" "}
-                            <span className="font-bold text-foreground">{items.length}</span>{" "}
-                            {items.length === 1 ? "item" : "items"}
+                            <span className="font-bold text-foreground">{items.length}</span> of{" "}
+                            <span className="font-bold text-foreground">
+                                {catalogData?.total ?? items.length}
+                            </span>{" "}
+                            {(catalogData?.total ?? items.length) === 1 ? "item" : "items"}
                         </p>
+                        {(catalogData?.totalPages ?? 1) > 1 && (
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page <= 1}
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    className="font-mono"
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm font-mono text-muted-foreground">
+                                    Page {page} of {catalogData?.totalPages ?? 1}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page >= (catalogData?.totalPages ?? 1)}
+                                    onClick={() => setPage((p) => p + 1)}
+                                    className="font-mono"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
