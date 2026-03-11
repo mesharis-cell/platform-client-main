@@ -17,10 +17,11 @@ export function EntityAttachmentsCard({
     title?: string;
 }) {
     const { platform } = usePlatform();
-    const { data, isLoading } = useEntityAttachments(entityType, entityId);
+    const attachmentsEnabled = platform?.features?.enable_attachments !== false;
+    const { data, isLoading } = useEntityAttachments(entityType, entityId, attachmentsEnabled);
     const attachments = data?.data || [];
 
-    if (platform?.features?.enable_attachments === false) {
+    if (!attachmentsEnabled) {
         return null;
     }
 

@@ -36,7 +36,11 @@ const pathByEntityType: Record<AttachmentEntityType, string> = {
     SERVICE_REQUEST: "service-request",
 };
 
-export function useEntityAttachments(entityType: AttachmentEntityType, entityId: string | null) {
+export function useEntityAttachments(
+    entityType: AttachmentEntityType,
+    entityId: string | null,
+    enabled = true
+) {
     return useQuery({
         queryKey: ["entity-attachments", entityType, entityId],
         queryFn: async (): Promise<{ data: EntityAttachment[] }> => {
@@ -50,6 +54,6 @@ export function useEntityAttachments(entityType: AttachmentEntityType, entityId:
                 throwApiError(error);
             }
         },
-        enabled: !!entityId,
+        enabled: !!entityId && enabled,
     });
 }
