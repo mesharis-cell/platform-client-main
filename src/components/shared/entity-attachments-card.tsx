@@ -25,7 +25,7 @@ export function EntityAttachmentsCard({
     }
 
     return (
-        <Card className="bg-card/50 backdrop-blur-sm border-border/40">
+        <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
@@ -63,7 +63,7 @@ export function EntityAttachmentsCard({
                                     </p>
                                 )}
                             </div>
-                            <Button asChild size="sm" variant="outline" className="shrink-0">
+                            <Button asChild size="icon" variant="outline" className="shrink-0">
                                 <a
                                     href={attachment.file_url}
                                     target="_blank"

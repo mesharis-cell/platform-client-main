@@ -21,6 +21,7 @@ export interface EntityAttachment {
         id: string;
         code: string;
         label: string;
+        required_note?: boolean;
     };
     uploaded_by_user: {
         id: string;
