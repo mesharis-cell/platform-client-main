@@ -32,8 +32,8 @@ export function PricingBreakdown({
     const fallbackLineItems = lineItems
         .filter((item: any) => {
             if (item.isVoided) return false;
-            const lineItemType = String(item.line_item_type || item.lineItemType || "CATALOG");
-            const billingMode = String(item.billing_mode || item.billingMode || "BILLABLE");
+            const lineItemType = String(item.lineItemType || "CATALOG");
+            const billingMode = String(item.billingMode || "BILLABLE");
             return !(lineItemType === "CUSTOM" && billingMode === "NON_BILLABLE");
         })
         .map((item) => ({
@@ -92,8 +92,12 @@ export function PricingBreakdown({
 
             {vatPercent > 0 && (
                 <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT ({vatPercent.toFixed(2)}%)</span>
-                    <span className="font-mono">{vatAmount.toFixed(2)} AED</span>
+                    <span className="text-muted-foreground">
+                        {vatAmount > 0
+                            ? `VAT (${vatPercent.toFixed(2)}%)`
+                            : `VAT included (${vatPercent.toFixed(2)}%)`}
+                    </span>
+                    {vatAmount > 0 && <span className="font-mono">{vatAmount.toFixed(2)} AED</span>}
                 </div>
             )}
 

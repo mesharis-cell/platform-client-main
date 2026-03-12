@@ -1,5 +1,12 @@
-// Permission Templates
-export type PermissionTemplate = "PMG_ADMIN" | "A2_STAFF" | "CLIENT_USER";
+export type UserRole = "ADMIN" | "LOGISTICS" | "CLIENT";
+
+export interface AccessPolicy {
+    id: string;
+    code: string;
+    name: string;
+    role: UserRole;
+    is_active: boolean;
+}
 
 // Permission strings for granular access control
 export type Permission =
@@ -151,9 +158,19 @@ export interface User {
     id: string;
     email: string;
     name: string;
+    role: UserRole;
     permissions: string[];
+    effective_permissions?: string[];
+    access_policy_id?: string | null;
+    access_policy?: AccessPolicy | null;
+    permission_grants?: string[];
+    permission_revokes?: string[];
     companies: string[];
-    permissionTemplate: PermissionTemplate | null;
+    company?: {
+        id: string;
+        name: string;
+    } | null;
+    is_super_admin?: boolean;
     isActive: boolean;
     lastLoginAt: Date | null;
     createdAt: Date;
@@ -172,23 +189,26 @@ export interface CreateUserRequest {
     email: string;
     name: string;
     password: string;
-    permissionTemplate?: PermissionTemplate | null;
-    permissions?: string[];
+    role?: UserRole;
+    access_policy_id?: string | null;
+    permission_grants?: string[];
+    permission_revokes?: string[];
     companies?: string[];
 }
 
 // Update user request
 export interface UpdateUserRequest {
     name?: string;
-    permissions?: string[];
+    access_policy_id?: string | null;
+    permission_grants?: string[];
+    permission_revokes?: string[];
     companies?: string[];
-    permissionTemplate?: PermissionTemplate | null;
 }
 
 // User list query params
 export interface UserListParams {
     company?: string;
-    permissionTemplate?: PermissionTemplate;
+    access_policy_id?: string;
     isActive?: boolean;
     search?: string;
     limit?: number;
@@ -202,78 +222,3 @@ export interface UserListResponse {
     limit: number;
     offset: number;
 }
-
-// Permission template default configurations
-export const PERMISSION_TEMPLATES: Record<
-    PermissionTemplate,
-    {
-        permissions: string[];
-        defaultCompanies: string[];
-    }
-> = {
-    PMG_ADMIN: {
-        permissions: [
-            "auth:*",
-            "users:*",
-            "companies:*",
-            "brands:*",
-            "warehouses:*",
-            "zones:*",
-            "orders:*",
-            "pricing:*",
-            "invoices:*",
-            "lifecycle:*",
-            "notifications:*",
-            "analytics:*",
-            "system:*",
-            "assets:*",
-            "collections:*",
-            "conditions:*",
-            "inventory:*",
-            "quotes:*",
-            "scanning:*",
-        ],
-        defaultCompanies: ["*"],
-    },
-    A2_STAFF: {
-        permissions: [
-            "auth:*",
-            "users:read",
-            "companies:read",
-            "brands:read",
-            "warehouses:read",
-            "zones:read",
-            "assets:*",
-            "collections:*",
-            "orders:read",
-            "orders:update",
-            "orders:add_time_windows", // Phase 10
-            "pricing:review",
-            "pricing:adjust",
-            "lifecycle:progress_status", // Phase 10
-            "lifecycle:receive_notifications", // Phase 10
-            "scanning:*",
-            "inventory:*",
-            "conditions:*",
-        ],
-        defaultCompanies: ["*"],
-    },
-    CLIENT_USER: {
-        permissions: [
-            "auth:*",
-            "companies:read",
-            "brands:read",
-            "assets:read",
-            "collections:read",
-            "orders:create",
-            "orders:read",
-            "orders:update",
-            "quotes:approve",
-            "quotes:decline",
-            "invoices:read",
-            "invoices:download",
-            "lifecycle:receive_notifications",
-        ],
-        defaultCompanies: [], // Will be set to specific company on creation
-    },
-};

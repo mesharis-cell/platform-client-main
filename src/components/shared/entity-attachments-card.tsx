@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEntityAttachments, type AttachmentEntityType } from "@/hooks/use-attachments";
+import { usePlatform } from "@/contexts/platform-context";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,11 +16,17 @@ export function EntityAttachmentsCard({
     entityId: string | null;
     title?: string;
 }) {
-    const { data, isLoading } = useEntityAttachments(entityType, entityId);
+    const { platform } = usePlatform();
+    const attachmentsEnabled = platform?.features?.enable_attachments !== false;
+    const { data, isLoading } = useEntityAttachments(entityType, entityId, attachmentsEnabled);
     const attachments = data?.data || [];
 
+    if (!attachmentsEnabled) {
+        return null;
+    }
+
     return (
-        <Card className="bg-card/50 backdrop-blur-sm border-border/40">
+        <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
@@ -36,7 +43,7 @@ export function EntityAttachmentsCard({
 
                 {!isLoading && attachments.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                        No client-visible attachments have been added yet.
+                        No attachments have been added yet.
                     </p>
                 )}
 
@@ -57,7 +64,7 @@ export function EntityAttachmentsCard({
                                     </p>
                                 )}
                             </div>
-                            <Button asChild size="sm" variant="outline" className="shrink-0">
+                            <Button asChild size="icon" variant="outline" className="shrink-0">
                                 <a
                                     href={attachment.file_url}
                                     target="_blank"

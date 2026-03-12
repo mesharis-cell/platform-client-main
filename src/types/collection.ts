@@ -189,7 +189,7 @@ export interface CatalogListParams {
     search_term?: string;
     type?: "asset" | "collection" | "all";
     limit?: number;
-    offset?: number;
+    page?: number;
 }
 
 export interface CatalogListResponse {
@@ -197,7 +197,8 @@ export interface CatalogListResponse {
     items: CatalogItem[];
     total: number;
     limit: number;
-    offset: number;
+    page: number;
+    totalPages: number;
 }
 
 // ========================================
