@@ -209,12 +209,17 @@ function CatalogPageInner() {
                         >
                             <div className="flex items-center gap-2">
                                 <Package className="h-4 w-4 text-primary" />
-                                <span>{items.filter((i) => i.type === "asset").length} Assets</span>
+                                <span>
+                                    {catalogData?.totalAssets ??
+                                        items.filter((i) => i.type === "asset").length}{" "}
+                                    Assets
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Layers className="h-4 w-4 text-primary" />
                                 <span>
-                                    {items.filter((i) => i.type === "collection").length}{" "}
+                                    {catalogData?.totalCollections ??
+                                        items.filter((i) => i.type === "collection").length}{" "}
                                     Collections
                                 </span>
                             </div>

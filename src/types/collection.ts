@@ -196,6 +196,8 @@ export interface CatalogListResponse {
     success: boolean;
     items: CatalogItem[];
     total: number;
+    totalAssets: number;
+    totalCollections: number;
     limit: number;
     page: number;
     totalPages: number;

@@ -133,6 +133,8 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         success: true,
         items,
         total,
+        totalAssets: meta.total_assets || 0,
+        totalCollections: meta.total_collections || 0,
         limit,
         page: meta.page || 1,
         totalPages: Math.ceil(total / limit) || 1,
