@@ -84,6 +84,7 @@ function CheckoutPageInner() {
         MaintenanceFeasibilityIssue[]
     >([]);
     const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
+    const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
 
@@ -254,10 +255,10 @@ function CheckoutPageInner() {
 
     // Redirect if cart is empty
     useEffect(() => {
-        if (items.length === 0 && currentStep !== "cart") {
+        if (!isLeavingAfterSubmit && items.length === 0 && currentStep !== "cart") {
             router.push("/catalog");
         }
-    }, [items.length, currentStep, router]);
+    }, [items.length, currentStep, isLeavingAfterSubmit, router]);
 
     const currentStepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
@@ -434,6 +435,7 @@ function CheckoutPageInner() {
             });
 
             localStorage.removeItem(CHECKOUT_STORAGE_KEY);
+            setIsLeavingAfterSubmit(true);
             clearCart();
             router.push(`/orders/${result.orderId}`);
         } catch (error) {
