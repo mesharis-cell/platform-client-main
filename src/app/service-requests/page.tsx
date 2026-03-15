@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientNav } from "@/components/client-nav";
+import { ClientHeader } from "@/components/client-header";
 import { useClientServiceRequests, useCreateServiceRequest } from "@/hooks/use-service-requests";
 import { useCatalogAsset } from "@/hooks/use-catalog";
 import { useSearchAssets } from "@/hooks/use-assets";
@@ -66,7 +67,7 @@ const SR_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 const COMMERCIAL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-    INTERNAL: { label: "Internal", color: "bg-slate-100 text-slate-700 border-slate-300" },
+    INTERNAL: { label: "Internal", color: "bg-muted text-foreground border-border" },
     PENDING_QUOTE: { label: "Pending Quote", color: "bg-blue-100 text-blue-700 border-blue-300" },
     QUOTED: { label: "Quoted", color: "bg-purple-100 text-purple-700 border-purple-300" },
     QUOTE_APPROVED: {
@@ -199,279 +200,258 @@ export default function ClientServiceRequestsPage() {
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/30 to-background">
-                {/* Sticky Header */}
-                <div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                                    Service Requests
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Track maintenance, reskin, and refurbishment requests
-                                </p>
-                            </div>
-                            <Dialog
-                                open={createOpen}
-                                onOpenChange={(open) => {
-                                    setCreateOpen(open);
-                                    if (!open) resetCreateForm();
-                                }}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button className="gap-2">
-                                        <Plus className="h-4 w-4" />
-                                        New Request
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-lg">
-                                    <DialogHeader>
-                                        <DialogTitle>Create Service Request</DialogTitle>
-                                        <DialogDescription>
-                                            Submit a new maintenance or service request.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="md:col-span-2">
-                                            <Label>
-                                                Title <span className="text-destructive">*</span>
-                                            </Label>
-                                            <Input
-                                                value={title}
-                                                onChange={(e) => setTitle(e.target.value)}
-                                                placeholder="Request title"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Type</Label>
-                                            <Select
-                                                value={requestType}
-                                                onValueChange={(v) =>
-                                                    setRequestType(v as ServiceRequestType)
-                                                }
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {REQUEST_TYPES.map((t) => (
-                                                        <SelectItem key={t} value={t}>
-                                                            {t.replace(/_/g, " ")}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        {/* Asset picker */}
-                                        <div className="md:col-span-2">
-                                            <Label>
-                                                Asset to Service{" "}
-                                                <span className="text-destructive">*</span>
-                                            </Label>
-                                            {hasPrefilledAsset ? (
-                                                <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
-                                                    {loadingPrefilledAsset ? (
-                                                        <span className="text-sm">Loading...</span>
-                                                    ) : (
-                                                        <>
-                                                            <div>
-                                                                <p className="font-semibold text-sm">
-                                                                    {prefilledAsset?.name}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground font-mono">
-                                                                    {prefilledAsset?.id}
-                                                                </p>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            ) : relatedAssetId ? (
-                                                <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
+            <ClientHeader
+                icon={Wrench}
+                title="Service Requests"
+                description="Maintenance, repairs, and custom work"
+                actions={
+                    <Dialog
+                        open={createOpen}
+                        onOpenChange={(open) => {
+                            setCreateOpen(open);
+                            if (!open) resetCreateForm();
+                        }}
+                    >
+                        <DialogTrigger asChild>
+                            <Button className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                New Request
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                                <DialogTitle>Create Service Request</DialogTitle>
+                                <DialogDescription>
+                                    Submit a new maintenance or service request.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <Label>
+                                        Title <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="Request title"
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Type</Label>
+                                    <Select
+                                        value={requestType}
+                                        onValueChange={(v) =>
+                                            setRequestType(v as ServiceRequestType)
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {REQUEST_TYPES.map((t) => (
+                                                <SelectItem key={t} value={t}>
+                                                    {t.replace(/_/g, " ")}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {/* Asset picker */}
+                                <div className="md:col-span-2">
+                                    <Label>
+                                        Asset to Service <span className="text-destructive">*</span>
+                                    </Label>
+                                    {hasPrefilledAsset ? (
+                                        <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
+                                            {loadingPrefilledAsset ? (
+                                                <span className="text-sm">Loading...</span>
+                                            ) : (
+                                                <>
                                                     <div>
                                                         <p className="font-semibold text-sm">
-                                                            {itemName}
+                                                            {prefilledAsset?.name}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground font-mono">
-                                                            {relatedAssetId}
+                                                            {prefilledAsset?.id}
                                                         </p>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setRelatedAssetId("");
-                                                            setItemName("");
-                                                            setAssetSearchQuery("");
-                                                        }}
-                                                        className="text-muted-foreground hover:text-destructive transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="relative mt-1">
-                                                    <div className="relative">
-                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                        <Input
-                                                            placeholder="Search your assets..."
-                                                            value={assetSearchQuery}
-                                                            onChange={(e) => {
-                                                                setAssetSearchQuery(e.target.value);
-                                                                setShowAssetDropdown(
-                                                                    e.target.value.length >= 2
-                                                                );
-                                                            }}
-                                                            onFocus={() =>
-                                                                assetSearchQuery.length >= 2 &&
-                                                                setShowAssetDropdown(true)
-                                                            }
-                                                            onBlur={() =>
-                                                                setTimeout(
-                                                                    () =>
-                                                                        setShowAssetDropdown(false),
-                                                                    200
-                                                                )
-                                                            }
-                                                            className="pl-9"
-                                                        />
-                                                        {isSearchingAssets && (
-                                                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                                                        )}
-                                                    </div>
-                                                    {showAssetDropdown && (
-                                                        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
-                                                            {searchedAssets.length > 0 ? (
-                                                                searchedAssets.map((asset) => (
-                                                                    <button
-                                                                        key={asset.id}
-                                                                        type="button"
-                                                                        className="w-full px-3 py-2.5 text-left hover:bg-muted transition-colors flex items-center gap-3"
-                                                                        onClick={() => {
-                                                                            setRelatedAssetId(
-                                                                                asset.id
-                                                                            );
-                                                                            setItemName(asset.name);
-                                                                            setAssetSearchQuery("");
-                                                                            setShowAssetDropdown(
-                                                                                false
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        {asset.images?.[0]?.url ? (
-                                                                            <img
-                                                                                src={
-                                                                                    asset.images[0]
-                                                                                        .url
-                                                                                }
-                                                                                alt={asset.name}
-                                                                                className="w-9 h-9 rounded object-cover border"
-                                                                            />
-                                                                        ) : (
-                                                                            <div className="w-9 h-9 rounded bg-muted flex items-center justify-center shrink-0">
-                                                                                <Wrench className="h-4 w-4 text-muted-foreground" />
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="text-sm font-medium truncate">
-                                                                                {asset.name}
-                                                                            </p>
-                                                                            <p className="text-xs text-muted-foreground">
-                                                                                {asset.category}
-                                                                            </p>
-                                                                        </div>
-                                                                    </button>
-                                                                ))
-                                                            ) : (
-                                                                <p className="p-3 text-sm text-muted-foreground text-center">
-                                                                    {assetSearchQuery.length < 2
-                                                                        ? "Type at least 2 characters to search"
-                                                                        : "No assets found"}
-                                                                </p>
-                                                            )}
-                                                        </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : relatedAssetId ? (
+                                        <div className="mt-1 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between">
+                                            <div>
+                                                <p className="font-semibold text-sm">{itemName}</p>
+                                                <p className="text-xs text-muted-foreground font-mono">
+                                                    {relatedAssetId}
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setRelatedAssetId("");
+                                                    setItemName("");
+                                                    setAssetSearchQuery("");
+                                                }}
+                                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="relative mt-1">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search your assets..."
+                                                    value={assetSearchQuery}
+                                                    onChange={(e) => {
+                                                        setAssetSearchQuery(e.target.value);
+                                                        setShowAssetDropdown(
+                                                            e.target.value.length >= 2
+                                                        );
+                                                    }}
+                                                    onFocus={() =>
+                                                        assetSearchQuery.length >= 2 &&
+                                                        setShowAssetDropdown(true)
+                                                    }
+                                                    onBlur={() =>
+                                                        setTimeout(
+                                                            () => setShowAssetDropdown(false),
+                                                            200
+                                                        )
+                                                    }
+                                                    className="pl-9"
+                                                />
+                                                {isSearchingAssets && (
+                                                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            {showAssetDropdown && (
+                                                <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                                                    {searchedAssets.length > 0 ? (
+                                                        searchedAssets.map((asset) => (
+                                                            <button
+                                                                key={asset.id}
+                                                                type="button"
+                                                                className="w-full px-3 py-2.5 text-left hover:bg-muted transition-colors flex items-center gap-3"
+                                                                onClick={() => {
+                                                                    setRelatedAssetId(asset.id);
+                                                                    setItemName(asset.name);
+                                                                    setAssetSearchQuery("");
+                                                                    setShowAssetDropdown(false);
+                                                                }}
+                                                            >
+                                                                {asset.images?.[0]?.url ? (
+                                                                    <img
+                                                                        src={asset.images[0].url}
+                                                                        alt={asset.name}
+                                                                        className="w-9 h-9 rounded object-cover border"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded bg-muted flex items-center justify-center shrink-0">
+                                                                        <Wrench className="h-4 w-4 text-muted-foreground" />
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium truncate">
+                                                                        {asset.name}
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {asset.category}
+                                                                    </p>
+                                                                </div>
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <p className="p-3 text-sm text-muted-foreground text-center">
+                                                            {assetSearchQuery.length < 2
+                                                                ? "Type at least 2 characters to search"
+                                                                : "No assets found"}
+                                                        </p>
                                                     )}
                                                 </div>
                                             )}
                                         </div>
-                                        <div>
-                                            <Label>Quantity</Label>
-                                            <Input
-                                                type="number"
-                                                min={1}
-                                                value={itemQuantity}
-                                                onChange={(e) =>
-                                                    setItemQuantity(Number(e.target.value) || 1)
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Refurb Days</Label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="Optional"
-                                                value={itemRefurbDays}
-                                                onChange={(e) => setItemRefurbDays(e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Start Date</Label>
-                                            <Input
-                                                type="datetime-local"
-                                                value={requestedStartAt}
-                                                onChange={(e) =>
-                                                    setRequestedStartAt(e.target.value)
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Due Date</Label>
-                                            <Input
-                                                type="datetime-local"
-                                                value={requestedDueAt}
-                                                onChange={(e) => setRequestedDueAt(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <Label>Item Notes</Label>
-                                            <Input
-                                                value={itemNotes}
-                                                onChange={(e) => setItemNotes(e.target.value)}
-                                                placeholder="Optional notes"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <Label>Description</Label>
-                                            <Textarea
-                                                value={description}
-                                                onChange={(e) => setDescription(e.target.value)}
-                                                placeholder="Optional description"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end gap-2 mt-2">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setCreateOpen(false)}
-                                            disabled={createServiceRequest.isPending}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            onClick={handleCreate}
-                                            disabled={createServiceRequest.isPending}
-                                        >
-                                            {createServiceRequest.isPending
-                                                ? "Creating..."
-                                                : "Create Request"}
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
-                    </div>
-                </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <Label>Quantity</Label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        value={itemQuantity}
+                                        onChange={(e) =>
+                                            setItemQuantity(Number(e.target.value) || 1)
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Refurb Days</Label>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        placeholder="Optional"
+                                        value={itemRefurbDays}
+                                        onChange={(e) => setItemRefurbDays(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Start Date</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={requestedStartAt}
+                                        onChange={(e) => setRequestedStartAt(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Due Date</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={requestedDueAt}
+                                        onChange={(e) => setRequestedDueAt(e.target.value)}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Label>Item Notes</Label>
+                                    <Input
+                                        value={itemNotes}
+                                        onChange={(e) => setItemNotes(e.target.value)}
+                                        placeholder="Optional notes"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Label>Description</Label>
+                                    <Textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Optional description"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setCreateOpen(false)}
+                                    disabled={createServiceRequest.isPending}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleCreate}
+                                    disabled={createServiceRequest.isPending}
+                                >
+                                    {createServiceRequest.isPending
+                                        ? "Creating..."
+                                        : "Create Request"}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                }
+            />
 
+            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/30 to-background">
                 <div className="container mx-auto px-6 py-8">
                     {/* Filter Bar */}
                     <Card className="bg-card/80 backdrop-blur-sm border-border/40 mb-6">

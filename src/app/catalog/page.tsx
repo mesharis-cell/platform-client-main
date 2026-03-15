@@ -3,7 +3,15 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Boxes, ChevronLeft, ChevronRight, Layers, Package, Search, Tag } from "lucide-react";
+import {
+    AlertCircle,
+    Boxes,
+    ChevronLeft,
+    ChevronRight,
+    Layers,
+    Package,
+    Search,
+} from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,65 +59,53 @@ function CatalogCard({ item }: { item: CatalogItem }) {
                         </div>
                     )}
                 </div>
-                <CardContent className="space-y-4 p-5">
+                <CardContent className="space-y-3 p-5">
                     <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{item.type === "family" ? "Family" : "Collection"}</Badge>
-                        {item.type === "family" && (
-                            <Badge variant="outline">{item.stockMode}</Badge>
-                        )}
-                        {item.brand && (
-                            <Badge variant="outline">
-                                <Tag className="mr-1 h-3 w-3" />
-                                {item.brand.name}
-                            </Badge>
-                        )}
+                        {item.brand && <Badge variant="secondary">{item.brand.name}</Badge>}
+                        {item.type === "family" &&
+                            (item.conditionSummary.red > 0 || item.conditionSummary.orange > 0) && (
+                                <Badge
+                                    variant="outline"
+                                    className={
+                                        item.conditionSummary.red > 0
+                                            ? "bg-red-500/10 text-red-700 border-red-500/20 text-[10px]"
+                                            : "bg-amber-500/10 text-amber-700 border-amber-500/20 text-[10px]"
+                                    }
+                                >
+                                    <AlertCircle className="mr-1 h-2.5 w-2.5" />
+                                    {item.conditionSummary.red > 0
+                                        ? `${item.conditionSummary.red} need repair`
+                                        : `${item.conditionSummary.orange} minor issues`}
+                                </Badge>
+                            )}
                     </div>
 
                     <div>
-                        <h2 className="text-xl font-semibold">{item.name}</h2>
-                        {item.description && (
-                            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                                {item.description}
-                            </p>
-                        )}
+                        <h2 className="text-lg font-semibold">{item.name}</h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            {item.category || "Uncategorized"}
+                        </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                        <span>{item.category || "Uncategorized"}</span>
-                        {item.type === "family" ? (
-                            <>
-                                <span>{item.availableQuantity} available</span>
-                                <span>{item.stockRecordCount} stock records</span>
-                            </>
-                        ) : (
-                            <span>{item.itemCount} items</span>
-                        )}
-                    </div>
-
-                    {item.type === "family" && (
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="rounded-lg border p-3">
-                                <p className="text-xs uppercase text-muted-foreground">
-                                    Total quantity
-                                </p>
-                                <p className="text-lg font-semibold">{item.totalQuantity}</p>
+                    {item.type === "family" ? (
+                        <div className="flex items-center gap-4 text-sm">
+                            <div>
+                                <span className="font-semibold text-emerald-600">
+                                    {item.availableQuantity}
+                                </span>
+                                <span className="text-muted-foreground"> available</span>
                             </div>
-                            <div className="rounded-lg border p-3">
-                                <p className="text-xs uppercase text-muted-foreground">
-                                    Condition issues
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {item.conditionSummary.orange + item.conditionSummary.red}
-                                </p>
-                            </div>
+                            <span className="text-muted-foreground text-xs">
+                                of {item.totalQuantity}
+                            </span>
                         </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">{item.itemCount} items</p>
                     )}
 
-                    <div className="pt-1">
-                        <Button className="w-full" variant="outline">
-                            {item.type === "family" ? "Browse stock" : "View collection"}
-                        </Button>
-                    </div>
+                    <Button className="w-full" variant="outline" size="sm">
+                        {item.type === "family" ? "View items" : "View collection"}
+                    </Button>
                 </CardContent>
             </Link>
         </Card>
@@ -160,12 +156,10 @@ export default function CatalogPage() {
             <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
                 <div className="border-b border-border bg-card/70 backdrop-blur-sm">
                     <div className="mx-auto max-w-7xl px-8 py-10">
-                        <Badge className="mb-4">Asset Catalog</Badge>
-                        <h1 className="text-5xl font-bold tracking-tight">Browse by family</h1>
-                        <p className="mt-3 max-w-3xl text-muted-foreground">
-                            Families are the catalog identity. Checkout still uses the underlying
-                            stock records, so you can browse by family and select the exact stock
-                            row before ordering.
+                        <Badge className="mb-4">Catalog</Badge>
+                        <h1 className="text-4xl font-bold tracking-tight">Browse items</h1>
+                        <p className="mt-3 max-w-2xl text-muted-foreground">
+                            Find the items you need, check availability, and add them to your order.
                         </p>
                         <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted-foreground">
                             <span>{catalogData?.totalFamilies ?? 0} families</span>

@@ -159,7 +159,8 @@ export function QuoteReviewSection({
                             </p>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Assets will be reserved for your event dates and preparation will begin.
+                            Assets will be reserved for your installation dates and preparation will
+                            begin.
                         </p>
                     </div>
                     <DialogFooter>

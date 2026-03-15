@@ -370,7 +370,7 @@ export default function InboundRequestDetailsPage({ params }: { params: Promise<
 
                                 {/* COMPLETED */}
                                 {request.request_status === "COMPLETED" && (
-                                    <Card className="p-6 bg-slate-500/5 border-slate-500/20">
+                                    <Card className="p-6 bg-muted/50 border-border">
                                         <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
                                             <CheckCircle2 className="w-4 h-4" />
                                             Completed

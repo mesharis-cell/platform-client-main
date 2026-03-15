@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<
 > = {
     DRAFT: {
         label: "DRAFT",
-        color: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+        color: "bg-muted/50 text-muted-foreground border-border",
     },
     SUBMITTED: {
         label: "SUBMITTED",
@@ -104,7 +104,7 @@ const STATUS_CONFIG: Record<
     },
     CLOSED: {
         label: "CLOSED",
-        color: "bg-slate-600/10 text-slate-700 border-slate-600/20",
+        color: "bg-muted/50 text-foreground border-border",
     },
 };
 

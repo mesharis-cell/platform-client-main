@@ -50,16 +50,17 @@ import { useCountries } from "@/hooks/use-countries";
 import { useToken } from "@/lib/auth/use-token";
 import { useCompany } from "@/hooks/use-companies";
 import {
+    useFeasibilityConfig,
     useMaintenanceFeasibilityCheck,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
 
-type Step = "cart" | "event" | "venue" | "contact" | "review";
+type Step = "cart" | "installation" | "venue" | "contact" | "review";
 
 const STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "cart", label: "Order Review", icon: ShoppingCart },
-    { key: "event", label: "Event Details", icon: Calendar },
-    { key: "venue", label: "Venue Info", icon: MapPin },
+    { key: "installation", label: "Installation Details", icon: Calendar },
+    { key: "venue", label: "Installation Location", icon: MapPin },
     { key: "contact", label: "Point of Contact", icon: User },
     { key: "review", label: "Review", icon: FileText },
 ];
@@ -169,11 +170,24 @@ function CheckoutPageInner() {
         currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
 
-    // Calculate minimum allowed date (Today + 6 days)
-    // "disable prev data also 5 days after current date. measn including current and 5 days after today will be disable."
+    // Fetch resolved feasibility config (platform default + company override)
+    const { data: feasibilityConfig } = useFeasibilityConfig();
+
+    // Calculate minimum allowed date from actual feasibility config
     const calculateMinDate = () => {
+        const leadHours = feasibilityConfig?.minimum_lead_hours ?? 24;
         const date = new Date();
-        date.setDate(date.getDate() + 6);
+        date.setTime(date.getTime() + leadHours * 60 * 60 * 1000);
+
+        // If weekends are excluded, skip forward past any weekend days
+        if (feasibilityConfig?.exclude_weekends) {
+            const weekendDays = new Set(feasibilityConfig.weekend_days ?? [0, 6]);
+            // Advance past weekend days so the minimum selectable date is a business day
+            while (weekendDays.has(date.getDay())) {
+                date.setDate(date.getDate() + 1);
+            }
+        }
+
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
@@ -266,7 +280,7 @@ function CheckoutPageInner() {
         switch (currentStep) {
             case "cart":
                 return items.length > 0;
-            case "event":
+            case "installation":
                 return (
                     formData.event_start_date &&
                     formData.event_end_date &&
@@ -307,7 +321,7 @@ function CheckoutPageInner() {
             return;
         }
 
-        if (currentStep === "event" && redItems.length > 0) {
+        if (currentStep === "installation" && redItems.length > 0) {
             try {
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
                     items: redItems.map((item) => ({
@@ -685,9 +699,9 @@ function CheckoutPageInner() {
                     )}
 
                     {/* Step 2: Event Details */}
-                    {currentStep === "event" && (
+                    {currentStep === "installation" && (
                         <motion.div
-                            key="event"
+                            key="installation"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
@@ -695,9 +709,9 @@ function CheckoutPageInner() {
                             className="space-y-6"
                         >
                             <div>
-                                <h2 className="text-3xl font-bold mb-2">Event Details</h2>
+                                <h2 className="text-3xl font-bold mb-2">Installation Details</h2>
                                 <p className="text-muted-foreground">
-                                    When do you need these assets?
+                                    When do you need these assets to be installed?
                                 </p>
                             </div>
 

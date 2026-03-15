@@ -67,10 +67,15 @@ const buildSearchParams = (params: Record<string, string | number | undefined>) 
 
 async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogListResponse> {
     try {
-        const query = {
+        const requestedPage = params.page || 1;
+        const limit = params.limit || 24;
+
+        const familyQuery: Record<string, string | undefined> = {
             brand: params.brand,
             category: params.category,
             search_term: params.search_term,
+            limit: String(limit),
+            page: String(requestedPage),
         };
 
         const shouldFetchFamilies = params.type !== "collection";
@@ -78,12 +83,14 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 
         const [familyResponse, collectionResponse] = await Promise.all([
             shouldFetchFamilies
-                ? apiClient.get(`/operations/v1/asset-family?${buildSearchParams(query)}`)
+                ? apiClient.get(`/operations/v1/asset-family?${buildSearchParams(familyQuery)}`)
                 : Promise.resolve(null),
             shouldFetchCollections
                 ? apiClient.get(
                       `/client/v1/catalog?${buildSearchParams({
-                          ...query,
+                          brand: params.brand,
+                          category: params.category,
+                          search_term: params.search_term,
                           type: "collection",
                       })}`
                   )
@@ -91,9 +98,8 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         ]);
 
         const families = familyResponse?.data?.data || [];
+        const familyMeta = familyResponse?.data?.meta || { total: 0, page: 1, limit };
         const collections = collectionResponse?.data?.data?.collections || [];
-        const requestedPage = params.page || 1;
-        const limit = params.limit || 24;
 
         const familyItems = families.map((family: any) => ({
             type: "family" as const,
@@ -150,6 +156,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             itemCount: Number(collection.assets?.length || 0),
         }));
 
+        // Families are server-paginated; collections are fetched in full (typically small count)
         const items =
             params.type === "family"
                 ? familyItems
@@ -157,18 +164,20 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                   ? collectionItems
                   : [...familyItems, ...collectionItems];
 
-        const start = (requestedPage - 1) * limit;
-        const pagedItems = items.slice(start, start + limit);
+        const totalItems =
+            params.type === "collection"
+                ? collectionItems.length
+                : Number(familyMeta.total) + (params.type === "all" ? collectionItems.length : 0);
 
         return {
             success: true,
-            items: pagedItems,
-            total: items.length,
-            totalFamilies: familyItems.length,
+            items,
+            total: totalItems,
+            totalFamilies: Number(familyMeta.total),
             totalCollections: collectionItems.length,
             limit,
             page: requestedPage,
-            totalPages: Math.max(1, Math.ceil(items.length / limit)),
+            totalPages: Math.max(1, Math.ceil(totalItems / limit)),
         };
     } catch (error) {
         throwApiError(error);

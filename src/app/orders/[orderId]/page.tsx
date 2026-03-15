@@ -294,12 +294,10 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isPendingApproval &&
                                             "Our management team is reviewing the pricing. You will receive your quote shortly."}
                                         {isQuoted && (
-                                            <>
-                                                <p>
-                                                    Your quote is ready! Review the pricing below
-                                                    and approve or decline.
-                                                </p>
-                                            </>
+                                            <span>
+                                                Your quote is ready! Review the pricing below and
+                                                approve or decline.
+                                            </span>
                                         )}
                                         {isApproved &&
                                             "Your order is proceeding to invoicing. We will begin fulfillment preparations."}
@@ -711,12 +709,20 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                     {sr.service_request_id}
                                                                 </button>
                                                                 <div className="flex items-center gap-2">
-                                                                    <Badge className="font-mono text-[10px] border">
+                                                                    <Badge
+                                                                        variant={
+                                                                            sr.request_status ===
+                                                                            "COMPLETED"
+                                                                                ? "default"
+                                                                                : "outline"
+                                                                        }
+                                                                        className="font-mono text-[10px] border"
+                                                                    >
                                                                         {sr.request_status}
                                                                     </Badge>
-                                                                    <Badge className="font-mono text-[10px] border">
+                                                                    {/* <Badge className="font-mono text-[10px] border">
                                                                         {sr.commercial_status}
-                                                                    </Badge>
+                                                                    </Badge> */}
                                                                 </div>
                                                             </div>
                                                             <p className="text-xs text-muted-foreground mt-2 font-mono">
