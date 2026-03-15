@@ -394,6 +394,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                         className="mb-6"
+                        data-testid="client-order-hero"
                     >
                         <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
                             <div className="flex items-center justify-between">
@@ -436,6 +437,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
+                                    data-testid="client-order-quote-review"
                                 >
                                     <QuoteReviewSection
                                         order={order}

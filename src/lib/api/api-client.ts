@@ -1,3 +1,5 @@
+/* global globalThis */
+
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 
@@ -34,9 +36,30 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
     failedQueue = [];
 };
 
+const getBrowserLocation = (): { href: string; pathname: string } | null => {
+    const runtimeGlobal =
+        typeof globalThis !== "undefined"
+            ? (globalThis as unknown as Record<string, unknown>)
+            : undefined;
+    const maybeLocation = runtimeGlobal?.["location"] as
+        | {
+              href?: string;
+              pathname?: string;
+          }
+        | undefined;
+    if (!maybeLocation?.href || !maybeLocation.pathname) {
+        return null;
+    }
+    return {
+        href: maybeLocation.href,
+        pathname: maybeLocation.pathname,
+    };
+};
+
 const redirectTo = (path: string) => {
-    if (typeof globalThis.location !== "undefined") {
-        globalThis.location.href = path;
+    const location = getBrowserLocation();
+    if (location) {
+        location.href = path;
     }
 };
 
@@ -44,11 +67,8 @@ let isRedirectingToMaintenance = false;
 
 const redirectToMaintenance = (error: AxiosError) => {
     if (isRedirectingToMaintenance) return;
-    if (
-        typeof globalThis.location !== "undefined" &&
-        globalThis.location.pathname === "/maintenance"
-    )
-        return;
+    const location = getBrowserLocation();
+    if (location?.pathname === "/maintenance") return;
 
     isRedirectingToMaintenance = true;
 
@@ -67,7 +87,9 @@ const redirectToMaintenance = (error: AxiosError) => {
     const params = new URLSearchParams();
     if (payload?.message) params.set("message", payload.message);
     if (payload?.data?.maintenance?.until) params.set("until", payload.data.maintenance.until);
-    globalThis.location.href = `/maintenance${params.toString() ? `?${params.toString()}` : ""}`;
+    if (location) {
+        location.href = `/maintenance${params.toString() ? `?${params.toString()}` : ""}`;
+    }
 };
 
 // Token management functions

@@ -1,10 +1,12 @@
-// Phase 4: Collections & Catalog System TypeScript Types
-
-import type { Condition, AssetStatus, HandlingTag, AssetCategory, AssetImage } from "./asset";
-
-// ========================================
-// Collection Types
-// ========================================
+import type {
+    Condition,
+    AssetStatus,
+    HandlingTag,
+    AssetCategory,
+    AssetImage,
+    TrackingMethod,
+} from "./asset";
+import type { AssetFamilyConditionSummary, AssetFamilySummary, StockMode } from "./asset-family";
 
 export interface Collection {
     id: string;
@@ -42,8 +44,8 @@ export interface CollectionItemWithAsset extends CollectionItem {
         name: string;
         category: string;
         images: string[];
-        volume: string; // decimal as string
-        weight: string; // decimal as string
+        volume: string;
+        weight: string;
         status: AssetStatus;
         condition: Condition;
         availableQuantity: number;
@@ -51,10 +53,6 @@ export interface CollectionItemWithAsset extends CollectionItem {
         handlingTags: HandlingTag[];
     };
 }
-
-// ========================================
-// Collection Request/Response Types
-// ========================================
 
 export interface CreateCollectionRequest {
     company: string;
@@ -100,10 +98,6 @@ export interface CollectionDetailsResponse {
     };
 }
 
-// ========================================
-// Collection Item Request/Response Types
-// ========================================
-
 export interface AddCollectionItemRequest {
     asset: string;
     defaultQuantity: number;
@@ -114,10 +108,6 @@ export interface UpdateCollectionItemRequest {
     defaultQuantity?: number;
     notes?: string | null;
 }
-
-// ========================================
-// Collection Availability Types
-// ========================================
 
 export interface CollectionAvailabilityItem {
     assetId: string;
@@ -134,15 +124,10 @@ export interface CollectionAvailabilityResponse {
     items: CollectionAvailabilityItem[];
 }
 
-// ========================================
-// Catalog Types
-// ========================================
-
-export interface CatalogAssetItem {
-    type: "asset";
+export interface CatalogAssetFamilyItem {
+    type: "family";
     id: string;
     name: string;
-    status: AssetStatus;
     description: string | null;
     category: string;
     images: string[];
@@ -151,18 +136,18 @@ export interface CatalogAssetItem {
         name: string;
         logoUrl?: string | null;
     } | null;
-    availableQuantity: number;
+    stockMode: StockMode;
+    stockRecordCount: number;
     totalQuantity: number;
-    condition: Condition;
-    condition_notes?: string | null;
-    refurbDaysEstimate?: number | null; // Feedback #2: Days needed for refurbishment
-    lastScannedAt?: string | null;
-    volume: string; // decimal as string
-    weight: string; // decimal as string
-    dimensionLength: string; // decimal as string (cm)
-    dimensionWidth: string; // decimal as string (cm)
-    dimensionHeight: string; // decimal as string (cm)
-    tracking_method: string;
+    availableQuantity: number;
+    statusSummary: AssetFamilySummary;
+    conditionSummary: AssetFamilyConditionSummary;
+    volume: string;
+    weight: string;
+    dimensionLength: string;
+    dimensionWidth: string;
+    dimensionHeight: string;
+    packaging?: string | null;
 }
 
 export interface CatalogCollectionItem {
@@ -180,14 +165,14 @@ export interface CatalogCollectionItem {
     itemCount: number;
 }
 
-export type CatalogItem = CatalogAssetItem | CatalogCollectionItem;
+export type CatalogItem = CatalogAssetFamilyItem | CatalogCollectionItem;
 
 export interface CatalogListParams {
     company?: string;
     brand?: string;
     category?: string;
     search_term?: string;
-    type?: "asset" | "collection" | "all";
+    type?: "family" | "collection" | "all";
     limit?: number;
     page?: number;
 }
@@ -196,19 +181,21 @@ export interface CatalogListResponse {
     success: boolean;
     items: CatalogItem[];
     total: number;
-    totalAssets: number;
+    totalFamilies: number;
     totalCollections: number;
     limit: number;
     page: number;
     totalPages: number;
 }
 
-// ========================================
-// Catalog Detail Types
-// ========================================
-
 export interface CatalogAssetDetails {
     id: string;
+    familyId?: string | null;
+    family?: {
+        id: string;
+        name: string;
+        stockMode: StockMode;
+    } | null;
     name: string;
     description: string | null;
     category: string;
@@ -227,18 +214,80 @@ export interface CatalogAssetDetails {
     totalQuantity: number;
     condition: Condition;
     conditionNotes?: string | null;
-    refurbDaysEstimate?: number | null; // Feedback #2: Days needed for refurbishment
+    refurbDaysEstimate?: number | null;
     lastScannedAt?: string | null;
-    volume: string; // decimal as string
-    weight: string; // decimal as string
-    dimensionLength: string; // decimal as string
-    dimensionWidth: string; // decimal as string
-    dimensionHeight: string; // decimal as string
+    volume: string;
+    weight: string;
+    dimensionLength: string;
+    dimensionWidth: string;
+    dimensionHeight: string;
     handlingTags: HandlingTag[];
+    trackingMethod?: TrackingMethod;
+    qrCode?: string | null;
+}
+
+export interface CatalogFamilyStockItem {
+    id: string;
+    familyId: string | null;
+    name: string;
+    description: string | null;
+    category: string;
+    images: AssetImage[];
+    availableQuantity: number;
+    totalQuantity: number;
+    condition: Condition;
+    conditionNotes?: string | null;
+    refurbDaysEstimate?: number | null;
+    lastScannedAt?: string | null;
+    volume: string;
+    weight: string;
+    dimensionLength: string;
+    dimensionWidth: string;
+    dimensionHeight: string;
+    handlingTags: HandlingTag[];
+    trackingMethod: TrackingMethod;
+    status: AssetStatus | string;
+    qrCode?: string | null;
+}
+
+export interface CatalogAssetFamilyDetails {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string;
+    images: AssetImage[];
+    brand: {
+        id: string | null;
+        name: string | null;
+    } | null;
+    company: {
+        id: string | null;
+        name: string | null;
+    } | null;
+    stockMode: StockMode;
+    packaging: string | null;
+    volume: string;
+    weight: string;
+    dimensionLength: string;
+    dimensionWidth: string;
+    dimensionHeight: string;
+    availableQuantity: number;
+    totalQuantity: number;
+    stockRecordCount: number;
+    statusSummary: AssetFamilySummary;
+    conditionSummary: AssetFamilyConditionSummary;
+    handlingTags: HandlingTag[];
+    stockRecords: CatalogFamilyStockItem[];
 }
 
 export interface CatalogCollectionItemDetail {
     id: string;
+    assetId: string;
+    family?: {
+        id: string;
+        name: string;
+        stockMode: StockMode;
+    } | null;
     name: string;
     category: string;
     images: string[];
@@ -246,13 +295,13 @@ export interface CatalogCollectionItemDetail {
     availableQuantity: number;
     totalQuantity: number;
     condition: Condition;
-    refurbDaysEstimate?: number | null; // Feedback #2: Days needed for refurbishment
-    volume: string; // decimal as string
-    weight: string; // decimal as string
-    dimensionLength: string; // decimal as string (cm)
-    dimensionWidth: string; // decimal as string (cm)
-    dimensionHeight: string; // decimal as string (cm)
-    isAvailable: boolean; // availableQuantity >= defaultQuantity
+    refurbDaysEstimate?: number | null;
+    volume: string;
+    weight: string;
+    dimensionLength: string;
+    dimensionWidth: string;
+    dimensionHeight: string;
+    isAvailable: boolean;
 }
 
 export interface CatalogCollectionDetails {
@@ -267,14 +316,19 @@ export interface CatalogCollectionDetails {
         logoUrl: string | null;
     } | null;
     items: CatalogCollectionItemDetail[];
-    totalVolume: string; // decimal as string (sum of items)
-    totalWeight: string; // decimal as string (sum of items)
-    isFullyAvailable: boolean; // all items available
+    totalVolume: string;
+    totalWeight: string;
+    isFullyAvailable: boolean;
 }
 
 export interface CatalogAssetDetailsResponse {
     success: boolean;
     asset: CatalogAssetDetails;
+}
+
+export interface CatalogAssetFamilyDetailsResponse {
+    success: boolean;
+    family: CatalogAssetFamilyDetails;
 }
 
 export interface CatalogCollectionDetailsResponse {

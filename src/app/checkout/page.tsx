@@ -274,10 +274,10 @@ function CheckoutPageInner() {
             case "venue":
                 return Boolean(
                     formData.venue_name &&
-                    formData.venue_country_id &&
-                    formData.venue_city_id &&
-                    formData.venue_address &&
-                    (!formData.requires_permit || formData.permit_owner)
+                        formData.venue_country_id &&
+                        formData.venue_city_id &&
+                        formData.venue_address &&
+                        (!formData.requires_permit || formData.permit_owner)
                 );
             case "contact":
                 return (
@@ -712,6 +712,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="eventStartDate"
                                                 type="date"
+                                                data-testid="checkout-event-start"
                                                 value={formData.event_start_date}
                                                 onChange={(e) => {
                                                     setFormData({
@@ -737,6 +738,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="eventEndDate"
                                                 type="date"
+                                                data-testid="checkout-event-end"
                                                 value={formData.event_end_date}
                                                 onChange={(e) => {
                                                     setFormData({
@@ -842,6 +844,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Input
                                             id="venueName"
+                                            data-testid="checkout-venue-name"
                                             value={formData.venue_name}
                                             onChange={(e) =>
                                                 setFormData({
@@ -889,7 +892,10 @@ function CheckoutPageInner() {
                                                 }}
                                                 disabled={!formData.venue_country_id}
                                             >
-                                                <SelectTrigger className="h-12 font-mono">
+                                                <SelectTrigger
+                                                    className="h-12 font-mono"
+                                                    data-testid="checkout-venue-city"
+                                                >
                                                     <SelectValue placeholder="Select city" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -916,6 +922,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Textarea
                                             id="venueAddress"
+                                            data-testid="checkout-venue-address"
                                             value={formData.venue_address}
                                             onChange={(e) =>
                                                 setFormData({
@@ -1172,6 +1179,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Input
                                             id="contactName"
+                                            data-testid="checkout-contact-name"
                                             value={formData.contact_name}
                                             onChange={(e) =>
                                                 setFormData({
@@ -1196,6 +1204,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="contactEmail"
                                                 type="email"
+                                                data-testid="checkout-contact-email"
                                                 value={formData.contact_email}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -1219,6 +1228,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="contactPhone"
                                                 type="tel"
+                                                data-testid="checkout-contact-phone"
                                                 value={formData.contact_phone}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -1632,6 +1642,7 @@ function CheckoutPageInner() {
                         disabled={currentStepIndex === 0}
                         className="gap-2 font-mono"
                         size="lg"
+                        data-testid="checkout-back"
                     >
                         <ChevronLeft className="h-4 w-4" />
                         Back
@@ -1652,6 +1663,7 @@ function CheckoutPageInner() {
                             }
                             className="gap-2 font-mono uppercase tracking-wide"
                             size="lg"
+                            data-testid="checkout-submit"
                         >
                             {isSubmitting ? "Submitting..." : "Submit Order"}
                             <Check className="h-4 w-4" />
@@ -1662,6 +1674,7 @@ function CheckoutPageInner() {
                             disabled={!canProceed() || maintenanceFeasibilityCheck.isPending}
                             className="gap-2 font-mono"
                             size="lg"
+                            data-testid="checkout-next"
                         >
                             Continue
                             <ChevronRight className="h-4 w-4" />

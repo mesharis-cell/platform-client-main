@@ -10,6 +10,8 @@
         "lint": "eslint \"**/*.{ts,tsx}\"",
         "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy -- --dispatch-namespace benro-testing",
         "deploy:build": "opennextjs-cloudflare build",
+        "e2e:smoke": "playwright test",
+        "e2e:smoke:headed": "playwright test --headed",
         "format": "prettier --write .",
         "typecheck": "tsc --noEmit",
         "predeploy": "bun run format && bun run lint && bun run typecheck"
@@ -101,6 +103,7 @@
         "zod": "^3.25.74"
     },
     "devDependencies": {
+        "@playwright/test": "^1.56.1",
         "@types/bcrypt": "^6.0.0",
         "@types/color": "^4.2.0",
         "@types/eslint": "^8.56.10",

@@ -276,6 +276,7 @@ export function FloatingCart() {
                                         onClick={handleCheckout}
                                         className="w-full gap-2 font-mono uppercase tracking-wide h-12"
                                         size="lg"
+                                        data-testid="cart-checkout"
                                     >
                                         <Cuboid className="h-4 w-4" />
                                         Proceed to Checkout
