@@ -59,7 +59,11 @@ export function useSubmitOrderFromCart() {
         mutationFn: async (data: any) => {
             try {
                 const response = await apiClient.post("/client/v1/order/submit-from-cart", data);
-                return response.data;
+                const payload = response.data?.data || {};
+                return {
+                    ...payload,
+                    orderId: payload.order_id,
+                };
             } catch (error) {
                 throwApiError(error);
             }
