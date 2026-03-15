@@ -148,7 +148,7 @@ export function OrderItemsList({
             <div className="space-y-3">
                 {items.map((item, index) => (
                     <OrderItemCard
-                        key={item.id}
+                        key={item.id || item.order_item.id || `${item.order_item.asset_id}-${index}`}
                         orderStatus={orderStatus}
                         item={item}
                         reskinList={reskinList}
