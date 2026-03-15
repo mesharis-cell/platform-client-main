@@ -122,12 +122,23 @@ test("client staging smoke covers existing order branches", async ({ page }) => 
         return;
     }
 
-    const firstOrderLink = page.locator('a[href^="/orders/"]').first();
-    if ((await firstOrderLink.count()) === 0) {
+    const orderLinks = page.locator('a[href^="/orders/"]');
+    const emptyState = page.getByText(/no orders found/i);
+
+    await expect
+        .poll(async () => {
+            const linkCount = await orderLinks.count();
+            const emptyCount = await emptyState.count();
+            return linkCount > 0 || emptyCount > 0;
+        })
+        .toBe(true);
+
+    if ((await orderLinks.count()) === 0) {
         await expect(page.getByText(/no orders found/i)).toBeVisible();
         return;
     }
-    await firstOrderLink.click();
+
+    await orderLinks.first().click();
     await page.waitForURL(/\/orders\//);
     await expect(page.getByTestId("client-order-hero")).toBeVisible();
 });
