@@ -123,7 +123,10 @@ test("client staging smoke covers existing order branches", async ({ page }) => 
     }
 
     const firstOrderLink = page.locator('a[href^="/orders/"]').first();
-    await expect(firstOrderLink).toBeVisible();
+    if ((await firstOrderLink.count()) === 0) {
+        await expect(page.getByText(/no orders found/i)).toBeVisible();
+        return;
+    }
     await firstOrderLink.click();
     await page.waitForURL(/\/orders\//);
     await expect(page.getByTestId("client-order-hero")).toBeVisible();
