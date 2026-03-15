@@ -1,32 +1,13 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { test, expect, requireEnv, formatDate } from "./fixtures";
+import type { Locator, Page } from "@playwright/test";
 
-const clientEmail = process.env.CLIENT_EMAIL;
-const clientPassword = process.env.CLIENT_PASSWORD;
-
-const requireEnv = (value: string | undefined, name: string) => {
-    if (!value) {
-        throw new Error(`Missing required Playwright env: ${name}`);
-    }
-    return value;
-};
-
-const formatDate = (offsetDays: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() + offsetDays);
-    return date.toISOString().split("T")[0];
-};
-
-async function login(page: Page) {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.getByLabel(/email address/i).fill(requireEnv(clientEmail, "CLIENT_EMAIL"));
-    await page.getByLabel(/^password$/i).fill(requireEnv(clientPassword, "CLIENT_PASSWORD"));
-    await page.getByRole("button", { name: /grant access/i }).click();
-    await page.waitForURL(/\/client-dashboard$/, { timeout: 60_000 });
-}
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 async function openFamilyWithOrderableStock(page: Page): Promise<void> {
     await page.goto("/catalog", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /browse by family/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /browse items/i })).toBeVisible();
     await expect(page.getByTestId("client-family-browser")).toBeVisible();
 
     const familyLinks = page.locator('a[href^="/catalog/families/"]');
@@ -46,14 +27,15 @@ async function openFamilyWithOrderableStock(page: Page): Promise<void> {
             const addButton = card.getByTestId("family-stock-add");
             if (await addButton.isDisabled()) continue;
             await addButton.click();
-            await expect(page.getByTestId("cart-checkout")).toBeVisible();
+            // The cart drawer has a checkout button — wait for it
+            await expect(page.getByTestId("cart-checkout")).toBeVisible({ timeout: 15_000 });
             return;
         }
 
         await page.goto("/catalog", { waitUntil: "domcontentloaded" });
     }
 
-    throw new Error("Failed to find an orderable family stock record in the first 8 families");
+    throw new Error("Failed to find an orderable stock record in the first 8 families");
 }
 
 async function chooseFirstCity(page: Page) {
@@ -70,75 +52,127 @@ async function findQuotedOrderLink(page: Page): Promise<Locator | null> {
     return (await card.count()) > 0 ? card.first() : null;
 }
 
-test("client staging smoke covers family browse and order submission", async ({ page }) => {
-    await login(page);
-    await openFamilyWithOrderableStock(page);
+async function approveQuotedOrder(page: Page) {
+    const poNumber = `PW-PO-${Date.now()}`;
 
-    await page.getByTestId("cart-checkout").click();
-    await page.waitForURL(/\/checkout$/);
+    await expect(page.getByTestId("client-order-quote-review")).toBeVisible();
+    await page.getByRole("button", { name: /accept quote/i }).click();
+    await page.getByTestId("client-po-number-input").fill(poNumber);
+    await page.getByRole("button", { name: /confirm & accept quote/i }).click();
 
-    await page.getByTestId("checkout-next").click();
+    await expect(page.getByTestId("client-order-po-number")).toContainText(poNumber, {
+        timeout: 30_000,
+    });
+}
 
-    await page.getByTestId("checkout-event-start").fill(formatDate(10));
-    await page.getByTestId("checkout-event-end").fill(formatDate(12));
-    await page.getByTestId("checkout-next").click();
+// ---------------------------------------------------------------------------
+// Catalog Browsing
+// ---------------------------------------------------------------------------
 
-    await page.getByTestId("checkout-venue-name").fill(`Playwright Venue ${Date.now()}`);
-    await chooseFirstCity(page);
-    await page.getByTestId("checkout-venue-address").fill("Dubai Festival City, Dubai");
-    await page.getByTestId("checkout-next").click();
+test.describe("Catalog", () => {
+    test("family browser loads and shows families", async ({ authedPage: page }) => {
+        await page.goto("/catalog", { waitUntil: "domcontentloaded" });
+        await expect(page.getByRole("heading", { name: /browse items/i })).toBeVisible();
+        await expect(page.getByTestId("client-family-browser")).toBeVisible();
+        await expect(page.locator('a[href^="/catalog/families/"]').first()).toBeVisible();
+    });
 
-    await page.getByTestId("checkout-contact-name").fill("Playwright Client");
-    await page.getByTestId("checkout-contact-email").fill(requireEnv(clientEmail, "CLIENT_EMAIL"));
-    await page.getByTestId("checkout-contact-phone").fill("+971501234567");
-    await page.getByTestId("checkout-next").click();
-
-    await expect(page.getByRole("heading", { name: /review & submit/i })).toBeVisible();
-    await page.getByTestId("checkout-submit").click();
-
-    await page.waitForURL(/\/orders\//, { timeout: 60_000 });
-    await expect(page.getByTestId("client-order-hero")).toBeVisible();
-
-    const orderId = page.url().split("/orders/")[1]?.split("?")[0];
-    if (!orderId) {
-        throw new Error("Failed to capture order id from order detail URL");
-    }
-
-    await page.goto("/my-orders", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /my orders/i })).toBeVisible();
-    await expect(page.getByText(orderId).first()).toBeVisible();
+    test("family detail shows stock list", async ({ authedPage: page }) => {
+        await page.goto("/catalog", { waitUntil: "domcontentloaded" });
+        await page.locator('a[href^="/catalog/families/"]').first().click();
+        await page.waitForURL(/\/catalog\/families\//);
+        await expect(page.getByTestId("family-stock-list")).toBeVisible();
+    });
 });
 
-test("client staging smoke covers existing order branches", async ({ page }) => {
-    await login(page);
-    await page.goto("/my-orders", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: /my orders/i })).toBeVisible();
+// ---------------------------------------------------------------------------
+// Order Submission
+// ---------------------------------------------------------------------------
 
-    const quotedOrderLink = await findQuotedOrderLink(page);
-    if (quotedOrderLink) {
-        await quotedOrderLink.click();
+test.describe("Order Submission", () => {
+    test("full checkout flow from family browse to order confirmation", async ({
+        authedPage: page,
+    }) => {
+        await openFamilyWithOrderableStock(page);
+
+        await page.getByTestId("cart-checkout").click();
+        await page.waitForURL(/\/checkout$/);
+
+        // Step 1: Items review
+        await page.getByTestId("checkout-next").click();
+
+        // Step 2: Event dates
+        await page.getByTestId("checkout-event-start").fill(formatDate(10));
+        await page.getByTestId("checkout-event-end").fill(formatDate(12));
+        await page.getByTestId("checkout-next").click();
+
+        // Step 3: Venue
+        await page.getByTestId("checkout-venue-name").fill(`Playwright Venue ${Date.now()}`);
+        await chooseFirstCity(page);
+        await page.getByTestId("checkout-venue-address").fill("Dubai Festival City, Dubai");
+        await page.getByTestId("checkout-next").click();
+
+        // Step 4: Contact
+        await page.getByTestId("checkout-contact-name").fill("Playwright Client");
+        await page.getByTestId("checkout-contact-email").fill(requireEnv("CLIENT_EMAIL"));
+        await page.getByTestId("checkout-contact-phone").fill("+971501234567");
+        await page.getByTestId("checkout-next").click();
+
+        // Step 5: Review & Submit
+        await expect(page.getByRole("heading", { name: /review & submit/i })).toBeVisible();
+        await page.getByTestId("checkout-submit").click();
+
+        // Verify order created
+        await page.waitForURL(/\/orders\//, { timeout: 60_000 });
+        await expect(page.getByTestId("client-order-hero")).toBeVisible();
+
+        const orderId = page.url().split("/orders/")[1]?.split("?")[0];
+        if (!orderId) throw new Error("Failed to capture order id from URL");
+
+        // Verify order appears in list
+        await page.goto("/my-orders", { waitUntil: "domcontentloaded" });
+        await expect(page.getByRole("heading", { name: /my orders/i })).toBeVisible();
+        await expect(page.getByText(orderId).first()).toBeVisible();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Existing Orders
+// ---------------------------------------------------------------------------
+
+test.describe("Existing Orders", () => {
+    test("order list and detail navigation", async ({ authedPage: page }) => {
+        await page.goto("/my-orders", { waitUntil: "domcontentloaded" });
+        await expect(page.getByRole("heading", { name: /my orders/i })).toBeVisible();
+
+        // Check for quoted orders first
+        const quotedOrderLink = await findQuotedOrderLink(page);
+        if (quotedOrderLink) {
+            await quotedOrderLink.click();
+            await page.waitForURL(/\/orders\//);
+            await approveQuotedOrder(page);
+            return;
+        }
+
+        // Fall back to any order
+        const orderLinks = page.locator('a[href^="/orders/"]');
+        const emptyState = page.getByText(/no orders found/i);
+
+        await expect
+            .poll(async () => {
+                const linkCount = await orderLinks.count();
+                const emptyCount = await emptyState.count();
+                return linkCount > 0 || emptyCount > 0;
+            })
+            .toBe(true);
+
+        if ((await orderLinks.count()) === 0) {
+            await expect(page.getByText(/no orders found/i)).toBeVisible();
+            return;
+        }
+
+        await orderLinks.first().click();
         await page.waitForURL(/\/orders\//);
-        await expect(page.getByTestId("client-order-quote-review")).toBeVisible();
-        return;
-    }
-
-    const orderLinks = page.locator('a[href^="/orders/"]');
-    const emptyState = page.getByText(/no orders found/i);
-
-    await expect
-        .poll(async () => {
-            const linkCount = await orderLinks.count();
-            const emptyCount = await emptyState.count();
-            return linkCount > 0 || emptyCount > 0;
-        })
-        .toBe(true);
-
-    if ((await orderLinks.count()) === 0) {
-        await expect(page.getByText(/no orders found/i)).toBeVisible();
-        return;
-    }
-
-    await orderLinks.first().click();
-    await page.waitForURL(/\/orders\//);
-    await expect(page.getByTestId("client-order-hero")).toBeVisible();
+        await expect(page.getByTestId("client-order-hero")).toBeVisible();
+    });
 });

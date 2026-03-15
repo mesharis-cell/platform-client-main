@@ -173,7 +173,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         DERIG: "bg-purple-500/10 text-purple-600 border-purple-500/30",
         AWAITING_RETURN: "bg-rose-500/10 text-rose-600 border-rose-500/30",
         RETURN_IN_TRANSIT: "bg-orange-500/10 text-orange-600 border-orange-500/30",
-        CLOSED: "bg-slate-600/10 text-slate-700 border-slate-600/20",
+        CLOSED: "bg-muted/50 text-foreground border-border",
     };
 
     // Individual state checks for precise UI control
@@ -405,6 +405,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     <p className="text-2xl font-bold font-mono tracking-wider">
                                         {order.order_id}
                                     </p>
+                                    {order.po_number && (
+                                        <p
+                                            className="mt-2 text-sm font-mono text-muted-foreground"
+                                            data-testid="client-order-po-number"
+                                        >
+                                            PO: {order.po_number}
+                                        </p>
+                                    )}
                                 </div>
                                 <Cuboid className="h-12 w-12 text-primary/20" />
                             </div>
@@ -443,8 +451,11 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         order={order}
                                         pricing={order.order_pricing}
                                         lineItems={order.line_items || []}
-                                        onApprove={async () => {
-                                            await approveQuote.mutateAsync({ orderId: order.id });
+                                        onApprove={async (poNumber: string) => {
+                                            await approveQuote.mutateAsync({
+                                                orderId: order.id,
+                                                poNumber,
+                                            });
                                         }}
                                         onDecline={async (reason: string) => {
                                             await declineQuote.mutateAsync({
@@ -1044,7 +1055,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.5 }}
                                 >
-                                    <Card className="p-6 bg-slate-500/5 border-slate-500/20">
+                                    <Card className="p-6 bg-muted/50 border-border">
                                         <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
                                             <CheckCircle2 className="w-4 h-4" />
                                             Thank You!

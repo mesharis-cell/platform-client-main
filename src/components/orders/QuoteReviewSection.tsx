@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,7 +29,7 @@ interface QuoteReviewSectionProps {
     pricing: Record<string, any>;
     lineItems: OrderLineItem[];
     hasReskinRequests?: boolean;
-    onApprove: () => Promise<void>;
+    onApprove: (poNumber: string) => Promise<void>;
     onDecline: (reason: string) => Promise<void>;
 }
 
@@ -42,14 +43,20 @@ export function QuoteReviewSection({
 }: QuoteReviewSectionProps) {
     const [approveDialogOpen, setApproveDialogOpen] = useState(false);
     const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
+    const [poNumber, setPoNumber] = useState(order.po_number || "");
     const [declineReason, setDeclineReason] = useState("");
     const [isApproving, setIsApproving] = useState(false);
     const [isDeclining, setIsDeclining] = useState(false);
 
     const handleApprove = async () => {
+        if (!poNumber.trim()) {
+            toast.error("Please enter a PO number before accepting the quote");
+            return;
+        }
+
         setIsApproving(true);
         try {
-            await onApprove();
+            await onApprove(poNumber.trim());
             toast.success("Quote accepted! Your order is confirmed.");
             setApproveDialogOpen(false);
         } catch (error: any) {
@@ -135,6 +142,22 @@ export function QuoteReviewSection({
                                 </p>
                             </div>
                         )}
+                        <div className="space-y-2">
+                            <Label htmlFor="client-po-number">
+                                Purchase Order Number <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="client-po-number"
+                                data-testid="client-po-number-input"
+                                value={poNumber}
+                                onChange={(e) => setPoNumber(e.target.value)}
+                                placeholder="Enter PO number"
+                                autoComplete="off"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                This PO number will be attached to the confirmed order.
+                            </p>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                             Assets will be reserved for your event dates and preparation will begin.
                         </p>

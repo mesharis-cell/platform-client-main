@@ -453,11 +453,19 @@ export function useClientApproveQuote() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ orderId, notes }: { orderId: string; notes?: string }) => {
+        mutationFn: async ({
+            orderId,
+            poNumber,
+            notes,
+        }: {
+            orderId: string;
+            poNumber: string;
+            notes?: string;
+        }) => {
             try {
                 const response = await apiClient.patch(
                     `/client/v1/order/${orderId}/approve-quote`,
-                    { notes }
+                    { po_number: poNumber, notes }
                 );
 
                 return response.data;

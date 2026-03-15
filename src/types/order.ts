@@ -219,6 +219,7 @@ export interface Order {
     truckPhotos: string[];
     // Job number (Phase 7)
     jobNumber?: string | null;
+    po_number?: string | null;
     // Status (Feedback #1: Separate financial from fulfillment)
     status: OrderStatus;
     financialStatus: FinancialStatus;
