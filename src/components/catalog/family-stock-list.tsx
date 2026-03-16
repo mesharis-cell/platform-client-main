@@ -48,12 +48,8 @@ export function FamilyStockList({
         openCart();
     };
 
-    const availableItems = stockRecords.filter(
-        (s) => s.availableQuantity > 0 && s.condition !== "RED"
-    );
-    const unavailableItems = stockRecords.filter(
-        (s) => s.availableQuantity < 1 || s.condition === "RED"
-    );
+    const availableItems = stockRecords.filter((s) => s.availableQuantity > 0);
+    const unavailableItems = stockRecords.filter((s) => s.availableQuantity < 1);
 
     if (stockRecords.length === 0) {
         return (
