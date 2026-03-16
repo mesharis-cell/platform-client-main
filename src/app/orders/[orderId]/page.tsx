@@ -197,6 +197,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined;
     const showInvoiceSection = false; // Invoicing parked — cost estimates used instead
+    const isDerig = order?.order_status === "DERIG";
     const isFulfillmentStage =
         isConfirmed ||
         isInPreparation ||
@@ -204,6 +205,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isInTransit ||
         isDelivered ||
         isInUse ||
+        isDerig ||
         isAwaitingReturn ||
         isReturnInTransit ||
         isClosed;
