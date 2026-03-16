@@ -43,9 +43,9 @@ const clientNav = [
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
     { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
-    { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
-    { name: "New Stock Request", href: "/assets-inbound", icon: Box },
-    { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
+    // { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
+    // { name: "New Stock Request", href: "/assets-inbound", icon: Box },
+    // { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
     { name: "Reports", href: "/reports", icon: FileSpreadsheet },
 ];
 
