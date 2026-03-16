@@ -83,8 +83,14 @@ export function FamilyStockList({
                     data-testid="family-stock-list"
                 >
                     {availableItems.map((stock) => {
+                        const isDanger = stock.condition === "RED";
                         const isWarning = stock.condition === "ORANGE";
                         const stockImage = stock.images[0]?.url;
+                        const conditionBadgeClass = isDanger
+                            ? "bg-red-500/10 text-red-700 border-red-500/20"
+                            : isWarning
+                              ? "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                              : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
 
                         return (
                             <Card
@@ -111,10 +117,10 @@ export function FamilyStockList({
                                             <Package className="h-8 w-8 text-muted-foreground/20" />
                                         </div>
                                     )}
-                                    {isWarning && (
+                                    {(isDanger || isWarning) && (
                                         <Badge
                                             variant="outline"
-                                            className="absolute top-2 left-2 bg-amber-500/10 text-amber-700 border-amber-500/20 text-[10px]"
+                                            className={`absolute top-2 left-2 text-[10px] ${conditionBadgeClass}`}
                                         >
                                             <AlertCircle className="mr-1 h-2.5 w-2.5" />
                                             {stock.condition}
@@ -122,16 +128,36 @@ export function FamilyStockList({
                                     )}
                                 </button>
 
-                                <CardContent className="p-4 space-y-3">
-                                    <div>
+                                <CardContent className="p-4 space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
                                         <p className="font-medium truncate">{stock.name}</p>
-                                        <p className="text-sm text-muted-foreground mt-0.5">
-                                            {isSerialized
-                                                ? "1 unit"
-                                                : `${stock.availableQuantity} available`}
-                                        </p>
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[10px] shrink-0 ${conditionBadgeClass}`}
+                                        >
+                                            {stock.condition}
+                                        </Badge>
                                     </div>
-                                    <div className="flex gap-2">
+
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                        {isSerialized ? (
+                                            <span>1 unit</span>
+                                        ) : (
+                                            <span>{stock.availableQuantity} available</span>
+                                        )}
+                                        {Number(stock.weight) > 0 && (
+                                            <span>{Number(stock.weight).toFixed(1)} kg</span>
+                                        )}
+                                        {Number(stock.dimensionLength) > 0 && (
+                                            <span>
+                                                {Number(stock.dimensionLength).toFixed(0)}×
+                                                {Number(stock.dimensionWidth).toFixed(0)}×
+                                                {Number(stock.dimensionHeight).toFixed(0)} cm
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2 pt-1">
                                         <Button
                                             size="sm"
                                             className="flex-1"
@@ -141,15 +167,14 @@ export function FamilyStockList({
                                             <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
                                             Add to cart
                                         </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => {
-                                                setPreviewItem(stock);
-                                                setPreviewImgIdx(0);
-                                            }}
-                                        >
-                                            Details
+                                        <Button size="sm" variant="outline" asChild>
+                                            <a
+                                                href={`/catalog/assets/${stock.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Full details
+                                            </a>
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -312,10 +337,14 @@ export function FamilyStockList({
                                         Add to cart
                                     </Button>
                                     <Button variant="outline" asChild>
-                                        <Link href={`/catalog/assets/${previewItem.id}`}>
+                                        <a
+                                            href={`/catalog/assets/${previewItem.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             <ExternalLink className="mr-2 h-4 w-4" />
                                             Full details
-                                        </Link>
+                                        </a>
                                     </Button>
                                 </div>
                             </div>

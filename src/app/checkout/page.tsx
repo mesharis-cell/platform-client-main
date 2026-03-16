@@ -7,6 +7,8 @@
  * Steps: Review Cart → Event Details → Venue Info → Contact → Review & Submit
  */
 
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
 import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
@@ -298,6 +300,7 @@ function CheckoutPageInner() {
                 return (
                     formData.contact_name &&
                     formData.contact_phone &&
+                    isValidPhoneNumber(formData.contact_phone) &&
                     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
                 );
             case "review":
@@ -841,17 +844,6 @@ function CheckoutPageInner() {
                             <Card className="p-8 bg-card/50 border-border/50">
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label className="font-mono uppercase text-xs tracking-wide">
-                                            Transport
-                                        </Label>
-                                        <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
-                                            Round Trip (default)
-                                        </div>
-                                        <p className="text-xs text-muted-foreground font-mono">
-                                            Transport mode is set to round trip for client checkout.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label
                                             htmlFor="venueName"
                                             className="font-mono uppercase text-xs tracking-wide"
@@ -949,28 +941,6 @@ function CheckoutPageInner() {
                                             placeholder="Complete venue address"
                                             required
                                             rows={3}
-                                            className="font-mono text-sm"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="venueAccessNotes"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Access Notes (Optional)
-                                        </Label>
-                                        <Textarea
-                                            id="venueAccessNotes"
-                                            value={formData.venue_access_notes}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    venue_access_notes: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Loading dock information, access codes, etc."
-                                            rows={2}
                                             className="font-mono text-sm"
                                         />
                                     </div>
@@ -1160,6 +1130,29 @@ function CheckoutPageInner() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Access notes — always visible in permit section */}
+                                        <div className="space-y-2">
+                                            <Label
+                                                htmlFor="venueAccessNotes"
+                                                className="font-mono uppercase text-xs tracking-wide"
+                                            >
+                                                Access Notes (Optional)
+                                            </Label>
+                                            <Textarea
+                                                id="venueAccessNotes"
+                                                value={formData.venue_access_notes}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        venue_access_notes: e.target.value,
+                                                    })
+                                                }
+                                                placeholder="Loading dock info, access codes, gate instructions, etc."
+                                                rows={2}
+                                                className="font-mono text-sm"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </Card>
@@ -1230,8 +1223,16 @@ function CheckoutPageInner() {
                                                 }
                                                 placeholder="john@company.com"
                                                 required
-                                                className="h-12"
+                                                className={`h-12 ${formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email) ? "border-destructive" : ""}`}
                                             />
+                                            {formData.contact_email &&
+                                                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                                                    formData.contact_email
+                                                ) && (
+                                                    <p className="text-xs text-destructive">
+                                                        Please enter a valid email address
+                                                    </p>
+                                                )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -1241,21 +1242,25 @@ function CheckoutPageInner() {
                                             >
                                                 Phone Number *
                                             </Label>
-                                            <Input
-                                                id="contactPhone"
-                                                type="tel"
+                                            <PhoneInput
+                                                international
+                                                defaultCountry="AE"
                                                 data-testid="checkout-contact-phone"
                                                 value={formData.contact_phone}
-                                                onChange={(e) =>
+                                                onChange={(value) =>
                                                     setFormData({
                                                         ...formData,
-                                                        contact_phone: e.target.value,
+                                                        contact_phone: value || "",
                                                     })
                                                 }
-                                                placeholder="+971 50 123 4567"
-                                                required
-                                                className="h-12"
+                                                className="h-12 rounded-md border border-input bg-background px-3 text-sm [&>input]:border-0 [&>input]:bg-transparent [&>input]:outline-none [&>input]:h-full"
                                             />
+                                            {formData.contact_phone &&
+                                                !isValidPhoneNumber(formData.contact_phone) && (
+                                                    <p className="text-xs text-destructive">
+                                                        Please enter a valid phone number
+                                                    </p>
+                                                )}
                                         </div>
                                     </div>
 
