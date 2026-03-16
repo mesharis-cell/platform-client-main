@@ -188,7 +188,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
     try {
         const [familyResponse, stockResponse] = await Promise.all([
             apiClient.get(`/operations/v1/asset-family/${id}`),
-            apiClient.get(`/operations/v1/asset?family_id=${id}`),
+            apiClient.get(`/operations/v1/asset?family_id=${id}&limit=500`),
         ]);
 
         const family = familyResponse.data.data;

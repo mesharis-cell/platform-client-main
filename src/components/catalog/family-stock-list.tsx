@@ -2,15 +2,39 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/cart-context";
 import type { CatalogFamilyStockItem } from "@/types/collection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AlertCircle, ExternalLink, Package, ShoppingCart } from "lucide-react";
+import { AlertCircle, Check, ExternalLink, Package, ShoppingCart, X } from "lucide-react";
+
+function buildCartDetails(stock: CatalogFamilyStockItem) {
+    return {
+        assetName: stock.name,
+        availableQuantity: stock.availableQuantity,
+        volume: Number(stock.volume),
+        weight: Number(stock.weight),
+        dimensionLength: Number(stock.dimensionLength),
+        dimensionWidth: Number(stock.dimensionWidth),
+        dimensionHeight: Number(stock.dimensionHeight),
+        category: stock.category,
+        image: stock.images[0]?.url,
+        condition: stock.condition,
+        conditionNotes: stock.conditionNotes,
+        conditionImages: stock.images,
+        refurbDaysEstimate: stock.refurbDaysEstimate,
+    };
+}
+
+const CONDITION_CLASSES: Record<string, string> = {
+    RED: "bg-red-500/10 text-red-700 border-red-500/20",
+    ORANGE: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    GREEN: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+};
 
 export function FamilyStockList({
     familyName,
@@ -24,32 +48,50 @@ export function FamilyStockList({
     const { addItem, openCart } = useCart();
     const [previewItem, setPreviewItem] = useState<CatalogFamilyStockItem | null>(null);
     const [previewImgIdx, setPreviewImgIdx] = useState(0);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
 
-    const handleAddToCart = (stock: CatalogFamilyStockItem) => {
+    const availableItems = stockRecords.filter((s) => s.availableQuantity > 0);
+    const unavailableItems = stockRecords.filter((s) => s.availableQuantity < 1);
+    const hasSelection = selected.size > 0;
+
+    function toggleSelect(id: string) {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }
+
+    function selectAll() {
+        setSelected(new Set(availableItems.map((s) => s.id)));
+    }
+
+    function clearSelection() {
+        setSelected(new Set());
+    }
+
+    function handleAddSingle(stock: CatalogFamilyStockItem) {
         if (stock.availableQuantity < 1) {
             toast.error("This item is currently unavailable");
             return;
         }
-        addItem(stock.id, 1, {
-            assetName: stock.name,
-            availableQuantity: stock.availableQuantity,
-            volume: Number(stock.volume),
-            weight: Number(stock.weight),
-            dimensionLength: Number(stock.dimensionLength),
-            dimensionWidth: Number(stock.dimensionWidth),
-            dimensionHeight: Number(stock.dimensionHeight),
-            category: stock.category,
-            image: stock.images[0]?.url,
-            condition: stock.condition,
-            conditionNotes: stock.conditionNotes,
-            conditionImages: stock.images,
-            refurbDaysEstimate: stock.refurbDaysEstimate,
-        });
+        addItem(stock.id, 1, buildCartDetails(stock));
         openCart();
-    };
+    }
 
-    const availableItems = stockRecords.filter((s) => s.availableQuantity > 0);
-    const unavailableItems = stockRecords.filter((s) => s.availableQuantity < 1);
+    function handleAddSelected() {
+        const items = availableItems.filter((s) => selected.has(s.id));
+        if (items.length === 0) return;
+
+        items.forEach((stock) => {
+            addItem(stock.id, 1, buildCartDetails(stock));
+        });
+
+        toast.success(`${items.length} item${items.length > 1 ? "s" : ""} added to cart`);
+        setSelected(new Set());
+        openCart();
+    }
 
     if (stockRecords.length === 0) {
         return (
@@ -68,6 +110,46 @@ export function FamilyStockList({
 
     return (
         <>
+            {/* Selection toolbar */}
+            {availableItems.length > 1 && (
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={hasSelection ? clearSelection : selectAll}
+                        >
+                            {hasSelection ? (
+                                <>
+                                    <X className="h-3.5 w-3.5 mr-1.5" />
+                                    Clear ({selected.size})
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="h-3.5 w-3.5 mr-1.5" />
+                                    Select all
+                                </>
+                            )}
+                        </Button>
+                        {hasSelection && (
+                            <span className="text-sm text-muted-foreground">
+                                {selected.size} selected
+                            </span>
+                        )}
+                    </div>
+                    {hasSelection && (
+                        <Button
+                            size="sm"
+                            onClick={handleAddSelected}
+                            data-testid="family-stock-add-selected"
+                        >
+                            <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                            Add {selected.size} to cart
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {availableItems.length === 0 ? (
                 <div
                     className="rounded-xl border border-dashed border-border py-12 text-center"
@@ -86,16 +168,14 @@ export function FamilyStockList({
                         const isDanger = stock.condition === "RED";
                         const isWarning = stock.condition === "ORANGE";
                         const stockImage = stock.images[0]?.url;
-                        const conditionBadgeClass = isDanger
-                            ? "bg-red-500/10 text-red-700 border-red-500/20"
-                            : isWarning
-                              ? "bg-amber-500/10 text-amber-700 border-amber-500/20"
-                              : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
+                        const conditionClass =
+                            CONDITION_CLASSES[stock.condition] || CONDITION_CLASSES.GREEN;
+                        const isSelected = selected.has(stock.id);
 
                         return (
                             <Card
                                 key={stock.id}
-                                className="group overflow-hidden transition-colors hover:border-primary/40"
+                                className={`group overflow-hidden transition-all ${isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/40"}`}
                                 data-testid="family-stock-card"
                             >
                                 <button
@@ -120,11 +200,26 @@ export function FamilyStockList({
                                     {(isDanger || isWarning) && (
                                         <Badge
                                             variant="outline"
-                                            className={`absolute top-2 left-2 text-[10px] ${conditionBadgeClass}`}
+                                            className={`absolute top-2 left-2 text-[10px] ${conditionClass}`}
                                         >
                                             <AlertCircle className="mr-1 h-2.5 w-2.5" />
                                             {stock.condition}
                                         </Badge>
+                                    )}
+                                    {/* Selection checkbox overlay */}
+                                    {availableItems.length > 1 && (
+                                        <div
+                                            className="absolute top-2 right-2"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleSelect(stock.id);
+                                            }}
+                                        >
+                                            <Checkbox
+                                                checked={isSelected}
+                                                className="h-5 w-5 bg-background/80 backdrop-blur-sm border-2"
+                                            />
+                                        </div>
                                     )}
                                 </button>
 
@@ -133,7 +228,7 @@ export function FamilyStockList({
                                         <p className="font-medium truncate">{stock.name}</p>
                                         <Badge
                                             variant="outline"
-                                            className={`text-[10px] shrink-0 ${conditionBadgeClass}`}
+                                            className={`text-[10px] shrink-0 ${conditionClass}`}
                                         >
                                             {stock.condition}
                                         </Badge>
@@ -161,7 +256,7 @@ export function FamilyStockList({
                                         <Button
                                             size="sm"
                                             className="flex-1"
-                                            onClick={() => handleAddToCart(stock)}
+                                            onClick={() => handleAddSingle(stock)}
                                             data-testid="family-stock-add"
                                         >
                                             <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
@@ -214,9 +309,7 @@ export function FamilyStockList({
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{stock.name}</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {stock.condition === "RED"
-                                            ? "Needs maintenance"
-                                            : "Currently out"}
+                                        Currently unavailable
                                     </p>
                                 </div>
                             </div>
@@ -264,18 +357,14 @@ export function FamilyStockList({
                                 <div>
                                     <h3 className="text-xl font-semibold">{previewItem.name}</h3>
                                     <div className="flex flex-wrap items-center gap-2 mt-2">
-                                        {previewItem.condition !== "GREEN" && (
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    previewItem.condition === "RED"
-                                                        ? "bg-red-500/10 text-red-700 border-red-500/20"
-                                                        : "bg-amber-500/10 text-amber-700 border-amber-500/20"
-                                                }
-                                            >
-                                                {previewItem.condition}
-                                            </Badge>
-                                        )}
+                                        <Badge
+                                            variant="outline"
+                                            className={
+                                                CONDITION_CLASSES[previewItem.condition] || ""
+                                            }
+                                        >
+                                            {previewItem.condition}
+                                        </Badge>
                                         <Badge variant="outline">
                                             {previewItem.availableQuantity} available
                                         </Badge>
@@ -290,8 +379,8 @@ export function FamilyStockList({
                                     <div className="rounded-lg bg-muted/50 p-3">
                                         <p className="text-xs text-muted-foreground">Dimensions</p>
                                         <p className="font-medium mt-0.5">
-                                            {Number(previewItem.dimensionLength).toFixed(0)} x{" "}
-                                            {Number(previewItem.dimensionWidth).toFixed(0)} x{" "}
+                                            {Number(previewItem.dimensionLength).toFixed(0)} ×{" "}
+                                            {Number(previewItem.dimensionWidth).toFixed(0)} ×{" "}
                                             {Number(previewItem.dimensionHeight).toFixed(0)} cm
                                         </p>
                                     </div>
@@ -329,7 +418,7 @@ export function FamilyStockList({
                                         className="flex-1"
                                         disabled={previewItem.availableQuantity < 1}
                                         onClick={() => {
-                                            handleAddToCart(previewItem);
+                                            handleAddSingle(previewItem);
                                             setPreviewItem(null);
                                         }}
                                     >
