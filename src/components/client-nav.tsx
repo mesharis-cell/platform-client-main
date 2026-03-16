@@ -32,6 +32,7 @@ import {
     Calendar,
     Lock,
     ClipboardList,
+    FileSpreadsheet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -45,6 +46,7 @@ const clientNav = [
     { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
     { name: "New Stock Request", href: "/assets-inbound", icon: Box },
     { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
+    { name: "Reports", href: "/reports", icon: FileSpreadsheet },
 ];
 
 interface ClientNavProps {
