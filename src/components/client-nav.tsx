@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CartProvider, useCart } from "@/contexts/cart-context";
 import { useCompany } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
+import { usePlatform } from "@/contexts/platform-context";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -43,11 +44,26 @@ const clientNav = [
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
     { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
-    // { name: "Service Requests", href: "/service-requests", icon: ClipboardList },
-    // { name: "New Stock Request", href: "/assets-inbound", icon: Box },
-    // { name: "Event Calendar", href: "/event-calendar", icon: Calendar },
+    {
+        name: "Service Requests",
+        href: "/service-requests",
+        icon: ClipboardList,
+        featureFlag: "enable_service_requests",
+    },
+    {
+        name: "New Stock Request",
+        href: "/assets-inbound",
+        icon: Box,
+        featureFlag: "enable_client_stock_requests",
+    },
+    {
+        name: "Event Calendar",
+        href: "/event-calendar",
+        icon: Calendar,
+        featureFlag: "enable_event_calendar",
+    },
     { name: "Reports", href: "/reports", icon: FileSpreadsheet },
-];
+] as const;
 
 interface ClientNavProps {
     children: React.ReactNode;
@@ -59,7 +75,16 @@ function ClientNavInner({ children }: ClientNavProps) {
     const { logout } = useToken();
     const { toggleCart, itemCount } = useCart();
     const { user } = useToken();
+    const { platform } = usePlatform();
     const { data: company, isLoading } = useCompany(user?.company_id || undefined);
+
+    const features = platform?.features || {};
+    const visibleNav = clientNav.filter((item) => {
+        if ("featureFlag" in item && item.featureFlag) {
+            return features[item.featureFlag] !== false;
+        }
+        return true;
+    });
 
     const handleSignOut = () => {
         logout();
@@ -69,7 +94,7 @@ function ClientNavInner({ children }: ClientNavProps) {
 
     // Find most specific matching route for active state
     const getActiveRoute = () => {
-        const matchingRoutes = clientNav.filter(
+        const matchingRoutes = visibleNav.filter(
             (item) => pathname === item.href || pathname.startsWith(item.href + "/")
         );
         return matchingRoutes.reduce(
@@ -161,7 +186,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                             ))}
                         </>
                     ) : (
-                        clientNav.map((item) => {
+                        visibleNav.map((item) => {
                             const isActive = activeRoute?.href === item.href;
                             const Icon = item.icon;
 
