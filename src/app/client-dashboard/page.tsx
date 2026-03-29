@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { ClientHeader } from "@/components/client-header";
+import { usePlatform } from "@/contexts/platform-context";
 
 // Order status display configuration
 const ORDER_STATUS_CONFIG = {
@@ -91,8 +92,10 @@ const ORDER_STATUS_CONFIG = {
 export default function ClientDashboardPage() {
     // Fetch dashboard data
     const { data: summaryData, isLoading: summaryLoading } = useClientDashboardSummary();
+    const { platform } = usePlatform();
 
     const summary = summaryData?.data;
+    const eventCalendarEnabled = platform?.features?.enable_event_calendar !== false;
 
     return (
         <ClientNav>
@@ -159,24 +162,26 @@ export default function ClientDashboardPage() {
                                     </CardContent>
                                 </Card>
 
-                                <Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-shadow">
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                                    Upcoming Events
-                                                </p>
-                                                <p className="text-3xl font-bold text-foreground mt-1 font-mono">
-                                                    {summary?.summary?.upcoming_events || 0}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Next 30 days
-                                                </p>
+                                {eventCalendarEnabled && (
+                                    <Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-shadow">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                                        Upcoming Events
+                                                    </p>
+                                                    <p className="text-3xl font-bold text-foreground mt-1 font-mono">
+                                                        {summary?.summary?.upcoming_events || 0}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Next 30 days
+                                                    </p>
+                                                </div>
+                                                <Calendar className="h-10 w-10 text-green-500/80" />
                                             </div>
-                                            <Calendar className="h-10 w-10 text-green-500/80" />
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
                                 <Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-shadow">
                                     <CardContent className="pt-6">
@@ -325,20 +330,22 @@ export default function ClientDashboardPage() {
                                         </Button>
                                     </Link>
 
-                                    <Link href="/event-calendar">
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start gap-3 h-auto py-4"
-                                        >
-                                            <Calendar className="h-5 w-5 text-green-500" />
-                                            <div className="text-left">
-                                                <p className="font-semibold">Event Calendar</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    View upcoming event schedule
-                                                </p>
-                                            </div>
-                                        </Button>
-                                    </Link>
+                                    {eventCalendarEnabled && (
+                                        <Link href="/event-calendar">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-start gap-3 h-auto py-4"
+                                            >
+                                                <Calendar className="h-5 w-5 text-green-500" />
+                                                <div className="text-left">
+                                                    <p className="font-semibold">Event Calendar</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        View upcoming event schedule
+                                                    </p>
+                                                </div>
+                                            </Button>
+                                        </Link>
+                                    )}
 
                                     <Link href="/catalog">
                                         <Button

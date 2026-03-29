@@ -24,6 +24,9 @@ export interface Company {
         show_estimate_on_order_creation?: boolean;
         [key: string]: boolean | string | number | null | undefined;
     };
+    feature_overrides?: {
+        [key: string]: boolean;
+    };
     platform_margin_percent: string;
     contact_email: string | null;
     contact_phone: string | null;
