@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { LocalCartItem } from "@/lib/cart/localStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
@@ -75,7 +76,10 @@ export function MaintenanceDecisionCenter({
                         event or used as-is.
                     </p>
                 </div>
-                <Badge variant={unresolved > 0 ? "destructive" : "secondary"}>
+                <Badge
+                    variant={unresolved > 0 ? "destructive" : "default"}
+                    className="whitespace-nowrap"
+                >
                     {unresolved > 0 ? `${unresolved} pending` : "All decided"}
                 </Badge>
             </div>
@@ -134,41 +138,53 @@ export function MaintenanceDecisionCenter({
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="h-7 px-2 text-xs"
+                                        className="h-7 px-2 text-xs underline decoration-dotted gap-1 font-bold"
                                         onClick={() => openDetails(index)}
                                     >
-                                        View details
+                                        View details <span className="text-xs">→</span>
                                     </Button>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={
+                                    <label
+                                        className={`flex items-center gap-2 cursor-pointer text-sm font-medium rounded-md px-3 py-1.5 transition-colors ${
                                             item.maintenanceDecision === "FIX_IN_ORDER"
-                                                ? "default"
-                                                : "outline"
-                                        }
-                                        onClick={() =>
-                                            onDecisionChange(item.assetId, "FIX_IN_ORDER")
-                                        }
+                                                ? "bg-primary/10"
+                                                : "hover:bg-muted/50"
+                                        }`}
                                     >
-                                        <Wrench className="h-3.5 w-3.5 mr-1" />
-                                        Fix before event
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={
+                                        <Checkbox
+                                            checked={item.maintenanceDecision === "FIX_IN_ORDER"}
+                                            onCheckedChange={(checked) =>
+                                                onDecisionChange(
+                                                    item.assetId,
+                                                    checked ? "FIX_IN_ORDER" : "USE_AS_IS"
+                                                )
+                                            }
+                                        />
+                                        <span className="flex items-center gap-1.5">
+                                            <Wrench className="h-3.5 w-3.5" />
+                                            Fix before event
+                                        </span>
+                                    </label>
+                                    <label
+                                        className={`flex items-center gap-2 cursor-pointer text-sm font-medium rounded-md px-3 py-1.5 transition-colors ${
                                             item.maintenanceDecision === "USE_AS_IS"
-                                                ? "default"
-                                                : "outline"
-                                        }
-                                        onClick={() => onDecisionChange(item.assetId, "USE_AS_IS")}
+                                                ? "bg-muted"
+                                                : "hover:bg-muted/50"
+                                        }`}
                                     >
+                                        <Checkbox
+                                            checked={item.maintenanceDecision === "USE_AS_IS"}
+                                            onCheckedChange={(checked) =>
+                                                onDecisionChange(
+                                                    item.assetId,
+                                                    checked ? "USE_AS_IS" : "FIX_IN_ORDER"
+                                                )
+                                            }
+                                        />
                                         Use as-is
-                                    </Button>
+                                    </label>
                                 </div>
                             </div>
                         </div>

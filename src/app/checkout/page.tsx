@@ -7,6 +7,8 @@
  * Steps: Review Cart → Event Details → Venue Info → Contact → Review & Submit
  */
 
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
 import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
@@ -50,16 +52,17 @@ import { useCountries } from "@/hooks/use-countries";
 import { useToken } from "@/lib/auth/use-token";
 import { useCompany } from "@/hooks/use-companies";
 import {
+    useFeasibilityConfig,
     useMaintenanceFeasibilityCheck,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
 
-type Step = "cart" | "event" | "venue" | "contact" | "review";
+type Step = "cart" | "installation" | "venue" | "contact" | "review";
 
 const STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "cart", label: "Order Review", icon: ShoppingCart },
-    { key: "event", label: "Event Details", icon: Calendar },
-    { key: "venue", label: "Venue Info", icon: MapPin },
+    { key: "installation", label: "Installation Details", icon: Calendar },
+    { key: "venue", label: "Installation Location", icon: MapPin },
     { key: "contact", label: "Point of Contact", icon: User },
     { key: "review", label: "Review", icon: FileText },
 ];
@@ -84,6 +87,7 @@ function CheckoutPageInner() {
         MaintenanceFeasibilityIssue[]
     >([]);
     const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
+    const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
 
@@ -168,11 +172,24 @@ function CheckoutPageInner() {
         currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
 
-    // Calculate minimum allowed date (Today + 6 days)
-    // "disable prev data also 5 days after current date. measn including current and 5 days after today will be disable."
+    // Fetch resolved feasibility config (platform default + company override)
+    const { data: feasibilityConfig } = useFeasibilityConfig();
+
+    // Calculate minimum allowed date from actual feasibility config
     const calculateMinDate = () => {
+        const leadHours = feasibilityConfig?.minimum_lead_hours ?? 24;
         const date = new Date();
-        date.setDate(date.getDate() + 6);
+        date.setTime(date.getTime() + leadHours * 60 * 60 * 1000);
+
+        // If weekends are excluded, skip forward past any weekend days
+        if (feasibilityConfig?.exclude_weekends) {
+            const weekendDays = new Set(feasibilityConfig.weekend_days ?? [0, 6]);
+            // Advance past weekend days so the minimum selectable date is a business day
+            while (weekendDays.has(date.getDay())) {
+                date.setDate(date.getDate() + 1);
+            }
+        }
+
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
@@ -254,10 +271,10 @@ function CheckoutPageInner() {
 
     // Redirect if cart is empty
     useEffect(() => {
-        if (items.length === 0 && currentStep !== "cart") {
+        if (!isLeavingAfterSubmit && items.length === 0 && currentStep !== "cart") {
             router.push("/catalog");
         }
-    }, [items.length, currentStep, router]);
+    }, [items.length, currentStep, isLeavingAfterSubmit, router]);
 
     const currentStepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
@@ -265,7 +282,7 @@ function CheckoutPageInner() {
         switch (currentStep) {
             case "cart":
                 return items.length > 0;
-            case "event":
+            case "installation":
                 return (
                     formData.event_start_date &&
                     formData.event_end_date &&
@@ -274,15 +291,16 @@ function CheckoutPageInner() {
             case "venue":
                 return Boolean(
                     formData.venue_name &&
-                    formData.venue_country_id &&
-                    formData.venue_city_id &&
-                    formData.venue_address &&
-                    (!formData.requires_permit || formData.permit_owner)
+                        formData.venue_country_id &&
+                        formData.venue_city_id &&
+                        formData.venue_address &&
+                        (!formData.requires_permit || formData.permit_owner)
                 );
             case "contact":
                 return (
                     formData.contact_name &&
                     formData.contact_phone &&
+                    isValidPhoneNumber(formData.contact_phone) &&
                     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
                 );
             case "review":
@@ -306,7 +324,7 @@ function CheckoutPageInner() {
             return;
         }
 
-        if (currentStep === "event" && redItems.length > 0) {
+        if (currentStep === "installation" && redItems.length > 0) {
             try {
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
                     items: redItems.map((item) => ({
@@ -434,6 +452,7 @@ function CheckoutPageInner() {
             });
 
             localStorage.removeItem(CHECKOUT_STORAGE_KEY);
+            setIsLeavingAfterSubmit(true);
             clearCart();
             router.push(`/orders/${result.orderId}`);
         } catch (error) {
@@ -683,9 +702,9 @@ function CheckoutPageInner() {
                     )}
 
                     {/* Step 2: Event Details */}
-                    {currentStep === "event" && (
+                    {currentStep === "installation" && (
                         <motion.div
-                            key="event"
+                            key="installation"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
@@ -693,9 +712,9 @@ function CheckoutPageInner() {
                             className="space-y-6"
                         >
                             <div>
-                                <h2 className="text-3xl font-bold mb-2">Event Details</h2>
+                                <h2 className="text-3xl font-bold mb-2">Installation Details</h2>
                                 <p className="text-muted-foreground">
-                                    When do you need these assets?
+                                    When do you need these assets to be installed?
                                 </p>
                             </div>
 
@@ -712,6 +731,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="eventStartDate"
                                                 type="date"
+                                                data-testid="checkout-event-start"
                                                 value={formData.event_start_date}
                                                 onChange={(e) => {
                                                     setFormData({
@@ -737,6 +757,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="eventEndDate"
                                                 type="date"
+                                                data-testid="checkout-event-end"
                                                 value={formData.event_end_date}
                                                 onChange={(e) => {
                                                     setFormData({
@@ -823,17 +844,6 @@ function CheckoutPageInner() {
                             <Card className="p-8 bg-card/50 border-border/50">
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label className="font-mono uppercase text-xs tracking-wide">
-                                            Transport
-                                        </Label>
-                                        <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
-                                            Round Trip (default)
-                                        </div>
-                                        <p className="text-xs text-muted-foreground font-mono">
-                                            Transport mode is set to round trip for client checkout.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label
                                             htmlFor="venueName"
                                             className="font-mono uppercase text-xs tracking-wide"
@@ -842,6 +852,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Input
                                             id="venueName"
+                                            data-testid="checkout-venue-name"
                                             value={formData.venue_name}
                                             onChange={(e) =>
                                                 setFormData({
@@ -889,7 +900,10 @@ function CheckoutPageInner() {
                                                 }}
                                                 disabled={!formData.venue_country_id}
                                             >
-                                                <SelectTrigger className="h-12 font-mono">
+                                                <SelectTrigger
+                                                    className="h-12 font-mono"
+                                                    data-testid="checkout-venue-city"
+                                                >
                                                     <SelectValue placeholder="Select city" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -916,6 +930,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Textarea
                                             id="venueAddress"
+                                            data-testid="checkout-venue-address"
                                             value={formData.venue_address}
                                             onChange={(e) =>
                                                 setFormData({
@@ -926,28 +941,6 @@ function CheckoutPageInner() {
                                             placeholder="Complete venue address"
                                             required
                                             rows={3}
-                                            className="font-mono text-sm"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="venueAccessNotes"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Access Notes (Optional)
-                                        </Label>
-                                        <Textarea
-                                            id="venueAccessNotes"
-                                            value={formData.venue_access_notes}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    venue_access_notes: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Loading dock information, access codes, etc."
-                                            rows={2}
                                             className="font-mono text-sm"
                                         />
                                     </div>
@@ -1137,6 +1130,29 @@ function CheckoutPageInner() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Access notes — always visible in permit section */}
+                                        <div className="space-y-2">
+                                            <Label
+                                                htmlFor="venueAccessNotes"
+                                                className="font-mono uppercase text-xs tracking-wide"
+                                            >
+                                                Access Notes (Optional)
+                                            </Label>
+                                            <Textarea
+                                                id="venueAccessNotes"
+                                                value={formData.venue_access_notes}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        venue_access_notes: e.target.value,
+                                                    })
+                                                }
+                                                placeholder="Loading dock info, access codes, gate instructions, etc."
+                                                rows={2}
+                                                className="font-mono text-sm"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </Card>
@@ -1172,6 +1188,7 @@ function CheckoutPageInner() {
                                         </Label>
                                         <Input
                                             id="contactName"
+                                            data-testid="checkout-contact-name"
                                             value={formData.contact_name}
                                             onChange={(e) =>
                                                 setFormData({
@@ -1196,6 +1213,7 @@ function CheckoutPageInner() {
                                             <Input
                                                 id="contactEmail"
                                                 type="email"
+                                                data-testid="checkout-contact-email"
                                                 value={formData.contact_email}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -1205,8 +1223,16 @@ function CheckoutPageInner() {
                                                 }
                                                 placeholder="john@company.com"
                                                 required
-                                                className="h-12"
+                                                className={`h-12 ${formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email) ? "border-destructive" : ""}`}
                                             />
+                                            {formData.contact_email &&
+                                                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                                                    formData.contact_email
+                                                ) && (
+                                                    <p className="text-xs text-destructive">
+                                                        Please enter a valid email address
+                                                    </p>
+                                                )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -1216,20 +1242,25 @@ function CheckoutPageInner() {
                                             >
                                                 Phone Number *
                                             </Label>
-                                            <Input
-                                                id="contactPhone"
-                                                type="tel"
+                                            <PhoneInput
+                                                international
+                                                defaultCountry="AE"
+                                                data-testid="checkout-contact-phone"
                                                 value={formData.contact_phone}
-                                                onChange={(e) =>
+                                                onChange={(value) =>
                                                     setFormData({
                                                         ...formData,
-                                                        contact_phone: e.target.value,
+                                                        contact_phone: value || "",
                                                     })
                                                 }
-                                                placeholder="+971 50 123 4567"
-                                                required
-                                                className="h-12"
+                                                className="h-12 rounded-md border border-input bg-background px-3 text-sm [&>input]:border-0 [&>input]:bg-transparent [&>input]:outline-none [&>input]:h-full"
                                             />
+                                            {formData.contact_phone &&
+                                                !isValidPhoneNumber(formData.contact_phone) && (
+                                                    <p className="text-xs text-destructive">
+                                                        Please enter a valid phone number
+                                                    </p>
+                                                )}
                                         </div>
                                     </div>
 
@@ -1632,6 +1663,7 @@ function CheckoutPageInner() {
                         disabled={currentStepIndex === 0}
                         className="gap-2 font-mono"
                         size="lg"
+                        data-testid="checkout-back"
                     >
                         <ChevronLeft className="h-4 w-4" />
                         Back
@@ -1652,6 +1684,7 @@ function CheckoutPageInner() {
                             }
                             className="gap-2 font-mono uppercase tracking-wide"
                             size="lg"
+                            data-testid="checkout-submit"
                         >
                             {isSubmitting ? "Submitting..." : "Submit Order"}
                             <Check className="h-4 w-4" />
@@ -1662,6 +1695,7 @@ function CheckoutPageInner() {
                             disabled={!canProceed() || maintenanceFeasibilityCheck.isPending}
                             className="gap-2 font-mono"
                             size="lg"
+                            data-testid="checkout-next"
                         >
                             Continue
                             <ChevronRight className="h-4 w-4" />

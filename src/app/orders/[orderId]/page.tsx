@@ -173,7 +173,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         DERIG: "bg-purple-500/10 text-purple-600 border-purple-500/30",
         AWAITING_RETURN: "bg-rose-500/10 text-rose-600 border-rose-500/30",
         RETURN_IN_TRANSIT: "bg-orange-500/10 text-orange-600 border-orange-500/30",
-        CLOSED: "bg-slate-600/10 text-slate-700 border-slate-600/20",
+        CLOSED: "bg-muted/50 text-foreground border-border",
     };
 
     // Individual state checks for precise UI control
@@ -197,6 +197,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     // Grouped checks for sections
     const showQuoteSection = isQuoted || isApproved || isDeclined;
     const showInvoiceSection = false; // Invoicing parked — cost estimates used instead
+    const isDerig = order?.order_status === "DERIG";
     const isFulfillmentStage =
         isConfirmed ||
         isInPreparation ||
@@ -204,6 +205,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isInTransit ||
         isDelivered ||
         isInUse ||
+        isDerig ||
         isAwaitingReturn ||
         isReturnInTransit ||
         isClosed;
@@ -294,12 +296,10 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         {isPendingApproval &&
                                             "Our management team is reviewing the pricing. You will receive your quote shortly."}
                                         {isQuoted && (
-                                            <>
-                                                <p>
-                                                    Your quote is ready! Review the pricing below
-                                                    and approve or decline.
-                                                </p>
-                                            </>
+                                            <span>
+                                                Your quote is ready! Review the pricing below and
+                                                approve or decline.
+                                            </span>
                                         )}
                                         {isApproved &&
                                             "Your order is proceeding to invoicing. We will begin fulfillment preparations."}
@@ -394,6 +394,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                         className="mb-6"
+                        data-testid="client-order-hero"
                     >
                         <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
                             <div className="flex items-center justify-between">
@@ -404,6 +405,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     <p className="text-2xl font-bold font-mono tracking-wider">
                                         {order.order_id}
                                     </p>
+                                    {order.po_number && (
+                                        <p
+                                            className="mt-2 text-sm font-mono text-muted-foreground"
+                                            data-testid="client-order-po-number"
+                                        >
+                                            PO: {order.po_number}
+                                        </p>
+                                    )}
                                 </div>
                                 <Cuboid className="h-12 w-12 text-primary/20" />
                             </div>
@@ -436,13 +445,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
+                                    data-testid="client-order-quote-review"
                                 >
                                     <QuoteReviewSection
                                         order={order}
                                         pricing={order.order_pricing}
                                         lineItems={order.line_items || []}
-                                        onApprove={async () => {
-                                            await approveQuote.mutateAsync({ orderId: order.id });
+                                        onApprove={async (poNumber: string) => {
+                                            await approveQuote.mutateAsync({
+                                                orderId: order.id,
+                                                poNumber,
+                                            });
                                         }}
                                         onDecline={async (reason: string) => {
                                             await declineQuote.mutateAsync({
@@ -698,12 +711,20 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                     {sr.service_request_id}
                                                                 </button>
                                                                 <div className="flex items-center gap-2">
-                                                                    <Badge className="font-mono text-[10px] border">
+                                                                    <Badge
+                                                                        variant={
+                                                                            sr.request_status ===
+                                                                            "COMPLETED"
+                                                                                ? "default"
+                                                                                : "outline"
+                                                                        }
+                                                                        className="font-mono text-[10px] border"
+                                                                    >
                                                                         {sr.request_status}
                                                                     </Badge>
-                                                                    <Badge className="font-mono text-[10px] border">
+                                                                    {/* <Badge className="font-mono text-[10px] border">
                                                                         {sr.commercial_status}
-                                                                    </Badge>
+                                                                    </Badge> */}
                                                                 </div>
                                                             </div>
                                                             <p className="text-xs text-muted-foreground mt-2 font-mono">
@@ -1042,7 +1063,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.5 }}
                                 >
-                                    <Card className="p-6 bg-slate-500/5 border-slate-500/20">
+                                    <Card className="p-6 bg-muted/50 border-border">
                                         <h3 className="font-bold font-mono mb-3 uppercase tracking-wide text-sm flex items-center gap-2">
                                             <CheckCircle2 className="w-4 h-4" />
                                             Thank You!

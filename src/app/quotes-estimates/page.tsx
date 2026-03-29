@@ -5,21 +5,15 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
+import { ClientHeader } from "@/components/client-header";
 import { useClientOrders, useDownloadCostEstimate } from "@/hooks/use-client-orders";
 import { usePlatform } from "@/contexts/platform-context";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
+import { DataTable, DataTableRow } from "@/components/ui/data-table";
 
 const QUOTE_ELIGIBLE_ORDER_STATUSES = new Set([
     "QUOTED",
@@ -131,35 +125,16 @@ export default function QuotesEstimatesPage() {
         }
     };
 
-    return (
-        <ClientNav>
-            <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
-                <div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto px-6 py-6">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight">
-                                    Quotes & Estimates
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Review estimate history and download cost estimate PDFs
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="container mx-auto px-6 py-8">
-                    {isLoading ? (
-                        <div className="space-y-4">
-                            {[...Array(6)].map((_, index) => (
-                                <Skeleton key={index} className="h-14 w-full" />
-                            ))}
-                        </div>
-                    ) : error ? (
+    if (error) {
+        return (
+            <ClientNav>
+                <ClientHeader
+                    icon={FileText}
+                    title="Quotes & Estimates"
+                    description="Review pricing and approve quotes"
+                />
+                <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
+                    <div className="container mx-auto px-6 py-8">
                         <Card className="bg-card/80 backdrop-blur-sm border-border/40">
                             <CardContent className="p-10 text-center">
                                 <p className="text-destructive font-medium">
@@ -167,149 +142,130 @@ export default function QuotesEstimatesPage() {
                                 </p>
                             </CardContent>
                         </Card>
-                    ) : quoteOrders.length === 0 ? (
-                        <Card className="bg-card/80 backdrop-blur-sm border-border/40">
-                            <CardContent className="p-10 text-center space-y-2">
-                                <p className="font-medium text-lg">No quotes available yet</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Quotes will appear here once your orders reach quoted status.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <>
-                            <Card className="bg-card/80 backdrop-blur-sm border-border/40 overflow-hidden">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/40">
-                                            <TableHead>Order ID</TableHead>
-                                            <TableHead>Event Name</TableHead>
-                                            <TableHead>Event Date</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Total Amount</TableHead>
-                                            <TableHead>Date Sent</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedOrders.map((order) => {
-                                            const reviewStatus = getQuoteReviewStatus(
-                                                order?.order_status
-                                            );
-                                            return (
-                                                <TableRow key={order?.id}>
-                                                    <TableCell>
-                                                        <Link
-                                                            href={`/orders/${order?.order_id}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="font-mono font-semibold text-primary hover:underline inline-flex items-center gap-1"
-                                                        >
-                                                            {order?.order_id}
-                                                            <ExternalLink className="h-3.5 w-3.5" />
-                                                        </Link>
-                                                    </TableCell>
-                                                    <TableCell className="font-medium">
-                                                        {order?.event_name ||
-                                                            order?.venue_name ||
-                                                            "N/A"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatDate(
-                                                            order?.event_start_date ||
-                                                                order?.event_end_date
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`${reviewStatus.color} border`}
-                                                        >
-                                                            {reviewStatus.label}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="font-mono">
-                                                        {formatCurrency(getEstimateAmount(order))}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {formatDate(getDateSent(order))}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="gap-2"
-                                                            onClick={() => {
-                                                                if (!order?.id || !order?.order_id)
-                                                                    return;
-                                                                handleDownloadCostEstimate(
-                                                                    order.id,
-                                                                    order.order_id
-                                                                );
-                                                            }}
-                                                            disabled={
-                                                                downloadCostEstimate.isPending ||
-                                                                !order?.id
-                                                            }
-                                                        >
-                                                            <Download className="h-4 w-4" />
-                                                            Download
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </Card>
-
-                            {quoteOrders.length > limit && (
-                                <Card className="bg-card/80 backdrop-blur-sm border-border/40 mt-6">
-                                    <CardContent className="py-4">
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-sm text-muted-foreground">
-                                                Showing {(currentPage - 1) * limit + 1} to{" "}
-                                                {Math.min(currentPage * limit, quoteOrders.length)}{" "}
-                                                of {quoteOrders.length} estimates
-                                            </p>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-1"
-                                                    onClick={() =>
-                                                        setPage((previousPage) =>
-                                                            Math.max(1, previousPage - 1)
-                                                        )
-                                                    }
-                                                    disabled={currentPage === 1}
-                                                >
-                                                    <ChevronLeft className="h-4 w-4" />
-                                                    Previous
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-1"
-                                                    onClick={() =>
-                                                        setPage((previousPage) =>
-                                                            Math.min(totalPages, previousPage + 1)
-                                                        )
-                                                    }
-                                                    disabled={currentPage === totalPages}
-                                                >
-                                                    Next
-                                                    <ChevronRight className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </>
-                    )}
+                    </div>
                 </div>
-            </div>
+            </ClientNav>
+        );
+    }
+
+    return (
+        <ClientNav>
+            <ClientHeader
+                icon={FileText}
+                title="Quotes & Estimates"
+                description="Review pricing and approve quotes"
+            />
+
+            <DataTable
+                columns={[
+                    "Order ID",
+                    "Event Name",
+                    "Event Date",
+                    "Status",
+                    "Total Amount",
+                    "Date Sent",
+                    { label: "Action", className: "text-right" },
+                ]}
+                loading={isLoading}
+                hasData={quoteOrders.length > 0}
+                empty={{
+                    icon: FileText,
+                    message: "No quotes available yet",
+                }}
+            >
+                {paginatedOrders.map((order, index) => {
+                    const reviewStatus = getQuoteReviewStatus(order?.order_status);
+                    return (
+                        <DataTableRow key={order?.id} index={index}>
+                            <TableCell>
+                                <Link
+                                    href={`/orders/${order?.order_id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-mono font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                                >
+                                    {order?.order_id}
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                </Link>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                                {order?.event_name || order?.venue_name || "N/A"}
+                            </TableCell>
+                            <TableCell>
+                                {formatDate(order?.event_start_date || order?.event_end_date)}
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={`${reviewStatus.color} border`}>
+                                    {reviewStatus.label}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono">
+                                {formatCurrency(getEstimateAmount(order))}
+                            </TableCell>
+                            <TableCell>{formatDate(getDateSent(order))}</TableCell>
+                            <TableCell className="text-right">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    onClick={() => {
+                                        if (!order?.id || !order?.order_id) return;
+                                        handleDownloadCostEstimate(order.id, order.order_id);
+                                    }}
+                                    disabled={downloadCostEstimate.isPending || !order?.id}
+                                >
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                </Button>
+                            </TableCell>
+                        </DataTableRow>
+                    );
+                })}
+            </DataTable>
+
+            {quoteOrders.length > limit && (
+                <div className="px-8 pb-6">
+                    <Card className="bg-card/80 backdrop-blur-sm border-border/40">
+                        <CardContent className="py-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-muted-foreground">
+                                    Showing {(currentPage - 1) * limit + 1} to{" "}
+                                    {Math.min(currentPage * limit, quoteOrders.length)} of{" "}
+                                    {quoteOrders.length} estimates
+                                </p>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1"
+                                        onClick={() =>
+                                            setPage((previousPage) => Math.max(1, previousPage - 1))
+                                        }
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1"
+                                        onClick={() =>
+                                            setPage((previousPage) =>
+                                                Math.min(totalPages, previousPage + 1)
+                                            )
+                                        }
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </ClientNav>
     );
 }

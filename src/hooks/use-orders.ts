@@ -59,7 +59,11 @@ export function useSubmitOrderFromCart() {
         mutationFn: async (data: any) => {
             try {
                 const response = await apiClient.post("/client/v1/order/submit-from-cart", data);
-                return response.data;
+                const payload = response.data?.data || {};
+                return {
+                    ...payload,
+                    orderId: payload.order_id,
+                };
             } catch (error) {
                 throwApiError(error);
             }
@@ -449,11 +453,19 @@ export function useClientApproveQuote() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ orderId, notes }: { orderId: string; notes?: string }) => {
+        mutationFn: async ({
+            orderId,
+            poNumber,
+            notes,
+        }: {
+            orderId: string;
+            poNumber: string;
+            notes?: string;
+        }) => {
             try {
                 const response = await apiClient.patch(
                     `/client/v1/order/${orderId}/approve-quote`,
-                    { notes }
+                    { po_number: poNumber, notes }
                 );
 
                 return response.data;

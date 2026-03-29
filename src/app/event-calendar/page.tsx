@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Plus } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
+import { ClientHeader } from "@/components/client-header";
 import {
     startOfMonth,
     endOfMonth,
@@ -36,7 +37,7 @@ const STATUS_CONFIG: Record<
 > = {
     DRAFT: {
         label: "DRAFT",
-        color: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+        color: "bg-muted/50 text-muted-foreground border-border",
     },
     SUBMITTED: {
         label: "SUBMITTED",
@@ -104,7 +105,7 @@ const STATUS_CONFIG: Record<
     },
     CLOSED: {
         label: "CLOSED",
-        color: "bg-slate-600/10 text-slate-700 border-slate-600/20",
+        color: "bg-muted/50 text-foreground border-border",
     },
 };
 
@@ -212,28 +213,20 @@ export default function EventCalendarPage() {
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
-                {/* Header */}
-                <div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                                    Event Calendar
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    View your upcoming event schedule
-                                </p>
-                            </div>
-                            <Link href="/catalog">
-                                <Button className="gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    New Order
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+            <div className="min-h-screen bg-background">
+                <ClientHeader
+                    icon={CalendarIcon}
+                    title="Event Calendar"
+                    description="View your upcoming event schedule"
+                    actions={
+                        <Link href="/catalog">
+                            <Button className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                New Order
+                            </Button>
+                        </Link>
+                    }
+                />
 
                 <div className="container mx-auto px-6 py-8">
                     {/* Month Navigation */}

@@ -7,18 +7,12 @@
 import { useState } from "react";
 import { useInboundRequests } from "@/hooks/use-inbound-requests";
 import { CreateInboundRequestDialog } from "@/components/assets/create-inbound-request-dialog";
-import { Plus, Search, Package, Loader2 } from "lucide-react";
+import { ClientHeader } from "@/components/client-header";
+import { Plus, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
+import { DataTable, DataTableSearch, DataTableRow } from "@/components/ui/data-table";
 import type { InboundRequestStatus } from "@/types/inbound-request";
 import { ClientNav } from "@/components/client-nav";
 import Link from "next/link";
@@ -41,133 +35,90 @@ export default function AssetsInboundPage() {
 
     return (
         <ClientNav>
-            <div className="container mx-auto py-8 px-4 space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold font-mono flex items-center gap-2">
-                            <Package className="w-6 h-6 text-primary" />
-                            New Stock Requests
-                        </h1>
-                        <p className="text-muted-foreground font-mono text-sm mt-1">
-                            Manage new stock requests
-                        </p>
-                    </div>
+            <ClientHeader
+                icon={Package}
+                title="New Stock Requests"
+                description="Manage incoming stock requests"
+                actions={
                     <Button size="lg" className="font-mono" onClick={() => setIsCreateOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Create Request
                     </Button>
-                </div>
+                }
+            />
 
-                {/* Search and filters */}
-                <div className="flex items-center gap-4">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by ID, item name, or company..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 font-mono"
-                        />
-                    </div>
-                </div>
+            <DataTable
+                filters={
+                    <DataTableSearch
+                        value={search}
+                        onChange={setSearch}
+                        placeholder="Search by ID, item name, or company..."
+                    />
+                }
+                columns={[
+                    "Inbound ID",
+                    "Company",
+                    "Delivery Date",
+                    "Status",
+                    "Created",
+                    { label: "", className: "w-[50px]" },
+                ]}
+                loading={isLoading}
+                hasData={(data?.data.length ?? 0) > 0}
+                empty={{
+                    icon: Package,
+                    message: search ? "No requests match your search" : "No new stock requests yet",
+                    action: !search ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4 font-mono"
+                            onClick={() => setIsCreateOpen(true)}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create First Request
+                        </Button>
+                    ) : undefined,
+                }}
+            >
+                {data?.data.map((request, index) => (
+                    <DataTableRow key={request.id} index={index}>
+                        <TableCell className="font-mono">{request.inbound_request_id}</TableCell>
+                        <TableCell className="font-mono">{request.company?.name || "-"}</TableCell>
+                        <TableCell>
+                            <div className="flex items-center gap-2">
+                                {format(request.incoming_at, "MMM dd, yyyy")}
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <Badge
+                                variant="outline"
+                                className={`font-mono text-xs ${STATUS_COLORS[request.request_status as InboundRequestStatus] || "bg-muted text-muted-foreground"}`}
+                            >
+                                {request.request_status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm text-muted-foreground">
+                            {format(request.created_at, "MMM dd, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                            <Link href={`/assets-inbound/${request.id}`}>
+                                <Button variant="default">Details</Button>
+                            </Link>
+                        </TableCell>
+                    </DataTableRow>
+                ))}
+            </DataTable>
 
-                {/* Data table */}
-                <div className="border border-border rounded-lg overflow-hidden">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50">
-                                <TableHead className="font-mono font-semibold">
-                                    Inbound ID
-                                </TableHead>
-                                <TableHead className="font-mono font-semibold">Company</TableHead>
-                                <TableHead className="font-mono font-semibold">
-                                    Delivery Date
-                                </TableHead>
-                                <TableHead className="font-mono font-semibold">Status</TableHead>
-                                <TableHead className="font-mono font-semibold">Created</TableHead>
-                                <TableHead className="font-mono font-semibold w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-12">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                                        <p className="text-sm text-muted-foreground font-mono mt-2">
-                                            Loading requests...
-                                        </p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : data?.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-12">
-                                        <Package className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                                        <p className="text-sm text-muted-foreground font-mono">
-                                            {search
-                                                ? "No requests match your search"
-                                                : "No new stock requests yet"}
-                                        </p>
-                                        {!search && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="mt-4 font-mono"
-                                                onClick={() => setIsCreateOpen(true)}
-                                            >
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Create First Request
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                data?.data.map((request) => (
-                                    <TableRow key={request.id} className="hover:bg-muted/30">
-                                        <TableCell className="font-mono">
-                                            {request.inbound_request_id}
-                                        </TableCell>
-                                        <TableCell className="font-mono">
-                                            {request.company?.name || "-"}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                {format(request.incoming_at, "MMM dd, yyyy")}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                className={`font-mono text-xs ${STATUS_COLORS[request.request_status as InboundRequestStatus] || "bg-muted text-muted-foreground"}`}
-                                            >
-                                                {request.request_status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-sm text-muted-foreground">
-                                            {format(request.created_at, "MMM dd, yyyy")}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Link href={`/assets-inbound/${request.id}`}>
-                                                <Button variant="default">Details</Button>
-                                            </Link>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Create dialog */}
-                <CreateInboundRequestDialog
-                    open={isCreateOpen}
-                    onOpenChange={setIsCreateOpen}
-                    onSuccess={() => {
-                        setIsCreateOpen(false);
-                        refetch();
-                    }}
-                />
-            </div>
+            {/* Create dialog */}
+            <CreateInboundRequestDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                onSuccess={() => {
+                    setIsCreateOpen(false);
+                    refetch();
+                }}
+            />
         </ClientNav>
     );
 }

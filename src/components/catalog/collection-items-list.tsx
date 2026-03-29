@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Package, Layers, AlertTriangle } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "sonner";
 import { CollectionCustomizer } from "./collection-customizer";
 
@@ -125,7 +126,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
             <div className="space-y-3">
                 {collection.items.map((item) => (
                     <div
-                        key={item.id}
+                        key={`${item.assetId}-${item.defaultQuantity}`}
                         className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
                             item.availableQuantity > 0
                                 ? "border-border bg-card hover:border-primary/30"
@@ -153,10 +154,22 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-3">
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-semibold text-base mb-1">{item.name}</h4>
-                                    <Badge variant="outline" className="font-mono text-xs">
-                                        {item.category}
-                                    </Badge>
+                                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                                        <h4 className="font-semibold text-base">{item.name}</h4>
+                                        <Badge variant="outline" className="font-mono text-xs">
+                                            {item.category}
+                                        </Badge>
+                                        {item.family && (
+                                            <Link href={`/catalog/families/${item.family.id}`}>
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="font-mono text-xs"
+                                                >
+                                                    Family: {item.family.name}
+                                                </Badge>
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
                                 <Badge
                                     variant={item.availableQuantity > 0 ? "default" : "destructive"}

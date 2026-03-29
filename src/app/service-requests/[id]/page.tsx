@@ -40,7 +40,7 @@ const statusColors: Record<string, string> = {
 };
 
 const commercialColors: Record<string, string> = {
-    INTERNAL: "bg-slate-500/10 text-slate-600 border-slate-500/30",
+    INTERNAL: "bg-muted/50 text-muted-foreground border-border",
     PENDING_QUOTE: "bg-blue-500/10 text-blue-600 border-blue-500/30",
     QUOTED: "bg-amber-500/10 text-amber-600 border-amber-500/30",
     QUOTE_APPROVED: "bg-green-500/10 text-green-600 border-green-500/30",
@@ -379,7 +379,7 @@ export default function ClientServiceRequestDetailsPage() {
                                             request.items.map((item) => (
                                                 <div
                                                     key={item.id}
-                                                    className="rounded-md border p-4 bg-background/50"
+                                                    className="rounded-md p-4 bg-muted/40"
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <p className="font-semibold">

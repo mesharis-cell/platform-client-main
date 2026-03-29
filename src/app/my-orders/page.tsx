@@ -22,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     Search,
+    ShoppingBag,
     Package,
     Calendar,
     MapPin,
@@ -31,6 +32,7 @@ import {
     X,
 } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
+import { ClientHeader } from "@/components/client-header";
 
 // Order status display configuration
 const ORDER_STATUS_CONFIG = {
@@ -60,7 +62,7 @@ const ORDER_STATUS_CONFIG = {
         label: "Return in Transit",
         color: "bg-orange-100 text-orange-700 border-orange-300",
     },
-    CLOSED: { label: "Closed", color: "bg-slate-100 text-slate-700 border-slate-300" },
+    CLOSED: { label: "Closed", color: "bg-muted text-foreground border-border" },
 };
 
 export default function MyOrdersPage() {
@@ -94,29 +96,21 @@ export default function MyOrdersPage() {
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/30 to-background">
-                {/* Header */}
-                <div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                                    My Orders
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    View and track all your order requests
-                                </p>
-                            </div>
-                            <Link href="/catalog">
-                                <Button className="gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    New Order
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+            <ClientHeader
+                icon={ShoppingBag}
+                title="My Orders"
+                description="Track and manage your orders"
+                actions={
+                    <Link href="/catalog">
+                        <Button className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            New Order
+                        </Button>
+                    </Link>
+                }
+            />
 
+            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/30 to-background">
                 <div className="container mx-auto px-6 py-8">
                     {/* Filters Bar */}
                     <Card className="bg-card/80 backdrop-blur-sm border-border/40 mb-6">

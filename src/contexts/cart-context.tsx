@@ -87,16 +87,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    // Cross-tab synchronization
+    // Cross-tab synchronization (silent — no toast to avoid loops)
     useEffect(() => {
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === "asset-cart-v1" && e.newValue) {
                 try {
                     const cart = JSON.parse(e.newValue);
                     setItems(cart.items);
-                    toast.info("Cart updated from another tab");
-                } catch (error) {
-                    console.error("Failed to sync cart:", error);
+                } catch {
+                    // ignore parse errors from other tabs
                 }
             }
         };

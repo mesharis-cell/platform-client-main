@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/api-client";
 import { throwApiError } from "@/lib/utils/throw-api-error";
 
@@ -43,6 +43,24 @@ export function useMaintenanceFeasibilityCheck() {
                 throwApiError(error);
             }
         },
+    });
+}
+
+export type FeasibilityConfig = {
+    minimum_lead_hours: number;
+    exclude_weekends: boolean;
+    weekend_days: number[];
+    timezone: string;
+};
+
+export function useFeasibilityConfig() {
+    return useQuery({
+        queryKey: ["feasibility-config"],
+        queryFn: async (): Promise<FeasibilityConfig> => {
+            const response = await apiClient.get("/client/v1/order/feasibility-config");
+            return response.data.data;
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
 

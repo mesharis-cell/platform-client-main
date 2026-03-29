@@ -10,9 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, FileText, Calendar, Clock, ShoppingCart, MapPin, ArrowRight } from "lucide-react";
+import {
+    LayoutDashboard,
+    Package,
+    FileText,
+    Calendar,
+    Clock,
+    ShoppingCart,
+    MapPin,
+    ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
+import { ClientHeader } from "@/components/client-header";
 
 // Order status display configuration
 const ORDER_STATUS_CONFIG = {
@@ -74,7 +84,7 @@ const ORDER_STATUS_CONFIG = {
     },
     CLOSED: {
         label: "Closed",
-        color: "bg-slate-100 text-slate-700 border-slate-300",
+        color: "bg-muted text-foreground border-border",
     },
 };
 
@@ -86,21 +96,13 @@ export default function ClientDashboardPage() {
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
-                {/* Header */}
-                <div className="border-b border-border/40 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="container mx-auto px-6 py-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                                Dashboard
-                            </h1>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Welcome back! Here's an overview of your orders and upcoming events.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <ClientHeader
+                icon={LayoutDashboard}
+                title="Dashboard"
+                description="Overview of your recent activity"
+            />
 
+            <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
                 <div className="container mx-auto px-6 py-8">
                     {/* Summary Statistics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

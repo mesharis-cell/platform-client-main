@@ -11,6 +11,7 @@ export * from "./phase2";
 
 // Phase 3: Asset types
 export * from "./asset";
+export * from "./asset-family";
 
 // Phase 4: Collection types
 export * from "./collection";

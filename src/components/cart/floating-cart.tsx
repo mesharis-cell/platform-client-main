@@ -176,7 +176,7 @@ export function FloatingCart() {
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() => removeItem(item.assetId)}
-                                                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="h-6 w-6 p-0 shrink-0"
                                                         >
                                                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                                         </Button>
@@ -276,6 +276,7 @@ export function FloatingCart() {
                                         onClick={handleCheckout}
                                         className="w-full gap-2 font-mono uppercase tracking-wide h-12"
                                         size="lg"
+                                        data-testid="cart-checkout"
                                     >
                                         <Cuboid className="h-4 w-4" />
                                         Proceed to Checkout
