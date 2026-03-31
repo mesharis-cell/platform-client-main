@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getBackendApiUrl, resolvePlatformContext } from "@/lib/server/platform-context";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:3333";
-const PLATFORM_ID = process.env.NEXT_PUBLIC_PLATFORM_ID;
+const BACKEND_URL = getBackendApiUrl();
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const cookieStore = await cookies();
         const token = cookieStore.get("token")?.value;
+        const platform = await resolvePlatformContext(request);
 
         if (!token) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
-
-        if (!PLATFORM_ID) {
-            return NextResponse.json({ message: "Platform ID not configured" }, { status: 500 });
         }
 
         const response = await fetch(`${BACKEND_URL}/client/v1/order/submit-from-cart`, {
@@ -23,7 +20,7 @@ export async function POST(request: NextRequest) {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
-                "x-platform": PLATFORM_ID,
+                "x-platform": platform.platform_id,
             },
             body: JSON.stringify(body),
         });
