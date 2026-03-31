@@ -4,9 +4,9 @@
     "packageManager": "bun@1.2.22",
     "private": true,
     "scripts": {
-        "dev": "next dev --turbopack",
+        "dev": "next dev -p 4002 --turbopack",
         "build": "next build",
-        "start": "next start",
+        "start": "next start -p 4002",
         "lint": "eslint \"**/*.{ts,tsx}\"",
         "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy -- --dispatch-namespace benro-testing",
         "deploy:build": "opennextjs-cloudflare build",
