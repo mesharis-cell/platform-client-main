@@ -10,6 +10,8 @@
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
+import { SelfPickupCheckoutFlow } from "@/components/checkout/SelfPickupCheckoutFlow";
+import { usePlatform } from "@/contexts/platform-context";
 import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
 import { ClientNav } from "@/components/client-nav";
@@ -70,6 +72,7 @@ const STEPS: { key: Step; label: string; icon: any }[] = [
 function CheckoutPageInner() {
     const router = useRouter();
     const { user } = useToken();
+    const { platform } = usePlatform();
     const { data: companyData } = useCompany(user?.company_id || undefined);
     const {
         items,
@@ -80,8 +83,12 @@ function CheckoutPageInner() {
         isInitialized,
         updateItemMaintenanceDecision,
     } = useCart();
+    const [checkoutMode, setCheckoutMode] = useState<"standard" | "self-pickup">("standard");
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Feature flag: show self-pickup mode option only if enabled
+    const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
     const [maintenanceFeasibilityIssues, setMaintenanceFeasibilityIssues] = useState<
         MaintenanceFeasibilityIssue[]
@@ -554,6 +561,53 @@ function CheckoutPageInner() {
                 </div>
             </div>
 
+            {/* Mode selector (only when self-pickup feature is enabled) */}
+            {selfPickupEnabled && checkoutMode === "standard" && currentStep === "cart" && (
+                <div className="max-w-5xl mx-auto px-8 pt-8">
+                    <Card className="p-6">
+                        <h3 className="text-lg font-semibold mb-2">
+                            How would you like to receive these items?
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Choose delivery for our logistics team to bring items to your venue,
+                            or self-pickup to collect them yourself from the warehouse.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
+                                className="border-2 border-primary rounded-lg p-4 text-left bg-primary/5"
+                                onClick={() => setCheckoutMode("standard")}
+                            >
+                                <p className="font-semibold">Delivery</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    We deliver to your venue
+                                </p>
+                            </button>
+                            <button
+                                className="border-2 border-border rounded-lg p-4 text-left hover:border-primary/50 transition-colors"
+                                onClick={() => setCheckoutMode("self-pickup")}
+                            >
+                                <p className="font-semibold">I'll collect them myself</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Pick up from the warehouse
+                                </p>
+                            </button>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* Self-pickup flow (replaces standard steps) */}
+            {checkoutMode === "self-pickup" && (
+                <div className="max-w-5xl mx-auto px-8 py-10">
+                    <SelfPickupCheckoutFlow
+                        onSwitchToStandard={() => setCheckoutMode("standard")}
+                    />
+                </div>
+            )}
+
+            {/* Standard order flow continues below — hidden when self-pickup mode */}
+            {checkoutMode === "standard" && (
+                <>
             {/* warning if any item condition is red or orange */}
 
             {items.length > 0 && (
@@ -1703,6 +1757,8 @@ function CheckoutPageInner() {
                     )}
                 </div>
             </div>
+                </>
+            )}
         </div>
     );
 }
