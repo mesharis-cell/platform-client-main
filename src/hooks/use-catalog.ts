@@ -73,6 +73,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         const familyQuery: Record<string, string | undefined> = {
             brand: params.brand,
             category: params.category,
+            team_id: params.team,
             search_term: params.search_term,
             limit: String(limit),
             page: String(requestedPage),
@@ -115,6 +116,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                       logoUrl: null,
                   }
                 : null,
+            team: family.team?.id ? { id: family.team.id, name: family.team.name } : null,
             stockMode: family.stock_mode,
             stockRecordCount: Number(family.stock_record_count || family.asset_count || 0),
             totalQuantity: Number(family.total_quantity || 0),
