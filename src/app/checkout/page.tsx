@@ -65,7 +65,7 @@ const STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "cart", label: "Order Review", icon: ShoppingCart },
     { key: "installation", label: "Installation Details", icon: Calendar },
     { key: "venue", label: "Installation Location", icon: MapPin },
-    { key: "contact", label: "Point of Contact", icon: User },
+    { key: "contact", label: "Execution Contact", icon: User },
     { key: "review", label: "Review", icon: FileText },
 ];
 
@@ -116,6 +116,11 @@ function CheckoutPageInner() {
         venue_city_name: "",
         venue_address: "",
         venue_access_notes: "",
+        // Venue contact (always visible, separate from permits)
+        venue_contact_name: "",
+        venue_contact_email: "",
+        venue_contact_phone: "",
+        // Permits
         requires_permit: false,
         permit_owner: "UNKNOWN" as "CLIENT" | "PLATFORM" | "UNKNOWN",
         permit_venue_contact_name: "",
@@ -124,9 +129,14 @@ function CheckoutPageInner() {
         requires_vehicle_docs: false,
         requires_staff_ids: false,
         permit_notes: "",
+        // Execution contact
         contact_name: "",
         contact_email: "",
         contact_phone: "",
+        // Delivery window preference
+        requested_delivery_date: "",
+        requested_delivery_time_start: "",
+        requested_delivery_time_end: "",
         special_instructions: "",
     });
 
@@ -447,6 +457,25 @@ function CheckoutPageInner() {
                 contact_name: formData.contact_name,
                 contact_email: formData.contact_email,
                 contact_phone: formData.contact_phone,
+                // Venue contact (top-level, separate from permit_requirements)
+                ...(formData.venue_contact_name || formData.venue_contact_email || formData.venue_contact_phone
+                    ? {
+                          venue_contact: {
+                              ...(formData.venue_contact_name ? { name: formData.venue_contact_name } : {}),
+                              ...(formData.venue_contact_email ? { email: formData.venue_contact_email } : {}),
+                              ...(formData.venue_contact_phone ? { phone: formData.venue_contact_phone } : {}),
+                          },
+                      }
+                    : {}),
+                // Client-requested delivery window (optional)
+                ...(formData.requested_delivery_date && formData.requested_delivery_time_start && formData.requested_delivery_time_end
+                    ? {
+                          requested_delivery_window: {
+                              start: `${formData.requested_delivery_date}T${formData.requested_delivery_time_start}:00`,
+                              end: `${formData.requested_delivery_date}T${formData.requested_delivery_time_end}:00`,
+                          },
+                      }
+                    : {}),
                 ...(formData.special_instructions
                     ? { special_instructions: formData.special_instructions }
                     : {}),
@@ -830,6 +859,70 @@ function CheckoutPageInner() {
                                         </div>
                                     </div>
 
+                                    {/* Preferred Delivery Window (optional) */}
+                                    <div className="space-y-2 pt-4 border-t border-border/40">
+                                        <Label className="font-mono uppercase text-xs tracking-wide">
+                                            Preferred Delivery Window (Optional)
+                                        </Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            This is a request — logistics will review and confirm your
+                                            final delivery window.
+                                        </p>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="deliveryDate" className="text-xs">
+                                                    Date
+                                                </Label>
+                                                <Input
+                                                    id="deliveryDate"
+                                                    type="date"
+                                                    value={formData.requested_delivery_date}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_date: e.target.value,
+                                                        })
+                                                    }
+                                                    className="h-10 font-mono"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="deliveryTimeStart" className="text-xs">
+                                                    From
+                                                </Label>
+                                                <Input
+                                                    id="deliveryTimeStart"
+                                                    type="time"
+                                                    value={formData.requested_delivery_time_start}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_time_start: e.target.value,
+                                                        })
+                                                    }
+                                                    className="h-10 font-mono"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="deliveryTimeEnd" className="text-xs">
+                                                    To
+                                                </Label>
+                                                <Input
+                                                    id="deliveryTimeEnd"
+                                                    type="time"
+                                                    value={formData.requested_delivery_time_end}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_time_end: e.target.value,
+                                                        })
+                                                    }
+                                                    className="h-10 font-mono"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {formData.event_start_date && formData.event_end_date && (
                                         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                                             <div className="flex items-center gap-3">
@@ -997,6 +1090,70 @@ function CheckoutPageInner() {
                                             rows={3}
                                             className="font-mono text-sm"
                                         />
+                                    </div>
+
+                                    {/* Venue Contact — always visible, not gated by permits */}
+                                    <div className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-4">
+                                        <div>
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Venue Contact
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                The person at the venue who can coordinate arrival,
+                                                access, unloading, or handover.
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="venueContactName" className="text-xs">
+                                                    Name
+                                                </Label>
+                                                <Input
+                                                    id="venueContactName"
+                                                    value={formData.venue_contact_name}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            venue_contact_name: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="Contact name"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="venueContactEmail" className="text-xs">
+                                                    Email
+                                                </Label>
+                                                <Input
+                                                    id="venueContactEmail"
+                                                    type="email"
+                                                    value={formData.venue_contact_email}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            venue_contact_email: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="contact@venue.com"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="venueContactPhone" className="text-xs">
+                                                    Phone
+                                                </Label>
+                                                <Input
+                                                    id="venueContactPhone"
+                                                    value={formData.venue_contact_phone}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            venue_contact_phone: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="+971..."
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
