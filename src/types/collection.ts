@@ -171,6 +171,7 @@ export interface CatalogListParams {
     company?: string;
     brand?: string;
     category?: string;
+    team?: string;
     search_term?: string;
     type?: "family" | "collection" | "all";
     limit?: number;
