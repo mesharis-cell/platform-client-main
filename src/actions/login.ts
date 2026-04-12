@@ -33,7 +33,7 @@ export const login = async (email: string, password: string, platformId: string)
                 "x-platform": platformId,
             },
             body: JSON.stringify({
-                email,
+                email: email.trim().toLowerCase(),
                 password,
             }),
         });
