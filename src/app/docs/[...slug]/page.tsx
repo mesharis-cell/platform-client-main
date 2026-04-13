@@ -69,7 +69,7 @@ export default async function DocsArticlePage({ params }: PageProps) {
             companyName={platform.company_name}
             aside={<TableOfContents headings={headings} />}
         >
-            <article className="max-w-4xl">
+            <article>
                 <div className="mb-8 space-y-3 pb-6 border-b border-border">
                     <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
                         {article.frontmatter.category.replace(/-/g, " ")}

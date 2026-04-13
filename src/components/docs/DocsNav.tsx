@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { DocNavTree } from "@/lib/docs/nav-tree";
 import { docArticlePath } from "@/lib/docs/slug";
+import { MarqueeTitle } from "./MarqueeTitle";
 
 interface DocsNavProps {
     tree: DocNavTree;
@@ -48,7 +49,7 @@ export function DocsNav({ tree }: DocsNavProps) {
                                         aria-current={isActive ? "page" : undefined}
                                         title={article.title}
                                         className={cn(
-                                            "group relative flex items-center gap-2.5 rounded-md py-1.5 pl-5 pr-2 text-[13px] leading-snug transition-colors",
+                                            "group/nav-link relative flex items-center gap-2.5 rounded-md py-1.5 pl-5 pr-2 text-[13px] leading-snug transition-colors",
                                             isActive
                                                 ? "bg-primary/10 font-medium text-primary"
                                                 : "text-foreground/70 hover:bg-muted hover:text-foreground"
@@ -66,12 +67,13 @@ export function DocsNav({ tree }: DocsNavProps) {
                                                 "inline-block h-1 w-1 shrink-0 rounded-full transition-colors",
                                                 isActive
                                                     ? "bg-primary"
-                                                    : "bg-muted-foreground/40 group-hover:bg-muted-foreground/70"
+                                                    : "bg-muted-foreground/40 group-hover/nav-link:bg-muted-foreground/70"
                                             )}
                                         />
-                                        <span className="min-w-0 flex-1 truncate">
-                                            {article.title}
-                                        </span>
+                                        <MarqueeTitle
+                                            text={article.title}
+                                            className="flex-1"
+                                        />
                                     </Link>
                                 </li>
                             );
