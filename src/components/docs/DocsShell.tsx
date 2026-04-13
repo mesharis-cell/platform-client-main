@@ -21,11 +21,13 @@ export function DocsShell({ tree, companyName, aside, children }: DocsShellProps
             <DocsHeader companyName={companyName} />
             <div className="mx-auto w-full max-w-[1800px] px-6 py-10">
                 <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)_220px]">
-                    <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2">
+                    <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:border-border lg:pr-6">
                         <DocsNav tree={tree} />
                     </aside>
-                    <main className="min-w-0">{children}</main>
-                    <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:overscroll-contain">
+                    <main className="mx-auto w-full min-w-0 max-w-4xl">
+                        {children}
+                    </main>
+                    <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
                         {aside}
                     </aside>
                 </div>
