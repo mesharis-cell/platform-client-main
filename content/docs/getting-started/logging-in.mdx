@@ -1,0 +1,69 @@
+---
+title: Logging in to the portal
+slug: logging-in
+category: getting-started
+order: 0
+summary: Sign in to the Kadence client portal with the email your admin set up for you.
+readMinutes: 3
+updated: "2026-04-13"
+status: published
+---
+
+Your administrator provisions every portal account. Once they've added you, you'll have an email address and password you can use to sign in.
+
+## Before you start
+
+You'll need:
+
+- The tenant URL your admin shared with you (for example,
+  <code>https://demo.kadence.test</code>).
+- The email address registered on your account.
+- Your password. If you don't have one yet, or you've forgotten it, the portal
+  can send you a verification code to reset.
+
+<Callout kind="heads-up" title="Accounts are admin-provisioned">
+You can't self-register. If you don't see a login that works, ask your
+administrator to create an account for you.
+</Callout>
+
+## Sign in
+
+<StepList>
+    <Step n={1} title="Open the tenant URL">
+        Visit the portal URL your admin shared. You'll land on the login screen —
+        the grid-patterned page titled <strong>Access / Control</strong>.
+    </Step>
+    <Step n={2} title="Enter your email and password">
+        Type the email address your admin registered. If you type it in mixed
+        case, the portal will lowercase it for you before submitting.
+    </Step>
+    <Step n={3} title="Click Grant Access">
+        The button changes to <em>Authenticating…</em> while the portal verifies
+        your credentials. A success toast reading <strong>Access Granted</strong>
+        appears on correct login, and you're forwarded to your dashboard.
+    </Step>
+</StepList>
+
+## What you'll see after login
+
+Once authenticated, you land on the dashboard. From here you can reach:
+
+- <PortalLink to="/client-dashboard" label="Dashboard" hint="Summary of your active orders and upcoming events." />
+- <PortalLink to="/catalog" label="Catalog" hint="Browse items, check availability, and add things to your cart." />
+- <PortalLink to="/my-orders" label="My Orders" hint="See every order you've placed and its current status." />
+
+<Callout kind="tip" title="Forgot your password?">
+Click <strong>Forgot Password →</strong> at the bottom of the login form.
+You'll receive a 6-digit verification code by email; enter it along with a
+new password (minimum 8 characters).
+</Callout>
+
+## Troubleshooting
+
+- **&quot;Authentication Failed&quot; toast.** Double-check the email is
+  the one your admin registered. Passwords are case-sensitive.
+- **&quot;Access Denied&quot; toast.** The account exists, but the role isn't
+  <code>CLIENT</code>. If you need access, ask your admin to check the role
+  on your profile.
+- **Nothing happens when you click Grant Access.** A flaky network
+  connection is the usual cause. Reload the page and try again.
