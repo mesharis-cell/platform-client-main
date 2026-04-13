@@ -1,0 +1,65 @@
+---
+title: The five checkout steps
+slug: the-5-checkout-steps
+category: ordering
+order: 1
+summary: A tour of the stepper, the Back / Continue controls, and the save-and-resume behaviour.
+readMinutes: 3
+updated: "2026-04-13"
+status: published
+---
+
+Every order goes through the same five-step checkout. Most steps are filled in under a minute; Review is the only one where you'll spend real time.
+
+## The stepper
+
+<Screenshot
+    src="ordering/01-stepper.png"
+    alt="Checkout stepper showing all five steps with the second one active"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 345, y: 270 }, label: "1", text: "Completed steps show a check mark." },
+        { at: { x: 580, y: 270 }, label: "2", text: "Current step is highlighted with the primary colour." },
+        { at: { x: 900, y: 270 }, label: "3", text: "Upcoming steps are muted until you reach them." },
+    ]}
+/>
+
+The five steps, in order:
+
+1. **Order Review** — confirm what you're ordering.
+2. **Installation Details** — event dates and optional preferred
+   delivery window.
+3. **Installation Location** — venue info, access notes, and any
+   permit coordination.
+4. **Execution Contact** — the on-site person logistics will call.
+5. **Review** — final check, estimate preview, and Submit.
+
+## Navigating
+
+- **Continue** moves forward. If a required field on the current step
+  is empty or invalid, Continue stays disabled and a toast points out
+  what's missing.
+- **Back** moves one step earlier. Your inputs on the current step
+  are preserved.
+- **Step labels** are for orientation only — you can't jump forward by
+  clicking them. Each step's required fields gate the next.
+
+## Save and resume
+
+The portal persists your checkout state to your browser every time
+you type. If you refresh, close the tab, or come back tomorrow, you
+land on the step you left and the fields you filled are still there.
+
+<Callout kind="heads-up" title="Your cart and form live in the browser">
+If you start checkout on your laptop and switch to your phone, you'll
+see an empty cart and an empty form. Finish on the device you started
+with, or rebuild from scratch.
+</Callout>
+
+## What's next
+
+- [Step 2 — Installation dates and lead time](../ordering/event-dates-and-lead-time)
+- [Step 3 — Venue and permits](../ordering/venue-and-permits)
+- [Step 4 — Execution contact](../ordering/contact-and-special-instructions)
+- [Step 5 — Submit your order](../ordering/submitting-your-order)

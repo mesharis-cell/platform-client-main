@@ -1,0 +1,71 @@
+---
+title: Installation dates and lead time (Step 2)
+slug: event-dates-and-lead-time
+category: ordering
+order: 2
+summary: Set your event start and end, plus an optional preferred delivery window.
+readMinutes: 3
+updated: "2026-04-13"
+status: published
+---
+
+Step 2 is where your event timing lands in the system. Two dates are required; a preferred delivery window is optional.
+
+## Event dates
+
+<Screenshot
+    src="ordering/02-dates-empty.png"
+    alt="Checkout Step 2 with empty Event Start and Event End date pickers"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 345 }, label: "1", text: "Event Start Date — required. Can't be earlier than the minimum lead time." },
+        { at: { x: 980, y: 345 }, label: "2", text: "Event End Date — required. Must be on or after Event Start." },
+    ]}
+/>
+
+**Event Start Date** is when your event begins — the moment the items
+need to be set up and ready. **Event End Date** is the last day you
+need them.
+
+Both are required to advance to Step 3.
+
+## Lead time
+
+The portal enforces a **minimum lead time** between the submission
+moment and the earliest accepted event start. The default is 24 hours,
+but some tenants configure longer. The date picker dims any date
+earlier than that; the Continue button won't let you proceed with an
+out-of-range start date.
+
+<Callout kind="heads-up" title="Weekends may be skipped">
+Some tenants exclude weekends from lead-time counting. If the earliest
+accepted date you see looks further out than you expected, weekend
+exclusion is why.
+</Callout>
+
+## Preferred delivery window (optional)
+
+<Screenshot
+    src="ordering/03-dates-filled.png"
+    alt="Checkout Step 2 with dates filled and the optional preferred delivery window"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 480 }, label: "1", text: "Preferred delivery date — typically the day before your event starts." },
+        { at: { x: 960, y: 560 }, label: "2", text: "Preferred time window — from / to, your best-case arrival window." },
+    ]}
+/>
+
+This is a **request**, not a guarantee. Logistics reviews your
+preference and confirms the actual delivery window after your quote is
+approved — usually it lands within your preferred window, occasionally
+it shifts by a few hours for route reasons.
+
+Leave all three fields empty if you have no preference; the team will
+pick a sensible default.
+
+## What's next
+
+- [Step 3 — Venue and permits](../ordering/venue-and-permits)
+- [If your cart has RED items, the feasibility check runs here](../ordering/red-items-and-feasibility)
