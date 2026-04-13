@@ -36,27 +36,6 @@ Each entry: where it lives, what happens, impact on the docs flow, proposed disp
 
 ## Found during M0 smoke-test (2026-04-13)
 
-### DB-005 — Scan activity photos do not render (API/component field mismatch) — **PORTAL BUG**
-- **Where:** `client/src/components/scanning/scan-activity-timeline.tsx:112-140` (`getPhotoEntries`). Hook `useOrderScanEvents` in `client/src/hooks/use-scanning.ts:234-251` does no transformation.
-- **What happens:** the API returns scan-event photos under the field **`event_media[]`** (confirmed via raw response on ORD-DEMO-004: `event_media: [{ url, note, media_kind, sort_order }, …]`). The component's photo extractor falls through three readers:
-  1. `event.media` — **not set by the API**
-  2. `event.damage_report_entries` / `event.damageReportEntries` — not set
-  3. `event.photos` — not set
-  Result: `getPhotoEntries` returns `[]` every time. **Zero photos render on any scan event**, even though the seed attaches 1–3 photos per event on placehold.co.
-- **Impact on docs:** the entire Scan Activity flow (~18 screenshots) includes a Photos & Lightbox article that cannot be shot until this is fixed. The other scan-event info (type badge, Jordan Maxwell actor name, discrepancy reason, asset name, timestamp, condition) all renders correctly — verified via the component's defensive fallback chain.
-- **Recommended fix:** one-line change in `scan-activity-timeline.tsx:113` — add `event.event_media` to the precedence chain:
-  ```ts
-  const mediaEntries = event.media || event.event_media;
-  ```
-  Safe forward-compat; doesn't remove existing readers. Would also benefit the admin portal if they share this component (check).
-- **Disposition:** [x] **needs portal fix before Flow 6 (Scan Activity) can ship**   [ ] document around   [ ] defer
-
-### DB-005b — Multi-asset scan events show only one asset in the header (degraded)
-- **Where:** `scan-activity-timeline.tsx:211-220` reads `event.asset.name` (top-level convenience field) instead of iterating `event.event_assets[]`.
-- **What happens:** for scans that cover multiple assets (e.g. the OUTBOUND on ORD-DEMO-004 covers 5 Event Chairs + 1 LED Screen), the header shows only one asset. The `event_assets[]` array with per-asset quantities is ignored in the render.
-- **Impact on docs:** workable — the "Reading a scan entry" article can feature a single-asset scan (e.g. DERIG_CAPTURE or ON_SITE_CAPTURE) as its hero example. Worth mentioning in the "Scan types explained" article that each header summarizes the scan and that some events cover multiple assets.
-- **Disposition:** [ ] fix in portal (iterate `event_assets` with quantities)   [x] document around   [ ] defer
-
 ### DB-007 — No seeded order with VAT > 0
 - **Where:** all 6 demo orders return `vat.percent = 0`, so the "VAT (X%)" row never renders in `PricingBreakdown`.
 - **What happens:** docs can't screenshot the VAT row as it would appear for a company that has VAT configured.
@@ -70,6 +49,39 @@ Each entry: where it lives, what happens, impact on the docs flow, proposed disp
 
 ---
 
+## Superseded / retracted
+
+### DB-005 + DB-005b (RETRACTED — false alarm, 2026-04-13)
+
+Initial M0 analysis claimed photos would not render on the scan-activity timeline because the API returns them under `event_media[]` while the component reads `event.media`. **That conclusion was wrong.**
+
+Verified by re-reading `api/src/app/modules/order/order.services.ts:1445-1487` — the `getOrderScanEvents` service explicitly projects multiple convenience fields onto each event before returning:
+
+```ts
+return {
+    ...event,
+    media: orderedMedia.map(...),                // ← what the component reads
+    assets: event.event_assets.map(...),
+    photos: [...general + damage URLs],
+    latest_return_images: returnMedia.map(...),
+    damage_report_photos: damageMedia.map(...),
+    damage_report_entries: damageMedia.map(...),
+    asset: primaryAsset,                          // event.asset || event_assets[0]?.asset
+    scanned_by_user: event.scanned_by_user,
+    order: { id, order_id },
+};
+```
+
+Re-confirmed at runtime — the live response contains both `media: [3]` AND `event_media: [3]` AND `photos: [3]` on every scan event. The client's scan-activity-timeline reads `event.media` and finds photos. Everything renders as designed.
+
+Multi-asset scans also covered — the mapper sets `asset` to `event.asset || event.event_assets[0]?.asset` and separately exposes `assets[]` for any UI that wants the full list. The client timeline shows a single asset in the header by design; not a defect.
+
+**Lesson:** never file an API-vs-component field-name mismatch based solely on the Drizzle relation name seen in a raw response dump. Always check the service mapper.
+
+No action. Flow 6 (Scan Activity) ships cleanly with the current seed + portal + component.
+
+---
+
 ## Summary
 
 | # | Severity | Blocks v1? | Action |
@@ -78,9 +90,7 @@ Each entry: where it lives, what happens, impact on the docs flow, proposed disp
 | DB-002 | cosmetic | no | document around |
 | DB-003 | product decision | no | document around (tell users to contact admin) |
 | DB-004 | product decision | no | document around (use email reference article) |
-| **DB-005** | **portal bug** | **yes — Flow 6 (Scan Activity Photos)** | **needs 1-line fix** |
-| DB-005b | degraded UX | no | document around |
 | DB-007 | seed gap | no | inline MDX mock |
 | DB-008 | none | no | document as-is |
 
-Only **DB-005** (scan-activity photos not rendering) is a true blocker for a specific flow. Everything else is workable from docs alone.
+**Zero true blockers for v1.** Everything is workable from docs alone.
