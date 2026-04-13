@@ -1,0 +1,85 @@
+---
+title: Venue and permits (Step 3)
+slug: venue-and-permits
+category: ordering
+order: 3
+summary: Tell the portal where the event is, how to get in, and how permits are being handled.
+readMinutes: 4
+updated: "2026-04-13"
+status: published
+---
+
+Step 3 covers everything logistics needs about the physical location — name, address, access notes, and any permit coordination.
+
+## Venue essentials
+
+<Screenshot
+    src="ordering/04-venue-basics.png"
+    alt="Checkout Step 3 showing venue name, country, city, address, and access notes"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 335 }, label: "1", text: "Venue name — required. Freeform." },
+        { at: { x: 620, y: 420 }, label: "2", text: "Country auto-picks from your tenant; city lazy-loads once country is set." },
+        { at: { x: 620, y: 550 }, label: "3", text: "Full address — required. Enough detail for the driver to navigate." },
+    ]}
+/>
+
+- **Venue Name** is required.
+- **Country** is auto-selected to your tenant's default (e.g., UAE)
+  and usually shouldn't change.
+- **City** lazy-loads the list of cities for the selected country.
+  Required.
+- **Full Address** is a textarea — one building might have multiple
+  entrances, so write enough detail that a driver knows exactly where
+  to pull up.
+
+## Venue contact (always visible)
+
+Below the venue fields, an **always-visible** venue contact section
+captures the name, email, and phone of someone at the venue who can
+coordinate arrival, access, unloading, or handover. This is separate
+from the permit block — logistics needs it even when no permits are
+involved.
+
+## Permits
+
+Check **"Venue requires permits or access coordination"** if your
+venue has any access restriction the platform needs to coordinate.
+The checkbox expands a detailed section.
+
+<Screenshot
+    src="ordering/05-permits-expanded.png"
+    alt="Checkout Step 3 with the permits section expanded"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 320 }, label: "1", text: "Permit Owner — who's arranging them? You, the platform, or not decided yet." },
+        { at: { x: 620, y: 550 }, label: "2", text: "Two checkboxes for vehicle documents and staff IDs." },
+        { at: { x: 620, y: 720 }, label: "3", text: "Notes — loading-bay rules, access windows, anything venue-specific." },
+    ]}
+/>
+
+**Permit Owner** picks one of three:
+
+- **"I will arrange"** — you're handling the permits yourself. The
+  platform just needs to know.
+- **"You should arrange"** — platform staff coordinates with the venue.
+- **"Not sure yet"** — you'll come back with an answer.
+
+<Callout kind="tip" title="Additional charges may apply">
+Permit coordination can add to the final cost depending on venue
+requirements — the quote you receive will reflect this. Filling the
+info in now saves a back-and-forth later.
+</Callout>
+
+## Access notes
+
+At the bottom of the step, an **Access Notes** textarea is always
+visible regardless of the permit choice. Use it for loading-dock info,
+gate access codes, elevator restrictions, and anything a driver or
+installer would need to know without a permit being involved.
+
+## What's next
+
+- [Step 4 — Execution contact](../ordering/contact-and-special-instructions)

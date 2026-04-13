@@ -1,0 +1,70 @@
+---
+title: Handling RED items — feasibility check
+slug: red-items-and-feasibility
+category: ordering
+order: 6
+summary: RED items must pass a refurb-timeline check before checkout lets you continue.
+readMinutes: 3
+updated: "2026-04-13"
+status: published
+---
+
+**RED** items need repair before they can ship. The checkout runs a **maintenance feasibility check** that compares each RED item's refurb-days estimate to your event start date. If the timeline works, the check passes and you can continue. If not, checkout surfaces the earliest feasible date and blocks the step.
+
+## When the check runs
+
+The feasibility check fires on Step 2 (Installation Details) the first
+time you try to advance to Step 3, and again on Step 5 just before
+final submission. Each run re-reads your current event start date and
+the current condition of every RED item in your cart.
+
+## While the check runs
+
+<Screenshot
+    src="ordering/08-red-feasibility-ok.png"
+    alt="Step 2 with the feasibility check in progress"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 540 }, label: "1", text: "Amber banner appears while the check is running." },
+    ]}
+/>
+
+When you click Continue, the banner flips to an amber "Checking
+maintenance feasibility…" state for a beat. If the refurb timeline
+works, you're forwarded straight to Step 3 — a brief green flash
+confirms success. No extra work needed.
+
+## Check failed
+
+<Screenshot
+    src="ordering/09-red-feasibility-fail.png"
+    alt="Step 2 red banner listing items with earliest feasible dates"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 620, y: 530 }, label: "1", text: "Red banner — one or more items can't be refurbed before your current start date." },
+        { at: { x: 620, y: 620 }, label: "2", text: "Each line lists the item and its earliest feasible event start date." },
+    ]}
+/>
+
+When the check fails, the portal tells you **exactly** which items
+are blocking and what the earliest feasible start date is for each.
+You have three options:
+
+1. **Push the event start back** to the latest earliest-feasible date
+   among the blockers.
+2. **Remove the blocking items** from your cart and add alternatives.
+3. **Talk to your admin** — there may be a faster refurb path for a
+   specific unit.
+
+<Callout kind="heads-up" title="Feasibility re-runs on every date change">
+If you adjust the Event Start Date, click Continue again to re-check.
+The indicator goes back to "Checking…" for a beat, then lands on
+passed or failed with the fresh data.
+</Callout>
+
+## What's next
+
+- [Submit your order](../ordering/submitting-your-order)
+- [How ORANGE items differ](../ordering/maintenance-decisions)
