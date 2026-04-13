@@ -1,0 +1,109 @@
+---
+title: Adding items to your cart
+slug: adding-to-cart
+category: catalog
+order: 4
+summary: Add assets, families, and whole collections to your cart, then open the floating cart panel to review.
+readMinutes: 4
+updated: "2026-04-13"
+status: published
+---
+
+Your cart sits above every catalog page as a floating button in the bottom-right corner. Anything you add from any detail page lands in the cart and stays there — even across browser refreshes — until you remove it or submit an order.
+
+## Add a family or asset
+
+From a family detail page (pooled or serialized) or an asset detail page:
+
+<Screenshot
+    src="catalog/08-add-to-cart.png"
+    alt="Asset detail page with quantity stepper and Add to Cart button"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 1000, y: 655 }, label: "1", text: "Quantity stepper — minus, number, plus." },
+        { at: { x: 1020, y: 733 }, label: "2", text: "Add to Cart — the portal confirms with a toast." },
+    ]}
+/>
+
+<StepList>
+    <Step n={1} title="Pick your quantity">
+        Use the **+** and **−** buttons on the quantity stepper. The portal
+        caps you at the current available quantity for that asset — you can't
+        add more than the warehouse has.
+    </Step>
+    <Step n={2} title="Click Add to Cart">
+        A toast appears confirming the add. The floating cart button in the
+        bottom-right lights up with the new item count.
+    </Step>
+    <Step n={3} title="Keep browsing or open the cart">
+        Either continue to another family to add more, or click the floating
+        cart button to review what you've got.
+    </Step>
+</StepList>
+
+<Callout kind="tip" title="Adding the same item twice">
+If the asset is already in your cart, clicking Add to Cart with a new quantity
+*merges* — your cart shows the new total, not two separate entries. The
+original condition and any maintenance decisions carry forward.
+</Callout>
+
+## Add a whole collection
+
+On a collection detail page you have two choices:
+
+- **Customize Collection** — opens a dialog where you can toggle items off
+  and tweak quantities before adding.
+- Add the whole bundle at default quantities straight through.
+
+The customize dialog is how you do things like *"the events package minus the
+LED screens we already own"* without manually adding each family.
+
+## Open the cart
+
+The floating button in the bottom-right corner shows your current item count
+on a red badge. Click it to open the cart panel.
+
+<Screenshot
+    src="catalog/09-cart-panel.png"
+    alt="Floating cart panel open on the right side, showing items, totals, and a Proceed to Checkout button"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 900, y: 45 }, label: "1", text: "Header — total item count." },
+        { at: { x: 900, y: 125 }, label: "2", text: "Volume and weight totals for the whole cart." },
+        { at: { x: 950, y: 297 }, label: "3", text: "Per-item quantity stepper — same + / − behaviour as the catalog." },
+        { at: { x: 1020, y: 712 }, label: "4", text: "Proceed to Checkout — opens the five-step flow." },
+    ]}
+/>
+
+In the panel you can:
+
+- **Adjust the quantity** on any line with the + and − buttons.
+- **Remove an item** with the trash icon.
+- **Clear the whole cart** from the footer menu.
+- **Proceed to Checkout** when you're ready to submit.
+
+## What your cart remembers
+
+The cart is saved in your browser — it survives refreshes, browser restarts,
+and even syncs live between open tabs of the portal. A few points worth
+knowing:
+
+- **Per-item condition and maintenance decisions** are kept alongside the
+  quantity.
+- **If an item's availability drops** between when you added it and when you
+  open checkout, the Review step flags the issue before you can submit.
+- **The cart belongs to the browser**, not the account — if you sign in from
+  a different device, you start with an empty cart.
+
+<Callout kind="heads-up" title="One cart per browser">
+Signing out doesn't clear the cart by itself, but the contents are tied to the
+device and browser you were using. Switching devices means rebuilding the cart
+from scratch.
+</Callout>
+
+## What's next
+
+- [Start the checkout flow](../ordering/the-5-checkout-steps)
+- [Handle ORANGE and RED items at checkout](../ordering/maintenance-decisions)

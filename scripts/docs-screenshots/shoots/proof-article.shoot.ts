@@ -1,37 +1,79 @@
 import { test } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
+import matter from "gray-matter";
 import { shoot } from "../fixtures/shoot";
 import { docsEnv } from "../fixtures/env";
 
 /**
- * Post-M2 / M3 validation shots: captures each rendered /docs article
- * so we can visually verify the <Screenshot> compositing is correct at
- * the annotation level (numbered circles over the right spots on each
- * embedded PNG) and the overall prose/typography reads cleanly.
+ * Validation shots: captures every published /docs article so we can
+ * eyeball the <Screenshot> compositing — PNG load, SVG annotation
+ * alignment, prose rhythm.
  *
- * These are not tutorial-content screenshots — they're a regression
- * harness for the docs site itself.
+ * Walks content/docs/**\/*.mdx, filters to `status !== "stub"`, and
+ * generates one full-page capture per article into proof/.
  */
 
-const articles: Array<{ slug: string; filename: string }> = [
-    { slug: "logging-in", filename: "01-logging-in-rendered" },
-    { slug: "forgot-password", filename: "02-forgot-password-rendered" },
-    { slug: "change-password", filename: "03-change-password-rendered" },
-];
+const CONTENT_ROOT = path.join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "content",
+    "docs"
+);
+
+interface ArticleRef {
+    category: string;
+    slug: string;
+    filename: string;
+}
+
+function collectArticles(): ArticleRef[] {
+    const out: ArticleRef[] = [];
+    if (!fs.existsSync(CONTENT_ROOT)) return out;
+    for (const category of fs.readdirSync(CONTENT_ROOT, { withFileTypes: true })) {
+        if (!category.isDirectory()) continue;
+        const categoryDir = path.join(CONTENT_ROOT, category.name);
+        const files = fs.readdirSync(categoryDir).filter((f) => f.endsWith(".mdx"));
+        for (const file of files) {
+            const raw = fs.readFileSync(path.join(categoryDir, file), "utf8");
+            const { data } = matter(raw);
+            if (data.status === "stub") continue;
+            const slug = String(data.slug || file.replace(/\.mdx$/, ""));
+            out.push({
+                category: category.name,
+                slug,
+                filename: `${category.name}--${slug}`,
+            });
+        }
+    }
+    return out.sort((a, b) =>
+        `${a.category}/${a.slug}`.localeCompare(`${b.category}/${b.slug}`)
+    );
+}
+
+const articles = collectArticles();
 
 test.describe("proof — rendered docs articles", () => {
-    for (const { slug, filename } of articles) {
-        test(`captures /docs/getting-started/${slug}`, async ({ page }) => {
+    for (const article of articles) {
+        test(`captures /docs/${article.category}/${article.slug}`, async ({
+            page,
+        }) => {
             const env = docsEnv();
-            await page.goto(env.baseUrl + "/docs/getting-started/" + slug, {
-                waitUntil: "networkidle",
-            });
+            await page.goto(
+                env.baseUrl + `/docs/${article.category}/${article.slug}`,
+                { waitUntil: "networkidle" }
+            );
 
-            // Wait for the first article Screenshot figure to be mounted
-            // so images and SVG overlays are in the final layout.
-            await page.locator("figure").first().waitFor({ timeout: 10_000 });
-            await page.waitForTimeout(500);
+            // Wait for the first Screenshot figure (if any) to mount so
+            // the image + SVG overlay are composited in the final layout.
+            const figures = page.locator("figure");
+            if (await figures.first().isVisible().catch(() => false)) {
+                await page.waitForTimeout(500);
+            }
 
-            await shoot(page, { name: `proof/${filename}`, fullPage: true });
+            await shoot(page, { name: `proof/${article.filename}`, fullPage: true });
         });
     }
 });
