@@ -19,6 +19,22 @@ export interface CustomJwtPayload extends JwtPayload {
     role: string;
 }
 
+const DEFAULT_POST_LOGIN_PATH = "/client-dashboard";
+
+// Only allow same-origin relative paths so a malicious ?next= can't phish
+// users by redirecting them off-site after a real login.
+const safeNextPath = (raw: string | null): string => {
+    if (!raw) return DEFAULT_POST_LOGIN_PATH;
+    if (!raw.startsWith("/") || raw.startsWith("//")) return DEFAULT_POST_LOGIN_PATH;
+    if (raw.includes("://") || raw.includes("\\")) return DEFAULT_POST_LOGIN_PATH;
+    return raw;
+};
+
+const readNextFromUrl = (): string => {
+    if (typeof window === "undefined") return DEFAULT_POST_LOGIN_PATH;
+    return safeNextPath(new URLSearchParams(window.location.search).get("next"));
+};
+
 export default function HomePage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -34,8 +50,7 @@ export default function HomePage() {
             const role = jwtDecode<CustomJwtPayload>(access_token).role;
 
             if (role === "CLIENT") {
-                // Client goes to analytics dashboard
-                router.push("/client-dashboard");
+                router.push(readNextFromUrl());
             } else {
                 // User is not an admin, sign out and invalidate token
                 logout();
@@ -58,7 +73,7 @@ export default function HomePage() {
                 const { access_token, refresh_token, ...user } = res.data;
                 localStorage.setItem("user", JSON.stringify(user));
 
-                router.push("/client-dashboard");
+                router.push(readNextFromUrl());
             } else {
                 // User is not an admin, sign out and invalidate token
                 logout();

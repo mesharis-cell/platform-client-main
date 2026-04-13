@@ -1,13 +1,15 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     useClientSelfPickupDetail,
     useClientApproveSelfPickupQuote,
     useClientDeclineSelfPickupQuote,
     useTriggerSelfPickupReturn,
 } from "@/hooks/use-self-pickups";
+import { usePlatform } from "@/contexts/platform-context";
 import { ClientNav } from "@/components/client-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,12 +52,26 @@ export default function ClientSelfPickupDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = use(params);
+    const router = useRouter();
+    const { platform, isLoading: platformLoading } = usePlatform();
+    const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
+
+    useEffect(() => {
+        if (!platformLoading && !selfPickupEnabled) {
+            router.replace("/catalog");
+        }
+    }, [platformLoading, selfPickupEnabled, router]);
+
     const { data: pickupData, isLoading } = useClientSelfPickupDetail(id);
     const approveQuote = useClientApproveSelfPickupQuote();
     const declineQuote = useClientDeclineSelfPickupQuote();
     const triggerReturn = useTriggerSelfPickupReturn();
 
     const pickup = pickupData?.data;
+
+    if (platformLoading || !selfPickupEnabled) {
+        return null;
+    }
 
     if (isLoading) {
         return (
@@ -116,7 +132,7 @@ export default function ClientSelfPickupDetailPage({
                                             declineQuote.mutate(id, {
                                                 onSuccess: () =>
                                                     toast.success("Quote declined"),
-                                                onError: (e) => toast.error(e.message),
+                                                onError: (e: unknown) => toast.error((e as Error).message),
                                             });
                                         }}
                                         disabled={declineQuote.isPending}
@@ -128,7 +144,7 @@ export default function ClientSelfPickupDetailPage({
                                             approveQuote.mutate(id, {
                                                 onSuccess: () =>
                                                     toast.success("Quote approved"),
-                                                onError: (e) => toast.error(e.message),
+                                                onError: (e: unknown) => toast.error((e as Error).message),
                                             });
                                         }}
                                         disabled={approveQuote.isPending}
@@ -145,7 +161,7 @@ export default function ClientSelfPickupDetailPage({
                                         triggerReturn.mutate(id, {
                                             onSuccess: () =>
                                                 toast.success("Return initiated"),
-                                            onError: (e) => toast.error(e.message),
+                                            onError: (e: unknown) => toast.error((e as Error).message),
                                         });
                                     }}
                                     disabled={triggerReturn.isPending}
