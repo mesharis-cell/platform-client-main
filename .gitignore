@@ -37,6 +37,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.playwright.example
+!.env.docs.example
+
+# docs screenshot harness — auth state, traces, runtime output
+scripts/docs-screenshots/.auth/
+scripts/docs-screenshots/.output/
 
 # vercel
 .vercel

@@ -12,6 +12,8 @@
         "deploy:build": "opennextjs-cloudflare build",
         "e2e:smoke": "playwright test",
         "e2e:smoke:headed": "playwright test --headed",
+        "docs:shoot": "playwright test --config=playwright.docs.config.ts",
+        "docs:shoot:headed": "playwright test --config=playwright.docs.config.ts --headed",
         "format": "prettier --write .",
         "typecheck": "tsc --noEmit",
         "predeploy": "bun run format && bun run lint && bun run typecheck"
