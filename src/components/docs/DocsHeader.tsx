@@ -15,7 +15,7 @@ export function DocsHeader({ companyName }: DocsHeaderProps) {
 
     return (
         <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="mx-auto flex h-14 w-full max-w-[1800px] items-center justify-between px-6">
+            <div className="flex h-14 w-full items-center justify-between px-6">
                 <Link
                     href="/docs"
                     className="inline-flex items-center gap-2 font-mono text-sm font-semibold uppercase tracking-wider"
