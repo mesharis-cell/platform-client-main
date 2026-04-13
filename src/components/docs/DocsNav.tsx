@@ -46,6 +46,7 @@ export function DocsNav({ tree }: DocsNavProps) {
                                     <Link
                                         href={href}
                                         aria-current={isActive ? "page" : undefined}
+                                        title={article.title}
                                         className={cn(
                                             "group relative flex items-center gap-2.5 rounded-md py-1.5 pl-5 pr-2 text-[13px] leading-snug transition-colors",
                                             isActive
@@ -68,7 +69,9 @@ export function DocsNav({ tree }: DocsNavProps) {
                                                     : "bg-muted-foreground/40 group-hover:bg-muted-foreground/70"
                                             )}
                                         />
-                                        <span className="flex-1">{article.title}</span>
+                                        <span className="min-w-0 flex-1 truncate">
+                                            {article.title}
+                                        </span>
                                     </Link>
                                 </li>
                             );
