@@ -1,0 +1,86 @@
+---
+title: Condition flags — GREEN, ORANGE, RED
+slug: conditions
+category: catalog
+order: 3
+summary: What the three condition states mean and how they affect what you can order.
+readMinutes: 4
+updated: "2026-04-13"
+status: published
+---
+
+Every individual unit in the catalog has a **condition**, which tells you how ready-to-ship that unit is. The catalog surfaces condition at every level — on cards, on family detail pages, and on asset detail pages — because it changes what happens when you add the unit to your order.
+
+## The three states
+
+- **GREEN** — ready to use as-is. No notes, no extra steps. The default.
+- **ORANGE** — minor issues that are acceptable if you're fine with them. The
+  portal will ask you at checkout whether you want the item **fixed before
+  the event** or **used as-is**.
+- **RED** — needs repair before it can ship. You can still add RED units to
+  your order, but the portal runs a **feasibility check** to make sure your
+  team can refurbish them before your event start date.
+
+## Where you see condition
+
+### On a catalog card
+
+Cards show a small condition badge when any unit in the family is flagged
+ORANGE or RED — for example, *"2 need repair"* for two RED units, or
+*"1 minor issue"* for one ORANGE. GREEN-only families don't show a badge.
+
+<Screenshot
+    src="catalog/06-card-condition.png"
+    alt="Catalog card showing a condition badge"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 500, y: 670 }, label: "1", text: "Condition badge — counts items flagged ORANGE or RED." },
+    ]}
+/>
+
+### On an asset detail page
+
+The asset detail page has a dedicated **Condition & Maintenance** tab that
+shows:
+
+- The current condition (GREEN / ORANGE / RED)
+- **Condition notes** — a free-text description from the team that inspected
+  the unit
+- **Refurb days estimate** — for ORANGE/RED units, how many days of work are
+  needed before it's shippable
+- The latest condition photos captured during scanning
+- A full **Condition History** timeline if the unit has been re-assessed
+
+<Screenshot
+    src="catalog/07-asset-orange.png"
+    alt="Asset detail page for an ORANGE-condition item"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 1080, y: 518 }, label: "1", text: "Condition badge on the spec grid — this unit is flagged ORANGE." },
+        { at: { x: 930, y: 265 }, label: "2", text: "Availability is unchanged — you can still add non-GREEN units." },
+    ]}
+/>
+
+## What happens when you order a non-GREEN item
+
+- **ORANGE.** The item is added to your cart with condition info preserved.
+  At checkout, the **Maintenance Decision Center** asks you for a choice per
+  ORANGE item:
+  - **Fix before event** — the platform team refurbishes the unit.
+  - **Use as-is** — the unit ships flagged, you accept it as it is.
+- **RED.** The item is added but checkout runs a **maintenance feasibility
+  check** using the refurb-days estimate and your event start date. If the
+  timeline doesn't work, checkout tells you the earliest feasible event date.
+
+<Callout kind="heads-up" title="You can't skip a maintenance decision">
+If your cart has any ORANGE items when you open checkout, you'll be blocked
+from submitting until every ORANGE item has a decision. The Review step lists
+them so nothing slips through.
+</Callout>
+
+## What's next
+
+- [Add items to your cart](../catalog/adding-to-cart)
+- [Walk through the five-step checkout](../ordering/the-5-checkout-steps)

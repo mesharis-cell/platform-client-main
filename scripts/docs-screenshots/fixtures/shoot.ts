@@ -45,6 +45,19 @@ async function freeze(page: Page): Promise<void> {
                 transition-delay: 0s !important;
                 scroll-behavior: auto !important;
             }
+
+            /* Hide the Next.js 15 dev overlay and its badge — the "N" mark +
+               "N Issues" pill occlude the bottom-left avatar in our shots.
+               These elements only exist in dev mode; the rule is a no-op
+               otherwise. */
+            nextjs-portal,
+            [data-next-badge-root],
+            [data-nextjs-dev-tools-button],
+            [data-nextjs-toast],
+            #__next-build-watcher,
+            #__next-dev-indicator {
+                display: none !important;
+            }
         `,
     });
 }
