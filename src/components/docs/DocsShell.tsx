@@ -19,7 +19,7 @@ export function DocsShell({ tree, companyName, aside, children }: DocsShellProps
     return (
         <div className="min-h-screen bg-background text-foreground">
             <DocsHeader companyName={companyName} />
-            <div className="mx-auto w-full max-w-[1800px] px-6 py-10">
+            <div className="w-full px-6 py-10">
                 <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)_220px]">
                     <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:border-border lg:pr-6">
                         <DocsNav tree={tree} />
