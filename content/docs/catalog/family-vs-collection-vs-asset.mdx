@@ -1,0 +1,101 @@
+---
+title: Assets, families, and collections
+slug: family-vs-collection-vs-asset
+category: catalog
+order: 2
+summary: Three ways the catalog groups inventory, and what each detail page shows you.
+readMinutes: 5
+updated: "2026-04-13"
+status: published
+---
+
+The catalog groups inventory into three concepts: **assets**, **families**, and **collections**. They all represent items you can put on an order, but they live at different levels of aggregation. Understanding the difference makes filtering and ordering a lot faster.
+
+## Asset — a single item
+
+An **asset** is the smallest unit — one specific thing in the warehouse. One
+chair. One LED screen. One backdrop panel. An asset has a unique serial, a
+physical location, and a current condition.
+
+You rarely need to think at the asset level unless the specific identity
+matters (for example, you know the event venue has a restriction that rules
+out certain units).
+
+## Family — a group of similar assets
+
+A **family** is a group of interchangeable assets. They look identical, they're
+priced the same, and you usually don't care which specific unit you get — you
+care about **how many**. Families have a **stock mode** that tells the catalog
+how to surface availability:
+
+- **Pooled** — the family tracks by count ("20 of 30 available"). Perfect for
+  bulk items like chairs where one unit is as good as the next.
+- **Serialized** — each unit in the family is tracked individually ("3 of 4
+  available", with a specific unit shown as unavailable). Used when the
+  physical identity matters — different assembly, different condition, or a
+  different history.
+
+<Screenshot
+    src="catalog/03-family-pooled.png"
+    alt="Family detail page for a pooled family showing stock count and add-to-cart"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 1195, y: 190 }, label: "1", text: "Pooled families show a single stock count, not individual units." },
+        { at: { x: 1130, y: 275 }, label: "2", text: "Specs — volume and weight per unit." },
+    ]}
+/>
+
+<Screenshot
+    src="catalog/04-family-serialized.png"
+    alt="Family detail page for a serialized family showing individual stock units"
+    width={1280}
+    height={1096}
+    annotations={[
+        { at: { x: 780, y: 690 }, label: "1", text: "Serialized families list each unit with its own condition." },
+        { at: { x: 380, y: 550 }, label: "2", text: "Select individual units — Add to cart appears when you have a selection." },
+    ]}
+/>
+
+## Asset detail
+
+Clicking an individual unit on a serialized family takes you to its **asset
+detail** page — the single-unit view. Here you see the full spec, the image
+gallery, any condition notes, the refurb-days estimate if it's flagged ORANGE
+or RED, and three tabs with deeper information: **Usage Report**, **Condition
+History**, and **Versions**.
+
+## Collection — a bundle
+
+A **collection** is a curated package of items — multiple families grouped
+together for a specific use case. The seeded example is *Corporate Event
+Package*, which pulls chairs, backdrop panels, and LED screens into one bundle
+with sensible default quantities.
+
+<Screenshot
+    src="catalog/05-collection.png"
+    alt="Collection detail page listing all items and totals"
+    width={1280}
+    height={1551}
+    annotations={[
+        { at: { x: 780, y: 470 }, label: "1", text: "Availability banner — one glance tells you if the collection is fully in stock." },
+        { at: { x: 780, y: 700 }, label: "2", text: "Items — each row is one family in the bundle with its default quantity." },
+        { at: { x: 780, y: 1380 }, label: "3", text: "Customize Collection — pick which items to actually order." },
+    ]}
+/>
+
+Collections give you two ways to order:
+
+- **Order the whole collection** with the default quantities.
+- **Customize** the selection — toggle items off, or adjust quantities —
+  before adding to your cart. Useful when you only need part of a package.
+
+<Callout kind="tip" title="Which view should I start from?">
+If you know exactly what you need, start from the **Families** tab. If you're
+outfitting a standard event, start from **Collections** — you'll save clicks.
+</Callout>
+
+## What's next
+
+- [Understand ORANGE and RED condition flags](../catalog/conditions)
+- [Add items to your cart](../catalog/adding-to-cart)
