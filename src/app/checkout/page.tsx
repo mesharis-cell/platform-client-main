@@ -14,6 +14,7 @@ import { SelfPickupCheckoutFlow } from "@/components/checkout/SelfPickupCheckout
 import { usePlatform } from "@/contexts/platform-context";
 import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
+import { FeasibilityHelper } from "@/components/checkout/FeasibilityHelper";
 import { ClientNav } from "@/components/client-nav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -48,7 +49,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
 import { useCountries } from "@/hooks/use-countries";
@@ -57,6 +58,8 @@ import { useCompany } from "@/hooks/use-companies";
 import {
     useFeasibilityConfig,
     useMaintenanceFeasibilityCheck,
+    useFeasibilityPreview,
+    interpretFeasibilityPreview,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
 
@@ -178,6 +181,30 @@ function CheckoutPageInner() {
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
     const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
+
+    // Proactive feasibility preview. Runs whenever items (or their decisions)
+    // change — NOT gated on event_start_date. Backend compares against a
+    // past sentinel so we always get per-item earliest_feasible_date; the
+    // floor is derived here and the user's picked date is compared against
+    // it for the hard block + helper rendering.
+    const feasibilityItems = useMemo(
+        () =>
+            items.map((item) => ({
+                asset_id: item.assetId,
+                maintenance_decision: item.maintenanceDecision,
+            })),
+        [items]
+    );
+    const feasibilityPreview = useFeasibilityPreview({
+        items: feasibilityItems,
+        enabled: items.length > 0,
+    });
+    const feasibility = interpretFeasibilityPreview(
+        feasibilityPreview.data,
+        formData.event_start_date
+    );
+    const feasibilityHelperEnabled =
+        (platform?.features as any)?.enable_feasibility_helper !== false;
 
     // NEW: Calculate estimate using new system
     const {
@@ -302,11 +329,20 @@ function CheckoutPageInner() {
             case "cart":
                 return items.length > 0;
             case "installation":
-                return (
+                return Boolean(
                     formData.event_start_date &&
-                    formData.event_end_date &&
-                    new Date(formData.event_start_date) <= new Date(formData.event_end_date)
+                        formData.event_end_date &&
+                        new Date(formData.event_start_date) <=
+                            new Date(formData.event_end_date) &&
+                        // Hard-block when we KNOW the picked date is too soon.
+                        // Always enforced — independent of the helper flag.
+                        feasibility.userDateFeasible !== false
                 );
+            case "review":
+                // Block submit path from review-level Next if ORANGE FIX
+                // decisions pushed the earliest date past the picked event
+                // date. Submit handler also checks as a last line of defense.
+                return feasibility.userDateFeasible !== false;
             case "venue":
                 return Boolean(
                     formData.venue_name &&
@@ -322,8 +358,6 @@ function CheckoutPageInner() {
                     isValidPhoneNumber(formData.contact_phone) &&
                     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
                 );
-            case "review":
-                return true;
             default:
                 return false;
         }
@@ -880,6 +914,34 @@ function CheckoutPageInner() {
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Feasibility helper — inline under the date fields.
+                                        Helper copy is gated by the enable_feasibility_helper
+                                        platform flag; the hard block on Next is always
+                                        enforced via canProceed(). */}
+                                    <FeasibilityHelper
+                                        helperEnabled={feasibilityHelperEnabled}
+                                        isLoading={feasibilityPreview.isLoading}
+                                        floorDate={feasibility.floorDate}
+                                        userEventDate={formData.event_start_date}
+                                        userDateFeasible={feasibility.userDateFeasible}
+                                        blockingItems={feasibility.blockingItems}
+                                        config={feasibilityPreview.data?.config ?? null}
+                                        onUseFloorDate={() => {
+                                            if (feasibility.floorDate) {
+                                                setFormData({
+                                                    ...formData,
+                                                    event_start_date: feasibility.floorDate,
+                                                    event_end_date:
+                                                        formData.event_end_date &&
+                                                        formData.event_end_date >=
+                                                            feasibility.floorDate
+                                                            ? formData.event_end_date
+                                                            : feasibility.floorDate,
+                                                });
+                                            }
+                                        }}
+                                    />
 
                                     {/* Preferred Delivery + Pickup Windows (optional) */}
                                     <div className="space-y-4 pt-4 border-t border-border/40">
@@ -1509,6 +1571,36 @@ function CheckoutPageInner() {
                                     }
                                 />
                             ) : null}
+
+                            {/* Feasibility re-check. When a user flips an ORANGE
+                                decision to "Fix", the preview query re-fires with
+                                the new decision; if that pushes the earliest date
+                                past the event date they picked at the installation
+                                step, the helper surfaces it here + the Submit button
+                                is blocked via canProceed. */}
+                            <FeasibilityHelper
+                                helperEnabled={feasibilityHelperEnabled}
+                                isLoading={feasibilityPreview.isLoading}
+                                floorDate={feasibility.floorDate}
+                                userEventDate={formData.event_start_date}
+                                userDateFeasible={feasibility.userDateFeasible}
+                                blockingItems={feasibility.blockingItems}
+                                config={feasibilityPreview.data?.config ?? null}
+                                onUseFloorDate={() => {
+                                    if (feasibility.floorDate) {
+                                        setFormData({
+                                            ...formData,
+                                            event_start_date: feasibility.floorDate,
+                                            event_end_date:
+                                                formData.event_end_date &&
+                                                formData.event_end_date >= feasibility.floorDate
+                                                    ? formData.event_end_date
+                                                    : feasibility.floorDate,
+                                        });
+                                    }
+                                }}
+                            />
+
 
                             {/* Order Summary */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
