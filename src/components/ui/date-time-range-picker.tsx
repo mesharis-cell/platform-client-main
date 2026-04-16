@@ -148,6 +148,21 @@ function TimeColumnGroup({
     );
 }
 
+/**
+ * Returns parts + 1 hour, wrapping AM↔PM at the 11/12 boundary.
+ *   1 AM → 2 AM, 10 AM → 11 AM, 11 AM → 12 PM, 12 PM → 1 PM,
+ *   11 PM → 12 AM, 12 AM → 1 AM
+ */
+function advanceOneHour(parts: TimeParts): TimeParts {
+    if (parts.hour12 === 11) {
+        return { hour12: 12, ampm: parts.ampm === "AM" ? "PM" : "AM" };
+    }
+    if (parts.hour12 === 12) {
+        return { hour12: 1, ampm: parts.ampm };
+    }
+    return { hour12: parts.hour12 + 1, ampm: parts.ampm };
+}
+
 export function DateTimeRangePicker({
     date,
     start,
@@ -159,6 +174,32 @@ export function DateTimeRangePicker({
     minDate,
 }: DateTimeRangePickerProps) {
     const [open, setOpen] = React.useState(false);
+
+    // "To" auto-tracks "From" + 1 hour until the user explicitly clicks a
+    // button in the To column. Initialize touched=true if end is already
+    // populated on mount (e.g. restored from localStorage) so we don't
+    // trample the stored value on the user's next From tweak.
+    const [toTouched, setToTouched] = React.useState(() => Boolean(end));
+
+    const handleStartChange = (newStart: string) => {
+        onStartChange(newStart);
+        if (toTouched) return;
+        const parts = parseHHMM(newStart);
+        if (!parts) return;
+        onEndChange(partsToHHMM(advanceOneHour(parts)));
+    };
+
+    const handleEndChange = (newEnd: string) => {
+        setToTouched(true);
+        onEndChange(newEnd);
+    };
+
+    const handleClear = () => {
+        onDateChange("");
+        onStartChange("");
+        onEndChange("");
+        setToTouched(false);
+    };
 
     const hasAll = Boolean(date && start && end);
     const hasAny = Boolean(date || start || end);
@@ -229,9 +270,9 @@ export function DateTimeRangePicker({
                         <TimeColumnGroup
                             label="From"
                             value={start}
-                            onChange={onStartChange}
+                            onChange={handleStartChange}
                         />
-                        <TimeColumnGroup label="To" value={end} onChange={onEndChange} />
+                        <TimeColumnGroup label="To" value={end} onChange={handleEndChange} />
                     </div>
                 </div>
                 <div className="flex justify-between border-t border-border p-1.5 bg-muted/30">
@@ -240,11 +281,7 @@ export function DateTimeRangePicker({
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs"
-                        onClick={() => {
-                            onDateChange("");
-                            onStartChange("");
-                            onEndChange("");
-                        }}
+                        onClick={handleClear}
                     >
                         Clear
                     </Button>
