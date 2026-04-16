@@ -29,6 +29,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
@@ -120,12 +121,9 @@ function CheckoutPageInner() {
         venue_contact_name: "",
         venue_contact_email: "",
         venue_contact_phone: "",
-        // Permits
+        // Permits (venue contact is NOT here — it's first-class at top-level)
         requires_permit: false,
         permit_owner: "UNKNOWN" as "CLIENT" | "PLATFORM" | "UNKNOWN",
-        permit_venue_contact_name: "",
-        permit_venue_contact_email: "",
-        permit_venue_contact_phone: "",
         requires_vehicle_docs: false,
         requires_staff_ids: false,
         permit_notes: "",
@@ -133,10 +131,14 @@ function CheckoutPageInner() {
         contact_name: "",
         contact_email: "",
         contact_phone: "",
-        // Delivery window preference
+        // Delivery window preference (client-requested; logistics confirms later)
         requested_delivery_date: "",
         requested_delivery_time_start: "",
         requested_delivery_time_end: "",
+        // Pickup window preference (client-requested; logistics confirms later)
+        requested_pickup_date: "",
+        requested_pickup_time_start: "",
+        requested_pickup_time_end: "",
         special_instructions: "",
     });
 
@@ -437,15 +439,6 @@ function CheckoutPageInner() {
                           permit_requirements: {
                               requires_permit: true,
                               permit_owner: formData.permit_owner,
-                              ...(formData.permit_venue_contact_name
-                                  ? { venue_contact_name: formData.permit_venue_contact_name }
-                                  : {}),
-                              ...(formData.permit_venue_contact_email
-                                  ? { venue_contact_email: formData.permit_venue_contact_email }
-                                  : {}),
-                              ...(formData.permit_venue_contact_phone
-                                  ? { venue_contact_phone: formData.permit_venue_contact_phone }
-                                  : {}),
                               ...(formData.requires_vehicle_docs
                                   ? { requires_vehicle_docs: true }
                                   : {}),
@@ -467,15 +460,44 @@ function CheckoutPageInner() {
                           },
                       }
                     : {}),
-                // Client-requested delivery window (optional)
-                ...(formData.requested_delivery_date && formData.requested_delivery_time_start && formData.requested_delivery_time_end
-                    ? {
-                          requested_delivery_window: {
-                              start: `${formData.requested_delivery_date}T${formData.requested_delivery_time_start}:00`,
-                              end: `${formData.requested_delivery_date}T${formData.requested_delivery_time_end}:00`,
-                          },
-                      }
-                    : {}),
+                // Client-requested delivery window (optional) — date auto-falls-back
+                // to event_start_date if user set times but not date explicitly.
+                ...((() => {
+                    const deliveryDate =
+                        formData.requested_delivery_date || formData.event_start_date;
+                    if (
+                        deliveryDate &&
+                        formData.requested_delivery_time_start &&
+                        formData.requested_delivery_time_end
+                    ) {
+                        return {
+                            requested_delivery_window: {
+                                start: `${deliveryDate}T${formData.requested_delivery_time_start}:00`,
+                                end: `${deliveryDate}T${formData.requested_delivery_time_end}:00`,
+                            },
+                        };
+                    }
+                    return {};
+                })()),
+                // Client-requested pickup window (optional) — date auto-falls-back
+                // to event_end_date if user set times but not date explicitly.
+                ...((() => {
+                    const pickupDate =
+                        formData.requested_pickup_date || formData.event_end_date;
+                    if (
+                        pickupDate &&
+                        formData.requested_pickup_time_start &&
+                        formData.requested_pickup_time_end
+                    ) {
+                        return {
+                            requested_pickup_window: {
+                                start: `${pickupDate}T${formData.requested_pickup_time_start}:00`,
+                                end: `${pickupDate}T${formData.requested_pickup_time_end}:00`,
+                            },
+                        };
+                    }
+                    return {};
+                })()),
                 ...(formData.special_instructions
                     ? { special_instructions: formData.special_instructions }
                     : {}),
@@ -859,65 +881,82 @@ function CheckoutPageInner() {
                                         </div>
                                     </div>
 
-                                    {/* Preferred Delivery Window (optional) */}
-                                    <div className="space-y-2 pt-4 border-t border-border/40">
-                                        <Label className="font-mono uppercase text-xs tracking-wide">
-                                            Preferred Delivery Window (Optional)
-                                        </Label>
-                                        <p className="text-xs text-muted-foreground">
-                                            This is a request — logistics will review and confirm your
-                                            final delivery window.
-                                        </p>
-                                        <div className="grid grid-cols-3 gap-4">
+                                    {/* Preferred Delivery + Pickup Windows (optional) */}
+                                    <div className="space-y-4 pt-4 border-t border-border/40">
+                                        <div className="space-y-1">
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Preferred Delivery & Pickup Windows (Optional)
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                These are requests — logistics will review and confirm
+                                                the final windows. Dates default to your event start
+                                                (delivery) and event end (pickup) when you open the picker.
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-4 md:grid-cols-2">
                                             <div className="space-y-1">
-                                                <Label htmlFor="deliveryDate" className="text-xs">
-                                                    Date
-                                                </Label>
-                                                <Input
-                                                    id="deliveryDate"
-                                                    type="date"
-                                                    value={formData.requested_delivery_date}
-                                                    onChange={(e) =>
+                                                <Label className="text-xs">Delivery window</Label>
+                                                <DateTimeRangePicker
+                                                    date={
+                                                        formData.requested_delivery_date ||
+                                                        formData.event_start_date ||
+                                                        ""
+                                                    }
+                                                    start={formData.requested_delivery_time_start}
+                                                    end={formData.requested_delivery_time_end}
+                                                    onDateChange={(d) =>
                                                         setFormData({
                                                             ...formData,
-                                                            requested_delivery_date: e.target.value,
+                                                            requested_delivery_date: d,
                                                         })
                                                     }
-                                                    className="h-10 font-mono"
+                                                    onStartChange={(t) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_time_start: t,
+                                                        })
+                                                    }
+                                                    onEndChange={(t) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_time_end: t,
+                                                        })
+                                                    }
+                                                    placeholder="Choose delivery window"
                                                 />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label htmlFor="deliveryTimeStart" className="text-xs">
-                                                    From
-                                                </Label>
-                                                <Input
-                                                    id="deliveryTimeStart"
-                                                    type="time"
-                                                    value={formData.requested_delivery_time_start}
-                                                    onChange={(e) =>
+                                                <Label className="text-xs">Pickup window</Label>
+                                                <DateTimeRangePicker
+                                                    date={
+                                                        formData.requested_pickup_date ||
+                                                        formData.event_end_date ||
+                                                        ""
+                                                    }
+                                                    start={formData.requested_pickup_time_start}
+                                                    end={formData.requested_pickup_time_end}
+                                                    minDate={
+                                                        formData.event_start_date || undefined
+                                                    }
+                                                    onDateChange={(d) =>
                                                         setFormData({
                                                             ...formData,
-                                                            requested_delivery_time_start: e.target.value,
+                                                            requested_pickup_date: d,
                                                         })
                                                     }
-                                                    className="h-10 font-mono"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="deliveryTimeEnd" className="text-xs">
-                                                    To
-                                                </Label>
-                                                <Input
-                                                    id="deliveryTimeEnd"
-                                                    type="time"
-                                                    value={formData.requested_delivery_time_end}
-                                                    onChange={(e) =>
+                                                    onStartChange={(t) =>
                                                         setFormData({
                                                             ...formData,
-                                                            requested_delivery_time_end: e.target.value,
+                                                            requested_pickup_time_start: t,
                                                         })
                                                     }
-                                                    className="h-10 font-mono"
+                                                    onEndChange={(t) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_pickup_time_end: t,
+                                                        })
+                                                    }
+                                                    placeholder="Choose pickup window"
                                                 />
                                             </div>
                                         </div>
@@ -1215,66 +1254,6 @@ function CheckoutPageInner() {
                                                             </SelectItem>
                                                         </SelectContent>
                                                     </Select>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label className="font-mono uppercase text-xs tracking-wide">
-                                                            Venue Contact Name
-                                                        </Label>
-                                                        <Input
-                                                            value={
-                                                                formData.permit_venue_contact_name
-                                                            }
-                                                            onChange={(e) =>
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    permit_venue_contact_name:
-                                                                        e.target.value,
-                                                                })
-                                                            }
-                                                            placeholder="Venue operations contact"
-                                                            className="h-12"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label className="font-mono uppercase text-xs tracking-wide">
-                                                            Venue Contact Phone
-                                                        </Label>
-                                                        <Input
-                                                            value={
-                                                                formData.permit_venue_contact_phone
-                                                            }
-                                                            onChange={(e) =>
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    permit_venue_contact_phone:
-                                                                        e.target.value,
-                                                                })
-                                                            }
-                                                            placeholder="Phone number"
-                                                            className="h-12"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Venue Contact Email
-                                                    </Label>
-                                                    <Input
-                                                        type="email"
-                                                        value={formData.permit_venue_contact_email}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                permit_venue_contact_email:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="venue@example.com"
-                                                        className="h-12"
-                                                    />
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1692,36 +1671,6 @@ function CheckoutPageInner() {
                                                         {formData.permit_owner === "UNKNOWN" &&
                                                             "Permit ownership still to be confirmed"}
                                                     </p>
-                                                    {(formData.permit_venue_contact_name ||
-                                                        formData.permit_venue_contact_email ||
-                                                        formData.permit_venue_contact_phone) && (
-                                                        <div className="text-sm space-y-1">
-                                                            {formData.permit_venue_contact_name && (
-                                                                <p>
-                                                                    Contact:{" "}
-                                                                    {
-                                                                        formData.permit_venue_contact_name
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                            {formData.permit_venue_contact_email && (
-                                                                <p>
-                                                                    Email:{" "}
-                                                                    {
-                                                                        formData.permit_venue_contact_email
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                            {formData.permit_venue_contact_phone && (
-                                                                <p>
-                                                                    Phone:{" "}
-                                                                    {
-                                                                        formData.permit_venue_contact_phone
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    )}
                                                     <div className="flex flex-wrap gap-2 text-xs font-mono">
                                                         {formData.requires_vehicle_docs && (
                                                             <span className="rounded-full border px-2 py-1">
