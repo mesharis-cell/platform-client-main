@@ -36,31 +36,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 type TimeParts = {
     hour12: number; // 1..12
-    minute: number; // 0..55 in 5-min steps
     ampm: "AM" | "PM";
 };
 
 function parseHHMM(value: string): TimeParts | null {
     if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
-    const [h, m] = value.split(":").map((x) => parseInt(x, 10));
-    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    const [h] = value.split(":").map((x) => parseInt(x, 10));
+    if (Number.isNaN(h)) return null;
     const ampm: "AM" | "PM" = h >= 12 ? "PM" : "AM";
     const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    // Snap to 5-min grid for display
-    const minute = Math.round(m / 5) * 5;
-    return { hour12, minute: minute === 60 ? 0 : minute, ampm };
+    return { hour12, ampm };
 }
 
 function partsToHHMM(parts: TimeParts): string {
     let h24 = parts.hour12 % 12;
     if (parts.ampm === "PM") h24 += 12;
-    return `${String(h24).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`;
+    // Minutes always zero — picker is hourly-only by product choice.
+    return `${String(h24).padStart(2, "0")}:00`;
 }
 
 function formatTimeLabel(value: string): string {
     const parts = parseHHMM(value);
     if (!parts) return "";
-    return `${parts.hour12}:${String(parts.minute).padStart(2, "0")} ${parts.ampm}`;
+    return `${parts.hour12}:00 ${parts.ampm}`;
 }
 
 function formatDateLabel(date: string): string {
@@ -74,21 +72,18 @@ function formatDateLabel(date: string): string {
 }
 
 interface DateTimeRangePickerProps {
-    date: string; // YYYY-MM-DD or ""
-    start: string; // HH:MM (24h) or ""
-    end: string; // HH:MM (24h) or ""
+    date: string;
+    start: string;
+    end: string;
     onDateChange: (date: string) => void;
     onStartChange: (time: string) => void;
     onEndChange: (time: string) => void;
     placeholder?: string;
-    /**
-     * Earliest date the user can pick (inclusive). ISO string "YYYY-MM-DD".
-     */
+    /** Earliest date the user can pick (inclusive). "YYYY-MM-DD". */
     minDate?: string;
 }
 
-const HOURS_12 = Array.from({ length: 12 }, (_, i) => i + 1); // 1..12
-const MINUTES_5 = Array.from({ length: 12 }, (_, i) => i * 5); // 0,5,10...55
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => i + 1);
 const AMPM: Array<"AM" | "PM"> = ["AM", "PM"];
 
 function TimeColumnGroup({
@@ -105,38 +100,29 @@ function TimeColumnGroup({
     const setPart = (next: Partial<TimeParts>) => {
         const merged: TimeParts = {
             hour12: parts?.hour12 ?? 12,
-            minute: parts?.minute ?? 0,
             ampm: parts?.ampm ?? "AM",
             ...next,
         };
         onChange(partsToHHMM(merged));
     };
 
-    const isActive = (candidate: TimeParts): boolean => {
-        if (!parts) return false;
-        return (
-            parts.hour12 === candidate.hour12 &&
-            parts.minute === candidate.minute &&
-            parts.ampm === candidate.ampm
-        );
-    };
+    // Uniform button cell so hour and AM/PM columns align vertically.
+    const cellCls = "h-7 w-full px-0 text-[11px] font-mono rounded-sm";
 
     return (
-        <div className="flex flex-col">
-            <p className="px-3 pt-3 pb-1 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">
+        <div className="flex flex-col min-w-0">
+            <p className="px-2 pt-1.5 pb-1 text-[9px] font-mono uppercase tracking-[0.15em] text-muted-foreground">
                 {label}
             </p>
-            <div className="grid grid-cols-3 divide-x divide-border h-[240px]">
-                <ScrollArea className="h-full">
-                    <div className="flex flex-col p-1 gap-0.5">
+            <div className="flex flex-row divide-x divide-border h-[180px]">
+                <ScrollArea className="w-10">
+                    <div className="flex flex-col px-1 pb-1 gap-[2px]">
                         {HOURS_12.map((h) => (
                             <Button
                                 key={h}
                                 size="sm"
-                                variant={
-                                    parts?.hour12 === h ? "default" : "ghost"
-                                }
-                                className="h-8 w-full text-xs"
+                                variant={parts?.hour12 === h ? "default" : "ghost"}
+                                className={cellCls}
                                 onClick={() => setPart({ hour12: h })}
                             >
                                 {h}
@@ -144,28 +130,13 @@ function TimeColumnGroup({
                         ))}
                     </div>
                 </ScrollArea>
-                <ScrollArea className="h-full">
-                    <div className="flex flex-col p-1 gap-0.5">
-                        {MINUTES_5.map((m) => (
-                            <Button
-                                key={m}
-                                size="sm"
-                                variant={parts?.minute === m ? "default" : "ghost"}
-                                className="h-8 w-full text-xs"
-                                onClick={() => setPart({ minute: m })}
-                            >
-                                {String(m).padStart(2, "0")}
-                            </Button>
-                        ))}
-                    </div>
-                </ScrollArea>
-                <div className="flex flex-col p-1 gap-0.5">
+                <div className="flex flex-col px-1 pb-1 pt-0 gap-[2px] w-10">
                     {AMPM.map((ap) => (
                         <Button
                             key={ap}
                             size="sm"
                             variant={parts?.ampm === ap ? "default" : "ghost"}
-                            className="h-8 w-full text-xs"
+                            className={cellCls}
                             onClick={() => setPart({ ampm: ap })}
                         >
                             {ap}
@@ -189,8 +160,8 @@ export function DateTimeRangePicker({
 }: DateTimeRangePickerProps) {
     const [open, setOpen] = React.useState(false);
 
-    const hasAny = Boolean(date || start || end);
     const hasAll = Boolean(date && start && end);
+    const hasAny = Boolean(date || start || end);
 
     const label = hasAll
         ? `${formatDateLabel(date)} · ${formatTimeLabel(start)} – ${formatTimeLabel(end)}`
@@ -235,47 +206,40 @@ export function DateTimeRangePicker({
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-auto p-0 overflow-hidden"
+                className="w-auto p-0"
                 align="start"
+                sideOffset={6}
             >
-                <div className="flex flex-col sm:flex-row">
-                    <div className="p-2">
+                {/* Horizontal layout — calendar on the left, FROM and TO columns
+                    side-by-side on the right. Never stacks vertically. */}
+                <div className="flex flex-row items-stretch divide-x divide-border">
+                    <div className="shrink-0">
                         <Calendar
                             mode="single"
                             selected={selectedDate}
                             onSelect={(d) => {
-                                if (d) {
-                                    onDateChange(format(d, "yyyy-MM-dd"));
-                                }
+                                if (d) onDateChange(format(d, "yyyy-MM-dd"));
                             }}
-                            disabled={
-                                minDateObj
-                                    ? { before: minDateObj }
-                                    : undefined
-                            }
+                            disabled={minDateObj ? { before: minDateObj } : undefined}
+                            className="p-2 [--cell-size:1.85rem]"
                             initialFocus
                         />
                     </div>
-                    <div className="flex flex-row sm:flex-col border-t sm:border-t-0 sm:border-l border-border">
+                    <div className="flex flex-row divide-x divide-border shrink-0">
                         <TimeColumnGroup
                             label="From"
                             value={start}
                             onChange={onStartChange}
                         />
-                        <div className="border-t border-border" />
-                        <TimeColumnGroup
-                            label="To"
-                            value={end}
-                            onChange={onEndChange}
-                        />
+                        <TimeColumnGroup label="To" value={end} onChange={onEndChange} />
                     </div>
                 </div>
-                <div className="flex justify-between border-t border-border p-2 bg-muted/30">
+                <div className="flex justify-between border-t border-border p-1.5 bg-muted/30">
                     <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="text-xs"
+                        className="h-7 text-xs"
                         onClick={() => {
                             onDateChange("");
                             onStartChange("");
@@ -287,7 +251,7 @@ export function DateTimeRangePicker({
                     <Button
                         type="button"
                         size="sm"
-                        className="text-xs"
+                        className="h-7 text-xs"
                         onClick={() => setOpen(false)}
                     >
                         Done
