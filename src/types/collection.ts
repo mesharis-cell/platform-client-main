@@ -129,7 +129,12 @@ export interface CatalogAssetFamilyItem {
     id: string;
     name: string;
     description: string | null;
-    category: string;
+    category: {
+        id: string;
+        name: string;
+        slug: string;
+        color: string;
+    } | null;
     images: string[];
     brand: {
         id: string;
@@ -255,7 +260,12 @@ export interface CatalogAssetFamilyDetails {
     id: string;
     name: string;
     description: string | null;
-    category: string;
+    category: {
+        id: string;
+        name: string;
+        slug: string;
+        color: string;
+    } | null;
     images: AssetImage[];
     brand: {
         id: string | null;

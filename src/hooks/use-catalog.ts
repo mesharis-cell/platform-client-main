@@ -72,7 +72,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 
         const familyQuery: Record<string, string | undefined> = {
             brand: params.brand,
-            category: params.category,
+            category_id: params.category,
             team_id: params.team,
             search_term: params.search_term,
             limit: String(limit),
@@ -90,7 +90,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                 ? apiClient.get(
                       `/client/v1/catalog?${buildSearchParams({
                           brand: params.brand,
-                          category: params.category,
+                          category_id: params.category,
                           search_term: params.search_term,
                           type: "collection",
                       })}`

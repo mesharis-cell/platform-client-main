@@ -24,7 +24,12 @@ export interface AssetFamily {
     team_id: string | null;
     name: string;
     description: string | null;
-    category: string;
+    category: {
+        id: string;
+        name: string;
+        slug: string;
+        color: string;
+    } | null;
     images: AssetImage[];
     on_display_image: string | null;
     stock_mode: StockMode;

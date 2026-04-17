@@ -88,7 +88,11 @@ function CatalogCard({ item }: { item: CatalogItem }) {
                     <div>
                         <h2 className="text-lg font-semibold">{item.name}</h2>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            {item.category || "Uncategorized"}
+                            {item.category && typeof item.category === "object" && "name" in item.category
+                                ? (item.category as { name: string }).name
+                                : typeof item.category === "string"
+                                  ? item.category
+                                  : "Uncategorized"}
                         </p>
                     </div>
 
@@ -143,8 +147,16 @@ export default function CatalogPage() {
     const categories = useMemo(
         () =>
             Array.from(
-                new Set(items.map((item) => item.category).filter(Boolean) as string[])
-            ).sort(),
+                new Map(
+                    items
+                        .map((item) => item.category)
+                        .filter(
+                            (cat): cat is { id: string; name: string; slug: string; color: string } =>
+                                cat !== null && typeof cat === "object" && "id" in cat
+                        )
+                        .map((cat) => [cat.id, cat])
+                ).values()
+            ).sort((a, b) => a.name.localeCompare(b.name)),
         [items]
     );
 
@@ -235,8 +247,14 @@ export default function CatalogPage() {
                                 <SelectContent>
                                     <SelectItem value="_all_">All categories</SelectItem>
                                     {categories.map((category) => (
-                                        <SelectItem key={category} value={category}>
-                                            {category}
+                                        <SelectItem key={category.id} value={category.id}>
+                                            <span className="flex items-center gap-2">
+                                                <span
+                                                    className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                                    style={{ backgroundColor: category.color }}
+                                                />
+                                                {category.name}
+                                            </span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
