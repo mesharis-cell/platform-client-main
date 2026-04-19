@@ -1,15 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import {
-    AlertCircle,
-    Boxes,
     ChevronLeft,
     ChevronRight,
-    Layers,
-    Package,
     Search,
 } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
@@ -29,93 +23,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBrands } from "@/hooks/use-brands";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useToken } from "@/lib/auth/use-token";
-import type {
-    CatalogAssetFamilyItem,
-    CatalogCollectionItem,
-    CatalogItem,
-} from "@/types/collection";
-
-function CatalogCard({ item }: { item: CatalogItem }) {
-    const href =
-        item.type === "family" ? `/catalog/families/${item.id}` : `/catalog/collections/${item.id}`;
-    const image = item.images[0];
-
-    return (
-        <Card
-            className="h-full overflow-hidden border-border/50 bg-card/60 backdrop-blur-sm"
-            data-testid={item.type === "family" ? "client-family-card" : "client-collection-card"}
-        >
-            <Link href={href} className="block h-full">
-                <div className="relative aspect-[4/3] bg-muted">
-                    {image ? (
-                        <Image src={image} alt={item.name} fill className="object-cover" />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                            {item.type === "family" ? (
-                                <Boxes className="h-16 w-16 text-muted-foreground/20" />
-                            ) : (
-                                <Layers className="h-16 w-16 text-muted-foreground/20" />
-                            )}
-                        </div>
-                    )}
-                </div>
-                <CardContent className="space-y-3 p-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {item.brand && <Badge variant="secondary">{item.brand.name}</Badge>}
-                        {item.type === "family" && (item as any).team && (
-                            <Badge variant="outline" className="text-[10px]">
-                                {(item as any).team.name}
-                            </Badge>
-                        )}
-                        {item.type === "family" &&
-                            (item.conditionSummary.red > 0 || item.conditionSummary.orange > 0) && (
-                                <Badge
-                                    variant="outline"
-                                    className={
-                                        item.conditionSummary.red > 0
-                                            ? "bg-red-500/10 text-red-700 border-red-500/20 text-[10px]"
-                                            : "bg-amber-500/10 text-amber-700 border-amber-500/20 text-[10px]"
-                                    }
-                                >
-                                    <AlertCircle className="mr-1 h-2.5 w-2.5" />
-                                    {item.conditionSummary.red > 0
-                                        ? `${item.conditionSummary.red} need repair`
-                                        : `${item.conditionSummary.orange} minor issues`}
-                                </Badge>
-                            )}
-                    </div>
-
-                    <div>
-                        <h2 className="text-lg font-semibold">{item.name}</h2>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            {item.category ?? "Uncategorized"}
-                        </p>
-                    </div>
-
-                    {item.type === "family" ? (
-                        <div className="flex items-center gap-4 text-sm">
-                            <div>
-                                <span className="font-semibold text-emerald-600">
-                                    {item.availableQuantity}
-                                </span>
-                                <span className="text-muted-foreground"> available</span>
-                            </div>
-                            <span className="text-muted-foreground text-xs">
-                                of {item.totalQuantity}
-                            </span>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">{item.itemCount} items</p>
-                    )}
-
-                    <Button className="w-full" variant="outline" size="sm">
-                        {item.type === "family" ? "View items" : "View collection"}
-                    </Button>
-                </CardContent>
-            </Link>
-        </Card>
-    );
-}
+import type { CatalogItem } from "@/types/collection";
+import { CatalogCard } from "@/components/catalog/catalog-card";
 
 export default function CatalogPage() {
     const { user } = useToken();

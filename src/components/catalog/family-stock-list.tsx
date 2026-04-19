@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AlertCircle, Check, ExternalLink, Package, ShoppingCart, X } from "lucide-react";
+import { AlertCircle, Check, Package, ShoppingCart, X } from "lucide-react";
 
 function buildCartDetails(stock: CatalogFamilyStockItem) {
     return {
@@ -262,15 +262,6 @@ export function FamilyStockList({
                                             <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
                                             Add to cart
                                         </Button>
-                                        <Button size="sm" variant="outline" asChild>
-                                            <a
-                                                href={`/catalog/assets/${stock.id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                Full details
-                                            </a>
-                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -424,16 +415,6 @@ export function FamilyStockList({
                                     >
                                         <ShoppingCart className="mr-2 h-4 w-4" />
                                         Add to cart
-                                    </Button>
-                                    <Button variant="outline" asChild>
-                                        <a
-                                            href={`/catalog/assets/${previewItem.id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <ExternalLink className="mr-2 h-4 w-4" />
-                                            Full details
-                                        </a>
                                     </Button>
                                 </div>
                             </div>

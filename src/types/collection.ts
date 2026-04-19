@@ -154,6 +154,7 @@ export interface CatalogAssetFamilyItem {
     dimensionWidth: string;
     dimensionHeight: string;
     packaging?: string | null;
+    code?: string | null;
 }
 
 export interface CatalogCollectionItem {

@@ -25,6 +25,12 @@ export type MaintenanceFeasibilityResult = {
         weekend_days: number[];
         timezone: string;
     };
+    /**
+     * Earliest calendar date (YYYY-MM-DD) anyone can use, derived from the
+     * platform's minimum_lead_hours + weekend skip rules. Always present for
+     * every cart (including green-only ones with no per-item issues).
+     */
+    lead_floor_date: string;
 };
 
 export function useMaintenanceFeasibilityCheck() {
@@ -131,14 +137,21 @@ export function interpretFeasibilityPreview(
     if (!result) {
         return { floorDate: null, userDateFeasible: null, blockingItems: [] };
     }
+    // Platform lead-time floor is always returned (even for green-only carts).
+    const platformFloor = result.lead_floor_date || null;
     if (result.issues.length === 0) {
-        return { floorDate: null, userDateFeasible: null, blockingItems: [] };
+        const userDateFeasible =
+            userEventDate && platformFloor ? userEventDate >= platformFloor : null;
+        return { floorDate: platformFloor, userDateFeasible, blockingItems: [] };
     }
-    const floorDate = result.issues.reduce(
+    const issueFloor = result.issues.reduce(
         (max, issue) =>
             issue.earliest_feasible_date > max ? issue.earliest_feasible_date : max,
         result.issues[0].earliest_feasible_date
     );
+    // Never propose a date earlier than the platform lead-time floor.
+    const floorDate =
+        platformFloor && platformFloor > issueFloor ? platformFloor : issueFloor;
     const userDateFeasible = userEventDate ? userEventDate >= floorDate : null;
     const blockingItems = userEventDate
         ? result.issues.filter((i) => i.earliest_feasible_date > userEventDate)

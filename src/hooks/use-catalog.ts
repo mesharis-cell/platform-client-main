@@ -161,6 +161,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             dimensionWidth: String(family.dimensions?.width || 0),
             dimensionHeight: String(family.dimensions?.height || 0),
             packaging: family.packaging,
+            code: family.company_item_code || null,
         });
         });
 
