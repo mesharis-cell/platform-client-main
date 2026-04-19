@@ -13,6 +13,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { categoryLabel } from "@/lib/category-display";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -358,7 +359,7 @@ export default function ClientServiceRequestsPage() {
                                                                         {asset.name}
                                                                     </p>
                                                                     <p className="text-xs text-muted-foreground">
-                                                                        {asset.category}
+                                                                        {categoryLabel(asset.category)}
                                                                     </p>
                                                                 </div>
                                                             </button>

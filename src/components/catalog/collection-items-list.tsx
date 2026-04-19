@@ -17,6 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { CollectionCustomizer } from "./collection-customizer";
+import { categoryLabel } from "@/lib/category-display";
 
 export function CollectionItemsList({ collectionId }: { collectionId: string }) {
     const { data, isLoading } = useCatalogCollection(collectionId);
@@ -157,7 +158,7 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                                     <div className="mb-1 flex flex-wrap items-center gap-2">
                                         <h4 className="font-semibold text-base">{item.name}</h4>
                                         <Badge variant="outline" className="font-mono text-xs">
-                                            {item.category}
+                                            {categoryLabel(item.category)}
                                         </Badge>
                                         {item.family && (
                                             <Link href={`/catalog/families/${item.family.id}`}>
