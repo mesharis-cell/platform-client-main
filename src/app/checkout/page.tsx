@@ -30,7 +30,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
@@ -93,6 +92,11 @@ function CheckoutPageInner() {
 
     // Feature flag: show self-pickup mode option only if enabled
     const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
+    // Feature flag: whether to show separate Event Start/End date inputs.
+    // OFF (default) — hide event dates; delivery + pickup become required and
+    // event_start_date / event_end_date are auto-filled from them on submit.
+    const eventDateInputsEnabled =
+        (platform?.features as any)?.enable_event_date_inputs === true;
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
     const [maintenanceFeasibilityIssues, setMaintenanceFeasibilityIssues] = useState<
         MaintenanceFeasibilityIssue[]
@@ -199,9 +203,11 @@ function CheckoutPageInner() {
         items: feasibilityItems,
         enabled: items.length > 0,
     });
+    // Feasibility is interpreted against whichever date is the effective event
+    // start — when the event-dates flag is off, that's the delivery date.
     const feasibility = interpretFeasibilityPreview(
         feasibilityPreview.data,
-        formData.event_start_date
+        eventDateInputsEnabled ? formData.event_start_date : formData.requested_delivery_date
     );
     const feasibilityHelperEnabled =
         (platform?.features as any)?.enable_feasibility_helper !== false;
@@ -324,11 +330,43 @@ function CheckoutPageInner() {
 
     const currentStepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
+    // Derived "effective" event dates. When the event-dates flag is ON, these
+    // are whatever the user entered. When OFF, they mirror the delivery /
+    // pickup dates (delivery start → event start, pickup end → event end).
+    const effectiveEventStart = eventDateInputsEnabled
+        ? formData.event_start_date
+        : formData.requested_delivery_date;
+    const effectiveEventEnd = eventDateInputsEnabled
+        ? formData.event_end_date
+        : formData.requested_pickup_date;
+
     const canProceed = () => {
         switch (currentStep) {
             case "cart":
                 return items.length > 0;
-            case "installation":
+            case "installation": {
+                const deliveryComplete = Boolean(
+                    formData.requested_delivery_date &&
+                        formData.requested_delivery_time_start &&
+                        formData.requested_delivery_time_end
+                );
+                const pickupComplete = Boolean(
+                    formData.requested_pickup_date &&
+                        formData.requested_pickup_time_start &&
+                        formData.requested_pickup_time_end
+                );
+                // When the event-dates flag is OFF, delivery + pickup are the
+                // source of truth and BOTH must be complete. When ON, the user
+                // still provides event dates directly.
+                if (!eventDateInputsEnabled) {
+                    return Boolean(
+                        deliveryComplete &&
+                            pickupComplete &&
+                            new Date(formData.requested_delivery_date) <=
+                                new Date(formData.requested_pickup_date) &&
+                            feasibility.userDateFeasible !== false
+                    );
+                }
                 return Boolean(
                     formData.event_start_date &&
                         formData.event_end_date &&
@@ -338,6 +376,7 @@ function CheckoutPageInner() {
                         // Always enforced — independent of the helper flag.
                         feasibility.userDateFeasible !== false
                 );
+            }
             case "review":
                 // Block submit path from review-level Next if ORANGE FIX
                 // decisions pushed the earliest date past the picked event
@@ -431,12 +470,22 @@ function CheckoutPageInner() {
 
         setIsSubmitting(true);
         try {
+            // When the event-dates flag is off, delivery_date stands in for
+            // event_start_date. The backend still requires both fields, so we
+            // auto-derive them below.
+            const submitEventStart = eventDateInputsEnabled
+                ? formData.event_start_date
+                : formData.requested_delivery_date;
+            const submitEventEnd = eventDateInputsEnabled
+                ? formData.event_end_date
+                : formData.requested_pickup_date;
+
             const maintenanceResult = await maintenanceFeasibilityCheck.mutateAsync({
                 items: items.map((item) => ({
                     asset_id: item.assetId,
                     maintenance_decision: item.maintenanceDecision,
                 })),
-                event_start_date: formData.event_start_date,
+                event_start_date: submitEventStart,
             });
 
             setHasCheckedMaintenanceFeasibility(true);
@@ -459,8 +508,8 @@ function CheckoutPageInner() {
                         ? { maintenance_decision: item.maintenanceDecision }
                         : {}),
                 })),
-                event_start_date: formData.event_start_date,
-                event_end_date: formData.event_end_date,
+                event_start_date: submitEventStart,
+                event_end_date: submitEventEnd,
                 venue_name: formData.venue_name,
                 venue_country_id: formData.venue_country_id,
                 venue_city_id: formData.venue_city_id,
@@ -588,7 +637,9 @@ function CheckoutPageInner() {
 
     return (
         <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background">
-            {/* Progress Header */}
+            {/* Progress Header — hidden in self-pickup mode (that flow has its
+                own 3-tab nav embedded in SelfPickupCheckoutFlow). */}
+            {checkoutMode === "standard" && (
             <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto px-8 py-6">
                     <div className="flex items-center justify-between">
@@ -645,6 +696,7 @@ function CheckoutPageInner() {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Mode selector (only when self-pickup feature is enabled) */}
             {selfPickupEnabled && checkoutMode === "standard" && currentStep === "cart" && (
@@ -859,61 +911,64 @@ function CheckoutPageInner() {
 
                             <Card className="p-8 bg-card/50 border-border/50 space-y-6">
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="eventStartDate"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Event Start Date *
-                                            </Label>
-                                            <Input
-                                                id="eventStartDate"
-                                                type="date"
-                                                data-testid="checkout-event-start"
-                                                value={formData.event_start_date}
-                                                onChange={(e) => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        event_start_date: e.target.value,
-                                                    });
-                                                    setHasCheckedMaintenanceFeasibility(false);
-                                                    setMaintenanceFeasibilityIssues([]);
-                                                }}
-                                                required
-                                                min={calculateMinDate()}
-                                                className="h-12 font-mono"
-                                            />
-                                        </div>
+                                    {eventDateInputsEnabled && (
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="eventStartDate"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Event Start Date *
+                                                </Label>
+                                                <Input
+                                                    id="eventStartDate"
+                                                    type="date"
+                                                    data-testid="checkout-event-start"
+                                                    value={formData.event_start_date}
+                                                    onChange={(e) => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            event_start_date: e.target.value,
+                                                        });
+                                                        setHasCheckedMaintenanceFeasibility(false);
+                                                        setMaintenanceFeasibilityIssues([]);
+                                                    }}
+                                                    required
+                                                    min={calculateMinDate()}
+                                                    className="h-12 font-mono"
+                                                />
+                                            </div>
 
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="eventEndDate"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Event End Date *
-                                            </Label>
-                                            <Input
-                                                id="eventEndDate"
-                                                type="date"
-                                                data-testid="checkout-event-end"
-                                                value={formData.event_end_date}
-                                                onChange={(e) => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        event_end_date: e.target.value,
-                                                    });
-                                                    setHasCheckedMaintenanceFeasibility(false);
-                                                    setMaintenanceFeasibilityIssues([]);
-                                                }}
-                                                required
-                                                min={
-                                                    formData.event_start_date || calculateMinDate()
-                                                }
-                                                className="h-12 font-mono"
-                                            />
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="eventEndDate"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Event End Date *
+                                                </Label>
+                                                <Input
+                                                    id="eventEndDate"
+                                                    type="date"
+                                                    data-testid="checkout-event-end"
+                                                    value={formData.event_end_date}
+                                                    onChange={(e) => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            event_end_date: e.target.value,
+                                                        });
+                                                        setHasCheckedMaintenanceFeasibility(false);
+                                                        setMaintenanceFeasibilityIssues([]);
+                                                    }}
+                                                    required
+                                                    min={
+                                                        formData.event_start_date ||
+                                                        calculateMinDate()
+                                                    }
+                                                    className="h-12 font-mono"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* Feasibility helper — inline under the date fields.
                                         Helper copy is gated by the enable_feasibility_helper
@@ -923,12 +978,17 @@ function CheckoutPageInner() {
                                         helperEnabled={feasibilityHelperEnabled}
                                         isLoading={feasibilityPreview.isLoading}
                                         floorDate={feasibility.floorDate}
-                                        userEventDate={formData.event_start_date}
+                                        userEventDate={
+                                            eventDateInputsEnabled
+                                                ? formData.event_start_date
+                                                : formData.requested_delivery_date
+                                        }
                                         userDateFeasible={feasibility.userDateFeasible}
                                         blockingItems={feasibility.blockingItems}
                                         config={feasibilityPreview.data?.config ?? null}
                                         onUseFloorDate={() => {
-                                            if (feasibility.floorDate) {
+                                            if (!feasibility.floorDate) return;
+                                            if (eventDateInputsEnabled) {
                                                 setFormData({
                                                     ...formData,
                                                     event_start_date: feasibility.floorDate,
@@ -939,106 +999,187 @@ function CheckoutPageInner() {
                                                             ? formData.event_end_date
                                                             : feasibility.floorDate,
                                                 });
+                                            } else {
+                                                setFormData({
+                                                    ...formData,
+                                                    requested_delivery_date: feasibility.floorDate,
+                                                    requested_pickup_date:
+                                                        formData.requested_pickup_date &&
+                                                        formData.requested_pickup_date >=
+                                                            feasibility.floorDate
+                                                            ? formData.requested_pickup_date
+                                                            : feasibility.floorDate,
+                                                });
                                             }
                                         }}
                                     />
 
-                                    {/* Preferred Delivery + Pickup Windows (optional) */}
+                                    {/* Delivery + Pickup windows.
+                                        When event-dates flag is OFF, these are the primary
+                                        input and BOTH are required. Native <input type="date">
+                                        + <input type="time"> match the rest of the form's
+                                        styling. */}
                                     <div className="space-y-4 pt-4 border-t border-border/40">
                                         <div className="space-y-1">
                                             <Label className="font-mono uppercase text-xs tracking-wide">
-                                                Preferred Delivery & Pickup Windows (Optional)
+                                                Delivery &amp; Pickup {eventDateInputsEnabled ? "(Optional)" : "*"}
                                             </Label>
-                                            <p className="text-xs text-muted-foreground">
-                                                These are requests — logistics will review and confirm
-                                                the final windows. Dates default to your event start
-                                                (delivery) and event end (pickup) when you open the picker.
-                                            </p>
+                                            {!eventDateInputsEnabled && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    When do you need the items delivered and picked up?
+                                                </p>
+                                            )}
                                         </div>
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                            <div className="space-y-1">
-                                                <Label className="text-xs">Delivery window</Label>
-                                                <DateTimeRangePicker
-                                                    date={
-                                                        formData.requested_delivery_date ||
-                                                        formData.event_start_date ||
-                                                        ""
-                                                    }
-                                                    start={formData.requested_delivery_time_start}
-                                                    end={formData.requested_delivery_time_end}
-                                                    onDateChange={(d) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_delivery_date: d,
-                                                        })
-                                                    }
-                                                    onStartChange={(t) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_delivery_time_start: t,
-                                                        })
-                                                    }
-                                                    onEndChange={(t) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_delivery_time_end: t,
-                                                        })
-                                                    }
-                                                    placeholder="Choose delivery window"
-                                                />
+
+                                        <div className="space-y-5">
+                                            {/* Delivery */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Delivery Date {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="date"
+                                                        value={formData.requested_delivery_date}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_delivery_date:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        min={calculateMinDate()}
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        From {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            formData.requested_delivery_time_start
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_delivery_time_start:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        To {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            formData.requested_delivery_time_end
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_delivery_time_end:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label className="text-xs">Pickup window</Label>
-                                                <DateTimeRangePicker
-                                                    date={
-                                                        formData.requested_pickup_date ||
-                                                        formData.event_end_date ||
-                                                        ""
-                                                    }
-                                                    start={formData.requested_pickup_time_start}
-                                                    end={formData.requested_pickup_time_end}
-                                                    minDate={
-                                                        formData.event_start_date || undefined
-                                                    }
-                                                    onDateChange={(d) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_pickup_date: d,
-                                                        })
-                                                    }
-                                                    onStartChange={(t) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_pickup_time_start: t,
-                                                        })
-                                                    }
-                                                    onEndChange={(t) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            requested_pickup_time_end: t,
-                                                        })
-                                                    }
-                                                    placeholder="Choose pickup window"
-                                                />
+
+                                            {/* Pickup */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Pickup Date {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="date"
+                                                        value={formData.requested_pickup_date}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_pickup_date:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        min={
+                                                            formData.requested_delivery_date ||
+                                                            calculateMinDate()
+                                                        }
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        From {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            formData.requested_pickup_time_start
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_pickup_time_start:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        To {eventDateInputsEnabled ? "" : "*"}
+                                                    </Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            formData.requested_pickup_time_end
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requested_pickup_time_end:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                        required={!eventDateInputsEnabled}
+                                                        className="h-12 font-mono"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {formData.event_start_date && formData.event_end_date && (
+                                    {effectiveEventStart && effectiveEventEnd && (
                                         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                                             <div className="flex items-center gap-3">
                                                 <Calendar className="h-5 w-5 text-primary" />
                                                 <div>
                                                     <p className="text-sm font-medium">
-                                                        Event Duration
+                                                        {eventDateInputsEnabled
+                                                            ? "Event Duration"
+                                                            : "Rental Duration"}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground font-mono">
                                                         {Math.ceil(
                                                             (new Date(
-                                                                formData.event_end_date
+                                                                effectiveEventEnd
                                                             ).getTime() -
                                                                 new Date(
-                                                                    formData.event_start_date
+                                                                    effectiveEventStart
                                                                 ).getTime()) /
                                                                 (1000 * 60 * 60 * 24)
                                                         ) + 1}{" "}
