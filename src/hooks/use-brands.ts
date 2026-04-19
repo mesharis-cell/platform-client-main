@@ -57,9 +57,16 @@ async function deleteBrand(id: string): Promise<void> {
 
 // Hooks
 export function useBrands(params?: Record<string, string>) {
+    // If caller is filtering by company_id (the client portal always does),
+    // don't fire the query until that value is populated — `company_id=undefined`
+    // serialises as the literal string "undefined" and the API rejects it with
+    // a 500 (Drizzle SQL error on the join). This is a user-context race that
+    // used to spam every catalog page load with a red console entry.
+    const hasUndefinedFilter = params && "company_id" in params && !params.company_id;
     return useQuery({
         queryKey: brandKeys.list(params),
         queryFn: () => fetchBrands(params),
+        enabled: !hasUndefinedFilter,
     });
 }
 
