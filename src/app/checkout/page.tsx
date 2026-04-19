@@ -418,12 +418,17 @@ function CheckoutPageInner() {
 
         if (currentStep === "installation" && redItems.length > 0) {
             try {
+                // Effective event start: flag-on → user-entered event date;
+                // flag-off → delivery date acts as event start.
+                const checkEventStart = eventDateInputsEnabled
+                    ? formData.event_start_date
+                    : formData.requested_delivery_date;
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
                     items: redItems.map((item) => ({
                         asset_id: item.assetId,
                         maintenance_decision: "FIX_IN_ORDER",
                     })),
-                    event_start_date: formData.event_start_date,
+                    event_start_date: checkEventStart,
                 });
                 setHasCheckedMaintenanceFeasibility(true);
                 setMaintenanceFeasibilityIssues(result.issues || []);
@@ -1723,12 +1728,17 @@ function CheckoutPageInner() {
                                 helperEnabled={feasibilityHelperEnabled}
                                 isLoading={feasibilityPreview.isLoading}
                                 floorDate={feasibility.floorDate}
-                                userEventDate={formData.event_start_date}
+                                userEventDate={
+                                    eventDateInputsEnabled
+                                        ? formData.event_start_date
+                                        : formData.requested_delivery_date
+                                }
                                 userDateFeasible={feasibility.userDateFeasible}
                                 blockingItems={feasibility.blockingItems}
                                 config={feasibilityPreview.data?.config ?? null}
                                 onUseFloorDate={() => {
-                                    if (feasibility.floorDate) {
+                                    if (!feasibility.floorDate) return;
+                                    if (eventDateInputsEnabled) {
                                         setFormData({
                                             ...formData,
                                             event_start_date: feasibility.floorDate,
@@ -1736,6 +1746,17 @@ function CheckoutPageInner() {
                                                 formData.event_end_date &&
                                                 formData.event_end_date >= feasibility.floorDate
                                                     ? formData.event_end_date
+                                                    : feasibility.floorDate,
+                                        });
+                                    } else {
+                                        setFormData({
+                                            ...formData,
+                                            requested_delivery_date: feasibility.floorDate,
+                                            requested_pickup_date:
+                                                formData.requested_pickup_date &&
+                                                formData.requested_pickup_date >=
+                                                    feasibility.floorDate
+                                                    ? formData.requested_pickup_date
                                                     : feasibility.floorDate,
                                         });
                                     }
@@ -1813,42 +1834,96 @@ function CheckoutPageInner() {
 
                                 {/* Details Summary */}
                                 <div className="space-y-6">
-                                    {/* Event Info */}
+                                    {/* Schedule (delivery + pickup always shown; event dates only when flag on) */}
                                     <Card className="p-6 bg-card/50 border-border/50">
                                         <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
-                                            Event
+                                            Schedule
                                         </h3>
                                         <div className="space-y-3 text-sm">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Start Date
-                                                </p>
-                                                <p className="font-medium">
-                                                    {new Date(
-                                                        formData.event_start_date
-                                                    ).toLocaleDateString("en-US", {
-                                                        weekday: "long",
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    End Date
-                                                </p>
-                                                <p className="font-medium">
-                                                    {new Date(
-                                                        formData.event_end_date
-                                                    ).toLocaleDateString("en-US", {
-                                                        weekday: "long",
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    })}
-                                                </p>
-                                            </div>
+                                            {eventDateInputsEnabled && formData.event_start_date && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Event Start
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            formData.event_start_date
+                                                        ).toLocaleDateString("en-US", {
+                                                            weekday: "long",
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {eventDateInputsEnabled && formData.event_end_date && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Event End
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            formData.event_end_date
+                                                        ).toLocaleDateString("en-US", {
+                                                            weekday: "long",
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {formData.requested_delivery_date && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Delivery
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            formData.requested_delivery_date
+                                                        ).toLocaleDateString("en-US", {
+                                                            weekday: "long",
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                        {formData.requested_delivery_time_start &&
+                                                        formData.requested_delivery_time_end ? (
+                                                            <span className="text-muted-foreground font-mono">
+                                                                {" "}
+                                                                · {formData.requested_delivery_time_start}
+                                                                –{formData.requested_delivery_time_end}
+                                                            </span>
+                                                        ) : null}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {formData.requested_pickup_date && (
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Pickup
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {new Date(
+                                                            formData.requested_pickup_date
+                                                        ).toLocaleDateString("en-US", {
+                                                            weekday: "long",
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                        {formData.requested_pickup_time_start &&
+                                                        formData.requested_pickup_time_end ? (
+                                                            <span className="text-muted-foreground font-mono">
+                                                                {" "}
+                                                                · {formData.requested_pickup_time_start}
+                                                                –{formData.requested_pickup_time_end}
+                                                            </span>
+                                                        ) : null}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </Card>
 
