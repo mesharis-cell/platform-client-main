@@ -26,3 +26,4 @@ export function categoryLabel(category: CategoryLike, fallback = ""): string {
     }
     return fallback;
 }
+
