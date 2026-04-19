@@ -102,12 +102,34 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         const familyMeta = familyResponse?.data?.meta || { total: 0, page: 1, limit };
         const collections = collectionResponse?.data?.data?.collections || [];
 
-        const familyItems = families.map((family: any) => ({
+        // Normalize category to a stable shape regardless of whether the API
+        // returns a flat string (legacy) or the new nested { id, name, slug, color }
+        // object. Downstream React components render both `.category` (string) and
+        // `.categoryRef` (structured) so filter dedup can still use the reference.
+        const normalizeCategory = (raw: unknown) => {
+            if (!raw) return { label: null as string | null, ref: null as null | { id: string; name: string; slug: string; color: string } };
+            if (typeof raw === "string") return { label: raw, ref: null };
+            if (typeof raw === "object" && raw !== null && "name" in raw) {
+                const obj = raw as { id?: string; name?: string; slug?: string; color?: string };
+                return {
+                    label: typeof obj.name === "string" ? obj.name : null,
+                    ref: obj.id && obj.name && obj.slug && obj.color
+                        ? { id: obj.id, name: obj.name, slug: obj.slug, color: obj.color }
+                        : null,
+                };
+            }
+            return { label: null, ref: null };
+        };
+
+        const familyItems = families.map((family: any) => {
+            const cat = normalizeCategory(family.category);
+            return ({
             type: "family" as const,
             id: family.id,
             name: family.name,
             description: family.description,
-            category: family.category,
+            category: cat.label,
+            categoryRef: cat.ref,
             images: normalizeAssetImageUrls(family.images),
             brand: family.brand
                 ? {
@@ -139,14 +161,18 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             dimensionWidth: String(family.dimensions?.width || 0),
             dimensionHeight: String(family.dimensions?.height || 0),
             packaging: family.packaging,
-        }));
+        });
+        });
 
-        const collectionItems = collections.map((collection: any) => ({
+        const collectionItems = collections.map((collection: any) => {
+            const cat = normalizeCategory(collection.category);
+            return ({
             type: "collection" as const,
             id: collection.id,
             name: collection.name,
             description: collection.description,
-            category: collection.category,
+            category: cat.label,
+            categoryRef: cat.ref,
             images: normalizeCollectionImageUrls(collection.images),
             brand: collection.brand
                 ? {
@@ -156,7 +182,8 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                   }
                 : null,
             itemCount: Number(collection.assets?.length || 0),
-        }));
+        });
+        });
 
         // Families are server-paginated; collections are fetched in full (typically small count)
         const items =

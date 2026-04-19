@@ -13,7 +13,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, Package, Minus, Plus, Layers } from "lucide-react";
 import Image from "next/image";
 import type { CatalogCollectionDetails, CatalogCollectionItemDetail } from "@/types/collection";
-import { categoryLabel } from "@/lib/category-display";
 
 interface SelectionState {
     [assetId: string]: {
@@ -190,7 +189,7 @@ export function CollectionCustomizer({
                                                 {item.name}
                                             </h4>
                                             <Badge variant="outline" className="text-xs mt-1">
-                                                {categoryLabel(item.category)}
+                                                {item.category}
                                             </Badge>
                                         </div>
                                         <Badge

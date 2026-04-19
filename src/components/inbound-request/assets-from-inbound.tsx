@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { RequestItemCard } from "./request-item-card";
 import type { InboundRequestItem } from "@/types/inbound-request";
-import { categoryLabel } from "@/lib/category-display";
 
 interface AssetsFromInboundProps {
     items: InboundRequestItem[];
@@ -78,7 +77,7 @@ export function AssetsFromInbound({ items }: AssetsFromInboundProps) {
                                                     variant="outline"
                                                     className="text-xs font-mono text-muted-foreground"
                                                 >
-                                                    {categoryLabel(item.asset.category)}
+                                                    {item.asset.category}
                                                 </Badge>
                                                 <Badge
                                                     variant="outline"

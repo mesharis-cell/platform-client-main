@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, ChevronLeft, ChevronRight, Ruler, Scale, Box, Layers, Tag } from "lucide-react";
 import type { InboundRequestItem } from "@/types/inbound-request";
-import { categoryLabel } from "@/lib/category-display";
 
 interface RequestItemCardProps {
     item: InboundRequestItem;
@@ -59,7 +58,7 @@ export function RequestItemCard({ item, index }: RequestItemCardProps) {
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-xs text-muted-foreground font-mono">
-                                        {categoryLabel(item.category)}
+                                        {item.category}
                                     </span>
                                     <span className="text-[10px] text-muted-foreground">•</span>
                                     <span

@@ -88,11 +88,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
                     <div>
                         <h2 className="text-lg font-semibold">{item.name}</h2>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            {item.category && typeof item.category === "object" && "name" in item.category
-                                ? (item.category as { name: string }).name
-                                : typeof item.category === "string"
-                                  ? item.category
-                                  : "Uncategorized"}
+                            {item.category ?? "Uncategorized"}
                         </p>
                     </div>
 
@@ -149,10 +145,10 @@ export default function CatalogPage() {
             Array.from(
                 new Map(
                     items
-                        .map((item) => item.category)
+                        .map((item) => (item as { categoryRef?: { id: string; name: string; slug: string; color: string } | null }).categoryRef)
                         .filter(
                             (cat): cat is { id: string; name: string; slug: string; color: string } =>
-                                cat !== null && typeof cat === "object" && "id" in cat
+                                cat !== null && cat !== undefined && typeof cat === "object" && "id" in cat
                         )
                         .map((cat) => [cat.id, cat])
                 ).values()

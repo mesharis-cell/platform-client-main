@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
 import { useSubmitSelfPickupFromCart } from "@/hooks/use-self-pickups";
-import { categoryLabel } from "@/lib/category-display";
 import {
     ShoppingCart,
     User,
@@ -200,7 +199,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                         <div>
                                             <p className="font-medium">{item.assetName}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {categoryLabel(item.category)}
+                                                {item.category}
                                             </p>
                                         </div>
                                         <Badge variant="outline">

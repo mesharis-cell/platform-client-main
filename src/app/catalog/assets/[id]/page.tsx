@@ -13,7 +13,6 @@ import {
     useAssetConditionHistory,
     useAssetUsageReport,
 } from "@/hooks/use-catalog";
-import { categoryLabel } from "@/lib/category-display";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -244,7 +243,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         </Link>
                                     )}
                                     <Badge variant="outline" className="font-mono">
-                                        {categoryLabel(asset.category)}
+                                        {asset.category}
                                     </Badge>
                                 </div>
 

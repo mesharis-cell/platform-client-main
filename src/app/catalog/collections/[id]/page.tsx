@@ -17,7 +17,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { CollectionItemsList } from "@/components/catalog/collection-items-list";
-import { categoryLabel } from "@/lib/category-display";
 
 export default function CollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -91,7 +90,7 @@ export default function CollectionDetailPage({ params }: { params: Promise<{ id:
                                 </Badge>
                             )}
                             <Badge variant="outline" className="font-mono">
-                                {categoryLabel(collection.category)}
+                                {collection.category}
                             </Badge>
                         </div>
 

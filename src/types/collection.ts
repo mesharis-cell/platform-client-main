@@ -129,7 +129,8 @@ export interface CatalogAssetFamilyItem {
     id: string;
     name: string;
     description: string | null;
-    category: {
+    category: string | null;
+    categoryRef: {
         id: string;
         name: string;
         slug: string;
@@ -161,6 +162,7 @@ export interface CatalogCollectionItem {
     name: string;
     description: string | null;
     category: string | null;
+    categoryRef: null;
     images: string[];
     brand: {
         id: string;
