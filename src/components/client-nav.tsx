@@ -34,6 +34,7 @@ import {
     Lock,
     ClipboardList,
     FileSpreadsheet,
+    PackageCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,6 +44,12 @@ const clientNav = [
     { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard },
     { name: "Catalog", href: "/catalog", icon: Grid3x3 },
     { name: "My Orders", href: "/my-orders", icon: ShoppingCart },
+    {
+        name: "My Pickups",
+        href: "/self-pickups",
+        icon: PackageCheck,
+        featureFlag: "enable_self_pickup",
+    },
     { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
     {
         name: "Service Requests",

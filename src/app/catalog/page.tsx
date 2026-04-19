@@ -62,6 +62,11 @@ function CatalogCard({ item }: { item: CatalogItem }) {
                 <CardContent className="space-y-3 p-5">
                     <div className="flex flex-wrap items-center gap-2">
                         {item.brand && <Badge variant="secondary">{item.brand.name}</Badge>}
+                        {item.type === "family" && (item as any).team && (
+                            <Badge variant="outline" className="text-[10px]">
+                                {(item as any).team.name}
+                            </Badge>
+                        )}
                         {item.type === "family" &&
                             (item.conditionSummary.red > 0 || item.conditionSummary.orange > 0) && (
                                 <Badge
@@ -83,7 +88,7 @@ function CatalogCard({ item }: { item: CatalogItem }) {
                     <div>
                         <h2 className="text-lg font-semibold">{item.name}</h2>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            {item.category || "Uncategorized"}
+                            {item.category ?? "Uncategorized"}
                         </p>
                     </div>
 
@@ -117,6 +122,7 @@ export default function CatalogPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrand, setSelectedBrand] = useState<string>("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [selectedTeam, setSelectedTeam] = useState<string>("");
     const [viewType, setViewType] = useState<"family" | "collection" | "all">("all");
     const [page, setPage] = useState(1);
 
@@ -126,6 +132,7 @@ export default function CatalogPage() {
         search_term: searchQuery || undefined,
         brand: selectedBrand && selectedBrand !== "_all_" ? selectedBrand : undefined,
         category: selectedCategory && selectedCategory !== "_all_" ? selectedCategory : undefined,
+        team: selectedTeam && selectedTeam !== "_all_" ? selectedTeam : undefined,
         type: viewType,
         limit: ITEMS_PER_PAGE,
         page,
@@ -136,20 +143,39 @@ export default function CatalogPage() {
     const categories = useMemo(
         () =>
             Array.from(
-                new Set(items.map((item) => item.category).filter(Boolean) as string[])
-            ).sort(),
+                new Map(
+                    items
+                        .map((item) => (item as { categoryRef?: { id: string; name: string; slug: string; color: string } | null }).categoryRef)
+                        .filter(
+                            (cat): cat is { id: string; name: string; slug: string; color: string } =>
+                                cat !== null && cat !== undefined && typeof cat === "object" && "id" in cat
+                        )
+                        .map((cat) => [cat.id, cat])
+                ).values()
+            ).sort((a, b) => a.name.localeCompare(b.name)),
         [items]
     );
+
+    // Derive unique teams from catalog items. Hidden when empty (per design decision).
+    const teams = useMemo(() => {
+        const teamMap = new Map<string, string>();
+        items.forEach((item) => {
+            const team = (item as any).team;
+            if (team?.id && team?.name) teamMap.set(team.id, team.name);
+        });
+        return Array.from(teamMap.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }, [items]);
 
     const clearFilters = () => {
         setSearchQuery("");
         setSelectedBrand("");
         setSelectedCategory("");
+        setSelectedTeam("");
         setViewType("all");
         setPage(1);
     };
 
-    const hasActiveFilters = searchQuery || selectedBrand || selectedCategory || viewType !== "all";
+    const hasActiveFilters = searchQuery || selectedBrand || selectedCategory || selectedTeam || viewType !== "all";
 
     return (
         <ClientNav>
@@ -217,13 +243,44 @@ export default function CatalogPage() {
                                 <SelectContent>
                                     <SelectItem value="_all_">All categories</SelectItem>
                                     {categories.map((category) => (
-                                        <SelectItem key={category} value={category}>
-                                            {category}
+                                        <SelectItem key={category.id} value={category.id}>
+                                            <span className="flex items-center gap-2">
+                                                <span
+                                                    className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                                    style={{ backgroundColor: category.color }}
+                                                />
+                                                {category.name}
+                                            </span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* Team filter — hidden when no teams exist for the tenant */}
+                        {teams.length > 0 && (
+                            <div>
+                                <Select
+                                    value={selectedTeam || "_all_"}
+                                    onValueChange={(value) => {
+                                        setSelectedTeam(value === "_all_" ? "" : value);
+                                        setPage(1);
+                                    }}
+                                >
+                                    <SelectTrigger className="w-full max-w-[200px]">
+                                        <SelectValue placeholder="All departments" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="_all_">All departments</SelectItem>
+                                        {teams.map((team) => (
+                                            <SelectItem key={team.id} value={team.id}>
+                                                {team.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
 
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <Tabs

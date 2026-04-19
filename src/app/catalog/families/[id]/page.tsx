@@ -92,7 +92,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                         <div className="space-y-4">
                             <div>
                                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <Badge variant="secondary">{family.category}</Badge>
+                                    <Badge variant="secondary">{family.category?.name ?? "Uncategorized"}</Badge>
                                     {family.brand?.name && (
                                         <Badge variant="outline">{family.brand.name}</Badge>
                                     )}
