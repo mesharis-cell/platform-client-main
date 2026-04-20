@@ -158,24 +158,39 @@ function CheckoutPageInner() {
         special_instructions: "",
     });
 
-    // Restore checkout state from localStorage on mount
+    // Restore checkout state from localStorage on mount.
+    //
+    // When self-pickup is enabled, the new Step 0 ("mode") acts as a gate:
+    // users must pick delivery vs self-pickup before proceeding. We only
+    // restore a saved step if the saved payload already knows about that
+    // gate (i.e. has `modeConfirmed: true`). Old checkpoints written before
+    // the gate existed would otherwise land the user mid-flow and skip
+    // Step 0 entirely.
     useEffect(() => {
         if (!isInitialized) return;
         const validSteps = STEPS.map((s) => s.key);
+        let restoredMidFlow = false;
         try {
             const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
             if (saved) {
-                const { step, form } = JSON.parse(saved);
+                const { step, form, modeConfirmed } = JSON.parse(saved);
                 if (form) setFormData((prev) => ({ ...prev, ...form }));
-                if (step && validSteps.includes(step) && items.length > 0) {
+                const gateSatisfied = !selfPickupEnabled || modeConfirmed === true;
+                if (
+                    step &&
+                    validSteps.includes(step) &&
+                    items.length > 0 &&
+                    gateSatisfied
+                ) {
                     setCurrentStep(step);
-                    return;
+                    restoredMidFlow = true;
                 }
             }
         } catch (_) {
             // ignore malformed localStorage data
         }
-        // No restored step. Default to "mode" when self-pickup feature is on,
+        if (restoredMidFlow) return;
+        // No valid restore. Default to "mode" when self-pickup feature is on,
         // "cart" otherwise.
         if (selfPickupEnabled) setCurrentStep("mode");
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,13 +206,17 @@ function CheckoutPageInner() {
         }));
     }, [user]);
 
-    // Persist to localStorage on every change
+    // Persist to localStorage on every change. `modeConfirmed` is true once
+    // the user has passed the Delivery Mode gate — old checkpoints without
+    // this flag are treated as stale and force a return to Step 0.
     useEffect(() => {
+        const modeConfirmed =
+            !selfPickupEnabled || (currentStep !== "mode" && currentStep !== undefined);
         localStorage.setItem(
             CHECKOUT_STORAGE_KEY,
-            JSON.stringify({ step: currentStep, form: formData })
+            JSON.stringify({ step: currentStep, form: formData, modeConfirmed })
         );
-    }, [currentStep, formData]);
+    }, [currentStep, formData, selfPickupEnabled]);
 
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
