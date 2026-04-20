@@ -834,13 +834,13 @@ function CheckoutPageInner() {
                 </div>
             )}
 
-            {/* Self-pickup flow (replaces standard steps) */}
+            {/* Self-pickup flow (replaces standard steps). The component
+                provides its own sticky stepper + content layout matching the
+                standard-order flow. */}
             {checkoutMode === "self-pickup" && (
-                <div className="max-w-5xl mx-auto px-8 py-10">
-                    <SelfPickupCheckoutFlow
-                        onSwitchToStandard={() => setCheckoutMode("standard")}
-                    />
-                </div>
+                <SelfPickupCheckoutFlow
+                    onSwitchToStandard={() => setCheckoutMode("standard")}
+                />
             )}
 
             {/* Standard order flow continues below — hidden when self-pickup mode */}
