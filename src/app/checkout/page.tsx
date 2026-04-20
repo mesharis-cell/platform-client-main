@@ -44,7 +44,9 @@ import {
     MapPin,
     Package,
     ShoppingCart,
+    Truck,
     User,
+    Warehouse as WarehouseIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -62,9 +64,10 @@ import {
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
 
-type Step = "cart" | "installation" | "venue" | "contact" | "review";
+type Step = "mode" | "cart" | "installation" | "venue" | "contact" | "review";
 
-const STEPS: { key: Step; label: string; icon: any }[] = [
+const MODE_STEP = { key: "mode" as const, label: "Delivery Mode", icon: Truck };
+const STANDARD_STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "cart", label: "Order Review", icon: ShoppingCart },
     { key: "installation", label: "Installation Details", icon: Calendar },
     { key: "venue", label: "Installation Location", icon: MapPin },
@@ -88,10 +91,16 @@ function CheckoutPageInner() {
     } = useCart();
     const [checkoutMode, setCheckoutMode] = useState<"standard" | "self-pickup">("standard");
     const [currentStep, setCurrentStep] = useState<Step>("cart");
+    const [pendingMode, setPendingMode] = useState<"standard" | "self-pickup" | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Feature flag: show self-pickup mode option only if enabled
     const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
+    // When self-pickup is available, the first step is an explicit mode picker.
+    const STEPS = useMemo<{ key: Step; label: string; icon: any }[]>(
+        () => (selfPickupEnabled ? [MODE_STEP, ...STANDARD_STEPS] : STANDARD_STEPS),
+        [selfPickupEnabled]
+    );
     // Feature flag: whether to show separate Event Start/End date inputs.
     // OFF (default) — hide event dates; delivery + pickup become required and
     // event_start_date / event_end_date are auto-filled from them on submit.
@@ -140,29 +149,37 @@ function CheckoutPageInner() {
         contact_phone: "",
         // Delivery window preference (client-requested; logistics confirms later)
         requested_delivery_date: "",
-        requested_delivery_time_start: "",
-        requested_delivery_time_end: "",
+        requested_delivery_time_start: "09:00",
+        requested_delivery_time_end: "11:00",
         // Pickup window preference (client-requested; logistics confirms later)
         requested_pickup_date: "",
-        requested_pickup_time_start: "",
-        requested_pickup_time_end: "",
+        requested_pickup_time_start: "09:00",
+        requested_pickup_time_end: "11:00",
         special_instructions: "",
     });
 
     // Restore checkout state from localStorage on mount
     useEffect(() => {
         if (!isInitialized) return;
+        const validSteps = STEPS.map((s) => s.key);
         try {
             const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
-            if (!saved) return;
-            const { step, form } = JSON.parse(saved);
-            if (form) setFormData((prev) => ({ ...prev, ...form }));
-            if (step && items.length > 0) setCurrentStep(step);
+            if (saved) {
+                const { step, form } = JSON.parse(saved);
+                if (form) setFormData((prev) => ({ ...prev, ...form }));
+                if (step && validSteps.includes(step) && items.length > 0) {
+                    setCurrentStep(step);
+                    return;
+                }
+            }
         } catch (_) {
             // ignore malformed localStorage data
         }
+        // No restored step. Default to "mode" when self-pickup feature is on,
+        // "cart" otherwise.
+        if (selfPickupEnabled) setCurrentStep("mode");
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isInitialized]);
+    }, [isInitialized, selfPickupEnabled]);
 
     // Auto-fill contact from user token if empty
     useEffect(() => {
@@ -321,9 +338,14 @@ function CheckoutPageInner() {
 
     // Estimate is now handled by useCalculateEstimate hook above
 
-    // Redirect if cart is empty
+    // Redirect if cart is empty (but allow "mode" step 0 as a pre-cart stop)
     useEffect(() => {
-        if (!isLeavingAfterSubmit && items.length === 0 && currentStep !== "cart") {
+        if (
+            !isLeavingAfterSubmit &&
+            items.length === 0 &&
+            currentStep !== "cart" &&
+            currentStep !== "mode"
+        ) {
             router.push("/catalog");
         }
     }, [items.length, currentStep, isLeavingAfterSubmit, router]);
@@ -342,6 +364,8 @@ function CheckoutPageInner() {
 
     const canProceed = () => {
         switch (currentStep) {
+            case "mode":
+                return pendingMode !== null;
             case "cart":
                 return items.length > 0;
             case "installation": {
@@ -410,9 +434,22 @@ function CheckoutPageInner() {
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
             ) {
                 toast.error("Please enter a valid email address");
+            } else if (currentStep === "mode") {
+                toast.error("Please pick a delivery mode to continue");
             } else {
                 toast.error("Please fill all required fields");
             }
+            return;
+        }
+
+        // Commit the Delivery Mode selection on Continue (not on card click).
+        if (currentStep === "mode" && pendingMode) {
+            setCheckoutMode(pendingMode);
+            if (pendingMode === "self-pickup") {
+                // Self-pickup flow takes over rendering via the checkoutMode branch.
+                return;
+            }
+            setCurrentStep("cart");
             return;
         }
 
@@ -703,34 +740,57 @@ function CheckoutPageInner() {
             </div>
             )}
 
-            {/* Mode selector (only when self-pickup feature is enabled) */}
-            {selfPickupEnabled && checkoutMode === "standard" && currentStep === "cart" && (
-                <div className="max-w-5xl mx-auto px-8 pt-8">
+            {/* Step 0 — Delivery Mode (only rendered when feature enabled). */}
+            {checkoutMode === "standard" && currentStep === "mode" && (
+                <div className="max-w-5xl mx-auto px-8 pt-8 pb-4">
                     <Card className="p-6">
                         <h3 className="text-lg font-semibold mb-2">
                             How would you like to receive these items?
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Choose delivery for our logistics team to bring items to your venue,
-                            or self-pickup to collect them yourself from the warehouse.
+                        <p className="text-sm text-muted-foreground mb-6">
+                            Choose delivery for our logistics team to bring items to your
+                            venue, or self-pickup to collect them yourself from the
+                            warehouse. You can change this at any time before submitting.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <button
-                                className="border-2 border-primary rounded-lg p-4 text-left bg-primary/5"
-                                onClick={() => setCheckoutMode("standard")}
+                                type="button"
+                                onClick={() => setPendingMode("standard")}
+                                className={`group relative text-left rounded-xl border-2 p-5 transition-all ${
+                                    pendingMode === "standard"
+                                        ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-sm"
+                                        : "border-border hover:border-primary/50 hover:bg-muted/30"
+                                }`}
                             >
-                                <p className="font-semibold">Delivery</p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    We deliver to your venue
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                        <Truck className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <p className="font-semibold text-base">Delivery</p>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Our logistics team delivers to your venue on the date
+                                    and window you pick.
                                 </p>
                             </button>
                             <button
-                                className="border-2 border-border rounded-lg p-4 text-left hover:border-primary/50 transition-colors"
-                                onClick={() => setCheckoutMode("self-pickup")}
+                                type="button"
+                                onClick={() => setPendingMode("self-pickup")}
+                                className={`group relative text-left rounded-xl border-2 p-5 transition-all ${
+                                    pendingMode === "self-pickup"
+                                        ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-sm"
+                                        : "border-border hover:border-primary/50 hover:bg-muted/30"
+                                }`}
                             >
-                                <p className="font-semibold">I'll collect them myself</p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Pick up from the warehouse
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                        <WarehouseIcon className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <p className="font-semibold text-base">Self-Pickup</p>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Collect the items yourself from the warehouse. You
+                                    provide the collector and return window.
                                 </p>
                             </button>
                         </div>

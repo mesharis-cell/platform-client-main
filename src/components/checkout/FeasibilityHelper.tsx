@@ -68,7 +68,8 @@ export function FeasibilityHelper({
             <p className="text-xs text-muted-foreground italic">Checking availability…</p>
         );
     }
-    // Nothing in the cart requires prep — don't nag the user.
+    // Platform lead-time floor is always present. Only short-circuit when the
+    // preview hasn't returned yet (e.g., empty cart or pre-fetch).
     if (!floorDate) return null;
 
     // User hasn't picked a date yet — show the floor as a friendly hint.
