@@ -1,0 +1,77 @@
+---
+title: Declining a quote
+slug: declining-a-quote
+category: quotes
+order: 4
+summary: When the quote doesn't work, decline it with a reason so the platform team knows why.
+readMinutes: 2
+updated: "2026-04-20"
+status: published
+---
+
+If the quoted pricing doesn't work — too high, wrong scope, event cancelled on your end — the portal has a formal decline path. Decline closes the order; it doesn't go back to pricing review.
+
+## Step 1 — Click Decline Quote
+
+From the Quote Review section on the order page, click **Decline Quote**. A confirmation dialog opens.
+
+<Screenshot
+    src="quotes/07-decline-dialog-empty.png"
+    alt="Decline Quote dialog with an empty reason textarea"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 310 }, label: "1", text: "Short explainer — the team will see your reason." },
+        { at: { x: 640, y: 440 }, label: "2", text: "Decline reason — required, minimum 10 characters." },
+    ]}
+/>
+
+## Step 2 — Explain why
+
+<Screenshot
+    src="quotes/08-decline-dialog-filled.png"
+    alt="Decline Quote dialog with a reason typed in"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 440 }, label: "1", text: "Reason entered — Decline button now active." },
+    ]}
+/>
+
+The **Decline reason** textarea is required, with a 10-character
+minimum. Write a short note that tells logistics what happened — a few
+useful templates:
+
+- *"Price came in higher than our approved budget for this event."*
+- *"Event moved to a different vendor; order no longer needed."*
+- *"Venue cancelled on our side. Sorry for the churn."*
+- *"Need to reduce scope — will rebuild a smaller cart and start again."*
+
+The reason is visible to the platform's logistics and admin teams
+permanently — it shows on the internal order list and on the decline
+timeline row. It's not visible to other clients.
+
+<Callout kind="heads-up" title="Declining is terminal">
+Once declined, the order can't be "un-declined" from the portal — it
+stops at DECLINED and doesn't re-enter pricing review. If you want to
+proceed after talking with the team, build a new order.
+</Callout>
+
+## Step 3 — Click Decline Quote
+
+The button stays disabled until you type enough characters. Click it
+and the dialog submits.
+
+## What happens after
+
+- **Status** flips to **DECLINED**. The status hero shows "Quote
+  Declined" and your reason is captured on the Quote Summary card.
+- **No asset reservations** are made. Everything in the cart for that
+  order is released.
+- **The cost estimate PDF** stays available — you can still download it
+  for your records.
+
+## What's next
+
+- [Build a revised order](../ordering/before-you-start)
+- [What happens if the team revises the quote instead](../quotes/revised-quotes)

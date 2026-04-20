@@ -1,0 +1,72 @@
+---
+title: Downloading the cost estimate PDF
+slug: downloading-the-cost-estimate-pdf
+category: quotes
+order: 2
+summary: A one-click printable PDF of your quote, attached to the order page sidebar from QUOTED onwards.
+readMinutes: 2
+updated: "2026-04-20"
+status: published
+---
+
+Once logistics has sent your quote, a **Download Cost Estimate** button appears in the right sidebar of the order page. Clicking it downloads a print-ready PDF of the same pricing you see in the portal, formatted for forwarding to finance or attaching to a PO.
+
+## Where to click
+
+<Screenshot
+    src="quotes/03-cost-estimate-download.png"
+    alt="Right sidebar of the order page showing the Download Cost Estimate button at the top"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 1100, y: 470 }, label: "1", text: "Download Cost Estimate — sidebar, top, always one click away." },
+    ]}
+/>
+
+The button sits at the very top of the right-hand sidebar. While the
+download runs, the label changes briefly to **Downloading…** then goes
+back to its idle state.
+
+## When it's available
+
+The button appears as soon as your order reaches **QUOTED** and stays
+available through the rest of the lifecycle. Specifically it's
+visible for every status from QUOTED through CLOSED, including DECLINED
+— so you can always reference the original quoted pricing even on
+orders you didn't end up approving.
+
+## Filename
+
+The downloaded file is named
+`cost-estimate-{order-id}.pdf` — for example
+`cost-estimate-ORD-DEMO-002.pdf`. Matches the on-portal ID so you
+can find it easily in your downloads folder later.
+
+## What the PDF contains
+
+The PDF follows the same client-safe pricing principle as the on-portal
+view. You'll see:
+
+- **Header** — platform legal name, address, and the project reference
+  + issue date.
+- **Client + Installation** — your company, contact name, email, phone,
+  event start/end, venue name/city/address.
+- **Items table** — serial number, asset name, quantity, and notes
+  (handling tags or collection name).
+- **Cost breakdown** — the same line items as the portal, subtotal,
+  VAT if applicable, and the final **Estimated Total**.
+- **Notes** — a short disclaimer that the PDF is an estimate, not a
+  final invoice.
+- **Footer** — platform contact details.
+
+<Callout kind="heads-up" title="Regenerated on every revision">
+If logistics revises the quote, a fresh PDF is produced. Downloading
+again always gives you the current quote, not a cached earlier
+version. Old PDFs you'd already saved stay accurate to the quote they
+captured; they just don't reflect later revisions.
+</Callout>
+
+## What's next
+
+- [Approve with a PO number](../quotes/approving-with-a-po-number)
+- [If the quote is revised later](../quotes/revised-quotes)
