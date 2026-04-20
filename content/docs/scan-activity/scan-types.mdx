@@ -1,0 +1,102 @@
+---
+title: The six scan types explained
+slug: scan-types
+category: scan-activity
+order: 2
+summary: When each kind of scan happens in the lifecycle of your order.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+Your order generates up to six kinds of scan events over its lifetime. This article walks through each — what it captures, when it happens, and what you should look at on the entry.
+
+## Outbound Scan
+
+**Colour:** primary · **When:** during prep, before the truck leaves
+the warehouse.
+
+Outbound scans record individual items leaving the warehouse floor
+heading for your event. Each outbound scan captures:
+
+- **Which asset(s)** and how many (for pooled items).
+- **Condition at departure** — usually GREEN.
+- **Actor** — the logistics team member who did the scan.
+- **Notes** — optional, typically just the team member confirming
+  nothing unusual.
+
+Expect one outbound scan per asset-group in your order, at some point
+between CONFIRMED and IN_TRANSIT.
+
+## Outbound Truck Photos
+
+**Colour:** blue · **When:** after loading is complete, before the
+truck departs.
+
+A batch of photos of the loaded truck so you have a visual record of
+how your items were packed. No asset condition is captured here — it's
+a photo-only event. Useful to reference if a packing dispute comes up
+later.
+
+## On Site Capture
+
+**Colour:** pink · **When:** during the event, typically at the end of
+install and/or mid-event check-in.
+
+Photos taken at your venue, often with a short note like *"Setup
+complete, all screens tested"*. Gives you confirmation that things
+arrived installed and working.
+
+## Derig Capture
+
+**Colour:** purple · **When:** at teardown, end of your event.
+
+Photos captured as items are being taken down, plus a condition note
+per item if anything was flagged. If something was damaged during the
+event, this is where you'll see it first — usually with a photo.
+
+## Return Truck Photos
+
+**Colour:** orange · **When:** during the return journey's departure —
+items loaded onto the return truck.
+
+Mirror of Outbound Truck Photos, but for the return leg. Again, no
+condition; just visual record of how items were packed for return.
+
+## Inbound Scan
+
+**Colour:** secondary · **When:** when items are back at the warehouse
+and being scanned in.
+
+The last scan in a typical lifecycle. Captures:
+
+- **Condition on return** — the moment of truth. If something is
+  damaged, this is where it gets flagged.
+- **Discrepancy reason** — if the inbound scan doesn't match what
+  went out (broken, lost, or other), this field explains.
+- **Photos** — typically of any damage.
+- **Notes** — usually the damage description.
+
+<Callout kind="tip" title="The pair you'll pay most attention to">
+**Outbound + Inbound** are the most diagnostic pair. Compare condition
+and counts between them to see if anything changed during your event.
+The capture-only scans (truck photos, on-site, derig) are supplementary
+visual context.
+</Callout>
+
+## Mapped to the lifecycle
+
+| Scan type | Usually happens at status |
+|---|---|
+| Outbound Scan | IN_PREPARATION → READY_FOR_DELIVERY |
+| Outbound Truck Photos | READY_FOR_DELIVERY → IN_TRANSIT |
+| On Site Capture | DELIVERED / IN_USE |
+| Derig Capture | IN_USE → AWAITING_RETURN |
+| Return Truck Photos | AWAITING_RETURN → RETURN_IN_TRANSIT |
+| Inbound Scan | RETURN_IN_TRANSIT → CLOSED |
+
+## What's next
+
+- [Discrepancies — when the inbound scan finds something off](../scan-activity/discrepancies)
+- [Photos and the lightbox](../scan-activity/photos-and-the-lightbox)
+- [Mapping scans to your event timeline](../scan-activity/mapping-scans-to-your-event)

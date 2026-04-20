@@ -1,0 +1,63 @@
+---
+title: Discrepancies — when a scan flags something
+slug: discrepancies
+category: scan-activity
+order: 4
+summary: What the amber discrepancy banner means and what happens next.
+readMinutes: 2
+updated: "2026-04-20"
+status: published
+---
+
+When an inbound scan finds something that doesn't match what went out — a broken panel, a missing chair, an item in unexpected condition — the scanner records a **discrepancy reason**. It shows on the scan card as an amber banner; it also usually triggers follow-up work on the logistics side.
+
+## The banner
+
+<Screenshot
+    src="scan-activity/04-inbound-with-discrepancy.png"
+    alt="Inbound scan card with an amber 'Discrepancy: BROKEN' banner"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 399 }, label: "1", text: "Amber banner with the discrepancy reason in capital letters." },
+    ]}
+/>
+
+The banner sits immediately below the main scan info and the notes.
+Its text reads **Discrepancy: REASON** with one of three reason codes.
+
+## The three reasons
+
+- **BROKEN** — the item came back but is damaged or non-functional.
+  Accompanied by a photo and a note describing what's wrong.
+- **LOST** — the item didn't come back at all. Scanner recorded the
+  gap.
+- **OTHER** — anything that doesn't fit the first two. The note on
+  the same card explains what happened.
+
+Every discrepancy case also usually carries a scanner note that
+spells out the context in plain English.
+
+## What happens after
+
+A discrepancy usually triggers one or both of these:
+
+- **A service request** is opened against the returned asset for
+  maintenance or write-off. If it's linked to your order, it shows
+  on the [Linked Service Requests](../order-page/linked-service-requests)
+  card.
+- **A stock adjustment** is logged on the asset's inventory ledger —
+  this is internal to the platform team and doesn't appear on the
+  client portal.
+
+<Callout kind="heads-up" title="Discrepancies aren't automatic charges">
+Seeing "Discrepancy: BROKEN" on your scan timeline doesn't mean you're
+being charged extra. Any follow-up billing goes through a service
+request quote that you approve or decline separately. No silent
+surprises on your invoice.
+</Callout>
+
+## What's next
+
+- [Linked service requests](../order-page/linked-service-requests)
+- [Reading a single scan entry](../scan-activity/reading-a-scan-entry)

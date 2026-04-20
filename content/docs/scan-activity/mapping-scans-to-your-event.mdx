@@ -1,0 +1,89 @@
+---
+title: Mapping scans to your event timeline
+slug: mapping-scans-to-your-event
+category: scan-activity
+order: 5
+summary: A mental model that puts each scan type on your event's calendar.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+Once you've seen a few orders go through, you'll start to recognise the shape of the scan timeline. This article gives you the mental model so new orders feel familiar.
+
+## The six beats of a typical order
+
+Every fulfillment order hits these six beats, in order:
+
+### 1. Pre-event: Outbound Scans (T−2 to T−1 days)
+
+A day or two before your event start, the warehouse team starts
+scanning items out. You'll see multiple **Outbound Scan** entries on
+the timeline — one per asset group. Condition is GREEN; nothing
+unusual.
+
+### 2. Dispatch: Outbound Truck Photos (T−1 day / day-of)
+
+Once the truck is loaded, the team takes photos. **Outbound Truck
+Photos** entry captures them. No condition, just visual proof the
+truck left packed.
+
+### 3. On-site: On Site Capture (event day)
+
+Arrives at venue. After install, or partway through the event, the
+crew takes check-in photos. **On Site Capture** entry — usually with a
+short note like "Setup complete, tested" or "Mid-event check, all
+running".
+
+### 4. Teardown: Derig Capture (event end)
+
+As items come down, the team photographs them. **Derig Capture**
+entry — often with a condition note if anything got flagged during
+the event.
+
+### 5. Return dispatch: Return Truck Photos (post-event)
+
+Items are loaded back onto a return truck. **Return Truck Photos** —
+mirror of step 2.
+
+### 6. Back at warehouse: Inbound Scan (post-event)
+
+Items are scanned back in. **Inbound Scan** — with condition on return.
+Most orders finish here with GREEN condition and no discrepancy, and
+the order flips to **CLOSED** shortly after.
+
+## How the timeline looks visually
+
+The Scan Timeline card on your order page lists every scan with its
+type badge and timestamp. Reading top-to-bottom (most recent first),
+you'll typically see:
+
+```
+Inbound Scan            — post-event
+Return Truck Photos     — post-event
+Derig Capture           — event end
+On Site Capture         — event day
+Outbound Truck Photos   — dispatch
+Outbound Scan × N       — prep
+```
+
+Multiple Outbound Scans at the bottom (one per asset group), then the
+rest of the beats at one each.
+
+## Exceptions
+
+A few situations break the typical shape:
+
+- **Multi-day events** might have several On Site Capture entries —
+  one per check-in.
+- **Derig capture** can be split across multiple entries if teardown
+  happens over hours.
+- **Inbound with a discrepancy** — the entry will have the amber
+  banner. See [Discrepancies](../scan-activity/discrepancies).
+- **Partial returns** — rare, but if some items stay on-site longer,
+  inbound scans are split across multiple entries at different times.
+
+## What's next
+
+- [The six scan types explained](../scan-activity/scan-types)
+- [When to refresh the order page](../order-page/when-to-refresh)

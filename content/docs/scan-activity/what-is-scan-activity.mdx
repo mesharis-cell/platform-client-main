@@ -1,0 +1,69 @@
+---
+title: What scan activity tells you
+slug: what-is-scan-activity
+category: scan-activity
+order: 0
+summary: A scan-by-scan record of the physical movement of your items from warehouse to venue and back.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+Once your order moves into fulfillment, logistics scans items at every handover point: outbound from the warehouse, loaded onto the truck, arrived on-site, during derig, onto the return truck, and back at the warehouse. Every scan becomes an entry you can see on the order page — with photos, condition, and notes.
+
+## When it appears
+
+The **Scan Activity** section shows up on the order detail page once the order is at any of these statuses:
+
+- **CONFIRMED** — first scans start appearing as prep begins
+- **IN_PREPARATION / READY_FOR_DELIVERY** — outbound scans and truck photos
+- **IN_TRANSIT / DELIVERED** — on-site capture
+- **IN_USE / AWAITING_RETURN** — mid-event and derig photos
+- **RETURN_IN_TRANSIT / CLOSED** — return truck photos and inbound scans
+
+Before CONFIRMED, the section isn't rendered — there's nothing to show yet.
+
+## The overview
+
+<Screenshot
+    src="scan-activity/01-overview.png"
+    alt="Scan Activity section on an order page with summary counters and a timeline of events"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 500, y: 280 }, label: "1", text: "Summary counters — outbound, inbound, and capture totals." },
+        { at: { x: 640, y: 560 }, label: "2", text: "Timeline — every scan in chronological order with its own card." },
+    ]}
+/>
+
+Two parts:
+
+- **Summary counters** (three cards) — the count of outbound scans,
+  inbound scans, and captures (photo-only events like truck photos or
+  derig capture).
+- **Scan Timeline** — a chronological list of every scan event, each
+  one a full card with type badge, asset info, timestamp, photos, and
+  notes.
+
+## Why it's useful
+
+Scan activity gives you a complete audit trail of your order's physical journey. Common uses:
+
+- **Confirming delivery happened** and at what exact time.
+- **Inspecting derig photos** to see how items were broken down at the
+  end of your event.
+- **Investigating discrepancies** — "the team said one panel was
+  damaged on return; let me see the photo."
+- **Settling disputes** — scans are timestamped by the actual scanner
+  (a human name, not the system).
+
+<Callout kind="tip" title="Refresh to see the latest scans">
+Like the rest of the order page, scan activity doesn't auto-update.
+Reload the page when you want to see new scans the team just added.
+See [when to refresh](../order-page/when-to-refresh) for context.
+</Callout>
+
+## What's next
+
+- [Reading a single scan entry](../scan-activity/reading-a-scan-entry)
+- [The six scan types explained](../scan-activity/scan-types)
