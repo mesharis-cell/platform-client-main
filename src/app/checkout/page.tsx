@@ -93,6 +93,11 @@ function CheckoutPageInner() {
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [pendingMode, setPendingMode] = useState<"standard" | "self-pickup" | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Guards the persist→localStorage effect so it doesn't fire on the
+    // initial render with default state (which would clobber the stored
+    // checkpoint BEFORE the restore effect has had a chance to read it).
+    // The restore effect flips this to true after running.
+    const [restoreDone, setRestoreDone] = useState(false);
 
     // Feature flag: show self-pickup mode option only if enabled
     const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
@@ -166,6 +171,11 @@ function CheckoutPageInner() {
     // gate (i.e. has `modeConfirmed: true`). Old checkpoints written before
     // the gate existed would otherwise land the user mid-flow and skip
     // Step 0 entirely.
+    //
+    // CRITICAL: this must complete before the persist effect writes anything,
+    // otherwise initial-render defaults clobber the saved checkpoint. The
+    // `restoreDone` flag is flipped at the end of this effect and gates the
+    // persist effect below.
     useEffect(() => {
         if (!isInitialized) return;
         const validSteps = STEPS.map((s) => s.key);
@@ -189,10 +199,12 @@ function CheckoutPageInner() {
         } catch (_) {
             // ignore malformed localStorage data
         }
-        if (restoredMidFlow) return;
-        // No valid restore. Default to "mode" when self-pickup feature is on,
-        // "cart" otherwise.
-        if (selfPickupEnabled) setCurrentStep("mode");
+        if (!restoredMidFlow && selfPickupEnabled) {
+            // No valid restore. Default to "mode" when self-pickup feature is on,
+            // "cart" otherwise.
+            setCurrentStep("mode");
+        }
+        setRestoreDone(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isInitialized, selfPickupEnabled]);
 
@@ -209,14 +221,19 @@ function CheckoutPageInner() {
     // Persist to localStorage on every change. `modeConfirmed` is true once
     // the user has passed the Delivery Mode gate — old checkpoints without
     // this flag are treated as stale and force a return to Step 0.
+    //
+    // Gated on `restoreDone` so the initial render (with default currentStep
+    // = "cart") doesn't stamp modeConfirmed=true and clobber the saved
+    // checkpoint before the restore effect above runs.
     useEffect(() => {
+        if (!restoreDone) return;
         const modeConfirmed =
             !selfPickupEnabled || (currentStep !== "mode" && currentStep !== undefined);
         localStorage.setItem(
             CHECKOUT_STORAGE_KEY,
             JSON.stringify({ step: currentStep, form: formData, modeConfirmed })
         );
-    }, [currentStep, formData, selfPickupEnabled]);
+    }, [currentStep, formData, selfPickupEnabled, restoreDone]);
 
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
