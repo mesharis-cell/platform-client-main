@@ -87,9 +87,7 @@ export default function ClientSelfPickupDetailPage({
     if (!pickup) {
         return (
             <ClientNav>
-                <div className="text-center py-16 text-muted-foreground">
-                    Self-pickup not found
-                </div>
+                <div className="text-center py-16 text-muted-foreground">Self-pickup not found</div>
             </ClientNav>
         );
     }
@@ -114,9 +112,7 @@ export default function ClientSelfPickupDetailPage({
                                 </Button>
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold">
-                                    {pickup.self_pickup_id}
-                                </h1>
+                                <h1 className="text-2xl font-bold">{pickup.self_pickup_id}</h1>
                             </div>
                             <Badge variant="outline" className={statusConfig.color}>
                                 {statusConfig.label}
@@ -130,9 +126,9 @@ export default function ClientSelfPickupDetailPage({
                                         variant="outline"
                                         onClick={() => {
                                             declineQuote.mutate(id, {
-                                                onSuccess: () =>
-                                                    toast.success("Quote declined"),
-                                                onError: (e: unknown) => toast.error((e as Error).message),
+                                                onSuccess: () => toast.success("Quote declined"),
+                                                onError: (e: unknown) =>
+                                                    toast.error((e as Error).message),
                                             });
                                         }}
                                         disabled={declineQuote.isPending}
@@ -142,9 +138,9 @@ export default function ClientSelfPickupDetailPage({
                                     <Button
                                         onClick={() => {
                                             approveQuote.mutate(id, {
-                                                onSuccess: () =>
-                                                    toast.success("Quote approved"),
-                                                onError: (e: unknown) => toast.error((e as Error).message),
+                                                onSuccess: () => toast.success("Quote approved"),
+                                                onError: (e: unknown) =>
+                                                    toast.error((e as Error).message),
                                             });
                                         }}
                                         disabled={approveQuote.isPending}
@@ -153,15 +149,13 @@ export default function ClientSelfPickupDetailPage({
                                     </Button>
                                 </>
                             )}
-                            {["PICKED_UP", "IN_USE"].includes(
-                                pickup.self_pickup_status
-                            ) && (
+                            {["PICKED_UP", "IN_USE"].includes(pickup.self_pickup_status) && (
                                 <Button
                                     onClick={() => {
                                         triggerReturn.mutate(id, {
-                                            onSuccess: () =>
-                                                toast.success("Return initiated"),
-                                            onError: (e: unknown) => toast.error((e as Error).message),
+                                            onSuccess: () => toast.success("Return initiated"),
+                                            onError: (e: unknown) =>
+                                                toast.error((e as Error).message),
                                         });
                                     }}
                                     disabled={triggerReturn.isPending}
@@ -180,9 +174,7 @@ export default function ClientSelfPickupDetailPage({
                         <CardContent className="space-y-3">
                             <div className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">
-                                    {pickup.collector_name}
-                                </span>
+                                <span className="font-medium">{pickup.collector_name}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Phone className="h-4 w-4 text-muted-foreground" />
@@ -208,16 +200,12 @@ export default function ClientSelfPickupDetailPage({
                                     <Clock className="h-4 w-4 text-muted-foreground" />
                                     <span>
                                         Expected return:{" "}
-                                        {new Date(
-                                            pickup.expected_return_at
-                                        ).toLocaleString()}
+                                        {new Date(pickup.expected_return_at).toLocaleString()}
                                     </span>
                                 </div>
                             )}
                             {pickup.notes && (
-                                <p className="text-sm text-muted-foreground mt-2">
-                                    {pickup.notes}
-                                </p>
+                                <p className="text-sm text-muted-foreground mt-2">{pickup.notes}</p>
                             )}
                         </CardContent>
                     </Card>
@@ -225,9 +213,7 @@ export default function ClientSelfPickupDetailPage({
                     {/* Items */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">
-                                Items ({items.length})
-                            </CardTitle>
+                            <CardTitle className="text-base">Items ({items.length})</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
@@ -237,12 +223,9 @@ export default function ClientSelfPickupDetailPage({
                                         className="flex items-center justify-between p-3 border rounded-lg"
                                     >
                                         <div>
-                                            <p className="font-medium">
-                                                {item.asset_name}
-                                            </p>
+                                            <p className="font-medium">{item.asset_name}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                Qty: {item.quantity} | Vol:{" "}
-                                                {item.total_volume} m3
+                                                Qty: {item.quantity} | Vol: {item.total_volume} m3
                                             </p>
                                         </div>
                                         <Badge variant="outline">

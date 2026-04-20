@@ -241,9 +241,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
                             >
                                 <BookOpen className="h-4 w-4 shrink-0" />
-                                <span className="flex-1 uppercase tracking-wide text-xs">
-                                    Docs
-                                </span>
+                                <span className="flex-1 uppercase tracking-wide text-xs">Docs</span>
                                 <ExternalLink className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                             </a>
                         </>
@@ -304,7 +302,11 @@ function ClientNavInner({ children }: ClientNavProps) {
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onSelect={() =>
-                                                window.open("/docs", "_blank", "noopener,noreferrer")
+                                                window.open(
+                                                    "/docs",
+                                                    "_blank",
+                                                    "noopener,noreferrer"
+                                                )
                                             }
                                             className="font-mono text-xs uppercase tracking-wide"
                                         >

@@ -19,7 +19,10 @@ test.describe("scan activity views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-004", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-004/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-004/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // Scan Activity heading — scroll it to top of viewport.
         await page
@@ -35,7 +38,10 @@ test.describe("scan activity views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-004", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-004/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-004/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // The first Derig Capture / Outbound entry is the canonical example.
         // Scroll it into frame.
@@ -53,7 +59,10 @@ test.describe("scan activity views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-004", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-004/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-004/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // Derig Capture is seeded with 3 photos — scroll it into frame.
         await page
@@ -70,7 +79,10 @@ test.describe("scan activity views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-005", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-005/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-005/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // The Inbound entry + discrepancy is on the CLOSED order.
         await page

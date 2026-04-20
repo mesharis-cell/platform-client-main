@@ -18,11 +18,7 @@ interface MarqueeTitleProps {
  *
  * Intended for nav links with tight horizontal budgets.
  */
-export function MarqueeTitle({
-    text,
-    pixelsPerSecond = 80,
-    className,
-}: MarqueeTitleProps) {
+export function MarqueeTitle({ text, pixelsPerSecond = 80, className }: MarqueeTitleProps) {
     const outerRef = useRef<HTMLSpanElement>(null);
     const innerRef = useRef<HTMLSpanElement>(null);
     const [shift, setShift] = useState(0);
@@ -52,18 +48,14 @@ export function MarqueeTitle({
     return (
         <span
             ref={outerRef}
-            className={cn(
-                "relative block min-w-0 overflow-hidden whitespace-nowrap",
-                className
-            )}
+            className={cn("relative block min-w-0 overflow-hidden whitespace-nowrap", className)}
         >
             <span
                 ref={innerRef}
                 style={innerStyle}
                 className={cn(
                     "inline-block will-change-transform transition-transform ease-linear",
-                    shift > 0 &&
-                        "group-hover/nav-link:[transform:translateX(var(--marquee-shift))]"
+                    shift > 0 && "group-hover/nav-link:[transform:translateX(var(--marquee-shift))]"
                 )}
             >
                 {text}

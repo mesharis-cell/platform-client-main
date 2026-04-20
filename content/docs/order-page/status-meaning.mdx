@@ -39,41 +39,44 @@ Two off-path states:
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 420, y: 260 }, label: "1", text: "Every status has a large plain-English headline — here, 'Under Review' for PRICING_REVIEW." },
+        {
+            at: { x: 420, y: 260 },
+            label: "1",
+            text: "Every status has a large plain-English headline — here, 'Under Review' for PRICING_REVIEW.",
+        },
     ]}
 />
 
-| Badge | Headline | What it means | What you can do |
-|---|---|---|---|
-| **SUBMITTED** | Order Submitted | The portal received your order. | Wait — it moves on automatically. |
-| **PRICING_REVIEW** | Under Review | Logistics is working out the quote. | Wait. You'll get an email when the quote's ready. |
-| **PENDING_APPROVAL** | Pricing Under Review | Internal admin review of the draft quote. | Wait. |
-| **QUOTED** | Quote Ready | The team sent you a quote. | [Approve with a PO number](../quotes/approving-with-a-po-number) or decline. |
-| **APPROVED** | Quote Approved | You accepted the quote. Preparation kicks off automatically. | Nothing. Status will move to CONFIRMED shortly. |
-| **DECLINED** | Quote Declined | You declined the quote with a reason. | The order stops here. Start a new one if you need to. |
-| **CONFIRMED** | Order Confirmed | Assets are reserved for you; prep is underway. | Wait for IN_PREPARATION. |
-| **IN_PREPARATION** | Preparing Your Order | Items are being pulled, cleaned, refurbished. | Wait. |
-| **READY_FOR_DELIVERY** | Ready to Ship | Fully packed, truck being loaded. | Wait. You'll be notified at dispatch. |
-| **IN_TRANSIT** | On The Way | The truck is on the road. | Make sure someone is at the venue to receive. |
-| **DELIVERED** | Delivered | Items are at the venue. | Enjoy your event. |
-| **IN_USE** (badge reads "On Site") | On Site | Event is running. | Nothing scheduled. |
-| **AWAITING_RETURN** | Pickup Scheduled | Pickup window is confirmed. | Have items ready for collection at the scheduled time. |
-| **RETURN_IN_TRANSIT** | Items Returning | Truck is on the road back to the warehouse. | Wait for CLOSED. |
-| **CLOSED** | Order Complete | Inbound scan done. Everything settled. | Nothing. Start your next event. |
-| **CANCELLED** | — (red banner) | An admin cancelled. Reason shown on the page. | Contact your admin if you didn't expect this. |
+| Badge                              | Headline             | What it means                                                | What you can do                                                              |
+| ---------------------------------- | -------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **SUBMITTED**                      | Order Submitted      | The portal received your order.                              | Wait — it moves on automatically.                                            |
+| **PRICING_REVIEW**                 | Under Review         | Logistics is working out the quote.                          | Wait. You'll get an email when the quote's ready.                            |
+| **PENDING_APPROVAL**               | Pricing Under Review | Internal admin review of the draft quote.                    | Wait.                                                                        |
+| **QUOTED**                         | Quote Ready          | The team sent you a quote.                                   | [Approve with a PO number](../quotes/approving-with-a-po-number) or decline. |
+| **APPROVED**                       | Quote Approved       | You accepted the quote. Preparation kicks off automatically. | Nothing. Status will move to CONFIRMED shortly.                              |
+| **DECLINED**                       | Quote Declined       | You declined the quote with a reason.                        | The order stops here. Start a new one if you need to.                        |
+| **CONFIRMED**                      | Order Confirmed      | Assets are reserved for you; prep is underway.               | Wait for IN_PREPARATION.                                                     |
+| **IN_PREPARATION**                 | Preparing Your Order | Items are being pulled, cleaned, refurbished.                | Wait.                                                                        |
+| **READY_FOR_DELIVERY**             | Ready to Ship        | Fully packed, truck being loaded.                            | Wait. You'll be notified at dispatch.                                        |
+| **IN_TRANSIT**                     | On The Way           | The truck is on the road.                                    | Make sure someone is at the venue to receive.                                |
+| **DELIVERED**                      | Delivered            | Items are at the venue.                                      | Enjoy your event.                                                            |
+| **IN_USE** (badge reads "On Site") | On Site              | Event is running.                                            | Nothing scheduled.                                                           |
+| **AWAITING_RETURN**                | Pickup Scheduled     | Pickup window is confirmed.                                  | Have items ready for collection at the scheduled time.                       |
+| **RETURN_IN_TRANSIT**              | Items Returning      | Truck is on the road back to the warehouse.                  | Wait for CLOSED.                                                             |
+| **CLOSED**                         | Order Complete       | Inbound scan done. Everything settled.                       | Nothing. Start your next event.                                              |
+| **CANCELLED**                      | — (red banner)       | An admin cancelled. Reason shown on the page.                | Contact your admin if you didn't expect this.                                |
 
 <Callout kind="heads-up" title="You'll usually see PRICING_REVIEW first, not SUBMITTED">
-SUBMITTED is a transient system state. The portal auto-transitions to
-PRICING_REVIEW within seconds, so by the time you see your order page
-it's almost always showing "Under Review".
+    SUBMITTED is a transient system state. The portal auto-transitions to PRICING_REVIEW within
+    seconds, so by the time you see your order page it's almost always showing "Under Review".
 </Callout>
 
 ## What you see while you wait
 
 Between quote-sent and event day, the order page also shows a **What's
 Next** card tailored to the current status — a short explainer that
-reads something like *"Your items are being prepared. You'll see them
-move to In Transit when the truck dispatches."* These cards change as
+reads something like _"Your items are being prepared. You'll see them
+move to In Transit when the truck dispatches."_ These cards change as
 the status moves, so refreshing the page occasionally is a cheap way
 to see where you are.
 

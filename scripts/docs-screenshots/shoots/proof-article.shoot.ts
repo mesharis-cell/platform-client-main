@@ -14,14 +14,7 @@ import { docsEnv } from "../fixtures/env";
  * generates one full-page capture per article into proof/.
  */
 
-const CONTENT_ROOT = path.join(
-    __dirname,
-    "..",
-    "..",
-    "..",
-    "content",
-    "docs"
-);
+const CONTENT_ROOT = path.join(__dirname, "..", "..", "..", "content", "docs");
 
 interface ArticleRef {
     category: string;
@@ -48,28 +41,28 @@ function collectArticles(): ArticleRef[] {
             });
         }
     }
-    return out.sort((a, b) =>
-        `${a.category}/${a.slug}`.localeCompare(`${b.category}/${b.slug}`)
-    );
+    return out.sort((a, b) => `${a.category}/${a.slug}`.localeCompare(`${b.category}/${b.slug}`));
 }
 
 const articles = collectArticles();
 
 test.describe("proof — rendered docs articles", () => {
     for (const article of articles) {
-        test(`captures /docs/${article.category}/${article.slug}`, async ({
-            page,
-        }) => {
+        test(`captures /docs/${article.category}/${article.slug}`, async ({ page }) => {
             const env = docsEnv();
-            await page.goto(
-                env.baseUrl + `/docs/${article.category}/${article.slug}`,
-                { waitUntil: "networkidle" }
-            );
+            await page.goto(env.baseUrl + `/docs/${article.category}/${article.slug}`, {
+                waitUntil: "networkidle",
+            });
 
             // Wait for the first Screenshot figure (if any) to mount so
             // the image + SVG overlay are composited in the final layout.
             const figures = page.locator("figure");
-            if (await figures.first().isVisible().catch(() => false)) {
+            if (
+                await figures
+                    .first()
+                    .isVisible()
+                    .catch(() => false)
+            ) {
                 await page.waitForTimeout(500);
             }
 

@@ -64,9 +64,7 @@ export function FeasibilityHelper({
 
     if (!helperEnabled) return null;
     if (isLoading) {
-        return (
-            <p className="text-xs text-muted-foreground italic">Checking availability…</p>
-        );
+        return <p className="text-xs text-muted-foreground italic">Checking availability…</p>;
     }
     // Platform lead-time floor is always present. Only short-circuit when the
     // preview hasn't returned yet (e.g., empty cart or pre-fetch).
@@ -140,19 +138,12 @@ export function FeasibilityHelper({
                 >
                     Why
                     <ChevronDown
-                        className={cn(
-                            "h-3 w-3 transition-transform",
-                            whyOpen && "rotate-180"
-                        )}
+                        className={cn("h-3 w-3 transition-transform", whyOpen && "rotate-180")}
                     />
                 </button>
             </div>
             {whyOpen ? (
-                <WhyBody
-                    floorDate={floorDate}
-                    config={config}
-                    blockingItems={blockingItems}
-                />
+                <WhyBody floorDate={floorDate} config={config} blockingItems={blockingItems} />
             ) : null}
         </div>
     );
@@ -179,20 +170,11 @@ function WhyAccordion({
                 className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
             >
                 Why this date?
-                <ChevronDown
-                    className={cn(
-                        "h-3 w-3 transition-transform",
-                        open && "rotate-180"
-                    )}
-                />
+                <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
             </button>
             {open ? (
                 <div className="pt-2">
-                    <WhyBody
-                        floorDate={floorDate}
-                        config={config}
-                        blockingItems={blockingItems}
-                    />
+                    <WhyBody floorDate={floorDate} config={config} blockingItems={blockingItems} />
                 </div>
             ) : null}
         </div>
@@ -212,10 +194,8 @@ function WhyBody({
         <ul className="text-[11px] text-muted-foreground space-y-1 pl-3 border-l-2 border-border/50">
             {config ? (
                 <li>
-                    <span className="font-mono font-medium">
-                        {config.minimum_lead_hours}h
-                    </span>{" "}
-                    of prep time after you place your order
+                    <span className="font-mono font-medium">{config.minimum_lead_hours}h</span> of
+                    prep time after you place your order
                     {config.exclude_weekends ? " (weekends don't count)" : ""}
                 </li>
             ) : null}
@@ -231,9 +211,7 @@ function WhyBody({
             ))}
             <li className="pt-1 text-foreground">
                 Earliest everything can be ready:{" "}
-                <span className="font-mono font-medium">
-                    {fmtFriendlyDate(floorDate)}
-                </span>
+                <span className="font-mono font-medium">{fmtFriendlyDate(floorDate)}</span>
             </li>
         </ul>
     );

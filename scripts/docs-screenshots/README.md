@@ -17,32 +17,32 @@ without manual reshoots.
 1. **Test stack running** — the API is seeded and `dev:test` is live on
    port 9100 (see `api/test/README.md`). From the `api/` repo:
 
-   ```bash
-   bun run db:seed:test      # if you're coming off a test:e2e run
-   bun run dev:test          # API on http://localhost:9100
-   ```
+    ```bash
+    bun run db:seed:test      # if you're coming off a test:e2e run
+    bun run dev:test          # API on http://localhost:9100
+    ```
 
 2. **Client dev server wired to the test stack.** Copy the env template
    and start the client on port 4002:
 
-   ```bash
-   # in client/
-   cp .env.docs.example .env.docs.local      # template for the shoot runner
-   cp .env.docs.example .env.local           # Next.js reads .env.local at boot
-   # edit .env.local — set
-   #   NEXT_PUBLIC_API_URL=http://localhost:9100
-   #   NEXT_PUBLIC_DEV_HOST_OVERRIDE=demo.kadence.test
-   # (leave DOCS_CLIENT_* defaults as-is unless the seed changed)
-   bun run dev
-   ```
+    ```bash
+    # in client/
+    cp .env.docs.example .env.docs.local      # template for the shoot runner
+    cp .env.docs.example .env.local           # Next.js reads .env.local at boot
+    # edit .env.local — set
+    #   NEXT_PUBLIC_API_URL=http://localhost:9100
+    #   NEXT_PUBLIC_DEV_HOST_OVERRIDE=demo.kadence.test
+    # (leave DOCS_CLIENT_* defaults as-is unless the seed changed)
+    bun run dev
+    ```
 
 3. **Playwright browsers + system deps installed** (once per machine):
 
-   ```bash
-   bunx playwright install chromium
-   # WSL / fresh Ubuntu: Chrome needs libgbm1 / libnss3 etc. — run once:
-   sudo bunx playwright install-deps chromium
-   ```
+    ```bash
+    bunx playwright install chromium
+    # WSL / fresh Ubuntu: Chrome needs libgbm1 / libnss3 etc. — run once:
+    sudo bunx playwright install-deps chromium
+    ```
 
 ## Running
 

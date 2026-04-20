@@ -76,8 +76,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
         (family.conditionSummary?.orange || 0) +
         (family.conditionSummary?.red || 0);
 
-    const goPrev = () =>
-        setActiveImgIdx((i) => (i - 1 + images.length) % images.length);
+    const goPrev = () => setActiveImgIdx((i) => (i - 1 + images.length) % images.length);
     const goNext = () => setActiveImgIdx((i) => (i + 1) % images.length);
 
     return (
@@ -152,7 +151,9 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                         <div className="space-y-4">
                             <div>
                                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <Badge variant="secondary">{family.category?.name ?? "Uncategorized"}</Badge>
+                                    <Badge variant="secondary">
+                                        {family.category?.name ?? "Uncategorized"}
+                                    </Badge>
                                     {family.brand?.name && (
                                         <Badge variant="outline">{family.brand.name}</Badge>
                                     )}

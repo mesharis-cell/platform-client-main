@@ -26,7 +26,11 @@ the current condition of every RED item in your cart.
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 620, y: 540 }, label: "1", text: "Amber banner appears while the check is running." },
+        {
+            at: { x: 620, y: 540 },
+            label: "1",
+            text: "Amber banner appears while the check is running.",
+        },
     ]}
 />
 
@@ -43,8 +47,16 @@ confirms success. No extra work needed.
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 620, y: 530 }, label: "1", text: "Red banner — one or more items can't be refurbed before your current start date." },
-        { at: { x: 620, y: 620 }, label: "2", text: "Each line lists the item and its earliest feasible event start date." },
+        {
+            at: { x: 620, y: 530 },
+            label: "1",
+            text: "Red banner — one or more items can't be refurbed before your current start date.",
+        },
+        {
+            at: { x: 620, y: 620 },
+            label: "2",
+            text: "Each line lists the item and its earliest feasible event start date.",
+        },
     ]}
 />
 
@@ -59,9 +71,8 @@ You have three options:
    specific unit.
 
 <Callout kind="heads-up" title="Feasibility re-runs on every date change">
-If you adjust the Event Start Date, click Continue again to re-check.
-The indicator goes back to "Checking…" for a beat, then lands on
-passed or failed with the fresh data.
+    If you adjust the Event Start Date, click Continue again to re-check. The indicator goes back to
+    "Checking…" for a beat, then lands on passed or failed with the fresh data.
 </Callout>
 
 ## What's next

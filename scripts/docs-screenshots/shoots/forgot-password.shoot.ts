@@ -22,9 +22,7 @@ test.describe("forgot-password flow (unauthenticated)", () => {
 
         // Heading on step 1 is "Password / Recovery". Wait for it to avoid
         // capturing a half-hydrated shell.
-        await page
-            .getByRole("heading", { level: 2, name: /password\s*recovery/i })
-            .waitFor();
+        await page.getByRole("heading", { level: 2, name: /password\s*recovery/i }).waitFor();
 
         await shoot(page, { name: "getting-started/03-forgot-password-email" });
     });

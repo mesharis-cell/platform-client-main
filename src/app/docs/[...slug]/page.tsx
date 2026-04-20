@@ -8,7 +8,11 @@ import { DocsShell } from "@/components/docs/DocsShell";
 import { NotEnabledPage } from "@/components/docs/NotEnabledPage";
 import { docsMdxComponents } from "@/components/docs/mdx-components";
 import { extractHeadings, TableOfContents } from "@/components/docs/TableOfContents";
-import { buildNavTree, filterNavTreeByFeatures, isArticleEnabledForTenant } from "@/lib/docs/nav-tree";
+import {
+    buildNavTree,
+    filterNavTreeByFeatures,
+    isArticleEnabledForTenant,
+} from "@/lib/docs/nav-tree";
 import { getArticle, loadAllArticles } from "@/lib/docs/registry";
 import { parseArticleSegments } from "@/lib/docs/slug";
 import { getServerPlatformContext } from "@/lib/docs/platform-context.server";

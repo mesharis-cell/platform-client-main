@@ -72,37 +72,32 @@ async function primeCheckout(
     };
     const checkout = { step: args.step, form: args.form };
 
-    await context.addInitScript((data: SeedArgs) => {
-        const originalSetItem = Storage.prototype.setItem;
-        const blockUntil = Date.now() + 2500;
+    await context.addInitScript(
+        (data: SeedArgs) => {
+            const originalSetItem = Storage.prototype.setItem;
+            const blockUntil = Date.now() + 2500;
 
-        // Patch BEFORE the page's own scripts run.
-        Storage.prototype.setItem = function patchedSetItem(
-            this: Storage,
-            key: string,
-            value: string
-        ) {
-            if (key === "kadence_checkout_form" && Date.now() < blockUntil) {
-                // Swallow early writes — specifically the checkout
-                // component's mount-time persist effect that would
-                // overwrite our pre-seed.
-                return;
-            }
-            return originalSetItem.call(this, key, value);
-        } as typeof Storage.prototype.setItem;
+            // Patch BEFORE the page's own scripts run.
+            Storage.prototype.setItem = function patchedSetItem(
+                this: Storage,
+                key: string,
+                value: string
+            ) {
+                if (key === "kadence_checkout_form" && Date.now() < blockUntil) {
+                    // Swallow early writes — specifically the checkout
+                    // component's mount-time persist effect that would
+                    // overwrite our pre-seed.
+                    return;
+                }
+                return originalSetItem.call(this, key, value);
+            } as typeof Storage.prototype.setItem;
 
-        // Seed the keys directly via the original setItem.
-        originalSetItem.call(
-            window.localStorage,
-            "asset-cart-v1",
-            data.cartJson
-        );
-        originalSetItem.call(
-            window.localStorage,
-            "kadence_checkout_form",
-            data.checkoutJson
-        );
-    }, { cartJson: JSON.stringify(cart), checkoutJson: JSON.stringify(checkout) });
+            // Seed the keys directly via the original setItem.
+            originalSetItem.call(window.localStorage, "asset-cart-v1", data.cartJson);
+            originalSetItem.call(window.localStorage, "kadence_checkout_form", data.checkoutJson);
+        },
+        { cartJson: JSON.stringify(cart), checkoutJson: JSON.stringify(checkout) }
+    );
 }
 
 const COMMON_DATES = {
@@ -127,8 +122,7 @@ const COMMON_CONTACT = {
     contact_name: "Alex Chen",
     contact_email: "alex.chen@kadence-demo.com",
     contact_phone: "+971501234567",
-    special_instructions:
-        "Please arrive at the north loading dock. Setup window is 07:00 - 09:00.",
+    special_instructions: "Please arrive at the north loading dock. Setup window is 07:00 - 09:00.",
 };
 
 // -----------------------------------------------------------------------------
@@ -237,9 +231,7 @@ test.describe("checkout — step captures", () => {
         });
         const env = docsEnv();
         await page.goto(env.baseUrl + "/checkout", { waitUntil: "networkidle" });
-        await page
-            .getByRole("heading", { name: /point of contact/i })
-            .waitFor({ timeout: 15_000 });
+        await page.getByRole("heading", { name: /point of contact/i }).waitFor({ timeout: 15_000 });
         await page.waitForTimeout(400);
         await shoot(page, { name: "ordering/06-contact" });
     });
@@ -257,9 +249,7 @@ test.describe("checkout — step captures", () => {
         });
         const env = docsEnv();
         await page.goto(env.baseUrl + "/checkout", { waitUntil: "networkidle" });
-        await page
-            .getByRole("heading", { name: /review & submit/i })
-            .waitFor({ timeout: 15_000 });
+        await page.getByRole("heading", { name: /review & submit/i }).waitFor({ timeout: 15_000 });
         await page.waitForTimeout(600);
         await shoot(page, { name: "ordering/10-review", fullPage: true });
     });

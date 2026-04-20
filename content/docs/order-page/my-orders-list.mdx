@@ -14,6 +14,7 @@ Every order you submit — past, current, cancelled, closed — lives in the **M
 ## Open the list
 
 Click **My Orders** in the left sidebar from any page in the portal. The URL is
+
 <PortalLink to="/my-orders" label="/my-orders" hint="Your complete order history." />.
 
 <Screenshot
@@ -22,9 +23,17 @@ Click **My Orders** in the left sidebar from any page in the portal. The URL is
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 1100, y: 115 }, label: "1", text: "New Order — jumps back to the catalog to start another one." },
+        {
+            at: { x: 1100, y: 115 },
+            label: "1",
+            text: "New Order — jumps back to the catalog to start another one.",
+        },
         { at: { x: 500, y: 240 }, label: "2", text: "Search — matches order ID or venue name." },
-        { at: { x: 1000, y: 240 }, label: "3", text: "Status filter — narrow to one lifecycle stage." },
+        {
+            at: { x: 1000, y: 240 },
+            label: "3",
+            text: "Status filter — narrow to one lifecycle stage.",
+        },
         { at: { x: 780, y: 400 }, label: "4", text: "Click any row to open its detail page." },
     ]}
 />
@@ -64,10 +73,8 @@ buttons appear at the bottom along with a "Showing X to Y of Z" counter.
 Filters survive pagination — moving pages keeps your active filters.
 
 <Callout kind="tip" title="Bookmark a specific order">
-Order detail URLs are stable —
-`/orders/ORD-DEMO-003` is the same link today, next week, forever. If
-you're working on one order for a while, bookmark the detail page
-directly.
+    Order detail URLs are stable — `/orders/ORD-DEMO-003` is the same link today, next week,
+    forever. If you're working on one order for a while, bookmark the detail page directly.
 </Callout>
 
 ## What's next

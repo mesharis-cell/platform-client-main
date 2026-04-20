@@ -32,6 +32,7 @@ const safeNextPath = (raw: string | null): string => {
 
 const readNextFromUrl = (): string => {
     if (typeof window === "undefined") return DEFAULT_POST_LOGIN_PATH;
+    // eslint-disable-next-line creatr/no-browser-globals-in-ssr -- guarded by typeof check above
     return safeNextPath(new URLSearchParams(window.location.search).get("next"));
 };
 

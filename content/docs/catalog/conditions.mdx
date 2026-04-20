@@ -26,8 +26,8 @@ Every individual unit in the catalog has a **condition**, which tells you how re
 ### On a catalog card
 
 Cards show a small condition badge when any unit in the family is flagged
-ORANGE or RED — for example, *"2 need repair"* for two RED units, or
-*"1 minor issue"* for one ORANGE. GREEN-only families don't show a badge.
+ORANGE or RED — for example, _"2 need repair"_ for two RED units, or
+_"1 minor issue"_ for one ORANGE. GREEN-only families don't show a badge.
 
 <Screenshot
     src="catalog/06-card-condition.png"
@@ -35,7 +35,11 @@ ORANGE or RED — for example, *"2 need repair"* for two RED units, or
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 500, y: 670 }, label: "1", text: "Condition badge — counts items flagged ORANGE or RED." },
+        {
+            at: { x: 500, y: 670 },
+            label: "1",
+            text: "Condition badge — counts items flagged ORANGE or RED.",
+        },
     ]}
 />
 
@@ -58,8 +62,16 @@ shows:
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 1080, y: 518 }, label: "1", text: "Condition badge on the spec grid — this unit is flagged ORANGE." },
-        { at: { x: 930, y: 265 }, label: "2", text: "Availability is unchanged — you can still add non-GREEN units." },
+        {
+            at: { x: 1080, y: 518 },
+            label: "1",
+            text: "Condition badge on the spec grid — this unit is flagged ORANGE.",
+        },
+        {
+            at: { x: 930, y: 265 },
+            label: "2",
+            text: "Availability is unchanged — you can still add non-GREEN units.",
+        },
     ]}
 />
 
@@ -68,16 +80,15 @@ shows:
 - **ORANGE.** The item is added to your cart with condition info preserved.
   At checkout, the **Maintenance Decision Center** asks you for a choice per
   ORANGE item:
-  - **Fix before event** — the platform team refurbishes the unit.
-  - **Use as-is** — the unit ships flagged, you accept it as it is.
+    - **Fix before event** — the platform team refurbishes the unit.
+    - **Use as-is** — the unit ships flagged, you accept it as it is.
 - **RED.** The item is added but checkout runs a **maintenance feasibility
   check** using the refurb-days estimate and your event start date. If the
   timeline doesn't work, checkout tells you the earliest feasible event date.
 
 <Callout kind="heads-up" title="You can't skip a maintenance decision">
-If your cart has any ORANGE items when you open checkout, you'll be blocked
-from submitting until every ORANGE item has a decision. The Review step lists
-them so nothing slips through.
+    If your cart has any ORANGE items when you open checkout, you'll be blocked from submitting
+    until every ORANGE item has a decision. The Review step lists them so nothing slips through.
 </Callout>
 
 ## What's next

@@ -14,12 +14,14 @@ The platform uses email as the main push channel — the portal itself doesn't n
 ## Order-lifecycle emails
 
 ### Order Submitted
+
 - **Subject:** `Order Submitted: {ORDER_ID}`
 - **When:** Immediately after you submit the order.
 - **What to do:** Nothing. You'll receive the next email when logistics
   has a quote ready.
 
 ### Quote Ready
+
 - **Subject:** `Quote Ready: {ORDER_ID}`
 - **When:** After logistics finishes pricing your order.
 - **What to do:** Open the order. Review the quote. Approve (with a PO
@@ -27,43 +29,51 @@ The platform uses email as the main push channel — the portal itself doesn't n
   [Approving with a PO number](../quotes/approving-with-a-po-number).
 
 ### Revised Quote
+
 - **Subject:** `Revised Quote: {ORDER_ID}`
 - **When:** If logistics revises the original quote.
 - **What to do:** Read the revision reason in the email, then go back
   to the portal to approve the new quote.
 
 ### Order Confirmed
+
 - **Subject:** `Order Confirmed: {ORDER_ID}`
 - **When:** Immediately after you approve the quote.
 - **What to do:** Nothing. Prep starts.
 
 ### Order In Transit
+
 - **Subject:** `Order In Transit: {ORDER_ID}`
 - **When:** When the delivery truck dispatches.
 - **What to do:** Make sure someone is at the venue to receive.
 
 ### Order Delivered
+
 - **Subject:** `Order Delivered: {ORDER_ID}`
 - **When:** When items arrive at the venue and are signed for.
 - **What to do:** Enjoy the event. Check the scan activity if you want
   to see arrival photos.
 
 ### Pickup Reminder — 48 Hours
+
 - **Subject:** `Pickup Reminder: {ORDER_ID} — 48 Hours`
 - **When:** Two days before scheduled pickup.
 - **What to do:** Have items ready at the scheduled time and location.
 
 ### Delivery / Pickup Times Updated
+
 - **Subject:** `Delivery/Pickup Times Updated: {ORDER_ID}`
 - **When:** If logistics adjusts your delivery or pickup window.
 - **What to do:** Review the new time in the portal.
 
 ### Invoice Ready
+
 - **Subject:** `Invoice Ready: {ORDER_ID}`
 - **When:** When the platform issues the final invoice.
 - **What to do:** Download the PDF from the email or the order page.
 
 ### Order Cancelled
+
 - **Subject:** `Order Cancelled: {ORDER_ID}`
 - **When:** Only if an admin cancels your order.
 - **What to do:** Read the reason in the email. Contact your admin if
@@ -106,9 +116,8 @@ internal — you won't get a notification for:
   you did it).
 
 <Callout kind="tip" title="Every email links back to the portal">
-Every transactional email the platform sends includes a direct link
-to the order, service request, or self-pickup detail page. Click
-through when you need to take an action.
+    Every transactional email the platform sends includes a direct link to the order, service
+    request, or self-pickup detail page. Click through when you need to take an action.
 </Callout>
 
 ## What's next

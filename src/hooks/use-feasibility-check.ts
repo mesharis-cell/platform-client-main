@@ -145,13 +145,11 @@ export function interpretFeasibilityPreview(
         return { floorDate: platformFloor, userDateFeasible, blockingItems: [] };
     }
     const issueFloor = result.issues.reduce(
-        (max, issue) =>
-            issue.earliest_feasible_date > max ? issue.earliest_feasible_date : max,
+        (max, issue) => (issue.earliest_feasible_date > max ? issue.earliest_feasible_date : max),
         result.issues[0].earliest_feasible_date
     );
     // Never propose a date earlier than the platform lead-time floor.
-    const floorDate =
-        platformFloor && platformFloor > issueFloor ? platformFloor : issueFloor;
+    const floorDate = platformFloor && platformFloor > issueFloor ? platformFloor : issueFloor;
     const userDateFeasible = userEventDate ? userEventDate >= floorDate : null;
     const blockingItems = userEventDate
         ? result.issues.filter((i) => i.earliest_feasible_date > userEventDate)

@@ -27,11 +27,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 type TimeParts = {
@@ -207,10 +203,10 @@ export function DateTimeRangePicker({
     const label = hasAll
         ? `${formatDateLabel(date)} · ${formatTimeLabel(start)} – ${formatTimeLabel(end)}`
         : hasAny
-        ? `${formatDateLabel(date) || "—"} · ${formatTimeLabel(start) || "—"} – ${
-              formatTimeLabel(end) || "—"
-          }`
-        : placeholder;
+          ? `${formatDateLabel(date) || "—"} · ${formatTimeLabel(start) || "—"} – ${
+                formatTimeLabel(end) || "—"
+            }`
+          : placeholder;
 
     const selectedDate = React.useMemo(() => {
         if (!date) return undefined;
@@ -246,11 +242,7 @@ export function DateTimeRangePicker({
                     <span className="truncate">{label}</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent
-                className="w-auto p-0"
-                align="start"
-                sideOffset={6}
-            >
+            <PopoverContent className="w-auto p-0" align="start" sideOffset={6}>
                 {/* Horizontal layout — calendar on the left, FROM and TO columns
                     side-by-side on the right. Never stacks vertically. */}
                 <div className="flex flex-row items-stretch divide-x divide-border">
@@ -267,11 +259,7 @@ export function DateTimeRangePicker({
                         />
                     </div>
                     <div className="flex flex-row divide-x divide-border shrink-0">
-                        <TimeColumnGroup
-                            label="From"
-                            value={start}
-                            onChange={handleStartChange}
-                        />
+                        <TimeColumnGroup label="From" value={start} onChange={handleStartChange} />
                         <TimeColumnGroup label="To" value={end} onChange={handleEndChange} />
                     </div>
                 </div>

@@ -38,9 +38,7 @@ export function PortalLink({ to, label, hint, className }: PortalLinkProps) {
                 {label}
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
-            {hint ? (
-                <span className="text-xs text-muted-foreground mt-0.5">{hint}</span>
-            ) : null}
+            {hint ? <span className="text-xs text-muted-foreground mt-0.5">{hint}</span> : null}
         </span>
     );
 }

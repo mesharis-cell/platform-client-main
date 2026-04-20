@@ -37,8 +37,8 @@ export default async function DocsIndexPage() {
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                     Tutorials and step-by-step walkthroughs for logging in, browsing the catalog,
-                    submitting orders, reviewing quotes, and tracking your event through
-                    delivery and return.
+                    submitting orders, reviewing quotes, and tracking your event through delivery
+                    and return.
                 </p>
             </section>
 
@@ -83,9 +83,7 @@ export default async function DocsIndexPage() {
 
             <section className="space-y-10">
                 <div>
-                    <h2 className="text-xl font-semibold tracking-tight">
-                        Browse every topic
-                    </h2>
+                    <h2 className="text-xl font-semibold tracking-tight">Browse every topic</h2>
                     <p className="text-sm text-muted-foreground mt-1">
                         The complete library, organised by journey.
                     </p>
@@ -105,10 +103,7 @@ export default async function DocsIndexPage() {
                         </div>
                         <ul className="grid gap-3 sm:grid-cols-2" role="list">
                             {category.articles.map((article) => (
-                                <li
-                                    key={`${article.category}/${article.slug}`}
-                                    className="group"
-                                >
+                                <li key={`${article.category}/${article.slug}`} className="group">
                                     <Link
                                         href={docArticlePath(article.category, article.slug)}
                                         className="block h-full rounded-lg border border-border bg-card/40 p-4 hover:border-primary/50 hover:bg-card/80 transition-colors"
@@ -128,7 +123,10 @@ export default async function DocsIndexPage() {
 
                 {tree.categories.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border p-10 text-center">
-                        <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
+                        <BookOpen
+                            className="mx-auto h-8 w-8 text-muted-foreground/40"
+                            aria-hidden="true"
+                        />
                         <p className="mt-3 text-sm text-muted-foreground">
                             No tutorials are available yet. Check back soon.
                         </p>

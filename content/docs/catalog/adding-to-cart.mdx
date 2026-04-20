@@ -22,30 +22,33 @@ From a family detail page (pooled or serialized) or an asset detail page:
     height={800}
     annotations={[
         { at: { x: 1000, y: 655 }, label: "1", text: "Quantity stepper — minus, number, plus." },
-        { at: { x: 1020, y: 733 }, label: "2", text: "Add to Cart — the portal confirms with a toast." },
+        {
+            at: { x: 1020, y: 733 },
+            label: "2",
+            text: "Add to Cart — the portal confirms with a toast.",
+        },
     ]}
 />
 
 <StepList>
     <Step n={1} title="Pick your quantity">
-        Use the **+** and **−** buttons on the quantity stepper. The portal
-        caps you at the current available quantity for that asset — you can't
-        add more than the warehouse has.
+        Use the **+** and **−** buttons on the quantity stepper. The portal caps you at the current
+        available quantity for that asset — you can't add more than the warehouse has.
     </Step>
     <Step n={2} title="Click Add to Cart">
-        A toast appears confirming the add. The floating cart button in the
-        bottom-right lights up with the new item count.
+        A toast appears confirming the add. The floating cart button in the bottom-right lights up
+        with the new item count.
     </Step>
     <Step n={3} title="Keep browsing or open the cart">
-        Either continue to another family to add more, or click the floating
-        cart button to review what you've got.
+        Either continue to another family to add more, or click the floating cart button to review
+        what you've got.
     </Step>
 </StepList>
 
 <Callout kind="tip" title="Adding the same item twice">
-If the asset is already in your cart, clicking Add to Cart with a new quantity
-*merges* — your cart shows the new total, not two separate entries. The
-original condition and any maintenance decisions carry forward.
+    If the asset is already in your cart, clicking Add to Cart with a new quantity *merges* — your
+    cart shows the new total, not two separate entries. The original condition and any maintenance
+    decisions carry forward.
 </Callout>
 
 ## Add a whole collection
@@ -56,8 +59,8 @@ On a collection detail page you have two choices:
   and tweak quantities before adding.
 - Add the whole bundle at default quantities straight through.
 
-The customize dialog is how you do things like *"the events package minus the
-LED screens we already own"* without manually adding each family.
+The customize dialog is how you do things like _"the events package minus the
+LED screens we already own"_ without manually adding each family.
 
 ## Open the cart
 
@@ -71,9 +74,21 @@ on a red badge. Click it to open the cart panel.
     height={800}
     annotations={[
         { at: { x: 900, y: 45 }, label: "1", text: "Header — total item count." },
-        { at: { x: 900, y: 125 }, label: "2", text: "Volume and weight totals for the whole cart." },
-        { at: { x: 950, y: 297 }, label: "3", text: "Per-item quantity stepper — same + / − behaviour as the catalog." },
-        { at: { x: 1020, y: 712 }, label: "4", text: "Proceed to Checkout — opens the five-step flow." },
+        {
+            at: { x: 900, y: 125 },
+            label: "2",
+            text: "Volume and weight totals for the whole cart.",
+        },
+        {
+            at: { x: 950, y: 297 },
+            label: "3",
+            text: "Per-item quantity stepper — same + / − behaviour as the catalog.",
+        },
+        {
+            at: { x: 1020, y: 712 },
+            label: "4",
+            text: "Proceed to Checkout — opens the five-step flow.",
+        },
     ]}
 />
 
@@ -98,9 +113,8 @@ knowing:
   a different device, you start with an empty cart.
 
 <Callout kind="heads-up" title="One cart per browser">
-Signing out doesn't clear the cart by itself, but the contents are tied to the
-device and browser you were using. Switching devices means rebuilding the cart
-from scratch.
+    Signing out doesn't clear the cart by itself, but the contents are tied to the device and
+    browser you were using. Switching devices means rebuilding the cart from scratch.
 </Callout>
 
 ## What's next

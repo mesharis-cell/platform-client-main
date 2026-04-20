@@ -40,9 +40,7 @@ export const loadAllArticles = (): DocArticle[] => {
             const { data, content } = matter(raw);
             const parsed = docFrontmatterSchema.safeParse(data);
             if (!parsed.success) {
-                throw new Error(
-                    `Invalid frontmatter in ${full}: ${parsed.error.message}`
-                );
+                throw new Error(`Invalid frontmatter in ${full}: ${parsed.error.message}`);
             }
             articles.push({
                 frontmatter: parsed.data,

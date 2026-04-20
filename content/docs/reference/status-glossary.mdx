@@ -15,83 +15,83 @@ The Kadence portal uses several status machines depending on what kind of thing 
 
 The ones you'll see most often. Every order goes through some subset of these on its way from submission to close.
 
-| Status | You see it as | Meaning |
-|---|---|---|
-| `DRAFT` | Draft | Started but not submitted (rarely visible). |
-| `SUBMITTED` | Order Submitted | Just submitted. Transient — auto-flips to PRICING_REVIEW. |
-| `PRICING_REVIEW` | Under Review | Logistics is quoting. |
-| `PENDING_APPROVAL` | Pricing Under Review | Internal admin review of the draft quote. |
-| `QUOTED` | Quote Ready | Quote sent to you; ready to approve or decline. |
-| `APPROVED` | Quote Approved | You accepted; confirmation kicking off. |
-| `DECLINED` | Quote Declined | You declined. Terminal. |
-| `CONFIRMED` | Order Confirmed | Asset reservations active; prep underway. |
-| `IN_PREPARATION` | Preparing Your Order | Items being pulled and readied. |
-| `READY_FOR_DELIVERY` | Ready to Ship | Fully packed, truck being loaded. |
-| `IN_TRANSIT` | On The Way | Truck on the road to venue. |
-| `DELIVERED` | Delivered | Items at venue. |
-| `IN_USE` | On Site | Event running. |
-| `DERIG` | Pickup Scheduled | Teardown in progress. |
-| `AWAITING_RETURN` | Pickup Scheduled | Waiting for return pickup. |
-| `RETURN_IN_TRANSIT` | Items Returning | Truck on its way back to warehouse. |
-| `CLOSED` | Order Complete | Inbound complete; everything settled. |
-| `CANCELLED` | (red banner) | Cancelled by an admin. Terminal. |
+| Status               | You see it as        | Meaning                                                   |
+| -------------------- | -------------------- | --------------------------------------------------------- |
+| `DRAFT`              | Draft                | Started but not submitted (rarely visible).               |
+| `SUBMITTED`          | Order Submitted      | Just submitted. Transient — auto-flips to PRICING_REVIEW. |
+| `PRICING_REVIEW`     | Under Review         | Logistics is quoting.                                     |
+| `PENDING_APPROVAL`   | Pricing Under Review | Internal admin review of the draft quote.                 |
+| `QUOTED`             | Quote Ready          | Quote sent to you; ready to approve or decline.           |
+| `APPROVED`           | Quote Approved       | You accepted; confirmation kicking off.                   |
+| `DECLINED`           | Quote Declined       | You declined. Terminal.                                   |
+| `CONFIRMED`          | Order Confirmed      | Asset reservations active; prep underway.                 |
+| `IN_PREPARATION`     | Preparing Your Order | Items being pulled and readied.                           |
+| `READY_FOR_DELIVERY` | Ready to Ship        | Fully packed, truck being loaded.                         |
+| `IN_TRANSIT`         | On The Way           | Truck on the road to venue.                               |
+| `DELIVERED`          | Delivered            | Items at venue.                                           |
+| `IN_USE`             | On Site              | Event running.                                            |
+| `DERIG`              | Pickup Scheduled     | Teardown in progress.                                     |
+| `AWAITING_RETURN`    | Pickup Scheduled     | Waiting for return pickup.                                |
+| `RETURN_IN_TRANSIT`  | Items Returning      | Truck on its way back to warehouse.                       |
+| `CLOSED`             | Order Complete       | Inbound complete; everything settled.                     |
+| `CANCELLED`          | (red banner)         | Cancelled by an admin. Terminal.                          |
 
 ## Financial statuses
 
 Runs in parallel to the order status, tracking the billing side.
 
-| Status | Meaning |
-|---|---|
-| `PENDING_QUOTE` | Quote not yet sent. |
-| `QUOTE_SENT` | Quote delivered to the client. |
-| `QUOTE_REVISED` | Quote updated after initial send. |
-| `QUOTE_ACCEPTED` | Client approved the quote. |
-| `PENDING_INVOICE` | Fulfillment done; invoice not yet issued. |
-| `INVOICED` | Invoice sent. |
-| `PAID` | Payment received and confirmed. |
-| `CANCELLED` | Order cancelled; no invoice will be issued. |
+| Status            | Meaning                                     |
+| ----------------- | ------------------------------------------- |
+| `PENDING_QUOTE`   | Quote not yet sent.                         |
+| `QUOTE_SENT`      | Quote delivered to the client.              |
+| `QUOTE_REVISED`   | Quote updated after initial send.           |
+| `QUOTE_ACCEPTED`  | Client approved the quote.                  |
+| `PENDING_INVOICE` | Fulfillment done; invoice not yet issued.   |
+| `INVOICED`        | Invoice sent.                               |
+| `PAID`            | Payment received and confirmed.             |
+| `CANCELLED`       | Order cancelled; no invoice will be issued. |
 
 ## Service request operational statuses
 
 What stage the physical service work is at.
 
-| Status | Meaning |
-|---|---|
-| `DRAFT` | Not submitted. |
-| `SUBMITTED` | Received by the platform. |
-| `IN_REVIEW` | Platform team evaluating feasibility. |
-| `APPROVED` | Approved to go ahead. |
-| `IN_PROGRESS` | Work started. |
-| `COMPLETED` | Work finished. |
-| `CANCELLED` | Work abandoned. Terminal. |
+| Status        | Meaning                               |
+| ------------- | ------------------------------------- |
+| `DRAFT`       | Not submitted.                        |
+| `SUBMITTED`   | Received by the platform.             |
+| `IN_REVIEW`   | Platform team evaluating feasibility. |
+| `APPROVED`    | Approved to go ahead.                 |
+| `IN_PROGRESS` | Work started.                         |
+| `COMPLETED`   | Work finished.                        |
+| `CANCELLED`   | Work abandoned. Terminal.             |
 
 ## Service request commercial statuses
 
 Runs alongside the operational status — the billing track.
 
-| Status | Meaning |
-|---|---|
-| `INTERNAL` | No billing; platform absorbs the cost. |
-| `PENDING_QUOTE` | Needs pricing. |
-| `QUOTED` | Quote sent to you. |
-| `QUOTE_APPROVED` | You approved the quote. |
-| `INVOICED` | Invoice sent. |
-| `PAID` | Payment received. |
-| `CANCELLED` | Cancelled; no billing. |
+| Status           | Meaning                                |
+| ---------------- | -------------------------------------- |
+| `INTERNAL`       | No billing; platform absorbs the cost. |
+| `PENDING_QUOTE`  | Needs pricing.                         |
+| `QUOTED`         | Quote sent to you.                     |
+| `QUOTE_APPROVED` | You approved the quote.                |
+| `INVOICED`       | Invoice sent.                          |
+| `PAID`           | Payment received.                      |
+| `CANCELLED`      | Cancelled; no billing.                 |
 
 ## Inbound request statuses
 
 Used on the "New Stock Request" flow (if your platform has it enabled).
 
-| Status | Meaning |
-|---|---|
-| `PRICING_REVIEW` | Platform team quoting. |
-| `PENDING_APPROVAL` | Internal review. |
-| `QUOTED` | Quote sent to you. |
-| `CONFIRMED` | You approved; intake scheduled. |
-| `DECLINED` | You declined. Terminal. |
-| `CANCELLED` | Cancelled by admin. Terminal. |
-| `COMPLETED` | Stock received into inventory. |
+| Status             | Meaning                         |
+| ------------------ | ------------------------------- |
+| `PRICING_REVIEW`   | Platform team quoting.          |
+| `PENDING_APPROVAL` | Internal review.                |
+| `QUOTED`           | Quote sent to you.              |
+| `CONFIRMED`        | You approved; intake scheduled. |
+| `DECLINED`         | You declined. Terminal.         |
+| `CANCELLED`        | Cancelled by admin. Terminal.   |
+| `COMPLETED`        | Stock received into inventory.  |
 
 ## Self-pickup statuses
 

@@ -9,7 +9,7 @@ updated: "2026-04-20"
 status: published
 ---
 
-The status hero shows you what's happening *now*. The **status timeline** shows you everything that's happened up to now — one row per transition, timestamped, in chronological order.
+The status hero shows you what's happening _now_. The **status timeline** shows you everything that's happened up to now — one row per transition, timestamped, in chronological order.
 
 ## Where it lives
 
@@ -22,9 +22,21 @@ Scroll about a third of the way down the order page. The card is titled
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 440, y: 547 }, label: "1", text: "Most recent transition at the top — filled primary dot." },
-        { at: { x: 440, y: 620 }, label: "2", text: "Each row shows the status name and when the transition happened." },
-        { at: { x: 440, y: 760 }, label: "3", text: "Older entries sit below, working back in time." },
+        {
+            at: { x: 440, y: 547 },
+            label: "1",
+            text: "Most recent transition at the top — filled primary dot.",
+        },
+        {
+            at: { x: 440, y: 620 },
+            label: "2",
+            text: "Each row shows the status name and when the transition happened.",
+        },
+        {
+            at: { x: 440, y: 760 },
+            label: "3",
+            text: "Older entries sit below, working back in time.",
+        },
     ]}
 />
 
@@ -54,16 +66,14 @@ Two main things:
   support to pull it for you.
 
 <Callout kind="heads-up" title="The timeline doesn't auto-refresh">
-Like the rest of the order page, the timeline only refreshes when you
-reload. If you're watching for a status change in real time, the
-fastest signal is an email notification —
-[see which emails you receive](../reference/emails-you-receive)
-for the full list.
+    Like the rest of the order page, the timeline only refreshes when you reload. If you're watching
+    for a status change in real time, the fastest signal is an email notification — [see which
+    emails you receive](../reference/emails-you-receive) for the full list.
 </Callout>
 
 ## Missing a status?
 
-The timeline shows every transition *the system recorded*. A few
+The timeline shows every transition _the system recorded_. A few
 transitions are automatic and can happen within the same second — for
 example, SUBMITTED → PRICING_REVIEW. You'll see just PRICING_REVIEW on
 the timeline in that case, not a separate SUBMITTED row, because the

@@ -16,7 +16,10 @@ test.describe("quote views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-002", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-002/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-002/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
         await page.waitForTimeout(500);
         await shoot(page, { name: "quotes/01-order-at-quoted" });
     });
@@ -26,7 +29,10 @@ test.describe("quote views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-002", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-002/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-002/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // Cost Breakdown heading sits at the top of the pricing card.
         await page
@@ -42,7 +48,10 @@ test.describe("quote views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-002", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-002/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-002/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         await page
             .getByRole("button", { name: /download cost estimate/i })
@@ -57,7 +66,10 @@ test.describe("quote views", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-003", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-003/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-003/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
         await page.waitForTimeout(500);
         await shoot(page, { name: "quotes/06-post-approval" });
     });
