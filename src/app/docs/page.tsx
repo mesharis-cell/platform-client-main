@@ -5,17 +5,30 @@ import { buildNavTree, filterNavTreeByFeatures } from "@/lib/docs/nav-tree";
 import { getServerPlatformContext } from "@/lib/docs/platform-context.server";
 import { docArticlePath } from "@/lib/docs/slug";
 
+// Curated on-ramp for first-time readers. Three articles that together
+// cover the core journey "sign in → find something → order it". If any
+// of these gets renamed or its slug changes, update here.
+const START_HERE = [
+    { category: "getting-started", slug: "logging-in" },
+    { category: "catalog", slug: "browsing" },
+    { category: "ordering", slug: "the-5-checkout-steps" },
+];
+
 export default async function DocsIndexPage() {
     const platform = await getServerPlatformContext();
     const tree = filterNavTreeByFeatures(buildNavTree(), platform.features);
-    const firstArticle = tree.categories[0]?.articles[0];
-    const quickStartHref = firstArticle
-        ? docArticlePath(firstArticle.category, firstArticle.slug)
-        : null;
+
+    // Resolve the three "start here" stops from the tree so we get titles +
+    // summaries, and so broken slugs surface visibly rather than silently.
+    const startHereArticles = START_HERE.map((stop) => {
+        const category = tree.categories.find((c) => c.key === stop.category);
+        const article = category?.articles.find((a) => a.slug === stop.slug);
+        return article ?? null;
+    }).filter((a): a is NonNullable<typeof a> => a !== null);
 
     return (
         <DocsShell tree={tree} companyName={platform.company_name}>
-            <section className="mb-12 space-y-4">
+            <section className="mb-14 space-y-4">
                 <p className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">
                     Documentation
                 </p>
@@ -27,26 +40,63 @@ export default async function DocsIndexPage() {
                     submitting orders, reviewing quotes, and tracking your event through
                     delivery and return.
                 </p>
-                {quickStartHref ? (
-                    <div className="pt-2">
-                        <Link
-                            href={quickStartHref}
-                            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-mono font-semibold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors"
-                        >
-                            Start here
-                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                        </Link>
-                    </div>
-                ) : null}
             </section>
 
+            {startHereArticles.length > 0 ? (
+                <section className="mb-14 space-y-4">
+                    <div className="flex items-baseline justify-between flex-wrap gap-2">
+                        <div>
+                            <h2 className="text-xl font-semibold tracking-tight">
+                                New here? Start with these three.
+                            </h2>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                A fifteen-minute on-ramp that covers the core journey — sign in,
+                                find something, order it.
+                            </p>
+                        </div>
+                    </div>
+                    <ol className="grid gap-4 sm:grid-cols-3" role="list">
+                        {startHereArticles.map((article, index) => (
+                            <li key={`${article.category}/${article.slug}`}>
+                                <Link
+                                    href={docArticlePath(article.category, article.slug)}
+                                    className="group block h-full rounded-lg border border-primary/20 bg-primary/5 p-5 hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2 mb-3 font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
+                                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+                                            {index + 1}
+                                        </span>
+                                        <span>Step {index + 1}</span>
+                                    </div>
+                                    <p className="font-semibold text-[15px] leading-tight mb-1.5 group-hover:text-primary transition-colors">
+                                        {article.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        {article.summary}
+                                    </p>
+                                </Link>
+                            </li>
+                        ))}
+                    </ol>
+                </section>
+            ) : null}
+
             <section className="space-y-10">
+                <div>
+                    <h2 className="text-xl font-semibold tracking-tight">
+                        Browse every topic
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        The complete library, organised by journey.
+                    </p>
+                </div>
+
                 {tree.categories.map((category) => (
                     <div key={category.key} className="space-y-4">
                         <div>
-                            <h2 className="text-xl font-semibold tracking-tight">
+                            <h3 className="text-base font-semibold tracking-tight">
                                 {category.title}
-                            </h2>
+                            </h3>
                             {category.description ? (
                                 <p className="text-sm text-muted-foreground mt-1">
                                     {category.description}
