@@ -1,0 +1,100 @@
+---
+title: Approving a quote with a PO number
+slug: approving-with-a-po-number
+category: quotes
+order: 3
+summary: Accept the quote, enter the PO number, and confirm the order for fulfillment.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+Approving a quote does three things in one click: locks in the pricing, attaches your PO number to the order, and kicks off asset reservation and preparation. This article walks you through the dialog.
+
+## Step 1 — Click Accept Quote
+
+From the Quote Review section of the order page, click **Accept Quote**. A confirmation dialog opens.
+
+<Screenshot
+    src="quotes/04-approve-dialog-empty.png"
+    alt="Accept Quote dialog opened with an empty PO number input"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 310 }, label: "1", text: "Confirmation copy restates the total so you can't misclick." },
+        { at: { x: 640, y: 395 }, label: "2", text: "Purchase Order Number — required to submit." },
+        { at: { x: 767, y: 527 }, label: "3", text: "Confirm & Accept Quote — stays disabled until PO is typed." },
+    ]}
+/>
+
+The dialog restates the order total in AED so you can't approve the
+wrong amount by accident.
+
+## Step 2 — Enter your PO number
+
+The **Purchase Order Number** field is required. Type the PO reference
+your finance system uses. It gets stored against the order and:
+
+- **Shows on the order detail page** under the order ID, from the
+  moment of approval forward.
+- **Appears on the final invoice** the platform issues later.
+- **Is returned on every API call** about the order, for your internal
+  systems.
+
+<Callout kind="tip" title="Make sure the PO is open on your side first">
+The platform will invoice against this PO — double-check it's active in
+your procurement system and has enough budget allocated before you
+click submit.
+</Callout>
+
+## Step 3 — Confirm & Accept Quote
+
+<Screenshot
+    src="quotes/05-approve-dialog-filled.png"
+    alt="Accept Quote dialog with a PO number entered and the Confirm button enabled"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 395 }, label: "1", text: "PO number populated." },
+        { at: { x: 767, y: 527 }, label: "2", text: "Confirm button is now active." },
+    ]}
+/>
+
+Clicking **Confirm & Accept Quote** submits the approval. The dialog
+closes, a green success toast appears — **Quote accepted! Your order is
+confirmed.** — and the order page updates in place.
+
+## What happens after approval
+
+<Screenshot
+    src="quotes/06-post-approval.png"
+    alt="Order page after quote approval showing CONFIRMED status and the PO number on the header card"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 500, y: 180 }, label: "1", text: "Status hero flips to 'Order Confirmed'." },
+        { at: { x: 620, y: 390 }, label: "2", text: "PO number now shown under the order ID." },
+        { at: { x: 620, y: 530 }, label: "3", text: "The Quote Review section collapses into a read-only Quote Summary." },
+    ]}
+/>
+
+Three changes are visible immediately:
+
+- **Status hero** flips from "Quote Ready" → **"Order Confirmed"**.
+- **PO number** appears on the order ID card.
+- **Quote Review** section collapses into a **Quote Summary** — same
+  pricing, read-only, with an "Approved on DATE" timestamp.
+
+Preparation kicks off on the logistics side — asset reservations go
+active, and the order moves to IN_PREPARATION as soon as the team
+picks it up.
+
+<Callout kind="heads-up" title="PO cannot be edited from the portal">
+Once entered on approval, the PO is locked. If you need to change it,
+ask your platform admin — they can update it on the backend.
+</Callout>
+
+## What's next
+
+- [What happens if the quote is revised](../quotes/revised-quotes)
+- [The order lifecycle after approval](../order-page/status-meaning)

@@ -35,6 +35,9 @@ import {
     ClipboardList,
     FileSpreadsheet,
     PackageCheck,
+    BookOpen,
+    ExternalLink,
+    LifeBuoy,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -193,36 +196,57 @@ function ClientNavInner({ children }: ClientNavProps) {
                             ))}
                         </>
                     ) : (
-                        visibleNav.map((item) => {
-                            const isActive = activeRoute?.href === item.href;
-                            const Icon = item.icon;
+                        <>
+                            {visibleNav.map((item) => {
+                                const isActive = activeRoute?.href === item.href;
+                                const Icon = item.icon;
 
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        "group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all relative overflow-hidden",
-                                        isActive
-                                            ? "bg-primary text-primary-foreground font-semibold shadow-sm"
-                                            : "text-foreground/70 hover:text-foreground hover:bg-muted"
-                                    )}
-                                >
-                                    {isActive && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground/30" />
-                                    )}
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn(
+                                            "group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all relative overflow-hidden",
+                                            isActive
+                                                ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                                                : "text-foreground/70 hover:text-foreground hover:bg-muted"
+                                        )}
+                                    >
+                                        {isActive && (
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground/30" />
+                                        )}
 
-                                    <Icon className="h-4 w-4 relative z-10 shrink-0" />
-                                    <span className="flex-1 relative z-10 uppercase tracking-wide text-xs">
-                                        {item.name}
-                                    </span>
+                                        <Icon className="h-4 w-4 relative z-10 shrink-0" />
+                                        <span className="flex-1 relative z-10 uppercase tracking-wide text-xs">
+                                            {item.name}
+                                        </span>
 
-                                    {!isActive && (
-                                        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors" />
-                                    )}
-                                </Link>
-                            );
-                        })
+                                        {!isActive && (
+                                            <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors" />
+                                        )}
+                                    </Link>
+                                );
+                            })}
+
+                            {/* Separator before external links */}
+                            <div className="px-3 pt-4 pb-1">
+                                <div className="h-px bg-border/60" />
+                            </div>
+
+                            {/* Docs — external link, distinct styling (opens new tab) */}
+                            <a
+                                href="/docs"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
+                            >
+                                <BookOpen className="h-4 w-4 shrink-0" />
+                                <span className="flex-1 uppercase tracking-wide text-xs">
+                                    Docs
+                                </span>
+                                <ExternalLink className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                            </a>
+                        </>
                     )}
                 </nav>
 
@@ -278,6 +302,17 @@ function ClientNavInner({ children }: ClientNavProps) {
                                             <Lock className="h-3.5 w-3.5 mr-2" />
                                             Reset Password
                                         </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() =>
+                                                window.open("/docs", "_blank", "noopener,noreferrer")
+                                            }
+                                            className="font-mono text-xs uppercase tracking-wide"
+                                        >
+                                            <LifeBuoy className="h-3.5 w-3.5 mr-2" />
+                                            Help &amp; Docs
+                                            <ExternalLink className="h-3 w-3 ml-auto opacity-60" />
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             onSelect={handleSignOut}
                                             className="font-mono text-xs uppercase tracking-wide text-destructive focus:text-destructive"

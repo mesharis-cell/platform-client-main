@@ -1,0 +1,58 @@
+---
+title: What a quote looks like
+slug: what-a-quote-looks-like
+category: quotes
+order: 0
+summary: The anatomy of an order page once your quote has landed.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+When logistics finishes pricing your order, the status hero flips to **Quote Ready**, the platform emails you, and a new **Quote Review** section appears on the order page. This article walks through exactly what shows up.
+
+## The status hero changes
+
+You'll see a large **Quote Ready** headline at the top of the order page with the hero's icon tile in amber. The one-liner underneath reads something like *"Your quote is ready — review the pricing below and either accept with a PO number or decline."*
+
+## The Quote Review section
+
+<Screenshot
+    src="quotes/01-order-at-quoted.png"
+    alt="Order page for ORD-DEMO-002 at QUOTED status showing the Quote Review section"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 500, y: 180 }, label: "1", text: "Quote Ready hero — the headline signals the new state." },
+        { at: { x: 620, y: 530 }, label: "2", text: "Pricing breakdown — line items, subtotal, VAT, and total." },
+        { at: { x: 620, y: 720 }, label: "3", text: "Accept Quote and Decline Quote buttons appear at the bottom of the card." },
+    ]}
+/>
+
+Below the hero, a dedicated **Quote Review** card renders everything you
+need to make a decision:
+
+- A **pricing breakdown** — a line-by-line view of what you're being
+  charged for. Covered in detail in the
+  [Reading the pricing breakdown article](../quotes/reading-the-pricing-breakdown).
+- A **reskin reminder** when the order includes any custom branding
+  work (only relevant if your cart had rebrand items — usually none).
+- Two buttons: **Accept Quote** and **Decline Quote**.
+
+## The Download Cost Estimate button
+
+A persistent button sits in the right sidebar from the moment the quote is sent onwards: **Download Cost Estimate**. Covered in
+[Downloading the cost estimate PDF](../quotes/downloading-the-cost-estimate-pdf).
+
+<Callout kind="heads-up" title="You received an email too">
+The same moment your order moves to QUOTED, the platform sends you a
+"Quote Ready" email with a direct link back to the order detail page
+and (optionally) a cost-estimate PDF download. The email is the signal
+to open the portal.
+</Callout>
+
+## What's next
+
+- [Read the pricing breakdown line by line](../quotes/reading-the-pricing-breakdown)
+- [Approve with a PO number](../quotes/approving-with-a-po-number)
+- [Decline with a reason](../quotes/declining-a-quote)

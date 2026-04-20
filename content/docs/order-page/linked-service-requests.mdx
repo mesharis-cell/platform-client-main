@@ -1,0 +1,70 @@
+---
+title: Linked service requests
+slug: linked-service-requests
+category: order-page
+order: 4
+summary: How service requests attached to your order show up on the order page.
+readMinutes: 3
+updated: "2026-04-20"
+requiresFlag: enable_service_requests
+status: published
+---
+
+Sometimes an order has associated **service work** — maintenance on a damaged unit, rebranding on a panel, refurbishment between events. These live as **service requests**, separate from the order itself but linked to it so everyone can see the relationship.
+
+<FeatureFlagNote flag="enable_service_requests" />
+
+## Where it shows
+
+On the order detail page, a card titled **Linked Service Requests** appears whenever your order has at least one service request attached.
+
+<Screenshot
+    src="order-page/05-linked-srs.png"
+    alt="Linked Service Requests card on an order page showing one maintenance request"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 440, y: 280 }, label: "1", text: "Service request ID in monospace — click anywhere on the card to open it." },
+        { at: { x: 900, y: 280 }, label: "2", text: "Operational status — the maintenance workflow stage." },
+        { at: { x: 440, y: 380 }, label: "3", text: "Request type and total — MAINTENANCE / RESKIN / REFURBISHMENT / CUSTOM." },
+    ]}
+/>
+
+## Per-card info
+
+Each card shows three things:
+
+- **Service request ID** in monospace — the one logistics references.
+- **Operational status** as a badge — the stage in its own workflow
+  (SUBMITTED, IN_REVIEW, APPROVED, IN_PROGRESS, COMPLETED, CANCELLED).
+  This is separate from your order's own status.
+- **Request type + total amount** — the category of service and the
+  pricing (if any) attached to it.
+
+Clicking anywhere on the card takes you to the service request's own
+detail page where you can review its description, items, attachments,
+and any quote it carries.
+
+## Commercial vs operational status
+
+Service requests can have two status lines running in parallel:
+
+- The **operational status** — what's physically happening to the work.
+- The **commercial status** — what's happening to the billing (INTERNAL,
+  PENDING_QUOTE, QUOTED, QUOTE_APPROVED, INVOICED, PAID, CANCELLED).
+
+The card on the order page shows the operational status. If the service
+request is client-billable, you'll approve its quote from the service
+request's own page, not from the order.
+
+<Callout kind="tip" title="Service requests can block your order">
+A service request flagged as "blocks fulfillment" will hold your order
+from progressing past certain statuses until it's completed or a
+concession is applied. If your order seems stuck, check any linked
+service requests first.
+</Callout>
+
+## What's next
+
+- [Anatomy of the order page](../order-page/anatomy-of-the-order-page)
+- [When to refresh the order page](../order-page/when-to-refresh)

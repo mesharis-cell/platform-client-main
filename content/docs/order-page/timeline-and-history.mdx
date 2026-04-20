@@ -1,0 +1,75 @@
+---
+title: Reading the status timeline
+slug: timeline-and-history
+category: order-page
+order: 3
+summary: The chronological record of every status the order has been through.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+The status hero shows you what's happening *now*. The **status timeline** shows you everything that's happened up to now — one row per transition, timestamped, in chronological order.
+
+## Where it lives
+
+Scroll about a third of the way down the order page. The card is titled
+**Order Timeline**.
+
+<Screenshot
+    src="order-page/04-status-timeline.png"
+    alt="Status timeline card showing eight chronological transitions for ORD-DEMO-004"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 440, y: 547 }, label: "1", text: "Most recent transition at the top — filled primary dot." },
+        { at: { x: 440, y: 620 }, label: "2", text: "Each row shows the status name and when the transition happened." },
+        { at: { x: 440, y: 760 }, label: "3", text: "Older entries sit below, working back in time." },
+    ]}
+/>
+
+## Reading a row
+
+Each row shows four things:
+
+- A **coloured dot** at the left-hand edge. The top row's dot is filled
+  and ringed with primary — that's the current status. Everything below
+  is muted.
+- The **status name** — same labels you see everywhere else in the portal
+  (IN_USE shows as "On Site" here, consistent with the status badge).
+- The **date and time** of the transition, in your browser's local
+  time zone.
+- An optional **note** — when an admin adds a comment to a transition
+  (most commonly on cancellation), it appears inline under the row.
+
+## What it's useful for
+
+Two main things:
+
+- **Timeline disputes.** If you remember something different ("I thought
+  the order was delivered Tuesday?"), the timeline has the authoritative
+  record.
+- **Audit trail.** For your own finance or ops reporting, the timeline
+  is where you can see the lifecycle of the order without needing
+  support to pull it for you.
+
+<Callout kind="heads-up" title="The timeline doesn't auto-refresh">
+Like the rest of the order page, the timeline only refreshes when you
+reload. If you're watching for a status change in real time, the
+fastest signal is an email notification —
+[see which emails you receive](../reference/emails-you-receive)
+for the full list.
+</Callout>
+
+## Missing a status?
+
+The timeline shows every transition *the system recorded*. A few
+transitions are automatic and can happen within the same second — for
+example, SUBMITTED → PRICING_REVIEW. You'll see just PRICING_REVIEW on
+the timeline in that case, not a separate SUBMITTED row, because the
+first was never persisted as a visible state.
+
+## What's next
+
+- [Understand what every status means](../order-page/status-meaning)
+- [When to refresh an order page](../order-page/when-to-refresh)

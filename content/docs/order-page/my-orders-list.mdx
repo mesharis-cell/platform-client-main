@@ -1,0 +1,76 @@
+---
+title: Finding an order in My Orders
+slug: my-orders-list
+category: order-page
+order: 0
+summary: Filter, search, and open any order you've placed from the My Orders list.
+readMinutes: 3
+updated: "2026-04-20"
+status: published
+---
+
+Every order you submit — past, current, cancelled, closed — lives in the **My Orders** list. It's the starting point for everything post-submission: checking status, approving a quote, tracking delivery, looking up a PO number.
+
+## Open the list
+
+Click **My Orders** in the left sidebar from any page in the portal. The URL is
+<PortalLink to="/my-orders" label="/my-orders" hint="Your complete order history." />.
+
+<Screenshot
+    src="order-page/01-my-orders.png"
+    alt="My Orders list showing six demo orders across different statuses with a filter bar at the top"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 1100, y: 115 }, label: "1", text: "New Order — jumps back to the catalog to start another one." },
+        { at: { x: 500, y: 240 }, label: "2", text: "Search — matches order ID or venue name." },
+        { at: { x: 1000, y: 240 }, label: "3", text: "Status filter — narrow to one lifecycle stage." },
+        { at: { x: 780, y: 400 }, label: "4", text: "Click any row to open its detail page." },
+    ]}
+/>
+
+## Reading a row
+
+Every row shows the essentials without clicking in:
+
+- **Order ID** in monospace — e.g. `ORD-DEMO-003`. This is what the platform
+  team uses when you call or email about an order.
+- **Brand badge** when the order is tied to a specific brand.
+- **Venue name and city** so you can tell orders apart at a glance.
+- **Event dates** — the start and end of your installation.
+- **Status badge** — colour-coded. Click the status filter to see every
+  status colour; they stay consistent across every screen in the portal.
+- A hover-only **View Details →** on the right edge.
+
+Clicking anywhere on a row opens the order detail page.
+
+## Filters
+
+The filter bar has two controls and a **Clear filters** button that appears
+when anything's set:
+
+- **Search** matches the order ID substring and the venue name. Results
+  update as you type.
+- **Status** is a dropdown with every possible order status. Picking one
+  shows only orders at that stage.
+
+Both filters combine. "Search `burj` + status `DELIVERED`" finds delivered
+orders at venues whose name contains "burj".
+
+## Pagination
+
+The list shows 10 orders per page. If you have more, Previous / Next
+buttons appear at the bottom along with a "Showing X to Y of Z" counter.
+Filters survive pagination — moving pages keeps your active filters.
+
+<Callout kind="tip" title="Bookmark a specific order">
+Order detail URLs are stable —
+`/orders/ORD-DEMO-003` is the same link today, next week, forever. If
+you're working on one order for a while, bookmark the detail page
+directly.
+</Callout>
+
+## What's next
+
+- [The anatomy of the order page](../order-page/anatomy-of-the-order-page)
+- [What every status actually means](../order-page/status-meaning)

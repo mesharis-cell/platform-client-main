@@ -1,0 +1,83 @@
+---
+title: What every order status means
+slug: status-meaning
+category: order-page
+order: 2
+summary: A plain-English reference for every status your order can sit in.
+readMinutes: 5
+updated: "2026-04-20"
+status: published
+---
+
+An order moves through a sequence of statuses from the moment you submit it to the moment it closes out. The portal shows each status three ways: as a coloured badge in the My Orders list, as a large headline on the order page, and as a row on the status timeline. This article maps every one to what's actually happening.
+
+## The lifecycle in order
+
+The happy path runs top-to-bottom:
+
+1. **Submitted → Pricing Review** (automatic, within seconds).
+2. **Pricing Review → Quoted** (logistics team action).
+3. **Quoted → Confirmed** (you approve the quote with a PO number).
+4. **Confirmed → In Preparation → Ready → In Transit → Delivered**
+   (logistics + scans).
+5. **Delivered → In Use → Awaiting Return → Return in Transit → Closed**
+   (during and after your event).
+
+Two off-path states:
+
+- **Declined** — you declined the quote. The order stops there; no
+  further lifecycle happens automatically.
+- **Cancelled** — an admin cancelled the order (you can't cancel from
+  the portal). The status hero shows a destructive banner with the
+  cancellation reason.
+
+## The full table
+
+<Screenshot
+    src="order-page/03-status-submitted.png"
+    alt="Status hero for an order in PRICING_REVIEW showing 'Under Review' headline"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 420, y: 260 }, label: "1", text: "Every status has a large plain-English headline — here, 'Under Review' for PRICING_REVIEW." },
+    ]}
+/>
+
+| Badge | Headline | What it means | What you can do |
+|---|---|---|---|
+| **SUBMITTED** | Order Submitted | The portal received your order. | Wait — it moves on automatically. |
+| **PRICING_REVIEW** | Under Review | Logistics is working out the quote. | Wait. You'll get an email when the quote's ready. |
+| **PENDING_APPROVAL** | Pricing Under Review | Internal admin review of the draft quote. | Wait. |
+| **QUOTED** | Quote Ready | The team sent you a quote. | [Approve with a PO number](../quotes/approving-with-a-po-number) or decline. |
+| **APPROVED** | Quote Approved | You accepted the quote. Preparation kicks off automatically. | Nothing. Status will move to CONFIRMED shortly. |
+| **DECLINED** | Quote Declined | You declined the quote with a reason. | The order stops here. Start a new one if you need to. |
+| **CONFIRMED** | Order Confirmed | Assets are reserved for you; prep is underway. | Wait for IN_PREPARATION. |
+| **IN_PREPARATION** | Preparing Your Order | Items are being pulled, cleaned, refurbished. | Wait. |
+| **READY_FOR_DELIVERY** | Ready to Ship | Fully packed, truck being loaded. | Wait. You'll be notified at dispatch. |
+| **IN_TRANSIT** | On The Way | The truck is on the road. | Make sure someone is at the venue to receive. |
+| **DELIVERED** | Delivered | Items are at the venue. | Enjoy your event. |
+| **IN_USE** (badge reads "On Site") | On Site | Event is running. | Nothing scheduled. |
+| **AWAITING_RETURN** | Pickup Scheduled | Pickup window is confirmed. | Have items ready for collection at the scheduled time. |
+| **RETURN_IN_TRANSIT** | Items Returning | Truck is on the road back to the warehouse. | Wait for CLOSED. |
+| **CLOSED** | Order Complete | Inbound scan done. Everything settled. | Nothing. Start your next event. |
+| **CANCELLED** | — (red banner) | An admin cancelled. Reason shown on the page. | Contact your admin if you didn't expect this. |
+
+<Callout kind="heads-up" title="You'll usually see PRICING_REVIEW first, not SUBMITTED">
+SUBMITTED is a transient system state. The portal auto-transitions to
+PRICING_REVIEW within seconds, so by the time you see your order page
+it's almost always showing "Under Review".
+</Callout>
+
+## What you see while you wait
+
+Between quote-sent and event day, the order page also shows a **What's
+Next** card tailored to the current status — a short explainer that
+reads something like *"Your items are being prepared. You'll see them
+move to In Transit when the truck dispatches."* These cards change as
+the status moves, so refreshing the page occasionally is a cheap way
+to see where you are.
+
+## What's next
+
+- [Read the status timeline for the full history](../order-page/timeline-and-history)
+- [Approve or decline a quote](../quotes/approving-with-a-po-number)

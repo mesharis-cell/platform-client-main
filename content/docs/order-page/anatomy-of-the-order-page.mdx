@@ -1,0 +1,105 @@
+---
+title: Anatomy of the order page
+slug: anatomy-of-the-order-page
+category: order-page
+order: 1
+summary: A labelled tour of every section on an order detail page and what each one tells you.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+An order detail page is dense with information, but every section earns its space. This article walks through the layout once so the rest of the order-page articles can just refer to a section by name.
+
+## The full page
+
+<Screenshot
+    src="order-page/02-order-anatomy.png"
+    alt="Order detail page for ORD-DEMO-003 annotated with numbered callouts for each major section"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 500, y: 180 }, label: "1", text: "Status hero — the large banner that tells you what stage the order is in right now." },
+        { at: { x: 620, y: 360 }, label: "2", text: "Order ID + PO number once the quote is approved." },
+        { at: { x: 620, y: 500 }, label: "3", text: "Quote summary — always visible once a quote has been sent." },
+        { at: { x: 1100, y: 470 }, label: "4", text: "Sidebar action — one-click cost estimate PDF download." },
+        { at: { x: 1100, y: 600 }, label: "5", text: "Event / Venue / Contact cards — your inputs from checkout." },
+    ]}
+/>
+
+## The status hero
+
+The large banner at the top is your primary signal. It shows:
+
+- A **status badge** in the order's colour.
+- A **large headline** that summarises the current stage in plain English
+  ("Quote Ready", "On The Way", "Pickup Scheduled"…). The full mapping
+  from internal status to headline is in
+  [Status meanings](../order-page/status-meaning).
+- A **one-line description** under the headline — what's happening and
+  what, if anything, needs to happen next.
+- A colour-matched **icon tile** on the right so you can recognise the
+  stage at a glance.
+
+Cancelled orders also render a secondary red banner with the cancellation
+reason underneath the hero.
+
+## The Order ID card
+
+A small card next to the hero prints the order ID in large monospace and,
+once the quote is approved, the **PO number** you entered. This is the
+piece you'll copy into emails, support tickets, or internal systems.
+
+## Quote review or summary
+
+Immediately below the hero, the pricing section changes shape based on
+the order's status:
+
+- **QUOTED** — renders the [Quote Review section](../quotes/approving-with-a-po-number)
+  with Accept / Decline buttons and the PO-number input.
+- **APPROVED / DECLINED / CONFIRMED** — renders a **Quote Summary** card
+  showing the same pricing breakdown in read-only form, plus a
+  timestamped "Approved on DATE" or "Declined on DATE — REASON".
+
+Later in the lifecycle this card stays visible as your record of what
+was agreed.
+
+## Items, timeline, and supporting cards
+
+Below the quote area you'll find:
+
+- **Order Items** — one row per asset with quantity, volume, and weight.
+  If the order includes any rebranding work, those items show a badge.
+- **Status Timeline** — chronological list of every transition the order
+  has been through. Covered in
+  [Timeline and history](../order-page/timeline-and-history).
+- **Linked Service Requests** — visible when your order has service
+  requests linked to it. Covered in
+  [Linked service requests](../order-page/linked-service-requests).
+- **Supporting Documents** — attachments the team or you uploaded
+  against the order. Covered in
+  [Supporting documents](../order-page/supporting-documents).
+- **Scan Activity** — in the fulfillment stages (CONFIRMED through
+  CLOSED), a dedicated timeline of every outbound, on-site, and inbound
+  scan event. See the Scan Activity tutorials.
+
+## Right sidebar
+
+A persistent sidebar on the right stacks:
+
+- **Download Cost Estimate** — a one-click PDF export once the quote has
+  been sent. Available from QUOTED onwards.
+- **Event** — start/end dates.
+- **Venue** — name, city, address.
+- **Contact** — the person you named at checkout Step 4.
+- **Special Instructions** — if you wrote any.
+
+## Action footer
+
+Right at the bottom, a link back to **All Orders** plus (for closed
+orders) a **Browse Catalog for Next Event** shortcut.
+
+## What's next
+
+- [Decode every status headline](../order-page/status-meaning)
+- [Read the status timeline](../order-page/timeline-and-history)

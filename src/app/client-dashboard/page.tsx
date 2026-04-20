@@ -19,6 +19,8 @@ import {
     ShoppingCart,
     MapPin,
     ArrowRight,
+    BookOpen,
+    ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
@@ -107,6 +109,42 @@ export default function ClientDashboardPage() {
 
             <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
                 <div className="container mx-auto px-6 py-8">
+                    {/* Docs hero — surfaces the public /docs tutorials for
+                        first-time users. Opens in a new tab so the session
+                        stays intact. */}
+                    <a
+                        href="/docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block mb-8"
+                    >
+                        <Card className="relative overflow-hidden border-primary/30 bg-linear-to-br from-primary/5 via-primary/10 to-primary/5 hover:border-primary/50 hover:shadow-lg transition-all">
+                            <CardContent className="p-6">
+                                <div className="flex items-start gap-5">
+                                    <div className="h-12 w-12 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
+                                        <BookOpen className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-lg font-semibold text-foreground">
+                                                New to Kadence? Start here
+                                            </h3>
+                                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                            Step-by-step guides for browsing the catalog, placing
+                                            your first order, tracking quotes, and more.
+                                        </p>
+                                    </div>
+                                    <div className="hidden sm:flex items-center gap-1 text-xs font-mono text-primary uppercase tracking-wider shrink-0 self-center">
+                                        Open Docs
+                                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </a>
+
                     {/* Summary Statistics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {summaryLoading ? (

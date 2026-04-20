@@ -1,0 +1,91 @@
+---
+title: Reading the pricing breakdown
+slug: reading-the-pricing-breakdown
+category: quotes
+order: 1
+summary: Every line, every row, what's visible, and what's not — in AED.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+The pricing breakdown is the heart of your quote. Knowing how to read it makes the approve-or-decline decision a lot faster. Everything below is shown in AED.
+
+## The layout
+
+<Screenshot
+    src="quotes/02-pricing-breakdown.png"
+    alt="Pricing breakdown card showing line items, subtotal, and total"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 640, y: 540 }, label: "1", text: "Line items — one row per billable service or asset group." },
+        { at: { x: 640, y: 620 }, label: "2", text: "Subtotal — the sum of all line items." },
+        { at: { x: 640, y: 670 }, label: "3", text: "TOTAL — the number you'll be invoiced. Bold, primary colour." },
+    ]}
+/>
+
+From top to bottom:
+
+1. **Line items** — one row per billable service or item group. Each row
+   shows a plain-English description on the left and an amount in AED
+   on the right.
+2. **Subtotal** — the sum of every visible line.
+3. **VAT row** (only when applicable) — either a subtracted-in amount
+   or a note that VAT is already rolled into line totals, shown with
+   the configured rate (e.g. 5.00%).
+4. **TOTAL** — the bold, primary-coloured bottom line. This is what
+   you'll be invoiced.
+
+## Common line items
+
+The pricing engine generates lines based on what's in your order and which platform-rate-card items apply. You'll commonly see:
+
+- **Basic Assembly** — crew time for assembly on-site.
+- **Loading / Unloading** — warehouse handling.
+- **Picking & Handling (X.XXX m³)** — a "base operations" line that
+  scales with the total volume of your cart. Sometimes shown as a
+  label-only row without a per-line amount — its value is baked into
+  the subtotal.
+- **Transport** — vehicle and route costs.
+- **Reskin / Rebrand** — custom branding work per item.
+- **Custom Line** — anything one-off the logistics team added
+  manually, with an explanatory label.
+
+<Callout kind="tip" title="Label-only lines are by design">
+If you see a line that has a label ("Picking & Handling (1.020 m³)")
+but no amount on the right, the amount is computed into the subtotal
+even though the per-line number isn't displayed. No double-counting
+is happening.
+</Callout>
+
+## What's never shown
+
+By design the pricing breakdown **only shows client-safe pricing**. Things the portal intentionally hides:
+
+- **Buy prices / platform cost** — what the platform pays its suppliers.
+- **Margin percentage** — the markup applied to reach the sell price.
+- **Internal rate-card detail** — the formula the logistics team used
+  to generate the quote.
+
+You'll never see these on any client surface — the order detail page,
+the PDF cost estimate, the approved-quote snapshot. If a number makes
+it to your view, it's final and invoice-ready.
+
+## VAT
+
+If your company has VAT configured on its account, the pricing
+breakdown will include a dedicated VAT row between Subtotal and TOTAL.
+The display flips between two formats:
+
+- **VAT exclusive** — "VAT (5.00%) ... 5.32 AED" with an explicit
+  amount added on top of the subtotal.
+- **VAT inclusive** — "VAT included (5.00%)" with no separate amount,
+  because the line totals already have VAT baked in.
+
+Either way, the TOTAL at the bottom is the final number you pay.
+
+## What's next
+
+- [Download the cost estimate PDF](../quotes/downloading-the-cost-estimate-pdf)
+- [Approve with a PO number](../quotes/approving-with-a-po-number)
