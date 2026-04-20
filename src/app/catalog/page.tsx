@@ -22,6 +22,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBrands } from "@/hooks/use-brands";
 import { useCatalog } from "@/hooks/use-catalog";
+import { useClientAssetCategories } from "@/hooks/use-client-asset-categories";
+import { useClientTeams } from "@/hooks/use-client-teams";
 import { useToken } from "@/lib/auth/use-token";
 import type { CatalogItem } from "@/types/collection";
 import { CatalogCard } from "@/components/catalog/catalog-card";
@@ -49,31 +51,26 @@ export default function CatalogPage() {
 
     const items = catalogData?.items || [];
     const brands = brandsData?.data || [];
+
+    // Filter options come from dedicated endpoints, NOT derived from the
+    // current page's items — otherwise paginating changes the visible
+    // categories/teams, which breaks filter stability across navigation.
+    const { data: allCategoriesData } = useClientAssetCategories();
+    const { data: allTeamsData } = useClientTeams();
     const categories = useMemo(
         () =>
-            Array.from(
-                new Map(
-                    items
-                        .map((item) => (item as { categoryRef?: { id: string; name: string; slug: string; color: string } | null }).categoryRef)
-                        .filter(
-                            (cat): cat is { id: string; name: string; slug: string; color: string } =>
-                                cat !== null && cat !== undefined && typeof cat === "object" && "id" in cat
-                        )
-                        .map((cat) => [cat.id, cat])
-                ).values()
-            ).sort((a, b) => a.name.localeCompare(b.name)),
-        [items]
+            (allCategoriesData || [])
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name)),
+        [allCategoriesData]
     );
-
-    // Derive unique teams from catalog items. Hidden when empty (per design decision).
-    const teams = useMemo(() => {
-        const teamMap = new Map<string, string>();
-        items.forEach((item) => {
-            const team = (item as any).team;
-            if (team?.id && team?.name) teamMap.set(team.id, team.name);
-        });
-        return Array.from(teamMap.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
-    }, [items]);
+    const teams = useMemo(
+        () =>
+            (allTeamsData || [])
+                .map((t) => ({ id: t.id, name: t.name }))
+                .sort((a, b) => a.name.localeCompare(b.name)),
+        [allTeamsData]
+    );
 
     const clearFilters = () => {
         setSearchQuery("");
@@ -97,7 +94,7 @@ export default function CatalogPage() {
                             Find the items you need, check availability, and add them to your order.
                         </p>
                         <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted-foreground">
-                            <span>{catalogData?.totalFamilies ?? 0} families</span>
+                            <span>{catalogData?.totalFamilies ?? 0} assets</span>
                             <span>{catalogData?.totalCollections ?? 0} collections</span>
                         </div>
                     </div>
@@ -110,7 +107,7 @@ export default function CatalogPage() {
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     className="pl-9"
-                                    placeholder="Search families or collections"
+                                    placeholder="Search assets or collections"
                                     value={searchQuery}
                                     onChange={(event) => {
                                         setSearchQuery(event.target.value);
@@ -201,7 +198,7 @@ export default function CatalogPage() {
                             >
                                 <TabsList>
                                     <TabsTrigger value="all">All</TabsTrigger>
-                                    <TabsTrigger value="family">Families</TabsTrigger>
+                                    <TabsTrigger value="family">Assets</TabsTrigger>
                                     <TabsTrigger value="collection">Collections</TabsTrigger>
                                 </TabsList>
                             </Tabs>
