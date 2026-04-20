@@ -11,15 +11,7 @@ import fs from "node:fs";
  * authors use in MDX. Resolution is viewport × deviceScaleFactor from the
  * Playwright config (typically 1280x800 × 2).
  */
-const SCREENSHOT_ROOT = path.join(
-    __dirname,
-    "..",
-    "..",
-    "..",
-    "public",
-    "docs",
-    "screenshots"
-);
+const SCREENSHOT_ROOT = path.join(__dirname, "..", "..", "..", "public", "docs", "screenshots");
 
 export interface ShootOptions {
     /** `<flow>/<article>/<n>-<label>` (no extension). Required. */

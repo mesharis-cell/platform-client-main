@@ -19,7 +19,10 @@ test.describe("order page anatomy + sections", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-003", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-003/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-003/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
         await page.waitForTimeout(500);
         await shoot(page, { name: "order-page/02-order-anatomy" });
     });
@@ -29,7 +32,10 @@ test.describe("order page anatomy + sections", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-001", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-001/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-001/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
         await page.waitForTimeout(400);
         await shoot(page, { name: "order-page/03-status-submitted" });
     });
@@ -39,7 +45,10 @@ test.describe("order page anatomy + sections", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-004", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-004/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-004/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // Scroll the timeline into frame.
         await page
@@ -55,12 +64,13 @@ test.describe("order page anatomy + sections", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-005", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-005/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-005/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
         // The linked service requests card has its own heading.
-        const srCard = page
-            .getByText(/linked service requests/i)
-            .first();
+        const srCard = page.getByText(/linked service requests/i).first();
         if (await srCard.isVisible().catch(() => false)) {
             await srCard.scrollIntoViewIfNeeded();
             await page.waitForTimeout(400);
@@ -73,11 +83,12 @@ test.describe("order page anatomy + sections", () => {
         await page.goto(env.baseUrl + "/orders/ORD-DEMO-003", {
             waitUntil: "networkidle",
         });
-        await page.getByText(/ORD-DEMO-003/i).first().waitFor({ timeout: 10_000 });
+        await page
+            .getByText(/ORD-DEMO-003/i)
+            .first()
+            .waitFor({ timeout: 10_000 });
 
-        const attachmentsCard = page
-            .getByText(/supporting documents/i)
-            .first();
+        const attachmentsCard = page.getByText(/supporting documents/i).first();
         if (await attachmentsCard.isVisible().catch(() => false)) {
             await attachmentsCard.scrollIntoViewIfNeeded();
             await page.waitForTimeout(400);

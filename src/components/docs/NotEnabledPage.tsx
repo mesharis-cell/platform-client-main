@@ -28,12 +28,9 @@ export function NotEnabledPage({ articleTitle, flag, companyName }: NotEnabledPa
                 <h1 className="text-2xl font-semibold tracking-tight">{articleTitle}</h1>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-                This tutorial covers a feature that is not currently enabled for {company}.
-                If you need access, ask your administrator to enable{" "}
-                <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                    {flag}
-                </code>
-                .
+                This tutorial covers a feature that is not currently enabled for {company}. If you
+                need access, ask your administrator to enable{" "}
+                <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{flag}</code>.
             </p>
             <div>
                 <Link

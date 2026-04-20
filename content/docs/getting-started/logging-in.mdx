@@ -24,9 +24,8 @@ You'll need:
   on the login screen.
 
 <Callout kind="heads-up" title="Accounts are admin-provisioned">
-The sign-up page exists but is disabled. If your credentials don't work
-or you can't log in, ask your administrator to create an account for you
-or check the role on your profile.
+    The sign-up page exists but is disabled. If your credentials don't work or you can't log in, ask
+    your administrator to create an account for you or check the role on your profile.
 </Callout>
 
 ## Sign in
@@ -37,33 +36,43 @@ or check the role on your profile.
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 638, y: 358 }, label: "1", text: "Email address — type it any case; the portal lowercases before submitting." },
-        { at: { x: 638, y: 453 }, label: "2", text: "Password — the eye icon on the right toggles show/hide." },
-        { at: { x: 770, y: 508 }, label: "3", text: "Forgot Password — opens the OTP-based reset flow." },
+        {
+            at: { x: 638, y: 358 },
+            label: "1",
+            text: "Email address — type it any case; the portal lowercases before submitting.",
+        },
+        {
+            at: { x: 638, y: 453 },
+            label: "2",
+            text: "Password — the eye icon on the right toggles show/hide.",
+        },
+        {
+            at: { x: 770, y: 508 },
+            label: "3",
+            text: "Forgot Password — opens the OTP-based reset flow.",
+        },
         { at: { x: 638, y: 564 }, label: "4", text: "Grant Access — submits the form." },
     ]}
 />
 
 <StepList>
     <Step n={1} title="Open the tenant URL">
-        Paste the portal URL your admin shared into your browser. You'll
-        land on the login screen — the one titled **Access / Control**.
+        Paste the portal URL your admin shared into your browser. You'll land on the login screen —
+        the one titled **Access / Control**.
     </Step>
     <Step n={2} title="Type your email and password">
-        Enter the email your admin registered. Case doesn't matter — the
-        portal lowercases the input before submitting. Click the eye icon
-        on the password field to unhide what you're typing.
+        Enter the email your admin registered. Case doesn't matter — the portal lowercases the input
+        before submitting. Click the eye icon on the password field to unhide what you're typing.
     </Step>
     <Step n={3} title="Click Grant Access">
-        The button changes to *Authenticating…* while credentials are
-        checked. On success, a toast reading **Access Granted** appears
-        and you're forwarded straight to your dashboard.
+        The button changes to *Authenticating…* while credentials are checked. On success, a toast
+        reading **Access Granted** appears and you're forwarded straight to your dashboard.
     </Step>
 </StepList>
 
 <Callout kind="tip" title="Most browsers can save this login">
-If your browser asks whether to save the password, accept — it's the
-fastest way to skip typing on every visit.
+    If your browser asks whether to save the password, accept — it's the fastest way to skip typing
+    on every visit.
 </Callout>
 
 ## What you'll see after login
@@ -76,17 +85,37 @@ Once authenticated, you land on the dashboard — the portal's home base.
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 320, y: 122 }, label: "1", text: "Left sidebar — every portal page is one click away." },
+        {
+            at: { x: 320, y: 122 },
+            label: "1",
+            text: "Left sidebar — every portal page is one click away.",
+        },
         { at: { x: 505, y: 175 }, label: "2", text: "Stat cards summarise your current activity." },
-        { at: { x: 420, y: 420 }, label: "3", text: "Recent orders — click any row to open its detail page." },
+        {
+            at: { x: 420, y: 420 },
+            label: "3",
+            text: "Recent orders — click any row to open its detail page.",
+        },
     ]}
 />
 
 From the sidebar you can reach:
 
-- <PortalLink to="/client-dashboard" label="Dashboard" hint="Summary of your active orders and upcoming events." />
-- <PortalLink to="/catalog" label="Catalog" hint="Browse items, check availability, and add things to your cart." />
-- <PortalLink to="/my-orders" label="My Orders" hint="See every order you've placed and its current status." />
+- <PortalLink
+      to="/client-dashboard"
+      label="Dashboard"
+      hint="Summary of your active orders and upcoming events."
+  />
+- <PortalLink
+      to="/catalog"
+      label="Catalog"
+      hint="Browse items, check availability, and add things to your cart."
+  />
+- <PortalLink
+      to="/my-orders"
+      label="My Orders"
+      hint="See every order you've placed and its current status."
+  />
 
 ## Troubleshooting
 
@@ -98,5 +127,5 @@ From the sidebar you can reach:
 - **Nothing happens when you click Grant Access.** A flaky network
   connection is the most common cause. Reload the page and try again.
 - **You need to reset your password.** Use the
-  <PortalLink to="/forgot-password" label="Forgot Password" /> flow from
-  the login page — covered in the next article.
+    <PortalLink to="/forgot-password" label="Forgot Password" /> flow from the login page — covered
+    in the next article.

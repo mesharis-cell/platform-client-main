@@ -16,8 +16,8 @@ export default function DocsNotFound() {
                         We couldn&apos;t find that page
                     </h1>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        The article may have moved, been renamed, or never existed. Head back to
-                        the docs index and try again.
+                        The article may have moved, been renamed, or never existed. Head back to the
+                        docs index and try again.
                     </p>
                 </div>
                 <Link

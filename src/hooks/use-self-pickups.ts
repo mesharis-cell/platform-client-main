@@ -9,12 +9,14 @@ export const selfPickupKeys = {
     detail: (id: string | null) => ["client-self-pickup", id] as const,
 };
 
-export function useClientSelfPickups(params: {
-    page?: number;
-    limit?: number;
-    self_pickup_status?: string;
-    search?: string;
-} = {}) {
+export function useClientSelfPickups(
+    params: {
+        page?: number;
+        limit?: number;
+        self_pickup_status?: string;
+        search?: string;
+    } = {}
+) {
     return useQuery({
         queryKey: selfPickupKeys.list(params),
         queryFn: async () => {
@@ -22,9 +24,7 @@ export function useClientSelfPickups(params: {
             Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined && value !== "") query.set(key, String(value));
             });
-            const { data } = await apiClient.get(
-                `/client/v1/self-pickup/my?${query.toString()}`
-            );
+            const { data } = await apiClient.get(`/client/v1/self-pickup/my?${query.toString()}`);
             return data;
         },
     });
@@ -62,9 +62,7 @@ export function useClientApproveSelfPickupQuote() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { data } = await apiClient.post(
-                `/client/v1/self-pickup/${id}/approve-quote`
-            );
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/approve-quote`);
             return data;
         },
         onSuccess: () => {
@@ -79,9 +77,7 @@ export function useClientDeclineSelfPickupQuote() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { data } = await apiClient.post(
-                `/client/v1/self-pickup/${id}/decline-quote`
-            );
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/decline-quote`);
             return data;
         },
         onSuccess: () => {
@@ -96,9 +92,7 @@ export function useTriggerSelfPickupReturn() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { data } = await apiClient.post(
-                `/client/v1/self-pickup/${id}/trigger-return`
-            );
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/trigger-return`);
             return data;
         },
         onSuccess: () => {
@@ -113,10 +107,9 @@ export function useCancelSelfPickup() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-            const { data } = await apiClient.post(
-                `/client/v1/self-pickup/${id}/cancel`,
-                { reason }
-            );
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/cancel`, {
+                reason,
+            });
             return data;
         },
         onSuccess: () => {

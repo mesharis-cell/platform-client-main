@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-    ChevronLeft,
-    ChevronRight,
-    Search,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,10 +54,7 @@ export default function CatalogPage() {
     const { data: allCategoriesData } = useClientAssetCategories();
     const { data: allTeamsData } = useClientTeams();
     const categories = useMemo(
-        () =>
-            (allCategoriesData || [])
-                .slice()
-                .sort((a, b) => a.name.localeCompare(b.name)),
+        () => (allCategoriesData || []).slice().sort((a, b) => a.name.localeCompare(b.name)),
         [allCategoriesData]
     );
     const teams = useMemo(
@@ -81,7 +74,8 @@ export default function CatalogPage() {
         setPage(1);
     };
 
-    const hasActiveFilters = searchQuery || selectedBrand || selectedCategory || selectedTeam || viewType !== "all";
+    const hasActiveFilters =
+        searchQuery || selectedBrand || selectedCategory || selectedTeam || viewType !== "all";
 
     return (
         <ClientNav>

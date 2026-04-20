@@ -60,7 +60,10 @@ export const docsMdxComponents: MDXComponents = {
         </ul>
     ),
     ol: ({ children, ...props }) => (
-        <ol className="my-4 ml-6 list-decimal space-y-1 text-foreground/90 [&>li>p]:my-1" {...props}>
+        <ol
+            className="my-4 ml-6 list-decimal space-y-1 text-foreground/90 [&>li>p]:my-1"
+            {...props}
+        >
             {children}
         </ol>
     ),
@@ -107,10 +110,7 @@ export const docsMdxComponents: MDXComponents = {
         </div>
     ),
     th: ({ children, ...props }) => (
-        <th
-            className="border-b border-border px-3 py-2 text-left font-semibold"
-            {...props}
-        >
+        <th className="border-b border-border px-3 py-2 text-left font-semibold" {...props}>
             {children}
         </th>
     ),

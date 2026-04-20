@@ -1,13 +1,7 @@
 import { Info, Lightbulb, AlertTriangle, AlertCircle, Shield, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type CalloutKind =
-    | "info"
-    | "tip"
-    | "warning"
-    | "heads-up"
-    | "admin-only"
-    | "feature-flag";
+export type CalloutKind = "info" | "tip" | "warning" | "heads-up" | "admin-only" | "feature-flag";
 
 interface CalloutProps {
     kind?: CalloutKind;
@@ -17,7 +11,12 @@ interface CalloutProps {
 
 const KIND_STYLES: Record<
     CalloutKind,
-    { icon: React.ComponentType<{ className?: string }>; container: string; iconColor: string; label: string }
+    {
+        icon: React.ComponentType<{ className?: string }>;
+        container: string;
+        iconColor: string;
+        label: string;
+    }
 > = {
     info: {
         icon: Info,
@@ -72,7 +71,12 @@ export function Callout({ kind = "info", title, children }: CalloutProps) {
         >
             <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", style.iconColor)} aria-hidden="true" />
             <div className="space-y-1 min-w-0">
-                <p className={cn("font-mono text-xs uppercase tracking-wider font-semibold", style.iconColor)}>
+                <p
+                    className={cn(
+                        "font-mono text-xs uppercase tracking-wider font-semibold",
+                        style.iconColor
+                    )}
+                >
                     {displayTitle}
                 </p>
                 <div className="text-foreground [&>p]:my-0 [&>p+p]:mt-2 [&_code]:text-[0.85em]">

@@ -30,10 +30,7 @@ export function DocsNav({ tree }: DocsNavProps) {
             {tree.categories.map((category, index) => (
                 <div
                     key={category.key}
-                    className={cn(
-                        "space-y-1",
-                        index > 0 && "mt-5 border-t border-border pt-5"
-                    )}
+                    className={cn("space-y-1", index > 0 && "mt-5 border-t border-border pt-5")}
                 >
                     <p className="mb-2 px-2 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-foreground">
                         {category.title}
@@ -70,10 +67,7 @@ export function DocsNav({ tree }: DocsNavProps) {
                                                     : "bg-muted-foreground/40 group-hover/nav-link:bg-muted-foreground/70"
                                             )}
                                         />
-                                        <MarqueeTitle
-                                            text={article.title}
-                                            className="flex-1"
-                                        />
+                                        <MarqueeTitle text={article.title} className="flex-1" />
                                     </Link>
                                 </li>
                             );

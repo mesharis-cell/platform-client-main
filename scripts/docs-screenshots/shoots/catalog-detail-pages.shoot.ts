@@ -22,40 +22,36 @@ const DEMO_IDS = {
 test.describe("catalog detail pages (authenticated)", () => {
     test("pooled family detail", async ({ page }) => {
         const env = docsEnv();
-        await page.goto(
-            env.baseUrl + "/catalog/families/" + DEMO_IDS.familyPooled,
-            { waitUntil: "networkidle" }
-        );
+        await page.goto(env.baseUrl + "/catalog/families/" + DEMO_IDS.familyPooled, {
+            waitUntil: "networkidle",
+        });
         await page.getByRole("heading", { name: /event chairs/i }).waitFor();
         await shoot(page, { name: "catalog/03-family-pooled" });
     });
 
     test("serialized family detail (condition-mixed)", async ({ page }) => {
         const env = docsEnv();
-        await page.goto(
-            env.baseUrl + "/catalog/families/" + DEMO_IDS.familySerialized,
-            { waitUntil: "networkidle" }
-        );
+        await page.goto(env.baseUrl + "/catalog/families/" + DEMO_IDS.familySerialized, {
+            waitUntil: "networkidle",
+        });
         await page.getByRole("heading", { name: /backdrop panels/i }).waitFor();
         await shoot(page, { name: "catalog/04-family-serialized", fullPage: true });
     });
 
     test("collection detail", async ({ page }) => {
         const env = docsEnv();
-        await page.goto(
-            env.baseUrl + "/catalog/collections/" + DEMO_IDS.collection,
-            { waitUntil: "networkidle" }
-        );
+        await page.goto(env.baseUrl + "/catalog/collections/" + DEMO_IDS.collection, {
+            waitUntil: "networkidle",
+        });
         await page.getByRole("heading", { name: /corporate event package/i }).waitFor();
         await shoot(page, { name: "catalog/05-collection", fullPage: true });
     });
 
     test("asset detail — ORANGE condition", async ({ page }) => {
         const env = docsEnv();
-        await page.goto(
-            env.baseUrl + "/catalog/assets/" + DEMO_IDS.assetOrange,
-            { waitUntil: "networkidle" }
-        );
+        await page.goto(env.baseUrl + "/catalog/assets/" + DEMO_IDS.assetOrange, {
+            waitUntil: "networkidle",
+        });
         await page.getByRole("heading", { name: /backdrop panel #3/i }).waitFor();
         await shoot(page, { name: "catalog/07-asset-orange" });
     });

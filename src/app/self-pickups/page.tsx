@@ -19,16 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    Package,
-    Plus,
-    Truck,
-    User,
-    X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Package, Plus, Truck, User, X } from "lucide-react";
 
 const PICKUP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     SUBMITTED: { label: "Submitted", color: "bg-blue-100 text-blue-700 border-blue-300" },
@@ -87,10 +78,7 @@ export default function ClientSelfPickupsPage() {
         setPage(1);
     };
 
-    const activeFiltersCount = useMemo(
-        () => (status ? 1 : 0) + (search ? 1 : 0),
-        [status, search]
-    );
+    const activeFiltersCount = useMemo(() => (status ? 1 : 0) + (search ? 1 : 0), [status, search]);
 
     if (platformLoading || !selfPickupEnabled) {
         return null;
@@ -209,22 +197,19 @@ export default function ClientSelfPickupsPage() {
                         <>
                             <div className="flex flex-col space-y-4">
                                 {pickups.map((pickup: any) => {
-                                    const statusConfig =
-                                        PICKUP_STATUS_CONFIG[pickup.self_pickup_status] || {
-                                            label: pickup.self_pickup_status,
-                                            color:
-                                                "bg-gray-100 text-gray-700 border-gray-300",
-                                        };
+                                    const statusConfig = PICKUP_STATUS_CONFIG[
+                                        pickup.self_pickup_status
+                                    ] || {
+                                        label: pickup.self_pickup_status,
+                                        color: "bg-gray-100 text-gray-700 border-gray-300",
+                                    };
                                     const pickupWindow = pickup.pickup_window as any;
                                     const itemCount =
                                         pickup.item_count ?? pickup.items?.length ?? null;
                                     const total = pickup.total_sell_amount ?? null;
 
                                     return (
-                                        <Link
-                                            key={pickup.id}
-                                            href={`/self-pickups/${pickup.id}`}
-                                        >
+                                        <Link key={pickup.id} href={`/self-pickups/${pickup.id}`}>
                                             <Card className="bg-card/80 backdrop-blur-sm border-border/40 hover:shadow-lg transition-all duration-200 group cursor-pointer">
                                                 <CardContent className="p-6">
                                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -338,9 +323,7 @@ export default function ClientSelfPickupsPage() {
                                                 </Button>
                                                 <Button
                                                     onClick={() =>
-                                                        setPage((p) =>
-                                                            Math.min(totalPages, p + 1)
-                                                        )
+                                                        setPage((p) => Math.min(totalPages, p + 1))
                                                     }
                                                     disabled={page >= totalPages}
                                                     variant="outline"

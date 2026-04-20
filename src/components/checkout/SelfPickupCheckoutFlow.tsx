@@ -108,15 +108,11 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 items: items.map((item) => ({
                     asset_id: item.assetId,
                     quantity: item.quantity,
-                    ...(item.fromCollection
-                        ? { from_collection_id: item.fromCollection }
-                        : {}),
+                    ...(item.fromCollection ? { from_collection_id: item.fromCollection } : {}),
                 })),
                 collector_name: formData.collector_name,
                 collector_phone: formData.collector_phone,
-                ...(formData.collector_email
-                    ? { collector_email: formData.collector_email }
-                    : {}),
+                ...(formData.collector_email ? { collector_email: formData.collector_email } : {}),
                 pickup_window: {
                     start: pickupWindowStart,
                     end: pickupWindowEnd,
@@ -297,9 +293,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                 <CardContent className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="collector_name">
-                                                Collector Name *
-                                            </Label>
+                                            <Label htmlFor="collector_name">Collector Name *</Label>
                                             <Input
                                                 id="collector_name"
                                                 value={formData.collector_name}
@@ -399,8 +393,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                             Expected Return (optional)
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
-                                            When do you expect to return these items? If left
-                                            blank, a default window will be applied.
+                                            When do you expect to return these items? If left blank,
+                                            a default window will be applied.
                                         </p>
                                         <div className="max-w-xs">
                                             <Input

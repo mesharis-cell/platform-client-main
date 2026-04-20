@@ -15,9 +15,7 @@ function hexWithAlpha(hex: string | null | undefined, alphaHex: string) {
 
 export function CatalogCard({ item }: { item: CatalogItem }) {
     const isFamily = item.type === "family";
-    const href = isFamily
-        ? `/catalog/families/${item.id}`
-        : `/catalog/collections/${item.id}`;
+    const href = isFamily ? `/catalog/families/${item.id}` : `/catalog/collections/${item.id}`;
     const image = item.images[0];
     const Fallback = isFamily ? Boxes : Layers;
 
@@ -162,12 +160,7 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
                 )}
 
                 {/* CTA */}
-                <Button
-                    variant="default"
-                    size="sm"
-                    className="mt-auto w-full gap-1.5"
-                    asChild
-                >
+                <Button variant="default" size="sm" className="mt-auto w-full gap-1.5" asChild>
                     <span>
                         {isFamily ? "View Asset" : "View Collection"}
                         <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

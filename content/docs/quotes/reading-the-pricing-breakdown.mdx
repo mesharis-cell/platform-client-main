@@ -19,9 +19,17 @@ The pricing breakdown is the heart of your quote. Knowing how to read it makes t
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 640, y: 540 }, label: "1", text: "Line items — one row per billable service or asset group." },
+        {
+            at: { x: 640, y: 540 },
+            label: "1",
+            text: "Line items — one row per billable service or asset group.",
+        },
         { at: { x: 640, y: 620 }, label: "2", text: "Subtotal — the sum of all line items." },
-        { at: { x: 640, y: 670 }, label: "3", text: "TOTAL — the number you'll be invoiced. Bold, primary colour." },
+        {
+            at: { x: 640, y: 670 },
+            label: "3",
+            text: "TOTAL — the number you'll be invoiced. Bold, primary colour.",
+        },
     ]}
 />
 
@@ -53,10 +61,9 @@ The pricing engine generates lines based on what's in your order and which platf
   manually, with an explanatory label.
 
 <Callout kind="tip" title="Label-only lines are by design">
-If you see a line that has a label ("Picking & Handling (1.020 m³)")
-but no amount on the right, the amount is computed into the subtotal
-even though the per-line number isn't displayed. No double-counting
-is happening.
+    If you see a line that has a label ("Picking & Handling (1.020 m³)") but no amount on the right,
+    the amount is computed into the subtotal even though the per-line number isn't displayed. No
+    double-counting is happening.
 </Callout>
 
 ## What's never shown

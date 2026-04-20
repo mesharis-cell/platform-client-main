@@ -24,9 +24,21 @@ On the order detail page, a card titled **Linked Service Requests** appears when
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 440, y: 280 }, label: "1", text: "Service request ID in monospace — click anywhere on the card to open it." },
-        { at: { x: 900, y: 280 }, label: "2", text: "Operational status — the maintenance workflow stage." },
-        { at: { x: 440, y: 380 }, label: "3", text: "Request type and total — MAINTENANCE / RESKIN / REFURBISHMENT / CUSTOM." },
+        {
+            at: { x: 440, y: 280 },
+            label: "1",
+            text: "Service request ID in monospace — click anywhere on the card to open it.",
+        },
+        {
+            at: { x: 900, y: 280 },
+            label: "2",
+            text: "Operational status — the maintenance workflow stage.",
+        },
+        {
+            at: { x: 440, y: 380 },
+            label: "3",
+            text: "Request type and total — MAINTENANCE / RESKIN / REFURBISHMENT / CUSTOM.",
+        },
     ]}
 />
 
@@ -58,10 +70,9 @@ request is client-billable, you'll approve its quote from the service
 request's own page, not from the order.
 
 <Callout kind="tip" title="Service requests can block your order">
-A service request flagged as "blocks fulfillment" will hold your order
-from progressing past certain statuses until it's completed or a
-concession is applied. If your order seems stuck, check any linked
-service requests first.
+    A service request flagged as "blocks fulfillment" will hold your order from progressing past
+    certain statuses until it's completed or a concession is applied. If your order seems stuck,
+    check any linked service requests first.
 </Callout>
 
 ## What's next

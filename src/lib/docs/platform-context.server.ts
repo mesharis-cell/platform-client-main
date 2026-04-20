@@ -40,10 +40,7 @@ const FALLBACK: ServerPlatformContext = {
 export const getServerPlatformContext = async (): Promise<ServerPlatformContext> => {
     try {
         const headersList = await headers();
-        const host =
-            process.env.NEXT_PUBLIC_DEV_HOST_OVERRIDE ||
-            headersList.get("host") ||
-            "";
+        const host = process.env.NEXT_PUBLIC_DEV_HOST_OVERRIDE || headersList.get("host") || "";
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         if (!apiUrl) return FALLBACK;

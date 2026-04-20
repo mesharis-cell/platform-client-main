@@ -71,19 +71,12 @@ test.describe("checkout — maintenance decisions (ORANGE)", () => {
                     key: string,
                     value: string
                 ) {
-                    if (
-                        key === "kadence_checkout_form" &&
-                        Date.now() < blockUntil
-                    ) {
+                    if (key === "kadence_checkout_form" && Date.now() < blockUntil) {
                         return;
                     }
                     return originalSetItem.call(this, key, value);
                 } as typeof Storage.prototype.setItem;
-                originalSetItem.call(
-                    window.localStorage,
-                    "asset-cart-v1",
-                    data.cartJson
-                );
+                originalSetItem.call(window.localStorage, "asset-cart-v1", data.cartJson);
                 originalSetItem.call(
                     window.localStorage,
                     "kadence_checkout_form",
@@ -98,14 +91,10 @@ test.describe("checkout — maintenance decisions (ORANGE)", () => {
 
         const env = docsEnv();
         await page.goto(env.baseUrl + "/checkout", { waitUntil: "networkidle" });
-        await page
-            .getByRole("heading", { name: /review & submit/i })
-            .waitFor({ timeout: 15_000 });
+        await page.getByRole("heading", { name: /review & submit/i }).waitFor({ timeout: 15_000 });
 
         // Scroll the Maintenance Decision Center into frame.
-        await page
-            .getByText(/maintenance decision center/i)
-            .scrollIntoViewIfNeeded();
+        await page.getByText(/maintenance decision center/i).scrollIntoViewIfNeeded();
         await page.waitForTimeout(400);
 
         await shoot(page, { name: "ordering/07-maintenance-decisions" });

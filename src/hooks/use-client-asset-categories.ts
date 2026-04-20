@@ -14,9 +14,7 @@ export function useClientAssetCategories() {
     return useQuery({
         queryKey: ["client-asset-categories"],
         queryFn: async (): Promise<ClientAssetCategory[]> => {
-            const response = await apiClient.get(
-                "/client/v1/asset-category?limit=1000"
-            );
+            const response = await apiClient.get("/client/v1/asset-category?limit=1000");
             const raw = response.data?.data ?? [];
             return (Array.isArray(raw) ? raw : []).map((cat: any) => ({
                 id: cat.id,

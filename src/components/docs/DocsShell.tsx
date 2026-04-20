@@ -24,9 +24,7 @@ export function DocsShell({ tree, companyName, aside, children }: DocsShellProps
                     <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:border-border lg:pr-6">
                         <DocsNav tree={tree} />
                     </aside>
-                    <main className="mx-auto w-full min-w-0 max-w-4xl">
-                        {children}
-                    </main>
+                    <main className="mx-auto w-full min-w-0 max-w-4xl">{children}</main>
                     <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
                         {aside}
                     </aside>

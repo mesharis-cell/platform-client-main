@@ -35,8 +35,8 @@ export function FeatureFlagNote({ flag, children, className }: FeatureFlagNotePr
                     {children ?? (
                         <>
                             This section only applies if your company has{" "}
-                            <code className="font-mono text-[0.9em]">{flag}</code> enabled. Ask
-                            your administrator if you need access.
+                            <code className="font-mono text-[0.9em]">{flag}</code> enabled. Ask your
+                            administrator if you need access.
                         </>
                     )}
                 </div>

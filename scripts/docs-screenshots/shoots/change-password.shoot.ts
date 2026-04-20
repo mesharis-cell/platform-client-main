@@ -22,9 +22,7 @@ test.describe("change password page (authenticated)", () => {
 
         // Wait for useCompany() to resolve so the sidebar shows the real
         // "Kadence Demo" branding instead of Skeleton placeholders.
-        await page
-            .getByRole("heading", { name: /kadence demo/i })
-            .waitFor({ timeout: 10_000 });
+        await page.getByRole("heading", { name: /kadence demo/i }).waitFor({ timeout: 10_000 });
 
         await shoot(page, { name: "getting-started/05-change-password" });
     });

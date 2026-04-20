@@ -242,7 +242,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                             >
                                 <BookOpen className="h-4 w-4 shrink-0" />
                                 <span className="flex-1 uppercase tracking-wide text-xs">
-                                    Docs
+                                    Help &amp; Guides
                                 </span>
                                 <ExternalLink className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                             </a>
@@ -304,12 +304,16 @@ function ClientNavInner({ children }: ClientNavProps) {
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onSelect={() =>
-                                                window.open("/docs", "_blank", "noopener,noreferrer")
+                                                window.open(
+                                                    "/docs",
+                                                    "_blank",
+                                                    "noopener,noreferrer"
+                                                )
                                             }
                                             className="font-mono text-xs uppercase tracking-wide"
                                         >
                                             <LifeBuoy className="h-3.5 w-3.5 mr-2" />
-                                            Help &amp; Docs
+                                            Help &amp; Guides
                                             <ExternalLink className="h-3 w-3 ml-auto opacity-60" />
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />

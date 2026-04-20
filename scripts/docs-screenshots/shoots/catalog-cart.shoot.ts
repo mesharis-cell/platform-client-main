@@ -79,9 +79,9 @@ test.describe("cart interactions (authenticated)", () => {
 
         // Confirm the cart badge shows the expected item count before
         // opening the panel.
-        const cartBadge = page.locator(
-            'button[class*="fixed"][class*="bottom-8"][class*="right-8"] div'
-        ).filter({ hasText: /^\d+$/ });
+        const cartBadge = page
+            .locator('button[class*="fixed"][class*="bottom-8"][class*="right-8"] div')
+            .filter({ hasText: /^\d+$/ });
         await expect(cartBadge).toHaveText(/^[1-9]\d*$/, { timeout: 5_000 });
 
         // Open the floating cart panel.

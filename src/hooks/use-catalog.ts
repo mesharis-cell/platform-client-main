@@ -107,15 +107,20 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         // object. Downstream React components render both `.category` (string) and
         // `.categoryRef` (structured) so filter dedup can still use the reference.
         const normalizeCategory = (raw: unknown) => {
-            if (!raw) return { label: null as string | null, ref: null as null | { id: string; name: string; slug: string; color: string } };
+            if (!raw)
+                return {
+                    label: null as string | null,
+                    ref: null as null | { id: string; name: string; slug: string; color: string },
+                };
             if (typeof raw === "string") return { label: raw, ref: null };
             if (typeof raw === "object" && raw !== null && "name" in raw) {
                 const obj = raw as { id?: string; name?: string; slug?: string; color?: string };
                 return {
                     label: typeof obj.name === "string" ? obj.name : null,
-                    ref: obj.id && obj.name && obj.slug && obj.color
-                        ? { id: obj.id, name: obj.name, slug: obj.slug, color: obj.color }
-                        : null,
+                    ref:
+                        obj.id && obj.name && obj.slug && obj.color
+                            ? { id: obj.id, name: obj.name, slug: obj.slug, color: obj.color }
+                            : null,
                 };
             }
             return { label: null, ref: null };
@@ -123,67 +128,67 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
 
         const familyItems = families.map((family: any) => {
             const cat = normalizeCategory(family.category);
-            return ({
-            type: "family" as const,
-            id: family.id,
-            name: family.name,
-            description: family.description,
-            category: cat.label,
-            categoryRef: cat.ref,
-            images: normalizeAssetImageUrls(family.images),
-            brand: family.brand
-                ? {
-                      id: family.brand.id,
-                      name: family.brand.name,
-                      logoUrl: null,
-                  }
-                : null,
-            team: family.team?.id ? { id: family.team.id, name: family.team.name } : null,
-            stockMode: family.stock_mode,
-            stockRecordCount: Number(family.stock_record_count || family.asset_count || 0),
-            totalQuantity: Number(family.total_quantity || 0),
-            availableQuantity: Number(family.available_quantity || 0),
-            statusSummary: {
-                available: Number(family.status_summary?.available || 0),
-                booked: Number(family.status_summary?.booked || 0),
-                out: Number(family.status_summary?.out || 0),
-                maintenance: Number(family.status_summary?.maintenance || 0),
-                transformed: Number(family.status_summary?.transformed || 0),
-            },
-            conditionSummary: {
-                green: Number(family.condition_summary?.green || 0),
-                orange: Number(family.condition_summary?.orange || 0),
-                red: Number(family.condition_summary?.red || 0),
-            },
-            volume: String(family.volume_per_unit || 0),
-            weight: String(family.weight_per_unit || 0),
-            dimensionLength: String(family.dimensions?.length || 0),
-            dimensionWidth: String(family.dimensions?.width || 0),
-            dimensionHeight: String(family.dimensions?.height || 0),
-            packaging: family.packaging,
-            code: family.company_item_code || null,
-        });
+            return {
+                type: "family" as const,
+                id: family.id,
+                name: family.name,
+                description: family.description,
+                category: cat.label,
+                categoryRef: cat.ref,
+                images: normalizeAssetImageUrls(family.images),
+                brand: family.brand
+                    ? {
+                          id: family.brand.id,
+                          name: family.brand.name,
+                          logoUrl: null,
+                      }
+                    : null,
+                team: family.team?.id ? { id: family.team.id, name: family.team.name } : null,
+                stockMode: family.stock_mode,
+                stockRecordCount: Number(family.stock_record_count || family.asset_count || 0),
+                totalQuantity: Number(family.total_quantity || 0),
+                availableQuantity: Number(family.available_quantity || 0),
+                statusSummary: {
+                    available: Number(family.status_summary?.available || 0),
+                    booked: Number(family.status_summary?.booked || 0),
+                    out: Number(family.status_summary?.out || 0),
+                    maintenance: Number(family.status_summary?.maintenance || 0),
+                    transformed: Number(family.status_summary?.transformed || 0),
+                },
+                conditionSummary: {
+                    green: Number(family.condition_summary?.green || 0),
+                    orange: Number(family.condition_summary?.orange || 0),
+                    red: Number(family.condition_summary?.red || 0),
+                },
+                volume: String(family.volume_per_unit || 0),
+                weight: String(family.weight_per_unit || 0),
+                dimensionLength: String(family.dimensions?.length || 0),
+                dimensionWidth: String(family.dimensions?.width || 0),
+                dimensionHeight: String(family.dimensions?.height || 0),
+                packaging: family.packaging,
+                code: family.company_item_code || null,
+            };
         });
 
         const collectionItems = collections.map((collection: any) => {
             const cat = normalizeCategory(collection.category);
-            return ({
-            type: "collection" as const,
-            id: collection.id,
-            name: collection.name,
-            description: collection.description,
-            category: cat.label,
-            categoryRef: cat.ref,
-            images: normalizeCollectionImageUrls(collection.images),
-            brand: collection.brand
-                ? {
-                      id: collection.brand.id,
-                      name: collection.brand.name,
-                      logoUrl: collection.brand.logo_url,
-                  }
-                : null,
-            itemCount: Number(collection.assets?.length || 0),
-        });
+            return {
+                type: "collection" as const,
+                id: collection.id,
+                name: collection.name,
+                description: collection.description,
+                category: cat.label,
+                categoryRef: cat.ref,
+                images: normalizeCollectionImageUrls(collection.images),
+                brand: collection.brand
+                    ? {
+                          id: collection.brand.id,
+                          name: collection.brand.name,
+                          logoUrl: collection.brand.logo_url,
+                      }
+                    : null,
+                itemCount: Number(collection.assets?.length || 0),
+            };
         });
 
         // Families are server-paginated; collections are fetched in full (typically small count)

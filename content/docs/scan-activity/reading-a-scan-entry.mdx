@@ -19,11 +19,31 @@ Every scan on your order page renders as one card in the timeline. This article 
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 450, y: 380 }, label: "1", text: "Scan type badge — one of six types; coloured to match." },
-        { at: { x: 740, y: 380 }, label: "2", text: "Condition badge — GREEN / ORANGE / RED when the scan captured condition." },
-        { at: { x: 450, y: 430 }, label: "3", text: "Asset name in monospace + optional QR + quantity." },
-        { at: { x: 1100, y: 380 }, label: "4", text: "Timestamp + who scanned it (not the system — a human name)." },
-        { at: { x: 640, y: 600 }, label: "5", text: "Notes and photos appear beneath when the scan captured them." },
+        {
+            at: { x: 450, y: 380 },
+            label: "1",
+            text: "Scan type badge — one of six types; coloured to match.",
+        },
+        {
+            at: { x: 740, y: 380 },
+            label: "2",
+            text: "Condition badge — GREEN / ORANGE / RED when the scan captured condition.",
+        },
+        {
+            at: { x: 450, y: 430 },
+            label: "3",
+            text: "Asset name in monospace + optional QR + quantity.",
+        },
+        {
+            at: { x: 1100, y: 380 },
+            label: "4",
+            text: "Timestamp + who scanned it (not the system — a human name).",
+        },
+        {
+            at: { x: 640, y: 600 },
+            label: "5",
+            text: "Notes and photos appear beneath when the scan captured them.",
+        },
     ]}
 />
 
@@ -33,12 +53,12 @@ Every card opens with two badges:
 
 - **Scan type badge** on the left. One of six types, each with its own
   colour:
-  - **Outbound Scan** — primary
-  - **Inbound Scan** — secondary
-  - **Derig Capture** — purple
-  - **Outbound Truck Photos** — blue
-  - **Return Truck Photos** — orange
-  - **On Site Capture** — pink
+    - **Outbound Scan** — primary
+    - **Inbound Scan** — secondary
+    - **Derig Capture** — purple
+    - **Outbound Truck Photos** — blue
+    - **Return Truck Photos** — orange
+    - **On Site Capture** — pink
 - **Condition badge** on the right. Only present when the scan
   captured a condition (GREEN / ORANGE / RED). Capture-only scans
   like truck photos or on-site capture don't carry a condition.
@@ -57,7 +77,7 @@ Below the badges:
 
 - **Timestamp** in `MMM d, HH:mm` format, your browser's local time
   zone.
-- **"by <name>"** — who scanned. This is a logistics team member by
+- **"by `<name>`"** — who scanned. This is a logistics team member by
   name, not a system user. If a scan is auto-generated, it shows as
   "System".
 

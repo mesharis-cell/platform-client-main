@@ -23,10 +23,7 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
             </p>
             <ul className="space-y-1 text-sm" role="list">
                 {headings.map((heading) => (
-                    <li
-                        key={heading.id}
-                        className={heading.depth === 3 ? "pl-3" : ""}
-                    >
+                    <li key={heading.id} className={heading.depth === 3 ? "pl-3" : ""}>
                         <a
                             href={`#${heading.id}`}
                             className="block text-foreground/70 hover:text-foreground transition-colors leading-snug"

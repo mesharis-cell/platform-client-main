@@ -1,8 +1,4 @@
-import {
-    docCategories,
-    type DocCategoryMeta,
-    type DocFrontmatter,
-} from "./frontmatter";
+import { docCategories, type DocCategoryMeta, type DocFrontmatter } from "./frontmatter";
 import { loadAllArticles, type DocArticle } from "./registry";
 
 export interface DocNavArticle {

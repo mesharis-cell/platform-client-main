@@ -109,8 +109,7 @@ function CheckoutPageInner() {
     // Feature flag: whether to show separate Event Start/End date inputs.
     // OFF (default) — hide event dates; delivery + pickup become required and
     // event_start_date / event_end_date are auto-filled from them on submit.
-    const eventDateInputsEnabled =
-        (platform?.features as any)?.enable_event_date_inputs === true;
+    const eventDateInputsEnabled = (platform?.features as any)?.enable_event_date_inputs === true;
     const [availabilityIssues, setAvailabilityIssues] = useState<string[]>([]);
     const [maintenanceFeasibilityIssues, setMaintenanceFeasibilityIssues] = useState<
         MaintenanceFeasibilityIssue[]
@@ -186,12 +185,7 @@ function CheckoutPageInner() {
                 const { step, form, modeConfirmed } = JSON.parse(saved);
                 if (form) setFormData((prev) => ({ ...prev, ...form }));
                 const gateSatisfied = !selfPickupEnabled || modeConfirmed === true;
-                if (
-                    step &&
-                    validSteps.includes(step) &&
-                    items.length > 0 &&
-                    gateSatisfied
-                ) {
+                if (step && validSteps.includes(step) && items.length > 0 && gateSatisfied) {
                     setCurrentStep(step);
                     restoredMidFlow = true;
                 }
@@ -430,8 +424,7 @@ function CheckoutPageInner() {
                 return Boolean(
                     formData.event_start_date &&
                         formData.event_end_date &&
-                        new Date(formData.event_start_date) <=
-                            new Date(formData.event_end_date) &&
+                        new Date(formData.event_start_date) <= new Date(formData.event_end_date) &&
                         // Hard-block when we KNOW the picked date is too soon.
                         // Always enforced — independent of the helper flag.
                         feasibility.userDateFeasible !== false
@@ -612,18 +605,26 @@ function CheckoutPageInner() {
                 contact_email: formData.contact_email,
                 contact_phone: formData.contact_phone,
                 // Venue contact (top-level, separate from permit_requirements)
-                ...(formData.venue_contact_name || formData.venue_contact_email || formData.venue_contact_phone
+                ...(formData.venue_contact_name ||
+                formData.venue_contact_email ||
+                formData.venue_contact_phone
                     ? {
                           venue_contact: {
-                              ...(formData.venue_contact_name ? { name: formData.venue_contact_name } : {}),
-                              ...(formData.venue_contact_email ? { email: formData.venue_contact_email } : {}),
-                              ...(formData.venue_contact_phone ? { phone: formData.venue_contact_phone } : {}),
+                              ...(formData.venue_contact_name
+                                  ? { name: formData.venue_contact_name }
+                                  : {}),
+                              ...(formData.venue_contact_email
+                                  ? { email: formData.venue_contact_email }
+                                  : {}),
+                              ...(formData.venue_contact_phone
+                                  ? { phone: formData.venue_contact_phone }
+                                  : {}),
                           },
                       }
                     : {}),
                 // Client-requested delivery window (optional) — date auto-falls-back
                 // to event_start_date if user set times but not date explicitly.
-                ...((() => {
+                ...(() => {
                     const deliveryDate =
                         formData.requested_delivery_date || formData.event_start_date;
                     if (
@@ -639,12 +640,11 @@ function CheckoutPageInner() {
                         };
                     }
                     return {};
-                })()),
+                })(),
                 // Client-requested pickup window (optional) — date auto-falls-back
                 // to event_end_date if user set times but not date explicitly.
-                ...((() => {
-                    const pickupDate =
-                        formData.requested_pickup_date || formData.event_end_date;
+                ...(() => {
+                    const pickupDate = formData.requested_pickup_date || formData.event_end_date;
                     if (
                         pickupDate &&
                         formData.requested_pickup_time_start &&
@@ -658,7 +658,7 @@ function CheckoutPageInner() {
                         };
                     }
                     return {};
-                })()),
+                })(),
                 ...(formData.special_instructions
                     ? { special_instructions: formData.special_instructions }
                     : {}),
@@ -718,62 +718,62 @@ function CheckoutPageInner() {
             {/* Progress Header — hidden in self-pickup mode (that flow has its
                 own 3-tab nav embedded in SelfPickupCheckoutFlow). */}
             {checkoutMode === "standard" && (
-            <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="max-w-5xl mx-auto px-8 py-6">
-                    <div className="flex items-center justify-between">
-                        {STEPS.map((step, index) => {
-                            const isActive = step.key === currentStep;
-                            const isCompleted = index < currentStepIndex;
-                            const Icon = step.icon;
+                <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+                    <div className="max-w-5xl mx-auto px-8 py-6">
+                        <div className="flex items-center justify-between">
+                            {STEPS.map((step, index) => {
+                                const isActive = step.key === currentStep;
+                                const isCompleted = index < currentStepIndex;
+                                const Icon = step.icon;
 
-                            return (
-                                <div key={step.key} className="flex items-center flex-1">
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                                                isCompleted
-                                                    ? "bg-primary border-primary text-primary-foreground"
-                                                    : isActive
-                                                      ? "bg-primary/10 border-primary text-primary"
-                                                      : "bg-muted border-border text-muted-foreground"
-                                            }`}
-                                        >
-                                            {isCompleted ? (
-                                                <Check className="h-5 w-5" />
-                                            ) : (
-                                                <Icon className="h-5 w-5" />
-                                            )}
-                                        </div>
-                                        <div
-                                            className={`hidden sm:block ${index < STEPS.length - 1 ? "" : ""}`}
-                                        >
-                                            <p
-                                                className={`text-sm font-medium font-mono uppercase tracking-wide ${
-                                                    isActive
-                                                        ? "text-foreground"
-                                                        : "text-muted-foreground"
+                                return (
+                                    <div key={step.key} className="flex items-center flex-1">
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                                    isCompleted
+                                                        ? "bg-primary border-primary text-primary-foreground"
+                                                        : isActive
+                                                          ? "bg-primary/10 border-primary text-primary"
+                                                          : "bg-muted border-border text-muted-foreground"
                                                 }`}
                                             >
-                                                {step.label}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground font-mono">
-                                                Step {index + 1} of {STEPS.length}
-                                            </p>
+                                                {isCompleted ? (
+                                                    <Check className="h-5 w-5" />
+                                                ) : (
+                                                    <Icon className="h-5 w-5" />
+                                                )}
+                                            </div>
+                                            <div
+                                                className={`hidden sm:block ${index < STEPS.length - 1 ? "" : ""}`}
+                                            >
+                                                <p
+                                                    className={`text-sm font-medium font-mono uppercase tracking-wide ${
+                                                        isActive
+                                                            ? "text-foreground"
+                                                            : "text-muted-foreground"
+                                                    }`}
+                                                >
+                                                    {step.label}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground font-mono">
+                                                    Step {index + 1} of {STEPS.length}
+                                                </p>
+                                            </div>
                                         </div>
+                                        {index < STEPS.length - 1 && (
+                                            <div
+                                                className={`flex-1 h-0.5 mx-4 transition-colors ${
+                                                    isCompleted ? "bg-primary" : "bg-border"
+                                                }`}
+                                            />
+                                        )}
                                     </div>
-                                    {index < STEPS.length - 1 && (
-                                        <div
-                                            className={`flex-1 h-0.5 mx-4 transition-colors ${
-                                                isCompleted ? "bg-primary" : "bg-border"
-                                            }`}
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
 
             {/* Step 0 — Delivery Mode (only rendered when feature enabled). */}
@@ -784,9 +784,9 @@ function CheckoutPageInner() {
                             How would you like to receive these items?
                         </h3>
                         <p className="text-sm text-muted-foreground mb-6">
-                            Choose delivery for our logistics team to bring items to your
-                            venue, or self-pickup to collect them yourself from the
-                            warehouse. You can change this at any time before submitting.
+                            Choose delivery for our logistics team to bring items to your venue, or
+                            self-pickup to collect them yourself from the warehouse. You can change
+                            this at any time before submitting.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <button
@@ -805,8 +805,8 @@ function CheckoutPageInner() {
                                     <p className="font-semibold text-base">Delivery</p>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    Our logistics team delivers to your venue on the date
-                                    and window you pick.
+                                    Our logistics team delivers to your venue on the date and window
+                                    you pick.
                                 </p>
                             </button>
                             <button
@@ -825,8 +825,8 @@ function CheckoutPageInner() {
                                     <p className="font-semibold text-base">Self-Pickup</p>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    Collect the items yourself from the warehouse. You
-                                    provide the collector and return window.
+                                    Collect the items yourself from the warehouse. You provide the
+                                    collector and return window.
                                 </p>
                             </button>
                         </div>
@@ -838,243 +838,1046 @@ function CheckoutPageInner() {
                 provides its own sticky stepper + content layout matching the
                 standard-order flow. */}
             {checkoutMode === "self-pickup" && (
-                <SelfPickupCheckoutFlow
-                    onSwitchToStandard={() => setCheckoutMode("standard")}
-                />
+                <SelfPickupCheckoutFlow onSwitchToStandard={() => setCheckoutMode("standard")} />
             )}
 
             {/* Standard order flow continues below — hidden when self-pickup mode */}
             {checkoutMode === "standard" && (
                 <>
-            {/* warning if any item condition is red or orange */}
+                    {/* warning if any item condition is red or orange */}
 
-            {items.length > 0 && (
-                <div className="max-w-5xl mx-auto px-8 pt-10">
-                    {items.some(
-                        (item) => item.condition === "RED" || item.condition === "ORANGE"
-                    ) && (
-                        <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-                                <div>
-                                    <h3 className="text-sm font-medium text-yellow-800">
-                                        Maintenance Required
-                                    </h3>
-                                    <p className="mt-1 text-sm text-yellow-700">
-                                        Your order includes item(s) that require maintenance. Please
-                                        review condition details and confirm your decision so our
-                                        team can proceed correctly.
-                                    </p>
+                    {items.length > 0 && (
+                        <div className="max-w-5xl mx-auto px-8 pt-10">
+                            {items.some(
+                                (item) => item.condition === "RED" || item.condition === "ORANGE"
+                            ) && (
+                                <div className="bg-yellow-50 border-yellow-200 border rounded-lg p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="text-sm font-medium text-yellow-800">
+                                                Maintenance Required
+                                            </h3>
+                                            <p className="mt-1 text-sm text-yellow-700">
+                                                Your order includes item(s) that require
+                                                maintenance. Please review condition details and
+                                                confirm your decision so our team can proceed
+                                                correctly.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* Content */}
-            <div className="max-w-5xl mx-auto px-8 py-10">
-                <AnimatePresence mode="wait">
-                    {/* Step 1: Cart Review */}
-                    {currentStep === "cart" && (
-                        <motion.div
-                            key="cart"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Review Your Order</h2>
-                                <p className="text-muted-foreground">
-                                    Verify your items before proceeding to event details
-                                </p>
-                            </div>
+                    {/* Content */}
+                    <div className="max-w-5xl mx-auto px-8 py-10">
+                        <AnimatePresence mode="wait">
+                            {/* Step 1: Cart Review */}
+                            {currentStep === "cart" && (
+                                <motion.div
+                                    key="cart"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-6"
+                                >
+                                    <div>
+                                        <h2 className="text-3xl font-bold mb-2">
+                                            Review Your Order
+                                        </h2>
+                                        <p className="text-muted-foreground">
+                                            Verify your items before proceeding to event details
+                                        </p>
+                                    </div>
 
-                            <Card className="p-6 bg-card/50 border-border/50">
-                                <div className="space-y-4">
-                                    {items.map((item) => (
-                                        <div
-                                            key={item.assetId}
-                                            className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
-                                        >
-                                            <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
-                                                {item.image ? (
-                                                    <Image
-                                                        src={item.image}
-                                                        alt={item.assetName}
-                                                        width={96}
-                                                        height={96}
-                                                        className="object-cover w-full h-full"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Package className="h-10 w-10 text-muted-foreground/30" />
+                                    <Card className="p-6 bg-card/50 border-border/50">
+                                        <div className="space-y-4">
+                                            {items.map((item) => (
+                                                <div
+                                                    key={item.assetId}
+                                                    className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                                                >
+                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                        {item.image ? (
+                                                            <Image
+                                                                src={item.image}
+                                                                alt={item.assetName}
+                                                                width={96}
+                                                                height={96}
+                                                                className="object-cover w-full h-full"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <Package className="h-10 w-10 text-muted-foreground/30" />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
 
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold mb-1">
-                                                    {item.assetName}
-                                                </h4>
-                                                <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
-                                                    <span>Qty: {item.quantity}</span>
-                                                    <span>•</span>
-                                                    <span>{item.volume} m³ each</span>
-                                                    <span>•</span>
-                                                    <span>{item.weight} kg each</span>
+                                                    <div className="flex-1">
+                                                        <h4 className="font-semibold mb-1">
+                                                            {item.assetName}
+                                                        </h4>
+                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
+                                                            <span>Qty: {item.quantity}</span>
+                                                            <span>•</span>
+                                                            <span>{item.volume} m³ each</span>
+                                                            <span>•</span>
+                                                            <span>{item.weight} kg each</span>
+                                                        </div>
+                                                        {item.condition === "RED" && (
+                                                            <div className="mt-1 space-y-1">
+                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                                    <AlertCircle className="h-3 w-3" />{" "}
+                                                                    RED — Requires repair
+                                                                </span>
+                                                                {item.conditionNotes && (
+                                                                    <p className="text-xs text-red-600 line-clamp-2">
+                                                                        {item.conditionNotes}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {item.condition === "ORANGE" && (
+                                                            <div className="mt-1 space-y-1">
+                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                                    <AlertCircle className="h-3 w-3" />{" "}
+                                                                    ORANGE — Decision needed
+                                                                </span>
+                                                                {item.conditionNotes && (
+                                                                    <p className="text-xs text-amber-600 line-clamp-2">
+                                                                        {item.conditionNotes}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {item.fromCollectionName && (
+                                                            <p className="text-xs text-muted-foreground font-mono">
+                                                                From collection:{" "}
+                                                                {item.fromCollectionName}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                {item.condition === "RED" && (
-                                                    <div className="mt-1 space-y-1">
-                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
-                                                            <AlertCircle className="h-3 w-3" /> RED
-                                                            — Requires repair
-                                                        </span>
-                                                        {item.conditionNotes && (
-                                                            <p className="text-xs text-red-600 line-clamp-2">
-                                                                {item.conditionNotes}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {item.condition === "ORANGE" && (
-                                                    <div className="mt-1 space-y-1">
-                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                                            <AlertCircle className="h-3 w-3" />{" "}
-                                                            ORANGE — Decision needed
-                                                        </span>
-                                                        {item.conditionNotes && (
-                                                            <p className="text-xs text-amber-600 line-clamp-2">
-                                                                {item.conditionNotes}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {item.fromCollectionName && (
-                                                    <p className="text-xs text-muted-foreground font-mono">
-                                                        From collection: {item.fromCollectionName}
-                                                    </p>
-                                                )}
+                                            ))}
+                                        </div>
+                                    </Card>
+
+                                    {/* Totals Card */}
+                                    <Card className="p-6 bg-primary/5 border-primary/20">
+                                        <div className="grid grid-cols-3 gap-6">
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Items
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono">
+                                                    {itemCount}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Volume
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono text-primary">
+                                                    {totalVolume.toFixed(2)} m³
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Weight
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono">
+                                                    {totalWeight.toFixed(1)} kg
+                                                </p>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </Card>
+                                    </Card>
+                                </motion.div>
+                            )}
 
-                            {/* Totals Card */}
-                            <Card className="p-6 bg-primary/5 border-primary/20">
-                                <div className="grid grid-cols-3 gap-6">
+                            {/* Step 2: Event Details */}
+                            {currentStep === "installation" && (
+                                <motion.div
+                                    key="installation"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-6"
+                                >
                                     <div>
-                                        <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                            Total Items
-                                        </p>
-                                        <p className="text-2xl font-bold font-mono">{itemCount}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                            Total Volume
-                                        </p>
-                                        <p className="text-2xl font-bold font-mono text-primary">
-                                            {totalVolume.toFixed(2)} m³
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
-                                            Total Weight
-                                        </p>
-                                        <p className="text-2xl font-bold font-mono">
-                                            {totalWeight.toFixed(1)} kg
+                                        <h2 className="text-3xl font-bold mb-2">
+                                            Installation Details
+                                        </h2>
+                                        <p className="text-muted-foreground">
+                                            When do you need these assets to be installed?
                                         </p>
                                     </div>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
 
-                    {/* Step 2: Event Details */}
-                    {currentStep === "installation" && (
-                        <motion.div
-                            key="installation"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Installation Details</h2>
-                                <p className="text-muted-foreground">
-                                    When do you need these assets to be installed?
-                                </p>
-                            </div>
+                                    <Card className="p-8 bg-card/50 border-border/50 space-y-6">
+                                        <div className="space-y-6">
+                                            {eventDateInputsEnabled && (
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="eventStartDate"
+                                                            className="font-mono uppercase text-xs tracking-wide"
+                                                        >
+                                                            Event Start Date *
+                                                        </Label>
+                                                        <Input
+                                                            id="eventStartDate"
+                                                            type="date"
+                                                            data-testid="checkout-event-start"
+                                                            value={formData.event_start_date}
+                                                            onChange={(e) => {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    event_start_date:
+                                                                        e.target.value,
+                                                                });
+                                                                setHasCheckedMaintenanceFeasibility(
+                                                                    false
+                                                                );
+                                                                setMaintenanceFeasibilityIssues([]);
+                                                            }}
+                                                            required
+                                                            min={calculateMinDate()}
+                                                            className="h-12 font-mono"
+                                                        />
+                                                    </div>
 
-                            <Card className="p-8 bg-card/50 border-border/50 space-y-6">
-                                <div className="space-y-6">
-                                    {eventDateInputsEnabled && (
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="eventStartDate"
-                                                    className="font-mono uppercase text-xs tracking-wide"
-                                                >
-                                                    Event Start Date *
-                                                </Label>
-                                                <Input
-                                                    id="eventStartDate"
-                                                    type="date"
-                                                    data-testid="checkout-event-start"
-                                                    value={formData.event_start_date}
-                                                    onChange={(e) => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            event_start_date: e.target.value,
-                                                        });
-                                                        setHasCheckedMaintenanceFeasibility(false);
-                                                        setMaintenanceFeasibilityIssues([]);
-                                                    }}
-                                                    required
-                                                    min={calculateMinDate()}
-                                                    className="h-12 font-mono"
-                                                />
-                                            </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="eventEndDate"
+                                                            className="font-mono uppercase text-xs tracking-wide"
+                                                        >
+                                                            Event End Date *
+                                                        </Label>
+                                                        <Input
+                                                            id="eventEndDate"
+                                                            type="date"
+                                                            data-testid="checkout-event-end"
+                                                            value={formData.event_end_date}
+                                                            onChange={(e) => {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    event_end_date: e.target.value,
+                                                                });
+                                                                setHasCheckedMaintenanceFeasibility(
+                                                                    false
+                                                                );
+                                                                setMaintenanceFeasibilityIssues([]);
+                                                            }}
+                                                            required
+                                                            min={
+                                                                formData.event_start_date ||
+                                                                calculateMinDate()
+                                                            }
+                                                            className="h-12 font-mono"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="eventEndDate"
-                                                    className="font-mono uppercase text-xs tracking-wide"
-                                                >
-                                                    Event End Date *
-                                                </Label>
-                                                <Input
-                                                    id="eventEndDate"
-                                                    type="date"
-                                                    data-testid="checkout-event-end"
-                                                    value={formData.event_end_date}
-                                                    onChange={(e) => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            event_end_date: e.target.value,
-                                                        });
-                                                        setHasCheckedMaintenanceFeasibility(false);
-                                                        setMaintenanceFeasibilityIssues([]);
-                                                    }}
-                                                    required
-                                                    min={
-                                                        formData.event_start_date ||
-                                                        calculateMinDate()
-                                                    }
-                                                    className="h-12 font-mono"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Feasibility helper — inline under the date fields.
+                                            {/* Feasibility helper — inline under the date fields.
                                         Helper copy is gated by the enable_feasibility_helper
                                         platform flag; the hard block on Next is always
                                         enforced via canProceed(). */}
+                                            <FeasibilityHelper
+                                                helperEnabled={feasibilityHelperEnabled}
+                                                isLoading={feasibilityPreview.isLoading}
+                                                floorDate={feasibility.floorDate}
+                                                userEventDate={
+                                                    eventDateInputsEnabled
+                                                        ? formData.event_start_date
+                                                        : formData.requested_delivery_date
+                                                }
+                                                userDateFeasible={feasibility.userDateFeasible}
+                                                blockingItems={feasibility.blockingItems}
+                                                config={feasibilityPreview.data?.config ?? null}
+                                                onUseFloorDate={() => {
+                                                    if (!feasibility.floorDate) return;
+                                                    if (eventDateInputsEnabled) {
+                                                        setFormData({
+                                                            ...formData,
+                                                            event_start_date: feasibility.floorDate,
+                                                            event_end_date:
+                                                                formData.event_end_date &&
+                                                                formData.event_end_date >=
+                                                                    feasibility.floorDate
+                                                                    ? formData.event_end_date
+                                                                    : feasibility.floorDate,
+                                                        });
+                                                    } else {
+                                                        setFormData({
+                                                            ...formData,
+                                                            requested_delivery_date:
+                                                                feasibility.floorDate,
+                                                            requested_pickup_date:
+                                                                formData.requested_pickup_date &&
+                                                                formData.requested_pickup_date >=
+                                                                    feasibility.floorDate
+                                                                    ? formData.requested_pickup_date
+                                                                    : feasibility.floorDate,
+                                                        });
+                                                    }
+                                                }}
+                                            />
+
+                                            {/* Delivery + Pickup windows.
+                                        When event-dates flag is OFF, these are the primary
+                                        input and BOTH are required. Native <input type="date">
+                                        + <input type="time"> match the rest of the form's
+                                        styling. */}
+                                            <div className="space-y-4 pt-4 border-t border-border/40">
+                                                <div className="space-y-1">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Delivery &amp; Pickup{" "}
+                                                        {eventDateInputsEnabled
+                                                            ? "(Optional)"
+                                                            : "*"}
+                                                    </Label>
+                                                    {!eventDateInputsEnabled && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            When do you need the items delivered and
+                                                            picked up?
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-5">
+                                                    {/* Delivery */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Delivery Date{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="date"
+                                                                value={
+                                                                    formData.requested_delivery_date
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_delivery_date:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                min={calculateMinDate()}
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                From{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="time"
+                                                                value={
+                                                                    formData.requested_delivery_time_start
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_delivery_time_start:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                To{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="time"
+                                                                value={
+                                                                    formData.requested_delivery_time_end
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_delivery_time_end:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Pickup */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Pickup Date{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="date"
+                                                                value={
+                                                                    formData.requested_pickup_date
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_pickup_date:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                min={
+                                                                    formData.requested_delivery_date ||
+                                                                    calculateMinDate()
+                                                                }
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                From{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="time"
+                                                                value={
+                                                                    formData.requested_pickup_time_start
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_pickup_time_start:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                To{" "}
+                                                                {eventDateInputsEnabled ? "" : "*"}
+                                                            </Label>
+                                                            <Input
+                                                                type="time"
+                                                                value={
+                                                                    formData.requested_pickup_time_end
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        requested_pickup_time_end:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                required={!eventDateInputsEnabled}
+                                                                className="h-12 font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {effectiveEventStart && effectiveEventEnd && (
+                                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <Calendar className="h-5 w-5 text-primary" />
+                                                        <div>
+                                                            <p className="text-sm font-medium">
+                                                                {eventDateInputsEnabled
+                                                                    ? "Event Duration"
+                                                                    : "Rental Duration"}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground font-mono">
+                                                                {Math.ceil(
+                                                                    (new Date(
+                                                                        effectiveEventEnd
+                                                                    ).getTime() -
+                                                                        new Date(
+                                                                            effectiveEventStart
+                                                                        ).getTime()) /
+                                                                        (1000 * 60 * 60 * 24)
+                                                                ) + 1}{" "}
+                                                                days
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {redItems.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <Card className="p-4 border-red-300 bg-red-50/40">
+                                                        <p className="text-sm text-red-800">
+                                                            Your cart includes RED items. These are
+                                                            fix-only items and must pass feasibility
+                                                            before you can continue.
+                                                        </p>
+                                                    </Card>
+                                                    <RedFeasibilityAlert
+                                                        issues={maintenanceFeasibilityIssues}
+                                                        hasChecked={
+                                                            hasCheckedMaintenanceFeasibility
+                                                        }
+                                                        isChecking={
+                                                            maintenanceFeasibilityCheck.isPending
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            )}
+
+                            {/* Step 3: Venue Information */}
+                            {currentStep === "venue" && (
+                                <motion.div
+                                    key="venue"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-6"
+                                >
+                                    <div>
+                                        <h2 className="text-3xl font-bold mb-2">
+                                            Installation Information
+                                        </h2>
+                                        <p className="text-muted-foreground">
+                                            Where will the installation take place?
+                                        </p>
+                                    </div>
+
+                                    <Card className="p-8 bg-card/50 border-border/50">
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="venueName"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Venue Name *
+                                                </Label>
+                                                <Input
+                                                    id="venueName"
+                                                    data-testid="checkout-venue-name"
+                                                    value={formData.venue_name}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            venue_name: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="e.g., Dubai Festival City"
+                                                    required
+                                                    className="h-12"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label
+                                                        htmlFor="venueCountry"
+                                                        className="font-mono uppercase text-xs tracking-wide"
+                                                    >
+                                                        Country
+                                                    </Label>
+                                                    <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
+                                                        {formData.venue_country_name ||
+                                                            "Loading..."}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label
+                                                        htmlFor="venueCity"
+                                                        className="font-mono uppercase text-xs tracking-wide"
+                                                    >
+                                                        City *
+                                                    </Label>
+                                                    <Select
+                                                        value={formData.venue_city_id}
+                                                        onValueChange={(value) => {
+                                                            const selectedCity = cities.find(
+                                                                (c) => c.id === value
+                                                            );
+                                                            setFormData({
+                                                                ...formData,
+                                                                venue_city_id: value,
+                                                                venue_city_name:
+                                                                    selectedCity?.name || "",
+                                                            });
+                                                        }}
+                                                        disabled={!formData.venue_country_id}
+                                                    >
+                                                        <SelectTrigger
+                                                            className="h-12 font-mono"
+                                                            data-testid="checkout-venue-city"
+                                                        >
+                                                            <SelectValue placeholder="Select city" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {cities.map((city) => (
+                                                                <SelectItem
+                                                                    key={city.id}
+                                                                    value={city.id}
+                                                                    className="font-mono"
+                                                                >
+                                                                    {city.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="venueAddress"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Full Address *
+                                                </Label>
+                                                <Textarea
+                                                    id="venueAddress"
+                                                    data-testid="checkout-venue-address"
+                                                    value={formData.venue_address}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            venue_address: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="Complete venue address"
+                                                    required
+                                                    rows={3}
+                                                    className="font-mono text-sm"
+                                                />
+                                            </div>
+
+                                            {/* Venue Contact — always visible, not gated by permits */}
+                                            <div className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-4">
+                                                <div>
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Venue Contact
+                                                    </Label>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        The person at the venue who can coordinate
+                                                        arrival, access, unloading, or handover.
+                                                    </p>
+                                                </div>
+                                                <div className="grid gap-4 md:grid-cols-3">
+                                                    <div className="space-y-1">
+                                                        <Label
+                                                            htmlFor="venueContactName"
+                                                            className="text-xs"
+                                                        >
+                                                            Name
+                                                        </Label>
+                                                        <Input
+                                                            id="venueContactName"
+                                                            value={formData.venue_contact_name}
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    venue_contact_name:
+                                                                        e.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="Contact name"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label
+                                                            htmlFor="venueContactEmail"
+                                                            className="text-xs"
+                                                        >
+                                                            Email
+                                                        </Label>
+                                                        <Input
+                                                            id="venueContactEmail"
+                                                            type="email"
+                                                            value={formData.venue_contact_email}
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    venue_contact_email:
+                                                                        e.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="contact@venue.com"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label
+                                                            htmlFor="venueContactPhone"
+                                                            className="text-xs"
+                                                        >
+                                                            Phone
+                                                        </Label>
+                                                        <Input
+                                                            id="venueContactPhone"
+                                                            value={formData.venue_contact_phone}
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    venue_contact_phone:
+                                                                        e.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="+971..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
+                                                <div className="flex items-start gap-3">
+                                                    <Checkbox
+                                                        id="venueRequiresPermit"
+                                                        checked={formData.requires_permit}
+                                                        onCheckedChange={(checked) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                requires_permit: checked === true,
+                                                            })
+                                                        }
+                                                    />
+                                                    <div className="space-y-1">
+                                                        <Label
+                                                            htmlFor="venueRequiresPermit"
+                                                            className="font-mono uppercase text-xs tracking-wide"
+                                                        >
+                                                            Venue requires permits or access
+                                                            coordination
+                                                        </Label>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Share what you know now. Additional
+                                                            charges may apply depending on venue
+                                                            requirements.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {formData.requires_permit && (
+                                                    <div className="space-y-4">
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Permit Owner *
+                                                            </Label>
+                                                            <Select
+                                                                value={formData.permit_owner}
+                                                                onValueChange={(value) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        permit_owner: value as
+                                                                            | "CLIENT"
+                                                                            | "PLATFORM"
+                                                                            | "UNKNOWN",
+                                                                    })
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="h-12 font-mono">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="CLIENT">
+                                                                        I will arrange
+                                                                    </SelectItem>
+                                                                    <SelectItem value="PLATFORM">
+                                                                        You should arrange
+                                                                    </SelectItem>
+                                                                    <SelectItem value="UNKNOWN">
+                                                                        Not sure yet
+                                                                    </SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
+                                                                <Checkbox
+                                                                    checked={
+                                                                        formData.requires_vehicle_docs
+                                                                    }
+                                                                    onCheckedChange={(checked) =>
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            requires_vehicle_docs:
+                                                                                checked === true,
+                                                                        })
+                                                                    }
+                                                                />
+                                                                <div>
+                                                                    <p className="text-sm font-medium">
+                                                                        Vehicle documents required
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Use this if venue access
+                                                                        needs truck registration or
+                                                                        driver docs.
+                                                                    </p>
+                                                                </div>
+                                                            </label>
+                                                            <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
+                                                                <Checkbox
+                                                                    checked={
+                                                                        formData.requires_staff_ids
+                                                                    }
+                                                                    onCheckedChange={(checked) =>
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            requires_staff_ids:
+                                                                                checked === true,
+                                                                        })
+                                                                    }
+                                                                />
+                                                                <div>
+                                                                    <p className="text-sm font-medium">
+                                                                        Staff IDs required
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Use this if crew names, IDs,
+                                                                        or passes are needed before
+                                                                        entry.
+                                                                    </p>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Permit Notes
+                                                            </Label>
+                                                            <Textarea
+                                                                value={formData.permit_notes}
+                                                                onChange={(e) =>
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        permit_notes:
+                                                                            e.target.value,
+                                                                    })
+                                                                }
+                                                                placeholder="Permit timing, loading bay rules, access windows, or anything the team should know."
+                                                                rows={3}
+                                                                className="font-mono text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Access notes — always visible in permit section */}
+                                                <div className="space-y-2">
+                                                    <Label
+                                                        htmlFor="venueAccessNotes"
+                                                        className="font-mono uppercase text-xs tracking-wide"
+                                                    >
+                                                        Access Notes (Optional)
+                                                    </Label>
+                                                    <Textarea
+                                                        id="venueAccessNotes"
+                                                        value={formData.venue_access_notes}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                venue_access_notes: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder="Loading dock info, access codes, gate instructions, etc."
+                                                        rows={2}
+                                                        className="font-mono text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            )}
+
+                            {/* Step 4: Contact Information */}
+                            {currentStep === "contact" && (
+                                <motion.div
+                                    key="contact"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-6"
+                                >
+                                    <div>
+                                        <h2 className="text-3xl font-bold mb-2">
+                                            Point of Contact
+                                        </h2>
+                                        <p className="text-muted-foreground">
+                                            Provide the on-site contact for this order. Our team
+                                            will reach out to this person for coordination and
+                                            updates.
+                                        </p>
+                                    </div>
+
+                                    <Card className="p-8 bg-card/50 border-border/50">
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="contactName"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Contact Person Name *
+                                                </Label>
+                                                <Input
+                                                    id="contactName"
+                                                    data-testid="checkout-contact-name"
+                                                    value={formData.contact_name}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            contact_name: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="e.g., John Smith"
+                                                    required
+                                                    className="h-12"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label
+                                                        htmlFor="contactEmail"
+                                                        className="font-mono uppercase text-xs tracking-wide"
+                                                    >
+                                                        Email Address *
+                                                    </Label>
+                                                    <Input
+                                                        id="contactEmail"
+                                                        type="email"
+                                                        data-testid="checkout-contact-email"
+                                                        value={formData.contact_email}
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                contact_email: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder="john@company.com"
+                                                        required
+                                                        className={`h-12 ${formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email) ? "border-destructive" : ""}`}
+                                                    />
+                                                    {formData.contact_email &&
+                                                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                                                            formData.contact_email
+                                                        ) && (
+                                                            <p className="text-xs text-destructive">
+                                                                Please enter a valid email address
+                                                            </p>
+                                                        )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label
+                                                        htmlFor="contactPhone"
+                                                        className="font-mono uppercase text-xs tracking-wide"
+                                                    >
+                                                        Phone Number *
+                                                    </Label>
+                                                    <PhoneInput
+                                                        international
+                                                        defaultCountry="AE"
+                                                        data-testid="checkout-contact-phone"
+                                                        value={formData.contact_phone}
+                                                        onChange={(value) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                contact_phone: value || "",
+                                                            })
+                                                        }
+                                                        className="h-12 rounded-md border border-input bg-background px-3 text-sm [&>input]:border-0 [&>input]:bg-transparent [&>input]:outline-none [&>input]:h-full"
+                                                    />
+                                                    {formData.contact_phone &&
+                                                        !isValidPhoneNumber(
+                                                            formData.contact_phone
+                                                        ) && (
+                                                            <p className="text-xs text-destructive">
+                                                                Please enter a valid phone number
+                                                            </p>
+                                                        )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="specialInstructions"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Special Instructions (Optional)
+                                                </Label>
+                                                <Textarea
+                                                    id="specialInstructions"
+                                                    value={formData.special_instructions}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            special_instructions: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder="Any special handling requirements, setup preferences, or branding requests..."
+                                                    rows={4}
+                                                    className="font-mono text-sm"
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Include details about setup, branding, or any
+                                                    special requirements
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            )}
+
+                            {/* Step 5: Review & Submit */}
+                            {currentStep === "review" && (
+                                <motion.div
+                                    key="review"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-6"
+                                >
+                                    <div>
+                                        <h2 className="text-3xl font-bold mb-2">Review & Submit</h2>
+                                        <p className="text-muted-foreground">
+                                            Double-check all details before submitting your order
+                                        </p>
+                                    </div>
+
+                                    {orangeItems.length > 0 ? (
+                                        <MaintenanceDecisionCenter
+                                            items={orangeItems}
+                                            onDecisionChange={(assetId, decision) =>
+                                                updateItemMaintenanceDecision(assetId, decision)
+                                            }
+                                        />
+                                    ) : null}
+
+                                    {/* Feasibility re-check. When a user flips an ORANGE
+                                decision to "Fix", the preview query re-fires with
+                                the new decision; if that pushes the earliest date
+                                past the event date they picked at the installation
+                                step, the helper surfaces it here + the Submit button
+                                is blocked via canProceed. */}
                                     <FeasibilityHelper
                                         helperEnabled={feasibilityHelperEnabled}
                                         isLoading={feasibilityPreview.isLoading}
@@ -1115,1158 +1918,440 @@ function CheckoutPageInner() {
                                         }}
                                     />
 
-                                    {/* Delivery + Pickup windows.
-                                        When event-dates flag is OFF, these are the primary
-                                        input and BOTH are required. Native <input type="date">
-                                        + <input type="time"> match the rest of the form's
-                                        styling. */}
-                                    <div className="space-y-4 pt-4 border-t border-border/40">
-                                        <div className="space-y-1">
-                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                Delivery &amp; Pickup {eventDateInputsEnabled ? "(Optional)" : "*"}
-                                            </Label>
-                                            {!eventDateInputsEnabled && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    When do you need the items delivered and picked up?
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-5">
-                                            {/* Delivery */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Delivery Date {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={formData.requested_delivery_date}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_delivery_date:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        min={calculateMinDate()}
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        From {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={
-                                                            formData.requested_delivery_time_start
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_delivery_time_start:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        To {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={
-                                                            formData.requested_delivery_time_end
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_delivery_time_end:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Pickup */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Pickup Date {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={formData.requested_pickup_date}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_pickup_date:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        min={
-                                                            formData.requested_delivery_date ||
-                                                            calculateMinDate()
-                                                        }
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        From {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={
-                                                            formData.requested_pickup_time_start
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_pickup_time_start:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        To {eventDateInputsEnabled ? "" : "*"}
-                                                    </Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={
-                                                            formData.requested_pickup_time_end
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                requested_pickup_time_end:
-                                                                    e.target.value,
-                                                            })
-                                                        }
-                                                        required={!eventDateInputsEnabled}
-                                                        className="h-12 font-mono"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {effectiveEventStart && effectiveEventEnd && (
-                                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                                            <div className="flex items-center gap-3">
-                                                <Calendar className="h-5 w-5 text-primary" />
-                                                <div>
-                                                    <p className="text-sm font-medium">
-                                                        {eventDateInputsEnabled
-                                                            ? "Event Duration"
-                                                            : "Rental Duration"}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground font-mono">
-                                                        {Math.ceil(
-                                                            (new Date(
-                                                                effectiveEventEnd
-                                                            ).getTime() -
-                                                                new Date(
-                                                                    effectiveEventStart
-                                                                ).getTime()) /
-                                                                (1000 * 60 * 60 * 24)
-                                                        ) + 1}{" "}
-                                                        days
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {redItems.length > 0 && (
-                                        <div className="space-y-3">
-                                            <Card className="p-4 border-red-300 bg-red-50/40">
-                                                <p className="text-sm text-red-800">
-                                                    Your cart includes RED items. These are fix-only
-                                                    items and must pass feasibility before you can
-                                                    continue.
-                                                </p>
-                                            </Card>
-                                            <RedFeasibilityAlert
-                                                issues={maintenanceFeasibilityIssues}
-                                                hasChecked={hasCheckedMaintenanceFeasibility}
-                                                isChecking={maintenanceFeasibilityCheck.isPending}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {/* Step 3: Venue Information */}
-                    {currentStep === "venue" && (
-                        <motion.div
-                            key="venue"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">
-                                    Installation Information
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    Where will the installation take place?
-                                </p>
-                            </div>
-
-                            <Card className="p-8 bg-card/50 border-border/50">
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="venueName"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Venue Name *
-                                        </Label>
-                                        <Input
-                                            id="venueName"
-                                            data-testid="checkout-venue-name"
-                                            value={formData.venue_name}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    venue_name: e.target.value,
-                                                })
-                                            }
-                                            placeholder="e.g., Dubai Festival City"
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="venueCountry"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Country
-                                            </Label>
-                                            <div className="h-12 px-3 border border-border rounded-md bg-muted/30 flex items-center text-sm font-mono">
-                                                {formData.venue_country_name || "Loading..."}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="venueCity"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                City *
-                                            </Label>
-                                            <Select
-                                                value={formData.venue_city_id}
-                                                onValueChange={(value) => {
-                                                    const selectedCity = cities.find(
-                                                        (c) => c.id === value
-                                                    );
-                                                    setFormData({
-                                                        ...formData,
-                                                        venue_city_id: value,
-                                                        venue_city_name: selectedCity?.name || "",
-                                                    });
-                                                }}
-                                                disabled={!formData.venue_country_id}
-                                            >
-                                                <SelectTrigger
-                                                    className="h-12 font-mono"
-                                                    data-testid="checkout-venue-city"
-                                                >
-                                                    <SelectValue placeholder="Select city" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {cities.map((city) => (
-                                                        <SelectItem
-                                                            key={city.id}
-                                                            value={city.id}
-                                                            className="font-mono"
-                                                        >
-                                                            {city.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="venueAddress"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Full Address *
-                                        </Label>
-                                        <Textarea
-                                            id="venueAddress"
-                                            data-testid="checkout-venue-address"
-                                            value={formData.venue_address}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    venue_address: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Complete venue address"
-                                            required
-                                            rows={3}
-                                            className="font-mono text-sm"
-                                        />
-                                    </div>
-
-                                    {/* Venue Contact — always visible, not gated by permits */}
-                                    <div className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-4">
-                                        <div>
-                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                Venue Contact
-                                            </Label>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                The person at the venue who can coordinate arrival,
-                                                access, unloading, or handover.
-                                            </p>
-                                        </div>
-                                        <div className="grid gap-4 md:grid-cols-3">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="venueContactName" className="text-xs">
-                                                    Name
-                                                </Label>
-                                                <Input
-                                                    id="venueContactName"
-                                                    value={formData.venue_contact_name}
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            venue_contact_name: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder="Contact name"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="venueContactEmail" className="text-xs">
-                                                    Email
-                                                </Label>
-                                                <Input
-                                                    id="venueContactEmail"
-                                                    type="email"
-                                                    value={formData.venue_contact_email}
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            venue_contact_email: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder="contact@venue.com"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="venueContactPhone" className="text-xs">
-                                                    Phone
-                                                </Label>
-                                                <Input
-                                                    id="venueContactPhone"
-                                                    value={formData.venue_contact_phone}
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            venue_contact_phone: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder="+971..."
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                                        <div className="flex items-start gap-3">
-                                            <Checkbox
-                                                id="venueRequiresPermit"
-                                                checked={formData.requires_permit}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        requires_permit: checked === true,
-                                                    })
-                                                }
-                                            />
-                                            <div className="space-y-1">
-                                                <Label
-                                                    htmlFor="venueRequiresPermit"
-                                                    className="font-mono uppercase text-xs tracking-wide"
-                                                >
-                                                    Venue requires permits or access coordination
-                                                </Label>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Share what you know now. Additional charges may
-                                                    apply depending on venue requirements.
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {formData.requires_permit && (
-                                            <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Permit Owner *
-                                                    </Label>
-                                                    <Select
-                                                        value={formData.permit_owner}
-                                                        onValueChange={(value) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                permit_owner: value as
-                                                                    | "CLIENT"
-                                                                    | "PLATFORM"
-                                                                    | "UNKNOWN",
-                                                            })
-                                                        }
+                                    {/* Order Summary */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {/* Items */}
+                                        <Card className="p-6 bg-card/50 border-border/50">
+                                            <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                Order Items
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {items.map((item) => (
+                                                    <div
+                                                        key={item.assetId}
+                                                        className="flex items-center gap-3 text-sm"
                                                     >
-                                                        <SelectTrigger className="h-12 font-mono">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="CLIENT">
-                                                                I will arrange
-                                                            </SelectItem>
-                                                            <SelectItem value="PLATFORM">
-                                                                You should arrange
-                                                            </SelectItem>
-                                                            <SelectItem value="UNKNOWN">
-                                                                Not sure yet
-                                                            </SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
-                                                        <Checkbox
-                                                            checked={formData.requires_vehicle_docs}
-                                                            onCheckedChange={(checked) =>
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    requires_vehicle_docs:
-                                                                        checked === true,
-                                                                })
-                                                            }
-                                                        />
-                                                        <div>
-                                                            <p className="text-sm font-medium">
-                                                                Vehicle documents required
+                                                        <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                            {item.image ? (
+                                                                <Image
+                                                                    src={item.image}
+                                                                    alt={item.assetName}
+                                                                    width={48}
+                                                                    height={48}
+                                                                    className="object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                    <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium truncate">
+                                                                {item.assetName}
                                                             </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Use this if venue access needs truck
-                                                                registration or driver docs.
+                                                            <p className="text-xs text-muted-foreground font-mono">
+                                                                Qty: {item.quantity}
                                                             </p>
                                                         </div>
-                                                    </label>
-                                                    <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
-                                                        <Checkbox
-                                                            checked={formData.requires_staff_ids}
-                                                            onCheckedChange={(checked) =>
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    requires_staff_ids:
-                                                                        checked === true,
-                                                                })
-                                                            }
-                                                        />
-                                                        <div>
-                                                            <p className="text-sm font-medium">
-                                                                Staff IDs required
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Use this if crew names, IDs, or
-                                                                passes are needed before entry.
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div>
+                                                    </div>
+                                                ))}
+                                            </div>
 
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Permit Notes
-                                                    </Label>
-                                                    <Textarea
-                                                        value={formData.permit_notes}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                permit_notes: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="Permit timing, loading bay rules, access windows, or anything the team should know."
-                                                        rows={3}
-                                                        className="font-mono text-sm"
-                                                    />
+                                            <Separator className="my-4" />
+
+                                            <div className="space-y-2 text-sm font-mono">
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Total Items:
+                                                    </span>
+                                                    <span className="font-bold">{itemCount}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Total Volume:
+                                                    </span>
+                                                    <span className="font-bold text-primary">
+                                                        {totalVolume.toFixed(2)} m³
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Total Weight:
+                                                    </span>
+                                                    <span className="font-bold">
+                                                        {totalWeight.toFixed(1)} kg
+                                                    </span>
                                                 </div>
                                             </div>
+                                        </Card>
+
+                                        {/* Details Summary */}
+                                        <div className="space-y-6">
+                                            {/* Schedule (delivery + pickup always shown; event dates only when flag on) */}
+                                            <Card className="p-6 bg-card/50 border-border/50">
+                                                <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                    Schedule
+                                                </h3>
+                                                <div className="space-y-3 text-sm">
+                                                    {eventDateInputsEnabled &&
+                                                        formData.event_start_date && (
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                    Event Start
+                                                                </p>
+                                                                <p className="font-medium">
+                                                                    {new Date(
+                                                                        formData.event_start_date
+                                                                    ).toLocaleDateString("en-US", {
+                                                                        weekday: "long",
+                                                                        year: "numeric",
+                                                                        month: "long",
+                                                                        day: "numeric",
+                                                                    })}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    {eventDateInputsEnabled &&
+                                                        formData.event_end_date && (
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                    Event End
+                                                                </p>
+                                                                <p className="font-medium">
+                                                                    {new Date(
+                                                                        formData.event_end_date
+                                                                    ).toLocaleDateString("en-US", {
+                                                                        weekday: "long",
+                                                                        year: "numeric",
+                                                                        month: "long",
+                                                                        day: "numeric",
+                                                                    })}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    {formData.requested_delivery_date && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                Delivery
+                                                            </p>
+                                                            <p className="font-medium">
+                                                                {new Date(
+                                                                    formData.requested_delivery_date
+                                                                ).toLocaleDateString("en-US", {
+                                                                    weekday: "long",
+                                                                    year: "numeric",
+                                                                    month: "long",
+                                                                    day: "numeric",
+                                                                })}
+                                                                {formData.requested_delivery_time_start &&
+                                                                formData.requested_delivery_time_end ? (
+                                                                    <span className="text-muted-foreground font-mono">
+                                                                        {" "}
+                                                                        ·{" "}
+                                                                        {
+                                                                            formData.requested_delivery_time_start
+                                                                        }
+                                                                        –
+                                                                        {
+                                                                            formData.requested_delivery_time_end
+                                                                        }
+                                                                    </span>
+                                                                ) : null}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {formData.requested_pickup_date && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                Pickup
+                                                            </p>
+                                                            <p className="font-medium">
+                                                                {new Date(
+                                                                    formData.requested_pickup_date
+                                                                ).toLocaleDateString("en-US", {
+                                                                    weekday: "long",
+                                                                    year: "numeric",
+                                                                    month: "long",
+                                                                    day: "numeric",
+                                                                })}
+                                                                {formData.requested_pickup_time_start &&
+                                                                formData.requested_pickup_time_end ? (
+                                                                    <span className="text-muted-foreground font-mono">
+                                                                        {" "}
+                                                                        ·{" "}
+                                                                        {
+                                                                            formData.requested_pickup_time_start
+                                                                        }
+                                                                        –
+                                                                        {
+                                                                            formData.requested_pickup_time_end
+                                                                        }
+                                                                    </span>
+                                                                ) : null}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Card>
+
+                                            {/* Venue Info */}
+                                            <Card className="p-6 bg-card/50 border-border/50">
+                                                <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                    Venue
+                                                </h3>
+                                                <div className="space-y-3 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Venue Name
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.venue_name}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Location
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.venue_city_name},{" "}
+                                                            {formData.venue_country_name}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Address
+                                                        </p>
+                                                        <p className="font-medium leading-relaxed">
+                                                            {formData.venue_address}
+                                                        </p>
+                                                    </div>
+                                                    {formData.venue_access_notes && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                Access Notes
+                                                            </p>
+                                                            <p className="font-medium leading-relaxed">
+                                                                {formData.venue_access_notes}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {formData.requires_permit && (
+                                                        <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
+                                                                Permit / Access Coordination
+                                                            </p>
+                                                            <p className="font-medium">
+                                                                {formData.permit_owner ===
+                                                                    "CLIENT" &&
+                                                                    "Client will arrange permits"}
+                                                                {formData.permit_owner ===
+                                                                    "PLATFORM" &&
+                                                                    "Platform should arrange permits"}
+                                                                {formData.permit_owner ===
+                                                                    "UNKNOWN" &&
+                                                                    "Permit ownership still to be confirmed"}
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                                                {formData.requires_vehicle_docs && (
+                                                                    <span className="rounded-full border px-2 py-1">
+                                                                        Vehicle docs required
+                                                                    </span>
+                                                                )}
+                                                                {formData.requires_staff_ids && (
+                                                                    <span className="rounded-full border px-2 py-1">
+                                                                        Staff IDs required
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {formData.permit_notes && (
+                                                                <p className="text-sm leading-relaxed">
+                                                                    {formData.permit_notes}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Card>
+
+                                            {/* Contact Info */}
+                                            <Card className="p-6 bg-card/50 border-border/50">
+                                                <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                    Contact
+                                                </h3>
+                                                <div className="space-y-3 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Name
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.contact_name}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Email
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.contact_email}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Phone
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.contact_phone}
+                                                        </p>
+                                                    </div>
+                                                    {formData.special_instructions && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                Special Instructions
+                                                            </p>
+                                                            <p className="font-medium leading-relaxed">
+                                                                {formData.special_instructions}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                        </div>
+                                    </div>
+
+                                    {/* Availability Issues Banner */}
+                                    {availabilityIssues.length > 0 && (
+                                        <Card className="border-destructive/50 bg-destructive/5 p-6">
+                                            <div className="flex items-start gap-3">
+                                                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold text-destructive mb-2">
+                                                        Availability Issues
+                                                    </p>
+                                                    <ul className="text-sm text-muted-foreground space-y-1 mb-4">
+                                                        {availabilityIssues.map((issue, i) => (
+                                                            <li
+                                                                key={i}
+                                                                className="flex items-start gap-2"
+                                                            >
+                                                                <span className="text-destructive">
+                                                                    •
+                                                                </span>
+                                                                <span>{issue}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => router.push("/catalog")}
+                                                    >
+                                                        Return to Catalog
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    )}
+
+                                    {/* NEW: Hybrid Pricing Estimate */}
+                                    {isEstimateFeatureEnabled &&
+                                        availabilityIssues.length === 0 &&
+                                        estimateData?.data?.estimate?.base_operations && (
+                                            <OrderEstimate
+                                                estimate={estimateData.data.estimate}
+                                                hasRebrandItems={false}
+                                            />
                                         )}
 
-                                        {/* Access notes — always visible in permit section */}
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="venueAccessNotes"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Access Notes (Optional)
-                                            </Label>
-                                            <Textarea
-                                                id="venueAccessNotes"
-                                                value={formData.venue_access_notes}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        venue_access_notes: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Loading dock info, access codes, gate instructions, etc."
-                                                rows={2}
-                                                className="font-mono text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {/* Step 4: Contact Information */}
-                    {currentStep === "contact" && (
-                        <motion.div
-                            key="contact"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Point of Contact</h2>
-                                <p className="text-muted-foreground">
-                                    Provide the on-site contact for this order. Our team will reach
-                                    out to this person for coordination and updates.
-                                </p>
-                            </div>
-
-                            <Card className="p-8 bg-card/50 border-border/50">
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="contactName"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Contact Person Name *
-                                        </Label>
-                                        <Input
-                                            id="contactName"
-                                            data-testid="checkout-contact-name"
-                                            value={formData.contact_name}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    contact_name: e.target.value,
-                                                })
-                                            }
-                                            placeholder="e.g., John Smith"
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="contactEmail"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Email Address *
-                                            </Label>
-                                            <Input
-                                                id="contactEmail"
-                                                type="email"
-                                                data-testid="checkout-contact-email"
-                                                value={formData.contact_email}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        contact_email: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="john@company.com"
-                                                required
-                                                className={`h-12 ${formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email) ? "border-destructive" : ""}`}
-                                            />
-                                            {formData.contact_email &&
-                                                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-                                                    formData.contact_email
-                                                ) && (
-                                                    <p className="text-xs text-destructive">
-                                                        Please enter a valid email address
-                                                    </p>
-                                                )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="contactPhone"
-                                                className="font-mono uppercase text-xs tracking-wide"
-                                            >
-                                                Phone Number *
-                                            </Label>
-                                            <PhoneInput
-                                                international
-                                                defaultCountry="AE"
-                                                data-testid="checkout-contact-phone"
-                                                value={formData.contact_phone}
-                                                onChange={(value) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        contact_phone: value || "",
-                                                    })
-                                                }
-                                                className="h-12 rounded-md border border-input bg-background px-3 text-sm [&>input]:border-0 [&>input]:bg-transparent [&>input]:outline-none [&>input]:h-full"
-                                            />
-                                            {formData.contact_phone &&
-                                                !isValidPhoneNumber(formData.contact_phone) && (
-                                                    <p className="text-xs text-destructive">
-                                                        Please enter a valid phone number
-                                                    </p>
-                                                )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="specialInstructions"
-                                            className="font-mono uppercase text-xs tracking-wide"
-                                        >
-                                            Special Instructions (Optional)
-                                        </Label>
-                                        <Textarea
-                                            id="specialInstructions"
-                                            value={formData.special_instructions}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    special_instructions: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Any special handling requirements, setup preferences, or branding requests..."
-                                            rows={4}
-                                            className="font-mono text-sm"
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Include details about setup, branding, or any special
-                                            requirements
-                                        </p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {/* Step 5: Review & Submit */}
-                    {currentStep === "review" && (
-                        <motion.div
-                            key="review"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Review & Submit</h2>
-                                <p className="text-muted-foreground">
-                                    Double-check all details before submitting your order
-                                </p>
-                            </div>
-
-                            {orangeItems.length > 0 ? (
-                                <MaintenanceDecisionCenter
-                                    items={orangeItems}
-                                    onDecisionChange={(assetId, decision) =>
-                                        updateItemMaintenanceDecision(assetId, decision)
-                                    }
-                                />
-                            ) : null}
-
-                            {/* Feasibility re-check. When a user flips an ORANGE
-                                decision to "Fix", the preview query re-fires with
-                                the new decision; if that pushes the earliest date
-                                past the event date they picked at the installation
-                                step, the helper surfaces it here + the Submit button
-                                is blocked via canProceed. */}
-                            <FeasibilityHelper
-                                helperEnabled={feasibilityHelperEnabled}
-                                isLoading={feasibilityPreview.isLoading}
-                                floorDate={feasibility.floorDate}
-                                userEventDate={
-                                    eventDateInputsEnabled
-                                        ? formData.event_start_date
-                                        : formData.requested_delivery_date
-                                }
-                                userDateFeasible={feasibility.userDateFeasible}
-                                blockingItems={feasibility.blockingItems}
-                                config={feasibilityPreview.data?.config ?? null}
-                                onUseFloorDate={() => {
-                                    if (!feasibility.floorDate) return;
-                                    if (eventDateInputsEnabled) {
-                                        setFormData({
-                                            ...formData,
-                                            event_start_date: feasibility.floorDate,
-                                            event_end_date:
-                                                formData.event_end_date &&
-                                                formData.event_end_date >= feasibility.floorDate
-                                                    ? formData.event_end_date
-                                                    : feasibility.floorDate,
-                                        });
-                                    } else {
-                                        setFormData({
-                                            ...formData,
-                                            requested_delivery_date: feasibility.floorDate,
-                                            requested_pickup_date:
-                                                formData.requested_pickup_date &&
-                                                formData.requested_pickup_date >=
-                                                    feasibility.floorDate
-                                                    ? formData.requested_pickup_date
-                                                    : feasibility.floorDate,
-                                        });
-                                    }
-                                }}
-                            />
-
-
-                            {/* Order Summary */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Items */}
-                                <Card className="p-6 bg-card/50 border-border/50">
-                                    <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
-                                        Order Items
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {items.map((item) => (
-                                            <div
-                                                key={item.assetId}
-                                                className="flex items-center gap-3 text-sm"
-                                            >
-                                                <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                    {item.image ? (
-                                                        <Image
-                                                            src={item.image}
-                                                            alt={item.assetName}
-                                                            width={48}
-                                                            height={48}
-                                                            className="object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                            <Package className="h-5 w-5 text-muted-foreground/30" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium truncate">
-                                                        {item.assetName}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground font-mono">
-                                                        Qty: {item.quantity}
+                                    {/* Loading Estimate */}
+                                    {isEstimateFeatureEnabled &&
+                                        availabilityIssues.length === 0 &&
+                                        isEstimateLoading &&
+                                        formData.venue_city_id && (
+                                            <Card className="p-6 bg-muted/30 border-border">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Calculating estimate...
                                                     </p>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            </Card>
+                                        )}
 
-                                    <Separator className="my-4" />
-
-                                    <div className="space-y-2 text-sm font-mono">
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                                Total Items:
-                                            </span>
-                                            <span className="font-bold">{itemCount}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                                Total Volume:
-                                            </span>
-                                            <span className="font-bold text-primary">
-                                                {totalVolume.toFixed(2)} m³
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                                Total Weight:
-                                            </span>
-                                            <span className="font-bold">
-                                                {totalWeight.toFixed(1)} kg
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Card>
-
-                                {/* Details Summary */}
-                                <div className="space-y-6">
-                                    {/* Schedule (delivery + pickup always shown; event dates only when flag on) */}
-                                    <Card className="p-6 bg-card/50 border-border/50">
-                                        <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
-                                            Schedule
-                                        </h3>
-                                        <div className="space-y-3 text-sm">
-                                            {eventDateInputsEnabled && formData.event_start_date && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Event Start
-                                                    </p>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            formData.event_start_date
-                                                        ).toLocaleDateString("en-US", {
-                                                            weekday: "long",
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        })}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {eventDateInputsEnabled && formData.event_end_date && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Event End
-                                                    </p>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            formData.event_end_date
-                                                        ).toLocaleDateString("en-US", {
-                                                            weekday: "long",
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        })}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {formData.requested_delivery_date && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Delivery
-                                                    </p>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            formData.requested_delivery_date
-                                                        ).toLocaleDateString("en-US", {
-                                                            weekday: "long",
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        })}
-                                                        {formData.requested_delivery_time_start &&
-                                                        formData.requested_delivery_time_end ? (
-                                                            <span className="text-muted-foreground font-mono">
-                                                                {" "}
-                                                                · {formData.requested_delivery_time_start}
-                                                                –{formData.requested_delivery_time_end}
-                                                            </span>
-                                                        ) : null}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {formData.requested_pickup_date && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Pickup
-                                                    </p>
-                                                    <p className="font-medium">
-                                                        {new Date(
-                                                            formData.requested_pickup_date
-                                                        ).toLocaleDateString("en-US", {
-                                                            weekday: "long",
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        })}
-                                                        {formData.requested_pickup_time_start &&
-                                                        formData.requested_pickup_time_end ? (
-                                                            <span className="text-muted-foreground font-mono">
-                                                                {" "}
-                                                                · {formData.requested_pickup_time_start}
-                                                                –{formData.requested_pickup_time_end}
-                                                            </span>
-                                                        ) : null}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Card>
-
-                                    {/* Venue Info */}
-                                    <Card className="p-6 bg-card/50 border-border/50">
-                                        <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
-                                            Venue
-                                        </h3>
-                                        <div className="space-y-3 text-sm">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Venue Name
-                                                </p>
-                                                <p className="font-medium">{formData.venue_name}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Location
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.venue_city_name},{" "}
-                                                    {formData.venue_country_name}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Address
-                                                </p>
-                                                <p className="font-medium leading-relaxed">
-                                                    {formData.venue_address}
-                                                </p>
-                                            </div>
-                                            {formData.venue_access_notes && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Access Notes
-                                                    </p>
-                                                    <p className="font-medium leading-relaxed">
-                                                        {formData.venue_access_notes}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {formData.requires_permit && (
-                                                <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
-                                                        Permit / Access Coordination
-                                                    </p>
-                                                    <p className="font-medium">
-                                                        {formData.permit_owner === "CLIENT" &&
-                                                            "Client will arrange permits"}
-                                                        {formData.permit_owner === "PLATFORM" &&
-                                                            "Platform should arrange permits"}
-                                                        {formData.permit_owner === "UNKNOWN" &&
-                                                            "Permit ownership still to be confirmed"}
-                                                    </p>
-                                                    <div className="flex flex-wrap gap-2 text-xs font-mono">
-                                                        {formData.requires_vehicle_docs && (
-                                                            <span className="rounded-full border px-2 py-1">
-                                                                Vehicle docs required
-                                                            </span>
-                                                        )}
-                                                        {formData.requires_staff_ids && (
-                                                            <span className="rounded-full border px-2 py-1">
-                                                                Staff IDs required
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {formData.permit_notes && (
-                                                        <p className="text-sm leading-relaxed">
-                                                            {formData.permit_notes}
+                                    {/* Estimate Error */}
+                                    {isEstimateFeatureEnabled &&
+                                        availabilityIssues.length === 0 &&
+                                        isEstimateError &&
+                                        formData.venue_city_id && (
+                                            <Card className="p-6 bg-muted/30 border-border">
+                                                <div className="flex items-start gap-3">
+                                                    <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-medium mb-1">
+                                                            Unable to Calculate Estimate for{" "}
+                                                            <b>{formData.venue_city_name}</b>, You
+                                                            will receive a custom quote via email
+                                                            within 24-48 hours after submitting your
+                                                            order.
                                                         </p>
-                                                    )}
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </Card>
+                                            </Card>
+                                        )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                                    {/* Contact Info */}
-                                    <Card className="p-6 bg-card/50 border-border/50">
-                                        <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
-                                            Contact
-                                        </h3>
-                                        <div className="space-y-3 text-sm">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Name
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.contact_name}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Email
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.contact_email}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Phone
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.contact_phone}
-                                                </p>
-                                            </div>
-                                            {formData.special_instructions && (
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                        Special Instructions
-                                                    </p>
-                                                    <p className="font-medium leading-relaxed">
-                                                        {formData.special_instructions}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Card>
-                                </div>
+                        {/* Navigation Buttons */}
+                        <div className="flex items-center justify-between gap-4 mt-10">
+                            <Button
+                                variant="outline"
+                                onClick={handleBack}
+                                disabled={currentStepIndex === 0}
+                                className="gap-2 font-mono"
+                                size="lg"
+                                data-testid="checkout-back"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                                Back
+                            </Button>
+
+                            <div className="text-sm text-muted-foreground font-mono">
+                                Step {currentStepIndex + 1} of {STEPS.length}
                             </div>
 
-                            {/* Availability Issues Banner */}
-                            {availabilityIssues.length > 0 && (
-                                <Card className="border-destructive/50 bg-destructive/5 p-6">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-semibold text-destructive mb-2">
-                                                Availability Issues
-                                            </p>
-                                            <ul className="text-sm text-muted-foreground space-y-1 mb-4">
-                                                {availabilityIssues.map((issue, i) => (
-                                                    <li key={i} className="flex items-start gap-2">
-                                                        <span className="text-destructive">•</span>
-                                                        <span>{issue}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => router.push("/catalog")}
-                                            >
-                                                Return to Catalog
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </Card>
+                            {currentStep === "review" ? (
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={
+                                        isSubmitting ||
+                                        availabilityIssues.length > 0 ||
+                                        missingOrangeDecisions.length > 0 ||
+                                        (redItems.length > 0 && !hasCheckedMaintenanceFeasibility)
+                                    }
+                                    className="gap-2 font-mono uppercase tracking-wide"
+                                    size="lg"
+                                    data-testid="checkout-submit"
+                                >
+                                    {isSubmitting ? "Submitting..." : "Submit Order"}
+                                    <Check className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleNext}
+                                    disabled={
+                                        !canProceed() || maintenanceFeasibilityCheck.isPending
+                                    }
+                                    className="gap-2 font-mono"
+                                    size="lg"
+                                    data-testid="checkout-next"
+                                >
+                                    Continue
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
                             )}
-
-                            {/* NEW: Hybrid Pricing Estimate */}
-                            {isEstimateFeatureEnabled &&
-                                availabilityIssues.length === 0 &&
-                                estimateData?.data?.estimate?.base_operations && (
-                                    <OrderEstimate
-                                        estimate={estimateData.data.estimate}
-                                        hasRebrandItems={false}
-                                    />
-                                )}
-
-                            {/* Loading Estimate */}
-                            {isEstimateFeatureEnabled &&
-                                availabilityIssues.length === 0 &&
-                                isEstimateLoading &&
-                                formData.venue_city_id && (
-                                    <Card className="p-6 bg-muted/30 border-border">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                            <p className="text-sm text-muted-foreground">
-                                                Calculating estimate...
-                                            </p>
-                                        </div>
-                                    </Card>
-                                )}
-
-                            {/* Estimate Error */}
-                            {isEstimateFeatureEnabled &&
-                                availabilityIssues.length === 0 &&
-                                isEstimateError &&
-                                formData.venue_city_id && (
-                                    <Card className="p-6 bg-muted/30 border-border">
-                                        <div className="flex items-start gap-3">
-                                            <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium mb-1">
-                                                    Unable to Calculate Estimate for{" "}
-                                                    <b>{formData.venue_city_name}</b>, You will
-                                                    receive a custom quote via email within 24-48
-                                                    hours after submitting your order.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                )}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Navigation Buttons */}
-                <div className="flex items-center justify-between gap-4 mt-10">
-                    <Button
-                        variant="outline"
-                        onClick={handleBack}
-                        disabled={currentStepIndex === 0}
-                        className="gap-2 font-mono"
-                        size="lg"
-                        data-testid="checkout-back"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        Back
-                    </Button>
-
-                    <div className="text-sm text-muted-foreground font-mono">
-                        Step {currentStepIndex + 1} of {STEPS.length}
+                        </div>
                     </div>
-
-                    {currentStep === "review" ? (
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={
-                                isSubmitting ||
-                                availabilityIssues.length > 0 ||
-                                missingOrangeDecisions.length > 0 ||
-                                (redItems.length > 0 && !hasCheckedMaintenanceFeasibility)
-                            }
-                            className="gap-2 font-mono uppercase tracking-wide"
-                            size="lg"
-                            data-testid="checkout-submit"
-                        >
-                            {isSubmitting ? "Submitting..." : "Submit Order"}
-                            <Check className="h-4 w-4" />
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={handleNext}
-                            disabled={!canProceed() || maintenanceFeasibilityCheck.isPending}
-                            className="gap-2 font-mono"
-                            size="lg"
-                            data-testid="checkout-next"
-                        >
-                            Continue
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-            </div>
                 </>
             )}
         </div>
