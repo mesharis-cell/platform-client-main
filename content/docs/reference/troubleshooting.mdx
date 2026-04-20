@@ -1,0 +1,140 @@
+---
+title: Troubleshooting
+slug: troubleshooting
+category: reference
+order: 2
+summary: Common issues and fixes before you ping your admin.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+A starter checklist for the most common problems before reaching out to your platform admin.
+
+## I can't log in
+
+- **Wrong email?** Double-check you're using the exact address your
+  admin registered. Mixed case is fine — the portal lowercases it
+  automatically — but typos in the domain or missing characters
+  aren't.
+- **Wrong password?** Watch for Caps Lock. Try the show-password eye
+  icon to confirm what you typed.
+- **"Access Denied" toast?** The account exists but the role isn't
+  CLIENT. Ask your admin to fix the role.
+- **Nothing happens on Grant Access?** Flaky network is the usual
+  cause. Reload the page and try again. If persistent, clear browser
+  cache for the portal URL.
+- **Lost password?** Use the
+  [Forgot Password flow](../getting-started/forgot-password).
+
+## I approved the quote but the order is still QUOTED
+
+Refresh the page. The portal doesn't auto-update — if the approval
+went through, a reload will show the CONFIRMED hero and the PO on the
+header.
+
+If it's still QUOTED after a hard refresh, the approval didn't land.
+Check your browser console for errors and try again.
+
+## The cart is empty when I expected items in it
+
+Two things to check:
+
+- **Different device?** The cart lives in your browser's localStorage —
+  it doesn't sync between devices or even between browsers on the same
+  device. If you're on a different laptop, you'll see an empty cart.
+- **Cleared browser data?** If you recently cleared cookies / site
+  data, the cart gets wiped too.
+
+Rebuild the cart from the
+[catalog](../catalog/browsing).
+
+## I can't advance past a checkout step
+
+The Continue button stays disabled until every required field on the
+current step is valid.
+
+- **Step 2:** Both event dates required; end must be ≥ start; event
+  start must satisfy the minimum lead time.
+- **Step 3:** Venue name, city, and address required.
+- **Step 4:** Contact name, phone (valid format), and email (valid
+  format) required.
+- **RED items?** You'll also need the
+  [feasibility check](../ordering/red-items-and-feasibility) to pass.
+
+A toast usually tells you what's missing if you click Continue on a
+step with validation issues.
+
+## I'm stuck on Step 5 — "Submit Order" disabled
+
+Three common reasons:
+
+- **Unresolved ORANGE decisions.** Open the
+  [Maintenance Decision Center](../ordering/maintenance-decisions)
+  and choose Fix / Use-as-is for every ORANGE item.
+- **Availability issues.** An item's availability dropped between
+  adding to cart and getting to review. A banner on the Review step
+  lists the issues — click "Return to Catalog" to fix.
+- **RED feasibility not yet checked.** If your cart has RED items,
+  go back to Step 2 and click Continue to run the feasibility check
+  first.
+
+## The quote seems wrong
+
+Before assuming a pricing bug, check:
+
+- **Volume.** The **Picking & Handling (X.XXX m³)** line scales with
+  your cart's total volume. Adding or removing items between your
+  original cart and the quoted cart changes this line.
+- **Delivery window.** A tight or unusual delivery window can trigger
+  extra transport charges.
+- **Permit coordination.** If you flagged permit requirements, permit
+  line items might have been added.
+- **Reskins / rebrands.** Custom work is priced separately on its own
+  line.
+
+If none of that explains the number, ask your admin to decline the
+quote and re-quote — they can annotate the specific line you're
+asking about.
+
+## My order hasn't changed status in days
+
+First, refresh the page. Then check:
+
+- **Linked service requests** with "blocks_fulfillment" — they can
+  hold the order from progressing until they complete. See
+  [Linked service requests](../order-page/linked-service-requests).
+- **Event date is far out?** Prep usually starts a few days before
+  event start, not immediately on approval.
+
+If the status genuinely seems stuck, email the logistics team — the
+order ID is all they need to look it up.
+
+## I didn't get an email I expected
+
+- **Spam folder first.** Most delivery issues resolve there.
+- **Correct email on file?** Profile edits aren't self-serve; ask
+  your admin to verify the email address on your account.
+- **Event that doesn't send email?** Some transitions (Order Ready
+  for Delivery, Order Closed, your own quote approval) don't email
+  you. See [Emails you receive](../reference/emails-you-receive)
+  for the complete list.
+
+## A feature I read about isn't visible
+
+Some features are gated per-company. Service Requests, New Stock
+Request, Event Calendar, Self-Pickup, and Kadence Invoicing all
+depend on platform-level feature flags for your tenant.
+
+If a link or nav item isn't showing up, your company likely doesn't
+have that flag enabled. Ask your admin to turn it on.
+
+## Still stuck?
+
+Email your platform admin with:
+
+- The order ID (or service request ID, inbound request ID) if relevant.
+- A screenshot of the issue.
+- What you tried already.
+
+That's almost always enough to resolve it on the first round-trip.

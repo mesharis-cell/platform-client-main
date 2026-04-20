@@ -1,0 +1,61 @@
+---
+title: When to refresh the order page
+slug: when-to-refresh
+category: order-page
+order: 6
+summary: The order page doesn't auto-update. Here's when to hit reload and when to just wait for an email.
+readMinutes: 2
+updated: "2026-04-20"
+status: published
+---
+
+A quick heads-up: the order page is a **point-in-time snapshot**. Once it's loaded, it doesn't listen for status changes or live-update. If the logistics team moves your order to IN_TRANSIT while you've got the page open, the page still shows CONFIRMED until you refresh.
+
+## What updates on reload
+
+Reloading the page (Cmd/Ctrl+R, or just clicking the browser back-and-forth) picks up:
+
+- Current **order status** and its matching hero headline.
+- **Quote state** (quoted / approved / declined) and the pricing breakdown.
+- Any new **timeline entries** since you loaded.
+- **Scan events** added to the fulfillment activity feed.
+- New or changed **supporting documents** and **linked service requests**.
+
+## When you'd actually need to refresh
+
+Three realistic cases:
+
+- You're expecting a **quote** (status is PRICING_REVIEW or
+  PENDING_APPROVAL) and you got the "Quote Ready" email a minute ago.
+- You're on **event day** and want to check if the truck is on the road
+  yet (CONFIRMED → IN_TRANSIT transition).
+- You **approved a quote** seconds ago and want to see the CONFIRMED
+  state take effect.
+
+## When you don't need to
+
+Most of the time, you don't. The platform sends email notifications on
+every status change you care about, so the inbox is the source of truth
+for "is anything new?". See
+[Emails you receive](../reference/emails-you-receive) for the full
+notification list.
+
+<Callout kind="tip" title="Use the email as the trigger">
+Treat status-change emails as the cue to refresh if you need to. The
+portal isn't going to push a bell-icon or toast to tell you — it just
+silently updates the data when you reload.
+</Callout>
+
+## Why it works this way
+
+Live updates would need a persistent connection (WebSockets or polling)
+and introduce a class of bugs around stale state, reconciliation, and
+"your page says X but the server says Y" confusion. The current design
+trades that complexity for a simple rule: the page shows what the
+server had the moment you loaded it, and email tells you when to
+reload.
+
+## What's next
+
+- [Read the status timeline](../order-page/timeline-and-history)
+- [Emails you receive](../reference/emails-you-receive)

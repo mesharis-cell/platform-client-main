@@ -1,0 +1,88 @@
+---
+title: Reading a single scan entry
+slug: reading-a-scan-entry
+category: scan-activity
+order: 1
+summary: The anatomy of one row in the scan timeline — every badge and field decoded.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+Every scan on your order page renders as one card in the timeline. This article walks through what each piece of a card means so you can read any scan at a glance.
+
+## Full anatomy
+
+<Screenshot
+    src="scan-activity/02-entry-anatomy.png"
+    alt="Single scan-event card annotated with every field it can show"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 450, y: 380 }, label: "1", text: "Scan type badge — one of six types; coloured to match." },
+        { at: { x: 740, y: 380 }, label: "2", text: "Condition badge — GREEN / ORANGE / RED when the scan captured condition." },
+        { at: { x: 450, y: 430 }, label: "3", text: "Asset name in monospace + optional QR + quantity." },
+        { at: { x: 1100, y: 380 }, label: "4", text: "Timestamp + who scanned it (not the system — a human name)." },
+        { at: { x: 640, y: 600 }, label: "5", text: "Notes and photos appear beneath when the scan captured them." },
+    ]}
+/>
+
+## Top row — badges
+
+Every card opens with two badges:
+
+- **Scan type badge** on the left. One of six types, each with its own
+  colour:
+  - **Outbound Scan** — primary
+  - **Inbound Scan** — secondary
+  - **Derig Capture** — purple
+  - **Outbound Truck Photos** — blue
+  - **Return Truck Photos** — orange
+  - **On Site Capture** — pink
+- **Condition badge** on the right. Only present when the scan
+  captured a condition (GREEN / ORANGE / RED). Capture-only scans
+  like truck photos or on-site capture don't carry a condition.
+
+## Main row — asset info
+
+Below the badges:
+
+- **Asset name** in large monospace — e.g. "Event Chair (batch)".
+- If the asset has a QR code, a **Print QR** button shows beside the
+  name.
+- A single sub-line reads: `QR: <code> · Qty: <n> · <tracking-method>`
+  — everything the physical item has, at a glance.
+
+## Right column — timestamp + actor
+
+- **Timestamp** in `MMM d, HH:mm` format, your browser's local time
+  zone.
+- **"by <name>"** — who scanned. This is a logistics team member by
+  name, not a system user. If a scan is auto-generated, it shows as
+  "System".
+
+## Below the main row
+
+Three optional sections, shown only when they have data:
+
+### Notes
+
+A free-text block the scanner typed when recording the event.
+Renders in a subtle grey card beneath the main info.
+
+### Discrepancy
+
+An amber "Discrepancy: BROKEN / LOST / OTHER" banner. Only appears on
+inbound scans that found something wrong. See
+[Discrepancies](../scan-activity/discrepancies) for the full story.
+
+### Photos
+
+A 3-column grid of every photo attached to the scan. Click any to
+open the lightbox. See
+[Photos and the lightbox](../scan-activity/photos-and-the-lightbox).
+
+## What's next
+
+- [The six scan types explained](../scan-activity/scan-types)
+- [Photos and the lightbox](../scan-activity/photos-and-the-lightbox)

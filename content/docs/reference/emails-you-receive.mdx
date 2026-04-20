@@ -1,0 +1,117 @@
+---
+title: Emails you receive from the platform
+slug: emails-you-receive
+category: reference
+order: 1
+summary: Every email the platform sends you, what each one means, and what to do next.
+readMinutes: 4
+updated: "2026-04-20"
+status: published
+---
+
+The platform uses email as the main push channel — the portal itself doesn't notify you in-app. This page is the complete list of emails you'll receive across the lifecycle of an order, service request, or self-pickup.
+
+## Order-lifecycle emails
+
+### Order Submitted
+- **Subject:** `Order Submitted: {ORDER_ID}`
+- **When:** Immediately after you submit the order.
+- **What to do:** Nothing. You'll receive the next email when logistics
+  has a quote ready.
+
+### Quote Ready
+- **Subject:** `Quote Ready: {ORDER_ID}`
+- **When:** After logistics finishes pricing your order.
+- **What to do:** Open the order. Review the quote. Approve (with a PO
+  number) or decline. See
+  [Approving with a PO number](../quotes/approving-with-a-po-number).
+
+### Revised Quote
+- **Subject:** `Revised Quote: {ORDER_ID}`
+- **When:** If logistics revises the original quote.
+- **What to do:** Read the revision reason in the email, then go back
+  to the portal to approve the new quote.
+
+### Order Confirmed
+- **Subject:** `Order Confirmed: {ORDER_ID}`
+- **When:** Immediately after you approve the quote.
+- **What to do:** Nothing. Prep starts.
+
+### Order In Transit
+- **Subject:** `Order In Transit: {ORDER_ID}`
+- **When:** When the delivery truck dispatches.
+- **What to do:** Make sure someone is at the venue to receive.
+
+### Order Delivered
+- **Subject:** `Order Delivered: {ORDER_ID}`
+- **When:** When items arrive at the venue and are signed for.
+- **What to do:** Enjoy the event. Check the scan activity if you want
+  to see arrival photos.
+
+### Pickup Reminder — 48 Hours
+- **Subject:** `Pickup Reminder: {ORDER_ID} — 48 Hours`
+- **When:** Two days before scheduled pickup.
+- **What to do:** Have items ready at the scheduled time and location.
+
+### Delivery / Pickup Times Updated
+- **Subject:** `Delivery/Pickup Times Updated: {ORDER_ID}`
+- **When:** If logistics adjusts your delivery or pickup window.
+- **What to do:** Review the new time in the portal.
+
+### Invoice Ready
+- **Subject:** `Invoice Ready: {ORDER_ID}`
+- **When:** When the platform issues the final invoice.
+- **What to do:** Download the PDF from the email or the order page.
+
+### Order Cancelled
+- **Subject:** `Order Cancelled: {ORDER_ID}`
+- **When:** Only if an admin cancels your order.
+- **What to do:** Read the reason in the email. Contact your admin if
+  you didn't expect it.
+
+## Service request emails
+
+Only arrive if service requests are enabled for your company.
+
+- **Service Request Quote Ready** — review and approve/decline the
+  quote for service work.
+- **Service Request Quote Revised** — if the quote changes.
+- **Service Request Complete** — work is done.
+- **Invoice Ready** — service request invoice issued.
+
+## Inbound request emails
+
+Only if your company uses the stock-request feature.
+
+- **Inbound Request Submitted** — confirmation.
+- **Cost Estimate Ready** — review and approve/decline.
+- **Stock Intake Complete** — items added to your inventory.
+- **Invoice Ready** — inbound request invoice issued.
+
+## Account emails
+
+- **Password Reset** — OTP code during the forgot-password flow. Code
+  expires in 5 minutes. See
+  [Resetting a forgotten password](../getting-started/forgot-password).
+
+## Which emails you won't get
+
+Some events happen without a client email because they're routine or
+internal — you won't get a notification for:
+
+- Order Ready for Delivery (intermediate status; you get the "In
+  Transit" email instead).
+- Order Closed (the order just quietly finishes).
+- Quote Approved / Declined on your own orders (you already know —
+  you did it).
+
+<Callout kind="tip" title="Every email links back to the portal">
+Every transactional email the platform sends includes a direct link
+to the order, service request, or self-pickup detail page. Click
+through when you need to take an action.
+</Callout>
+
+## What's next
+
+- [When to refresh the order page](../order-page/when-to-refresh)
+- [Troubleshooting](../reference/troubleshooting)
