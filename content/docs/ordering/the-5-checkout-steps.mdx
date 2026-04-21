@@ -5,11 +5,17 @@ category: ordering
 order: 1
 summary: A tour of the stepper, the Back / Continue controls, and the save-and-resume behaviour.
 readMinutes: 3
-updated: "2026-04-13"
+updated: "2026-04-20"
 status: published
 ---
 
 Every order goes through the same five-step checkout. Most steps are filled in under a minute; Review is the only one where you'll spend real time.
+
+<FeatureFlagNote flag="enable_self_pickup">
+    If your company has self-pickup enabled, the checkout opens with a **Delivery Mode** picker
+    first. Choose Delivery to see the five steps below, or Self-Pickup for a shorter three-step
+    flow. See [Choosing delivery or self-pickup](../ordering/choosing-delivery-or-pickup).
+</FeatureFlagNote>
 
 ## The stepper
 
@@ -19,14 +25,14 @@ Every order goes through the same five-step checkout. Most steps are filled in u
     width={1280}
     height={800}
     annotations={[
-        { at: { x: 345, y: 270 }, label: "1", text: "Completed steps show a check mark." },
+        { at: { x: 340, y: 52 }, label: "1", text: "Completed steps show a check mark." },
         {
-            at: { x: 580, y: 270 },
+            at: { x: 520, y: 52 },
             label: "2",
             text: "Current step is highlighted with the primary colour.",
         },
         {
-            at: { x: 900, y: 270 },
+            at: { x: 895, y: 52 },
             label: "3",
             text: "Upcoming steps are muted until you reach them.",
         },

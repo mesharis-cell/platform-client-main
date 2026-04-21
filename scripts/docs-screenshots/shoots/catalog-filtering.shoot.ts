@@ -21,7 +21,7 @@ test.describe("catalog filter bar (authenticated)", () => {
             .waitFor({ timeout: 10_000 });
 
         // Narrow with a search term so the Clear-filters button appears.
-        await page.getByPlaceholder(/search families or collections/i).fill("backdrop");
+        await page.getByPlaceholder(/search assets or collections/i).fill("backdrop");
         await page.waitForTimeout(400); // debounce settle
 
         await shoot(page, { name: "catalog/02-filter-bar" });

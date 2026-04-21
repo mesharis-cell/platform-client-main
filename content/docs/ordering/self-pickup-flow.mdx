@@ -1,0 +1,164 @@
+---
+title: The self-pickup flow (three steps)
+slug: self-pickup-flow
+category: ordering
+order: 9
+summary: The short checkout path for collecting items from the warehouse yourself — review, collection details, submit.
+readMinutes: 4
+updated: "2026-04-20"
+requiresFlag: enable_self_pickup
+status: published
+---
+
+Self-pickup skips most of the delivery form. There's no venue address, no event dates, no execution contact — just who's collecting, when, and when you expect to return the items. Three steps, usually under a minute.
+
+<FeatureFlagNote flag="enable_self_pickup">
+    This article applies when your company has self-pickup enabled and you picked **Self-Pickup** on
+    the mode picker. See [Choosing delivery or self-pickup](../ordering/choosing-delivery-or-pickup)
+    for how to get here.
+</FeatureFlagNote>
+
+## The three-step stepper
+
+<Screenshot
+    src="ordering/sp-02-stepper.png"
+    alt="Self-pickup checkout stepper showing three steps — Review Items, Collection Details, Review and Submit"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 341, y: 44 }, label: "1", text: "Review Items — what you're collecting." },
+        {
+            at: { x: 649, y: 44 },
+            label: "2",
+            text: "Collection Details — who, when, and expected return.",
+        },
+        { at: { x: 959, y: 44 }, label: "3", text: "Review & Submit — final read-through." },
+    ]}
+/>
+
+The three steps, in order:
+
+1. **Review Items** — confirm the cart.
+2. **Collection Details** — collector info + pickup window + optional expected return.
+3. **Review & Submit** — scrollable summary with the Submit button.
+
+## Step 1 — Review Items
+
+<Screenshot
+    src="ordering/sp-03-items.png"
+    alt="Self-pickup Step 1 listing cart items with total count, volume, and weight"
+    width={1280}
+    height={800}
+    annotations={[
+        { at: { x: 780, y: 270 }, label: "1", text: "Every item in your cart with its quantity." },
+        {
+            at: { x: 500, y: 400 },
+            label: "2",
+            text: "Totals — items, volume, weight. Useful when picking a vehicle.",
+        },
+    ]}
+/>
+
+This is a read-only review. If you need to change quantities or remove items, click Back to return to the mode picker, then cancel out of checkout to edit your cart from the catalog.
+
+Click **Continue** to proceed.
+
+## Step 2 — Collection Details
+
+The main form of the self-pickup flow. Three blocks to fill in.
+
+<Screenshot
+    src="ordering/sp-04-details.png"
+    alt="Self-pickup Step 2 with collector fields, pickup window, and expected return date"
+    width={1280}
+    height={906}
+    annotations={[
+        {
+            at: { x: 640, y: 262 },
+            label: "1",
+            text: "Collector — pre-filled from your account, edit if someone else is collecting.",
+        },
+        {
+            at: { x: 640, y: 467 },
+            label: "2",
+            text: "Pickup window — date plus a From and To time on the same day.",
+        },
+        {
+            at: { x: 494, y: 608 },
+            label: "3",
+            text: "Expected return — optional. Leave blank to use the default window.",
+        },
+    ]}
+/>
+
+### Collector
+
+The collector is the person who physically walks into the warehouse. Three fields:
+
+- **Collector Name** _(required)_ — full name, auto-filled from your profile.
+- **Collector Phone** _(required)_ — auto-filled from your profile. The warehouse calls this number if they can't locate the collector on pickup day.
+- **Collector Email** _(optional)_ — auto-filled from your profile. Used for pickup confirmations if provided.
+
+Edit any of these if someone else is doing the collection on your behalf — a driver, a colleague, a courier.
+
+### Pickup window
+
+The time range during which you'll arrive at the warehouse. Three inputs on one row:
+
+- **Date** — when you're collecting.
+- **From** — earliest arrival time.
+- **To** — latest arrival time (same day).
+
+Treat this as a range, not an exact time. The warehouse team plans around the window and has your items staged by the **From** time.
+
+### Expected return (optional)
+
+When you'll bring the items back. If you leave this blank, the system applies a default return window based on your tenant's configuration. If you know your specific return date, fill it in — it gives logistics better visibility for scheduling incoming stock.
+
+### Notes (optional)
+
+A free-text field at the bottom of the form for anything the warehouse should know: vehicle type you'll arrive in, special access instructions, two collectors, etc.
+
+Click **Continue** once the required fields are filled.
+
+## Step 3 — Review & Submit
+
+<Screenshot
+    src="ordering/sp-05-review.png"
+    alt="Self-pickup Step 3 summary card with collector, collection date, items, and Submit Pickup Request button"
+    width={1280}
+    height={900}
+    annotations={[
+        { at: { x: 780, y: 233 }, label: "1", text: "Collector and pickup window summary." },
+        { at: { x: 780, y: 460 }, label: "2", text: "Items — your cart recapped." },
+        {
+            at: { x: 1121, y: 654 },
+            label: "3",
+            text: "Submit Pickup Request — fires the request.",
+        },
+    ]}
+/>
+
+Two summary cards on one page:
+
+- **Collector** — name, phone, collection date + time range, expected return (if set), notes (if set).
+- **Items** — every cart line recapped with quantity.
+
+If you spot something wrong, use **Back** to step backward and fix it. Your inputs are preserved on every step.
+
+Click **Submit Pickup Request**. The portal fires a toast on success and takes you to the new self-pickup's detail page under <PortalLink to="/self-pickups" label="/self-pickups" />. Your cart is cleared automatically on submit.
+
+<Callout kind="heads-up" title="Pricing and availability are confirmed later">
+    Submitting doesn't reserve the items. The logistics team reviews the request, confirms
+    availability against your pickup window, and generates a quote. You'll review and approve that
+    quote before the pickup is locked in — same pattern as a delivery order.
+</Callout>
+
+## Switching to delivery mid-flow
+
+On Step 1 (Review Items), the **Back** button reads **Switch to Delivery** instead of Back. Clicking it returns you to the [mode picker](../ordering/choosing-delivery-or-pickup) with your cart intact. Use this if you realise you do need delivery after all.
+
+## What's next
+
+- [See your pickup on the self-pickups page](../order-page/anatomy-of-the-order-page)
+- [How quotes and PO numbers work](../quotes/reviewing-a-quote)
