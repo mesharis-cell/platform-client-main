@@ -105,6 +105,7 @@ export default function ClientSelfPickupDetailPage({
     const lineItems = pickup.line_items || [];
     const pricing = pickup.self_pickup_pricing || null;
     const isQuoted = pickup.self_pickup_status === "QUOTED";
+    const isNoCost = pickup.pricing_mode === "NO_COST";
 
     return (
         <ClientNav>
@@ -124,6 +125,14 @@ export default function ClientSelfPickupDetailPage({
                             <Badge variant="outline" className={statusConfig.color}>
                                 {statusConfig.label}
                             </Badge>
+                            {isNoCost && (
+                                <Badge
+                                    variant="secondary"
+                                    className="bg-neutral-500/10 text-neutral-700 border-neutral-400/60 font-mono text-xs"
+                                >
+                                    NO COST
+                                </Badge>
+                            )}
                         </div>
 
                         <div className="flex gap-2">
@@ -141,8 +150,12 @@ export default function ClientSelfPickupDetailPage({
                     {/* Status banner */}
                     <SelfPickupStatusBanner pickup={pickup} />
 
-                    {/* Quote Review Section (QUOTED only) — renders pricing + accept/decline. */}
-                    {isQuoted && pricing && (
+                    {/* Quote Review Section — QUOTED only AND not NO_COST. NO_COST
+                        pickups skip the quote entirely (status jumps direct to
+                        CONFIRMED), so this never renders for them. The second guard
+                        is belt-and-suspenders: the status machine already prevents
+                        NO_COST pickups from reaching QUOTED. */}
+                    {isQuoted && !isNoCost && pricing && (
                         <SelfPickupQuoteReviewSection
                             pickup={pickup}
                             pricing={pricing}

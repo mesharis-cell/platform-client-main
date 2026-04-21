@@ -21,6 +21,7 @@ interface SelfPickupStatusBannerProps {
         created_at?: string;
         updated_at?: string;
         notes?: string | null;
+        pricing_mode?: "STANDARD" | "NO_COST";
     };
 }
 
@@ -93,13 +94,23 @@ function bannerFor(pickup: SelfPickupStatusBannerProps["pickup"]): {
             return {
                 className: "border-green-500/40 bg-green-50 dark:bg-green-950/20",
                 icon: <CheckCircle className="h-5 w-5 text-green-600" />,
-                title: "Pickup Confirmed",
-                body: (
-                    <p>
-                        We'll have your items ready for collection during your pickup window
-                        {pw?.start ? ` (${fmtDate(pw.start)})` : ""}.
-                    </p>
-                ),
+                title:
+                    pickup.pricing_mode === "NO_COST"
+                        ? "Pickup Approved — No Cost"
+                        : "Pickup Confirmed",
+                body:
+                    pickup.pricing_mode === "NO_COST" ? (
+                        <p>
+                            Your pickup has been approved at no cost. Items will be ready for
+                            collection during your pickup window
+                            {pw?.start ? ` (${fmtDate(pw.start)})` : ""}.
+                        </p>
+                    ) : (
+                        <p>
+                            We'll have your items ready for collection during your pickup window
+                            {pw?.start ? ` (${fmtDate(pw.start)})` : ""}.
+                        </p>
+                    ),
             };
         case "READY_FOR_PICKUP":
             return {
