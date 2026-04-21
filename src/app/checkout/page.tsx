@@ -1046,6 +1046,19 @@ function CheckoutPageInner() {
                                     <Card className="p-8 bg-card/50 border-border/50 space-y-6">
                                         <div className="space-y-6">
                                             {eventDateInputsEnabled && (
+                                                <div className="space-y-2">
+                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                        Dates &amp; times are in{" "}
+                                                        {feasibilityConfig?.timezone
+                                                            ? feasibilityConfig.timezone.replace(
+                                                                  "_",
+                                                                  " "
+                                                              )
+                                                            : "platform timezone"}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {eventDateInputsEnabled && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label
@@ -1173,6 +1186,15 @@ function CheckoutPageInner() {
                                                             picked up?
                                                         </p>
                                                     )}
+                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                        Times are in{" "}
+                                                        {feasibilityConfig?.timezone
+                                                            ? feasibilityConfig.timezone.replace(
+                                                                  "_",
+                                                                  " "
+                                                              )
+                                                            : "platform timezone"}
+                                                    </p>
                                                 </div>
 
                                                 <div className="space-y-5">
