@@ -157,16 +157,22 @@ export function useFeasibility({
 export const useFeasibilityPreview = useFeasibility;
 
 /**
- * Given a feasibility result + the user's picked date, return a plain-
- * English status the UI can render. Centralizes the interpretation so the
- * helper and the per-item warning draw from the same source.
+ * Given a feasibility result + the user's picked date/datetime, return a
+ * plain-English status the UI can render. Centralizes the interpretation
+ * so the helper, the Next-gate, and the per-item warning draw from one
+ * source.
  *
- * Accepts either a YYYY-MM-DD string or an ISO datetime for
- * `userEventDate` — lexicographic comparison works for both formats.
+ * Pass `userEventDatetime` (ISO 8601 with offset) whenever available —
+ * comparison is then time-of-day precise and matches the server's
+ * datetime-based feasibility verdict. `userEventDate` (YYYY-MM-DD) is
+ * kept as a fallback for the initial render before the composer has a
+ * time component, and as the source for computing blockingItems which
+ * are reported per-calendar-date on the server response.
  */
 export function interpretFeasibilityPreview(
     result: MaintenanceFeasibilityResult | undefined,
-    userEventDate: string // YYYY-MM-DD or ISO datetime or ""
+    userEventDate: string, // YYYY-MM-DD or ""
+    userEventDatetime: string | null = null // ISO 8601 or null
 ): {
     /**
      * The earliest date (YYYY-MM-DD) any of the cart's items can be ready
@@ -197,9 +203,24 @@ export function interpretFeasibilityPreview(
     // Platform lead-time floor is always returned (even for green-only carts).
     const platformFloor = result.lead_floor_date || null;
     const platformFloorDatetime = result.lead_floor_datetime || null;
+
+    // Prefer datetime comparison (matches server's Phase 3 verdict to the
+    // millisecond). Fall back to date-only when datetime isn't composable
+    // yet (e.g. time not picked, or platform TZ config still loading).
+    const compareUserAgainstFloor = (floorDate: string, floorDatetime: string | null) => {
+        if (userEventDatetime && floorDatetime) {
+            return new Date(userEventDatetime).getTime() >= new Date(floorDatetime).getTime();
+        }
+        if (userEventDate) {
+            return userEventDate >= floorDate;
+        }
+        return null;
+    };
+
     if (result.issues.length === 0) {
-        const userDateFeasible =
-            userEventDate && platformFloor ? userEventDate >= platformFloor : null;
+        const userDateFeasible = platformFloor
+            ? compareUserAgainstFloor(platformFloor, platformFloorDatetime)
+            : null;
         return {
             floorDate: platformFloor,
             floorDatetime: platformFloorDatetime,
@@ -222,7 +243,10 @@ export function interpretFeasibilityPreview(
         platformFloorDatetime && platformFloorDatetime > issueFloorDatetime
             ? platformFloorDatetime
             : issueFloorDatetime;
-    const userDateFeasible = userEventDate ? userEventDate >= floorDate : null;
+    const userDateFeasible = compareUserAgainstFloor(floorDate, floorDatetime);
+    // blockingItems remain date-granular: the per-item issue is "this asset
+    // can't be ready on that calendar day." Time-of-day nuance is captured
+    // at the aggregate floor above.
     const blockingItems = userEventDate
         ? result.issues.filter((i) => i.earliest_feasible_date > userEventDate)
         : [];
