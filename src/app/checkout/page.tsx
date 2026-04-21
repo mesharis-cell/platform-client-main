@@ -251,7 +251,7 @@ function CheckoutPageInner() {
         ? formData.event_end_date
         : formData.requested_pickup_date;
 
-    // Memoized ISO datetime with platform-TZ offset. Null until all
+    // Memoized ISO datetimes with platform-TZ offset. Null until all
     // components (date, time, timezone) are available — the feasibility
     // hook then stays disabled. Fine-grained deps keep identity stable
     // across renders to avoid TanStack Query key thrash.
@@ -262,6 +262,17 @@ function CheckoutPageInner() {
             timezone: feasibilityConfig?.timezone,
         });
     }, [effectiveEventStart, formData.requested_delivery_time_start, feasibilityConfig?.timezone]);
+    // event_end_datetime is NOT used by feasibility comparison (feasibility
+    // only checks event_start_* vs refurb timeline) — included in submit
+    // payload for wire-contract symmetry + future use. Event-end time is
+    // modelled as pickup-window end (when we retrieve the items).
+    const effectiveEventEndDatetime = useMemo(() => {
+        return composeZonedISO({
+            date: effectiveEventEnd,
+            time: formData.requested_pickup_time_end,
+            timezone: feasibilityConfig?.timezone,
+        });
+    }, [effectiveEventEnd, formData.requested_pickup_time_end, feasibilityConfig?.timezone]);
 
     // Consolidated feasibility subscription. Single source of truth for the
     // advisory helper, the Next-gate check, and the submit re-check. Fires
@@ -607,6 +618,18 @@ function CheckoutPageInner() {
                 })),
                 event_start_date: submitEventStart,
                 event_end_date: submitEventEnd,
+                // Also send ISO datetimes so the server-side feasibility
+                // re-check in submitOrderFromCart uses the precise moment
+                // (not midnight UTC from date-only parse). Without these,
+                // Phase 3's datetime comparison falsely rejects same-day
+                // submissions on westward timezones — the exact dafe89e
+                // regression class Phase 2 was supposed to prevent.
+                ...(effectiveEventStartDatetime
+                    ? { event_start_datetime: effectiveEventStartDatetime }
+                    : {}),
+                ...(effectiveEventEndDatetime
+                    ? { event_end_datetime: effectiveEventEndDatetime }
+                    : {}),
                 venue_name: formData.venue_name,
                 venue_country_id: formData.venue_country_id,
                 venue_city_id: formData.venue_city_id,
