@@ -63,6 +63,7 @@ import {
     interpretFeasibilityPreview,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
+import { composeZonedISO } from "@/lib/feasibility/compose-datetime";
 
 type Step = "mode" | "cart" | "installation" | "venue" | "contact" | "review";
 
@@ -233,11 +234,50 @@ function CheckoutPageInner() {
     const redItems = items.filter((item) => item.condition === "RED");
     const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
 
-    // Proactive feasibility preview. Runs whenever items (or their decisions)
-    // change — NOT gated on event_start_date. Backend compares against a
-    // past sentinel so we always get per-item earliest_feasible_date; the
-    // floor is derived here and the user's picked date is compared against
-    // it for the hard block + helper rendering.
+    // Fetch resolved feasibility config (platform default + company override).
+    // Loaded before the feasibility query so the composer has a timezone
+    // available. Until config loads, `feasibilityConfig?.timezone` is
+    // undefined → composer returns null → feasibility query is disabled.
+    const { data: feasibilityConfig } = useFeasibilityConfig();
+
+    // Derived "effective" event dates. When the event-dates flag is ON, these
+    // are whatever the user entered. When OFF, they mirror the delivery /
+    // pickup dates (delivery start → event start, pickup end → event end).
+    // Declared early so they can feed the consolidated feasibility hook.
+    const effectiveEventStart = eventDateInputsEnabled
+        ? formData.event_start_date
+        : formData.requested_delivery_date;
+    const effectiveEventEnd = eventDateInputsEnabled
+        ? formData.event_end_date
+        : formData.requested_pickup_date;
+
+    // Memoized ISO datetimes with platform-TZ offset. Null until all
+    // components (date, time, timezone) are available — the feasibility
+    // hook then stays disabled. Fine-grained deps keep identity stable
+    // across renders to avoid TanStack Query key thrash.
+    const effectiveEventStartDatetime = useMemo(() => {
+        return composeZonedISO({
+            date: effectiveEventStart,
+            time: formData.requested_delivery_time_start,
+            timezone: feasibilityConfig?.timezone,
+        });
+    }, [effectiveEventStart, formData.requested_delivery_time_start, feasibilityConfig?.timezone]);
+    // event_end_datetime is NOT used by feasibility comparison (feasibility
+    // only checks event_start_* vs refurb timeline) — included in submit
+    // payload for wire-contract symmetry + future use. Event-end time is
+    // modelled as pickup-window end (when we retrieve the items).
+    const effectiveEventEndDatetime = useMemo(() => {
+        return composeZonedISO({
+            date: effectiveEventEnd,
+            time: formData.requested_pickup_time_end,
+            timezone: feasibilityConfig?.timezone,
+        });
+    }, [effectiveEventEnd, formData.requested_pickup_time_end, feasibilityConfig?.timezone]);
+
+    // Consolidated feasibility subscription. Single source of truth for the
+    // advisory helper, the Next-gate check, and the submit re-check. Fires
+    // on any input change (items, decisions, date, OR time). Disabled when
+    // inputs are incomplete.
     const feasibilityItems = useMemo(
         () =>
             items.map((item) => ({
@@ -248,13 +288,13 @@ function CheckoutPageInner() {
     );
     const feasibilityPreview = useFeasibilityPreview({
         items: feasibilityItems,
+        eventStartDatetime: effectiveEventStartDatetime,
         enabled: items.length > 0,
     });
-    // Feasibility is interpreted against whichever date is the effective event
-    // start — when the event-dates flag is off, that's the delivery date.
+    // Feasibility is interpreted against the effective event start date.
     const feasibility = interpretFeasibilityPreview(
         feasibilityPreview.data,
-        eventDateInputsEnabled ? formData.event_start_date : formData.requested_delivery_date
+        effectiveEventStart
     );
     const feasibilityHelperEnabled =
         (platform?.features as any)?.enable_feasibility_helper !== false;
@@ -270,9 +310,6 @@ function CheckoutPageInner() {
         "ROUND_TRIP",
         currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
-
-    // Fetch resolved feasibility config (platform default + company override)
-    const { data: feasibilityConfig } = useFeasibilityConfig();
 
     // Calculate minimum allowed date from actual feasibility config
     const calculateMinDate = () => {
@@ -382,15 +419,9 @@ function CheckoutPageInner() {
 
     const currentStepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
-    // Derived "effective" event dates. When the event-dates flag is ON, these
-    // are whatever the user entered. When OFF, they mirror the delivery /
-    // pickup dates (delivery start → event start, pickup end → event end).
-    const effectiveEventStart = eventDateInputsEnabled
-        ? formData.event_start_date
-        : formData.requested_delivery_date;
-    const effectiveEventEnd = eventDateInputsEnabled
-        ? formData.event_end_date
-        : formData.requested_pickup_date;
+    // effectiveEventStart, effectiveEventEnd, and effectiveEventStartDatetime
+    // are declared earlier (before the feasibility hook) — see the block
+    // that wires the consolidated useFeasibilityPreview subscription.
 
     const canProceed = () => {
         switch (currentStep) {
@@ -482,26 +513,33 @@ function CheckoutPageInner() {
             return;
         }
 
-        if (currentStep === "installation" && redItems.length > 0) {
+        if (currentStep === "installation" && items.length > 0) {
             try {
-                // Effective event start: flag-on → user-entered event date;
-                // flag-off → delivery date acts as event start.
-                const checkEventStart = eventDateInputsEnabled
-                    ? formData.event_start_date
-                    : formData.requested_delivery_date;
+                // Authoritative check before advancing. Sends ALL items (not
+                // just RED) — server filters to RED + ORANGE-w/-FIX_IN_ORDER
+                // internally (order-feasibility.utils.ts:271-277), so GREEN
+                // items are safely ignored. Sending everything here keeps the
+                // Next-gate and submit-gate symmetric — identical payload
+                // shape means identical semantics.
+                // Send both legacy `event_start_date` (date-only) and new
+                // `event_start_datetime` (ISO w/ platform-TZ offset). Server
+                // picks datetime when present.
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
-                    items: redItems.map((item) => ({
+                    items: items.map((item) => ({
                         asset_id: item.assetId,
-                        maintenance_decision: "FIX_IN_ORDER",
+                        maintenance_decision: item.maintenanceDecision,
                     })),
-                    event_start_date: checkEventStart,
+                    event_start_date: effectiveEventStart,
+                    ...(effectiveEventStartDatetime
+                        ? { event_start_datetime: effectiveEventStartDatetime }
+                        : {}),
                 });
                 setHasCheckedMaintenanceFeasibility(true);
                 setMaintenanceFeasibilityIssues(result.issues || []);
 
                 if (!result.feasible) {
                     toast.error(
-                        "Some maintenance items cannot be completed before event. Choose a later start date."
+                        "Some items cannot be ready before the picked event start. Choose a later date/time."
                     );
                     return;
                 }
@@ -544,12 +582,8 @@ function CheckoutPageInner() {
             // When the event-dates flag is off, delivery_date stands in for
             // event_start_date. The backend still requires both fields, so we
             // auto-derive them below.
-            const submitEventStart = eventDateInputsEnabled
-                ? formData.event_start_date
-                : formData.requested_delivery_date;
-            const submitEventEnd = eventDateInputsEnabled
-                ? formData.event_end_date
-                : formData.requested_pickup_date;
+            const submitEventStart = effectiveEventStart;
+            const submitEventEnd = effectiveEventEnd;
 
             const maintenanceResult = await maintenanceFeasibilityCheck.mutateAsync({
                 items: items.map((item) => ({
@@ -557,6 +591,9 @@ function CheckoutPageInner() {
                     maintenance_decision: item.maintenanceDecision,
                 })),
                 event_start_date: submitEventStart,
+                ...(effectiveEventStartDatetime
+                    ? { event_start_datetime: effectiveEventStartDatetime }
+                    : {}),
             });
 
             setHasCheckedMaintenanceFeasibility(true);
@@ -581,6 +618,18 @@ function CheckoutPageInner() {
                 })),
                 event_start_date: submitEventStart,
                 event_end_date: submitEventEnd,
+                // Also send ISO datetimes so the server-side feasibility
+                // re-check in submitOrderFromCart uses the precise moment
+                // (not midnight UTC from date-only parse). Without these,
+                // Phase 3's datetime comparison falsely rejects same-day
+                // submissions on westward timezones — the exact dafe89e
+                // regression class Phase 2 was supposed to prevent.
+                ...(effectiveEventStartDatetime
+                    ? { event_start_datetime: effectiveEventStartDatetime }
+                    : {}),
+                ...(effectiveEventEndDatetime
+                    ? { event_end_datetime: effectiveEventEndDatetime }
+                    : {}),
                 venue_name: formData.venue_name,
                 venue_country_id: formData.venue_country_id,
                 venue_city_id: formData.venue_city_id,
@@ -1020,6 +1069,19 @@ function CheckoutPageInner() {
                                     <Card className="p-8 bg-card/50 border-border/50 space-y-6">
                                         <div className="space-y-6">
                                             {eventDateInputsEnabled && (
+                                                <div className="space-y-2">
+                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                        Dates &amp; times are in{" "}
+                                                        {feasibilityConfig?.timezone
+                                                            ? feasibilityConfig.timezone.replace(
+                                                                  "_",
+                                                                  " "
+                                                              )
+                                                            : "platform timezone"}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {eventDateInputsEnabled && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label
@@ -1147,6 +1209,15 @@ function CheckoutPageInner() {
                                                             picked up?
                                                         </p>
                                                     )}
+                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                        Times are in{" "}
+                                                        {feasibilityConfig?.timezone
+                                                            ? feasibilityConfig.timezone.replace(
+                                                                  "_",
+                                                                  " "
+                                                              )
+                                                            : "platform timezone"}
+                                                    </p>
                                                 </div>
 
                                                 <div className="space-y-5">

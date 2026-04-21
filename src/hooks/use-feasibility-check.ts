@@ -10,7 +10,10 @@ export type MaintenanceFeasibilityIssue = {
     asset_id: string;
     asset_name: string;
     refurb_days_estimate: number;
+    /** YYYY-MM-DD — kept for back-compat; prefer `earliest_feasible_datetime`. */
     earliest_feasible_date: string;
+    /** ISO 8601 UTC datetime — precise floor moment for the asset. */
+    earliest_feasible_datetime: string;
     condition: "RED" | "ORANGE";
     maintenance_mode: "MANDATORY_RED" | "OPTIONAL_ORANGE_FIX";
     message: string;
@@ -29,16 +32,40 @@ export type MaintenanceFeasibilityResult = {
      * Earliest calendar date (YYYY-MM-DD) anyone can use, derived from the
      * platform's minimum_lead_hours + weekend skip rules. Always present for
      * every cart (including green-only ones with no per-item issues).
+     * @deprecated Prefer `lead_floor_datetime` for precise display.
      */
     lead_floor_date: string;
+    /**
+     * ISO 8601 UTC datetime form of `lead_floor_date`. Precise to the
+     * minute; client formats in platform TZ for display.
+     */
+    lead_floor_datetime: string;
 };
 
+/**
+ * Accepts either `event_start_date` (legacy, YYYY-MM-DD) or
+ * `event_start_datetime` (new, ISO 8601 with TZ offset). Server requires
+ * at least one via superRefine; when both are sent, `event_start_datetime`
+ * wins. Callers should send `event_start_datetime` composed via
+ * `composeZonedISO` from `@/lib/feasibility/compose-datetime`.
+ */
+export type MaintenanceFeasibilityPayload = {
+    items: Array<{ asset_id: string; maintenance_decision?: MaintenanceDecision }>;
+    event_start_date?: string;
+    event_start_datetime?: string;
+};
+
+/**
+ * Imperative mutation wrapper. Kept for explicit-check call sites that
+ * need an awaited POST (currently: installation-step Next, final Submit).
+ * New code should prefer `useFeasibility` which auto-fires on input change
+ * and exposes the same result via its cached query data.
+ */
 export function useMaintenanceFeasibilityCheck() {
     return useMutation({
-        mutationFn: async (payload: {
-            items: Array<{ asset_id: string; maintenance_decision?: MaintenanceDecision }>;
-            event_start_date: string;
-        }): Promise<MaintenanceFeasibilityResult> => {
+        mutationFn: async (
+            payload: MaintenanceFeasibilityPayload
+        ): Promise<MaintenanceFeasibilityResult> => {
             try {
                 const response = await apiClient.post(
                     "/client/v1/order/check-maintenance-feasibility",
@@ -75,57 +102,82 @@ export type RedFeasibilityResult = MaintenanceFeasibilityResult;
 export const useRedFeasibilityCheck = useMaintenanceFeasibilityCheck;
 
 /**
- * Proactive feasibility preview — runs the same check the submit path runs,
- * but with a sentinel past date ("1970-01-01") so the API returns
- * earliest_feasible_date per item regardless of what the user has picked
- * (or hasn't picked) yet. Caller derives the floor by max()-ing those
- * earliest_feasible_date values.
+ * Consolidated feasibility subscription. Auto-fires on any input change —
+ * items list, maintenance_decision flip, AND eventStartDatetime change
+ * (including time-of-day edits). This is the single source of truth for
+ * all three checkout surfaces: the advisory helper, the installation-step
+ * Next gate, and the final submit validation.
  *
- * Used by the installation-step helper and the review-step re-check. Query
- * auto-refires when `items` (including maintenance_decision changes) changes.
+ * IMPORTANT: callers MUST memoize `items` and `eventStartDatetime` with
+ * fine-grained deps (`useMemo`). Passing a new array / new string on every
+ * render causes queryKey churn and a refetch loop. `items` is serialized
+ * via JSON.stringify inside the queryKey to make the key stable by value.
+ *
+ * `eventStartDatetime === null` disables the query — used when the user
+ * hasn't picked a date+time yet, OR when platform timezone config hasn't
+ * loaded yet. The UI should render loading/prompt states in that mode.
+ *
+ * Retires the old sentinel-date pattern (was posting `"1970-01-01"` to
+ * probe for floor-date). The new pattern sends the real user datetime;
+ * the server's response always includes `lead_floor_datetime` regardless,
+ * so floor-date display still works once the user has picked something.
  */
-const FEASIBILITY_SENTINEL_DATE = "1970-01-01";
-
-export function useFeasibilityPreview({
+export function useFeasibility({
     items,
+    eventStartDatetime,
     enabled = true,
 }: {
     items: Array<{ asset_id: string; maintenance_decision?: MaintenanceDecision }>;
+    eventStartDatetime: string | null;
     enabled?: boolean;
 }) {
     return useQuery({
-        queryKey: ["feasibility-preview", items],
+        queryKey: ["feasibility", JSON.stringify(items), eventStartDatetime],
         queryFn: async (): Promise<MaintenanceFeasibilityResult> => {
             const response = await apiClient.post(
                 "/client/v1/order/check-maintenance-feasibility",
                 {
                     items,
-                    event_start_date: FEASIBILITY_SENTINEL_DATE,
+                    event_start_datetime: eventStartDatetime!,
                 }
             );
             return response.data.data as MaintenanceFeasibilityResult;
         },
-        enabled: enabled && items.length > 0,
+        enabled: enabled && items.length > 0 && eventStartDatetime !== null,
         staleTime: 30_000,
         gcTime: 60_000,
     });
 }
 
 /**
- * Given a preview result + the user's picked date, return a plain-English
- * status the UI can render. Centralizes the interpretation so both the
- * installation-step helper and the review-step per-item warning draw from
- * the same source.
+ * @deprecated — use `useFeasibility` instead. Preserved only as an alias
+ * so any stale imports don't break compilation mid-migration. Callers MUST
+ * supply a real `eventStartDatetime`; the old sentinel-date pattern is retired.
+ */
+export const useFeasibilityPreview = useFeasibility;
+
+/**
+ * Given a feasibility result + the user's picked date, return a plain-
+ * English status the UI can render. Centralizes the interpretation so the
+ * helper and the per-item warning draw from the same source.
+ *
+ * Accepts either a YYYY-MM-DD string or an ISO datetime for
+ * `userEventDate` — lexicographic comparison works for both formats.
  */
 export function interpretFeasibilityPreview(
     result: MaintenanceFeasibilityResult | undefined,
-    userEventDate: string // YYYY-MM-DD or ""
+    userEventDate: string // YYYY-MM-DD or ISO datetime or ""
 ): {
     /**
      * The earliest date (YYYY-MM-DD) any of the cart's items can be ready
      * on, or null if nothing in the cart requires prep.
      */
     floorDate: string | null;
+    /**
+     * The earliest ISO datetime any cart item can be ready at. More precise
+     * than floorDate. Null when no prep is required or result is undefined.
+     */
+    floorDatetime: string | null;
     /** True when user has picked a date AND it's on/after the floor. */
     userDateFeasible: boolean | null; // null when userEventDate is ""
     /**
@@ -135,24 +187,44 @@ export function interpretFeasibilityPreview(
     blockingItems: MaintenanceFeasibilityIssue[];
 } {
     if (!result) {
-        return { floorDate: null, userDateFeasible: null, blockingItems: [] };
+        return {
+            floorDate: null,
+            floorDatetime: null,
+            userDateFeasible: null,
+            blockingItems: [],
+        };
     }
     // Platform lead-time floor is always returned (even for green-only carts).
     const platformFloor = result.lead_floor_date || null;
+    const platformFloorDatetime = result.lead_floor_datetime || null;
     if (result.issues.length === 0) {
         const userDateFeasible =
             userEventDate && platformFloor ? userEventDate >= platformFloor : null;
-        return { floorDate: platformFloor, userDateFeasible, blockingItems: [] };
+        return {
+            floorDate: platformFloor,
+            floorDatetime: platformFloorDatetime,
+            userDateFeasible,
+            blockingItems: [],
+        };
     }
     const issueFloor = result.issues.reduce(
         (max, issue) => (issue.earliest_feasible_date > max ? issue.earliest_feasible_date : max),
         result.issues[0].earliest_feasible_date
     );
+    const issueFloorDatetime = result.issues.reduce(
+        (max, issue) =>
+            issue.earliest_feasible_datetime > max ? issue.earliest_feasible_datetime : max,
+        result.issues[0].earliest_feasible_datetime
+    );
     // Never propose a date earlier than the platform lead-time floor.
     const floorDate = platformFloor && platformFloor > issueFloor ? platformFloor : issueFloor;
+    const floorDatetime =
+        platformFloorDatetime && platformFloorDatetime > issueFloorDatetime
+            ? platformFloorDatetime
+            : issueFloorDatetime;
     const userDateFeasible = userEventDate ? userEventDate >= floorDate : null;
     const blockingItems = userEventDate
         ? result.issues.filter((i) => i.earliest_feasible_date > userEventDate)
         : [];
-    return { floorDate, userDateFeasible, blockingItems };
+    return { floorDate, floorDatetime, userDateFeasible, blockingItems };
 }
