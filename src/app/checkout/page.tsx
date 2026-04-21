@@ -63,6 +63,7 @@ import {
     interpretFeasibilityPreview,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
+import { composeZonedISO } from "@/lib/feasibility/compose-datetime";
 
 type Step = "mode" | "cart" | "installation" | "venue" | "contact" | "review";
 
@@ -392,6 +393,22 @@ function CheckoutPageInner() {
         ? formData.event_end_date
         : formData.requested_pickup_date;
 
+    // Memoized full ISO datetime with platform-TZ offset. Flag-OFF derives
+    // the event-start moment from delivery_date + delivery_time_start.
+    // Flag-ON uses event_start_date but still uses delivery_time_start as the
+    // event-time proxy (product default; avoids adding a dedicated event_time
+    // input). Returns null when inputs incomplete or TZ config not loaded
+    // yet — in that case feasibility calls fall back to date-only payloads.
+    // Memo keys are fine-grained so new-render-same-content does NOT change
+    // the string identity — critical for TanStack Query key stability.
+    const effectiveEventStartDatetime = useMemo(() => {
+        return composeZonedISO({
+            date: effectiveEventStart,
+            time: formData.requested_delivery_time_start,
+            timezone: feasibilityConfig?.timezone,
+        });
+    }, [effectiveEventStart, formData.requested_delivery_time_start, feasibilityConfig?.timezone]);
+
     const canProceed = () => {
         switch (currentStep) {
             case "mode":
@@ -484,17 +501,19 @@ function CheckoutPageInner() {
 
         if (currentStep === "installation" && redItems.length > 0) {
             try {
-                // Effective event start: flag-on → user-entered event date;
-                // flag-off → delivery date acts as event start.
-                const checkEventStart = eventDateInputsEnabled
-                    ? formData.event_start_date
-                    : formData.requested_delivery_date;
+                // Send both legacy `event_start_date` (date-only) and new
+                // `event_start_datetime` (ISO w/ platform-TZ offset). Server
+                // picks datetime when present; staying backward compatible
+                // with API versions that haven't picked up Phase 1 yet.
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
                     items: redItems.map((item) => ({
                         asset_id: item.assetId,
                         maintenance_decision: "FIX_IN_ORDER",
                     })),
-                    event_start_date: checkEventStart,
+                    event_start_date: effectiveEventStart,
+                    ...(effectiveEventStartDatetime
+                        ? { event_start_datetime: effectiveEventStartDatetime }
+                        : {}),
                 });
                 setHasCheckedMaintenanceFeasibility(true);
                 setMaintenanceFeasibilityIssues(result.issues || []);
@@ -544,12 +563,8 @@ function CheckoutPageInner() {
             // When the event-dates flag is off, delivery_date stands in for
             // event_start_date. The backend still requires both fields, so we
             // auto-derive them below.
-            const submitEventStart = eventDateInputsEnabled
-                ? formData.event_start_date
-                : formData.requested_delivery_date;
-            const submitEventEnd = eventDateInputsEnabled
-                ? formData.event_end_date
-                : formData.requested_pickup_date;
+            const submitEventStart = effectiveEventStart;
+            const submitEventEnd = effectiveEventEnd;
 
             const maintenanceResult = await maintenanceFeasibilityCheck.mutateAsync({
                 items: items.map((item) => ({
@@ -557,6 +572,9 @@ function CheckoutPageInner() {
                     maintenance_decision: item.maintenanceDecision,
                 })),
                 event_start_date: submitEventStart,
+                ...(effectiveEventStartDatetime
+                    ? { event_start_datetime: effectiveEventStartDatetime }
+                    : {}),
             });
 
             setHasCheckedMaintenanceFeasibility(true);

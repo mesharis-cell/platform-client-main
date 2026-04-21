@@ -33,12 +33,24 @@ export type MaintenanceFeasibilityResult = {
     lead_floor_date: string;
 };
 
+/**
+ * Accepts either `event_start_date` (legacy, YYYY-MM-DD) or
+ * `event_start_datetime` (new, ISO 8601 with TZ offset). Server requires
+ * at least one via superRefine; when both are sent, `event_start_datetime`
+ * wins. Phase 2 callers should send `event_start_datetime` composed via
+ * `composeZonedISO` from `@/lib/feasibility/compose-datetime`.
+ */
+export type MaintenanceFeasibilityPayload = {
+    items: Array<{ asset_id: string; maintenance_decision?: MaintenanceDecision }>;
+    event_start_date?: string;
+    event_start_datetime?: string;
+};
+
 export function useMaintenanceFeasibilityCheck() {
     return useMutation({
-        mutationFn: async (payload: {
-            items: Array<{ asset_id: string; maintenance_decision?: MaintenanceDecision }>;
-            event_start_date: string;
-        }): Promise<MaintenanceFeasibilityResult> => {
+        mutationFn: async (
+            payload: MaintenanceFeasibilityPayload
+        ): Promise<MaintenanceFeasibilityResult> => {
             try {
                 const response = await apiClient.post(
                     "/client/v1/order/check-maintenance-feasibility",
