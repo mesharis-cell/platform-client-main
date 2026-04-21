@@ -234,11 +234,39 @@ function CheckoutPageInner() {
     const redItems = items.filter((item) => item.condition === "RED");
     const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
 
-    // Proactive feasibility preview. Runs whenever items (or their decisions)
-    // change — NOT gated on event_start_date. Backend compares against a
-    // past sentinel so we always get per-item earliest_feasible_date; the
-    // floor is derived here and the user's picked date is compared against
-    // it for the hard block + helper rendering.
+    // Fetch resolved feasibility config (platform default + company override).
+    // Loaded before the feasibility query so the composer has a timezone
+    // available. Until config loads, `feasibilityConfig?.timezone` is
+    // undefined → composer returns null → feasibility query is disabled.
+    const { data: feasibilityConfig } = useFeasibilityConfig();
+
+    // Derived "effective" event dates. When the event-dates flag is ON, these
+    // are whatever the user entered. When OFF, they mirror the delivery /
+    // pickup dates (delivery start → event start, pickup end → event end).
+    // Declared early so they can feed the consolidated feasibility hook.
+    const effectiveEventStart = eventDateInputsEnabled
+        ? formData.event_start_date
+        : formData.requested_delivery_date;
+    const effectiveEventEnd = eventDateInputsEnabled
+        ? formData.event_end_date
+        : formData.requested_pickup_date;
+
+    // Memoized ISO datetime with platform-TZ offset. Null until all
+    // components (date, time, timezone) are available — the feasibility
+    // hook then stays disabled. Fine-grained deps keep identity stable
+    // across renders to avoid TanStack Query key thrash.
+    const effectiveEventStartDatetime = useMemo(() => {
+        return composeZonedISO({
+            date: effectiveEventStart,
+            time: formData.requested_delivery_time_start,
+            timezone: feasibilityConfig?.timezone,
+        });
+    }, [effectiveEventStart, formData.requested_delivery_time_start, feasibilityConfig?.timezone]);
+
+    // Consolidated feasibility subscription. Single source of truth for the
+    // advisory helper, the Next-gate check, and the submit re-check. Fires
+    // on any input change (items, decisions, date, OR time). Disabled when
+    // inputs are incomplete.
     const feasibilityItems = useMemo(
         () =>
             items.map((item) => ({
@@ -249,13 +277,13 @@ function CheckoutPageInner() {
     );
     const feasibilityPreview = useFeasibilityPreview({
         items: feasibilityItems,
+        eventStartDatetime: effectiveEventStartDatetime,
         enabled: items.length > 0,
     });
-    // Feasibility is interpreted against whichever date is the effective event
-    // start — when the event-dates flag is off, that's the delivery date.
+    // Feasibility is interpreted against the effective event start date.
     const feasibility = interpretFeasibilityPreview(
         feasibilityPreview.data,
-        eventDateInputsEnabled ? formData.event_start_date : formData.requested_delivery_date
+        effectiveEventStart
     );
     const feasibilityHelperEnabled =
         (platform?.features as any)?.enable_feasibility_helper !== false;
@@ -271,9 +299,6 @@ function CheckoutPageInner() {
         "ROUND_TRIP",
         currentStep === "review" && !!formData.venue_city_id && isEstimateFeatureEnabled
     );
-
-    // Fetch resolved feasibility config (platform default + company override)
-    const { data: feasibilityConfig } = useFeasibilityConfig();
 
     // Calculate minimum allowed date from actual feasibility config
     const calculateMinDate = () => {
@@ -383,31 +408,9 @@ function CheckoutPageInner() {
 
     const currentStepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
-    // Derived "effective" event dates. When the event-dates flag is ON, these
-    // are whatever the user entered. When OFF, they mirror the delivery /
-    // pickup dates (delivery start → event start, pickup end → event end).
-    const effectiveEventStart = eventDateInputsEnabled
-        ? formData.event_start_date
-        : formData.requested_delivery_date;
-    const effectiveEventEnd = eventDateInputsEnabled
-        ? formData.event_end_date
-        : formData.requested_pickup_date;
-
-    // Memoized full ISO datetime with platform-TZ offset. Flag-OFF derives
-    // the event-start moment from delivery_date + delivery_time_start.
-    // Flag-ON uses event_start_date but still uses delivery_time_start as the
-    // event-time proxy (product default; avoids adding a dedicated event_time
-    // input). Returns null when inputs incomplete or TZ config not loaded
-    // yet — in that case feasibility calls fall back to date-only payloads.
-    // Memo keys are fine-grained so new-render-same-content does NOT change
-    // the string identity — critical for TanStack Query key stability.
-    const effectiveEventStartDatetime = useMemo(() => {
-        return composeZonedISO({
-            date: effectiveEventStart,
-            time: formData.requested_delivery_time_start,
-            timezone: feasibilityConfig?.timezone,
-        });
-    }, [effectiveEventStart, formData.requested_delivery_time_start, feasibilityConfig?.timezone]);
+    // effectiveEventStart, effectiveEventEnd, and effectiveEventStartDatetime
+    // are declared earlier (before the feasibility hook) — see the block
+    // that wires the consolidated useFeasibilityPreview subscription.
 
     const canProceed = () => {
         switch (currentStep) {
@@ -499,16 +502,21 @@ function CheckoutPageInner() {
             return;
         }
 
-        if (currentStep === "installation" && redItems.length > 0) {
+        if (currentStep === "installation" && items.length > 0) {
             try {
+                // Authoritative check before advancing. Sends ALL items (not
+                // just RED) — server filters to RED + ORANGE-w/-FIX_IN_ORDER
+                // internally (order-feasibility.utils.ts:271-277), so GREEN
+                // items are safely ignored. Sending everything here keeps the
+                // Next-gate and submit-gate symmetric — identical payload
+                // shape means identical semantics.
                 // Send both legacy `event_start_date` (date-only) and new
                 // `event_start_datetime` (ISO w/ platform-TZ offset). Server
-                // picks datetime when present; staying backward compatible
-                // with API versions that haven't picked up Phase 1 yet.
+                // picks datetime when present.
                 const result = await maintenanceFeasibilityCheck.mutateAsync({
-                    items: redItems.map((item) => ({
+                    items: items.map((item) => ({
                         asset_id: item.assetId,
-                        maintenance_decision: "FIX_IN_ORDER",
+                        maintenance_decision: item.maintenanceDecision,
                     })),
                     event_start_date: effectiveEventStart,
                     ...(effectiveEventStartDatetime
@@ -520,7 +528,7 @@ function CheckoutPageInner() {
 
                 if (!result.feasible) {
                     toast.error(
-                        "Some maintenance items cannot be completed before event. Choose a later start date."
+                        "Some items cannot be ready before the picked event start. Choose a later date/time."
                     );
                     return;
                 }
