@@ -291,10 +291,14 @@ function CheckoutPageInner() {
         eventStartDatetime: effectiveEventStartDatetime,
         enabled: items.length > 0,
     });
-    // Feasibility is interpreted against the effective event start date.
+    // Feasibility is interpreted against the effective event start date AND
+    // datetime — datetime makes the Next-gate precise to the minute (matches
+    // server's Phase 3 verdict). Without it, picking 01:00 on the floor date
+    // would falsely pass against a 19:44 floor.
     const feasibility = interpretFeasibilityPreview(
         feasibilityPreview.data,
-        effectiveEventStart
+        effectiveEventStart,
+        effectiveEventStartDatetime
     );
     const feasibilityHelperEnabled =
         (platform?.features as any)?.enable_feasibility_helper !== false;
