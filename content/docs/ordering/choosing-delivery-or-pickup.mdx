@@ -1,0 +1,69 @@
+---
+title: Choosing delivery or self-pickup
+slug: choosing-delivery-or-pickup
+category: ordering
+order: 8
+summary: When self-pickup is available on your tenant, checkout opens with a mode picker before the standard steps.
+readMinutes: 2
+updated: "2026-04-20"
+requiresFlag: enable_self_pickup
+status: published
+---
+
+When self-pickup is enabled for your company, the checkout opens with an extra first step — a **Delivery Mode** picker. You choose whether the logistics team delivers to your venue, or whether you'll collect the items yourself from the warehouse. The rest of the flow changes based on your answer.
+
+<FeatureFlagNote flag="enable_self_pickup">
+    This article only applies when your company has self-pickup enabled. If the mode picker doesn't
+    appear in your checkout, you're on the delivery-only path — jump straight to [the five checkout
+    steps](../ordering/the-5-checkout-steps).
+</FeatureFlagNote>
+
+## The mode picker
+
+<Screenshot
+    src="ordering/sp-01-mode-picker.png"
+    alt="Checkout mode picker with two cards — Delivery and Self-Pickup"
+    width={1280}
+    height={800}
+    annotations={[
+        {
+            at: { x: 500, y: 319 },
+            label: "1",
+            text: "Delivery — logistics brings items to your venue.",
+        },
+        {
+            at: { x: 950, y: 319 },
+            label: "2",
+            text: "Self-Pickup — you collect from the warehouse.",
+        },
+        {
+            at: { x: 1170, y: 591 },
+            label: "3",
+            text: "Continue commits the choice and routes you into the right flow.",
+        },
+    ]}
+/>
+
+Click a card to highlight it, then **Continue**. Only clicking a card does **not** commit the choice — you can change your selection until you press Continue.
+
+## Delivery
+
+Pick **Delivery** when the logistics team should bring everything to your venue. This is the traditional flow. Continue takes you straight into **Step 1 — Order Review**, and the rest of the checkout is the familiar five-step stepper: Cart → Installation → Venue → Contact → Review. See [the five checkout steps](../ordering/the-5-checkout-steps) for the full walkthrough.
+
+## Self-Pickup
+
+Pick **Self-Pickup** when you'd rather collect the items yourself. This path is shorter — three steps instead of five, no venue address, no event dates, no execution contact. Continue takes you into the self-pickup flow. See [the self-pickup flow](../ordering/self-pickup-flow) for the full walkthrough.
+
+<Callout kind="tip" title="You can switch back later">
+    On the first step of the self-pickup flow, the **Back** button becomes **Switch to Delivery**
+    and returns you to this mode picker. You won't lose your cart when you switch.
+</Callout>
+
+## Saved-and-resumed checkouts
+
+If you bounced out of checkout mid-flow on an older version of the portal (before the mode picker existed), you'll land back on the mode picker the next time you open checkout, not on your saved mid-flow step. This is intentional — the portal doesn't want to assume which path you meant.
+
+## What's next
+
+- [Walk the delivery path (five steps)](../ordering/the-5-checkout-steps)
+- [Walk the self-pickup path (three steps)](../ordering/self-pickup-flow)
