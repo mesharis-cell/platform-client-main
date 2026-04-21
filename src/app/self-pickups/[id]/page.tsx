@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, User, Phone, Mail, Clock, Package } from "lucide-react";
 import { toast } from "sonner";
+import { SelfPickupQuoteReviewSection } from "@/components/self-pickups/QuoteReviewSection";
+import { SelfPickupStatusBanner } from "@/components/self-pickups/SelfPickupStatusBanner";
+import { StartReturnDialog } from "@/components/self-pickups/StartReturnDialog";
 
 const PICKUP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     SUBMITTED: { label: "Submitted", color: "bg-blue-100 text-blue-700 border-blue-300" },
@@ -36,12 +39,10 @@ const PICKUP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
         color: "bg-emerald-100 text-emerald-700 border-emerald-300",
     },
     PICKED_UP: { label: "Collected", color: "bg-teal-100 text-teal-700 border-teal-300" },
-    IN_USE: { label: "In Use", color: "bg-purple-100 text-purple-700 border-purple-300" },
     AWAITING_RETURN: {
         label: "Return Pending",
         color: "bg-amber-100 text-amber-700 border-amber-300",
     },
-    RETURNED: { label: "Returned", color: "bg-cyan-100 text-cyan-700 border-cyan-300" },
     CLOSED: { label: "Closed", color: "bg-gray-100 text-gray-700 border-gray-300" },
     CANCELLED: { label: "Cancelled", color: "bg-red-50 text-red-600 border-red-200" },
 };
@@ -58,6 +59,7 @@ export default function ClientSelfPickupDetailPage({
 
     useEffect(() => {
         if (!platformLoading && !selfPickupEnabled) {
+            toast.error("Self-pickup is not enabled for this platform.");
             router.replace("/catalog");
         }
     }, [platformLoading, selfPickupEnabled, router]);
@@ -66,6 +68,8 @@ export default function ClientSelfPickupDetailPage({
     const approveQuote = useClientApproveSelfPickupQuote();
     const declineQuote = useClientDeclineSelfPickupQuote();
     const triggerReturn = useTriggerSelfPickupReturn();
+
+    const [returnDialogOpen, setReturnDialogOpen] = useState(false);
 
     const pickup = pickupData?.data;
 
@@ -96,8 +100,11 @@ export default function ClientSelfPickupDetailPage({
         label: pickup.self_pickup_status,
         color: "bg-gray-100 text-gray-700",
     };
-    const pickupWindow = pickup.pickup_window as any;
+    const pickupWindow = pickup.pickup_window as { start?: string; end?: string } | undefined;
     const items = pickup.items || [];
+    const lineItems = pickup.line_items || [];
+    const pricing = pickup.self_pickup_pricing || null;
+    const isQuoted = pickup.self_pickup_status === "QUOTED";
 
     return (
         <ClientNav>
@@ -120,44 +127,9 @@ export default function ClientSelfPickupDetailPage({
                         </div>
 
                         <div className="flex gap-2">
-                            {pickup.self_pickup_status === "QUOTED" && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            declineQuote.mutate(id, {
-                                                onSuccess: () => toast.success("Quote declined"),
-                                                onError: (e: unknown) =>
-                                                    toast.error((e as Error).message),
-                                            });
-                                        }}
-                                        disabled={declineQuote.isPending}
-                                    >
-                                        Decline
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            approveQuote.mutate(id, {
-                                                onSuccess: () => toast.success("Quote approved"),
-                                                onError: (e: unknown) =>
-                                                    toast.error((e as Error).message),
-                                            });
-                                        }}
-                                        disabled={approveQuote.isPending}
-                                    >
-                                        Approve Quote
-                                    </Button>
-                                </>
-                            )}
-                            {["PICKED_UP", "IN_USE"].includes(pickup.self_pickup_status) && (
+                            {pickup.self_pickup_status === "PICKED_UP" && (
                                 <Button
-                                    onClick={() => {
-                                        triggerReturn.mutate(id, {
-                                            onSuccess: () => toast.success("Return initiated"),
-                                            onError: (e: unknown) =>
-                                                toast.error((e as Error).message),
-                                        });
-                                    }}
+                                    onClick={() => setReturnDialogOpen(true)}
                                     disabled={triggerReturn.isPending}
                                 >
                                     Start Return
@@ -165,6 +137,30 @@ export default function ClientSelfPickupDetailPage({
                             )}
                         </div>
                     </div>
+
+                    {/* Status banner */}
+                    <SelfPickupStatusBanner pickup={pickup} />
+
+                    {/* Quote Review Section (QUOTED only) — renders pricing + accept/decline. */}
+                    {isQuoted && pricing && (
+                        <SelfPickupQuoteReviewSection
+                            pickup={pickup}
+                            pricing={pricing}
+                            lineItems={lineItems}
+                            onApprove={async (poNumber: string) => {
+                                await approveQuote.mutateAsync({
+                                    id: pickup.id,
+                                    po_number: poNumber,
+                                });
+                            }}
+                            onDecline={async (reason: string) => {
+                                await declineQuote.mutateAsync({
+                                    id: pickup.id,
+                                    decline_reason: reason,
+                                });
+                            }}
+                        />
+                    )}
 
                     {/* Collector Details */}
                     <Card>
@@ -190,8 +186,8 @@ export default function ClientSelfPickupDetailPage({
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-muted-foreground" />
                                     <span>
-                                        {new Date(pickupWindow.start).toLocaleString()} -{" "}
-                                        {new Date(pickupWindow.end).toLocaleString()}
+                                        {new Date(pickupWindow.start!).toLocaleString()} -{" "}
+                                        {new Date(pickupWindow.end!).toLocaleString()}
                                     </span>
                                 </div>
                             )}
@@ -201,6 +197,14 @@ export default function ClientSelfPickupDetailPage({
                                     <span>
                                         Expected return:{" "}
                                         {new Date(pickup.expected_return_at).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
+                            {pickup.po_number && (
+                                <div className="text-sm">
+                                    <span className="text-muted-foreground">PO Number:</span>{" "}
+                                    <span className="font-mono font-semibold">
+                                        {pickup.po_number}
                                     </span>
                                 </div>
                             )}
@@ -239,6 +243,15 @@ export default function ClientSelfPickupDetailPage({
                     </Card>
                 </div>
             </div>
+
+            <StartReturnDialog
+                open={returnDialogOpen}
+                onOpenChange={setReturnDialogOpen}
+                onConfirm={async () => {
+                    await triggerReturn.mutateAsync(pickup.id);
+                    toast.success("Return initiated");
+                }}
+            />
         </ClientNav>
     );
 }
