@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
@@ -216,135 +216,214 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                     >
                         {/* Step 1: Cart Review */}
                         {currentStep === "cart" && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="font-mono uppercase tracking-wide">
-                                        Items for Collection
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                            <>
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">
+                                        Review Your Collection Items
+                                    </h2>
+                                    <p className="text-muted-foreground">
+                                        Verify your items before providing collection details
+                                    </p>
+                                </div>
+
+                                <Card className="p-6 bg-card/50 border-border/50">
                                     {items.length === 0 ? (
                                         <p className="text-muted-foreground text-center py-8">
                                             Your cart is empty. Add items from the catalog first.
                                         </p>
                                     ) : (
-                                        <>
+                                        <div className="space-y-4">
                                             {items.map((item) => (
                                                 <div
                                                     key={item.assetId}
-                                                    className="flex items-center justify-between p-3 border rounded-lg"
+                                                    className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
                                                 >
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {item.assetName}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {item.category}
-                                                        </p>
+                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                        {item.image ? (
+                                                            <Image
+                                                                src={item.image}
+                                                                alt={item.assetName}
+                                                                width={96}
+                                                                height={96}
+                                                                className="object-cover w-full h-full"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <Package className="h-10 w-10 text-muted-foreground/30" />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <Badge variant="outline">
-                                                        <Package className="h-3 w-3 mr-1" />
-                                                        {item.quantity}
-                                                    </Badge>
+
+                                                    <div className="flex-1">
+                                                        <h4 className="font-semibold mb-1">
+                                                            {item.assetName}
+                                                        </h4>
+                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
+                                                            <span>Qty: {item.quantity}</span>
+                                                            {item.volume != null && (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span>
+                                                                        {item.volume} m³ each
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                            {item.weight != null && (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span>
+                                                                        {item.weight} kg each
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        {item.fromCollectionName && (
+                                                            <p className="text-xs text-muted-foreground font-mono">
+                                                                From collection:{" "}
+                                                                {item.fromCollectionName}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
-                                            <div className="pt-4 border-t flex flex-wrap gap-6 text-sm font-mono">
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                        Total Items
-                                                    </p>
-                                                    <p className="text-lg font-bold">{itemCount}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                        Total Volume
-                                                    </p>
-                                                    <p className="text-lg font-bold">
-                                                        {totalVolume.toFixed(2)} m³
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                        Total Weight
-                                                    </p>
-                                                    <p className="text-lg font-bold">
-                                                        {totalWeight.toFixed(1)} kg
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </>
+                                        </div>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </Card>
+
+                                {items.length > 0 && (
+                                    <Card className="p-6 bg-primary/5 border-primary/20">
+                                        <div className="grid grid-cols-3 gap-6">
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Items
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono">
+                                                    {itemCount}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Volume
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono text-primary">
+                                                    {totalVolume.toFixed(2)} m³
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-1">
+                                                    Total Weight
+                                                </p>
+                                                <p className="text-2xl font-bold font-mono">
+                                                    {totalWeight.toFixed(1)} kg
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                )}
+                            </>
                         )}
 
                         {/* Step 2: Collection Details */}
                         {currentStep === "details" && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="font-mono uppercase tracking-wide">
-                                        Who is collecting?
-                                    </CardTitle>
-                                    <p className="text-sm text-muted-foreground">
-                                        These details default from your account. Edit if someone
-                                        else is collecting.
+                            <>
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Collection Details</h2>
+                                    <p className="text-muted-foreground">
+                                        Who is collecting, when, and any pickup notes
                                     </p>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="collector_name">Collector Name *</Label>
-                                            <Input
-                                                id="collector_name"
-                                                value={formData.collector_name}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        collector_name: e.target.value,
-                                                    }))
-                                                }
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="collector_phone">
-                                                Collector Phone *
+                                </div>
+
+                                <Card className="p-8 bg-card/50 border-border/50 space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Collector *
                                             </Label>
-                                            <Input
-                                                id="collector_phone"
-                                                value={formData.collector_phone}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        collector_phone: e.target.value,
-                                                    }))
-                                                }
-                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Defaults from your account. Edit if someone else is
+                                                collecting.
+                                            </p>
                                         </div>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <Label htmlFor="collector_email">
-                                                Collector Email (optional)
-                                            </Label>
-                                            <Input
-                                                id="collector_email"
-                                                type="email"
-                                                value={formData.collector_email}
-                                                onChange={(e) =>
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        collector_email: e.target.value,
-                                                    }))
-                                                }
-                                            />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="collector_name"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Collector Name *
+                                                </Label>
+                                                <Input
+                                                    id="collector_name"
+                                                    value={formData.collector_name}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            collector_name: e.target.value,
+                                                        }))
+                                                    }
+                                                    className="h-12 font-mono"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="collector_phone"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Collector Phone *
+                                                </Label>
+                                                <Input
+                                                    id="collector_phone"
+                                                    value={formData.collector_phone}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            collector_phone: e.target.value,
+                                                        }))
+                                                    }
+                                                    className="h-12 font-mono"
+                                                />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label
+                                                    htmlFor="collector_email"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Collector Email (optional)
+                                                </Label>
+                                                <Input
+                                                    id="collector_email"
+                                                    type="email"
+                                                    value={formData.collector_email}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            collector_email: e.target.value,
+                                                        }))
+                                                    }
+                                                    className="h-12 font-mono"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t space-y-4">
-                                        <h3 className="font-medium font-mono uppercase tracking-wide text-sm">
-                                            When are you collecting? *
-                                        </h3>
+                                    <div className="space-y-4 pt-4 border-t border-border/40">
+                                        <div className="space-y-1">
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Pickup Window *
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                When do you plan to collect these items from the
+                                                warehouse?
+                                            </p>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="pickup_date">Date</Label>
+                                                <Label
+                                                    htmlFor="pickup_date"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    Pickup Date *
+                                                </Label>
                                                 <Input
                                                     id="pickup_date"
                                                     type="date"
@@ -355,10 +434,16 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                             pickup_date: e.target.value,
                                                         }))
                                                     }
+                                                    className="h-12 font-mono"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="pickup_start">From</Label>
+                                                <Label
+                                                    htmlFor="pickup_start"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    From *
+                                                </Label>
                                                 <Input
                                                     id="pickup_start"
                                                     type="time"
@@ -369,10 +454,16 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                             pickup_time_start: e.target.value,
                                                         }))
                                                     }
+                                                    className="h-12 font-mono"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="pickup_end">To</Label>
+                                                <Label
+                                                    htmlFor="pickup_end"
+                                                    className="font-mono uppercase text-xs tracking-wide"
+                                                >
+                                                    To *
+                                                </Label>
                                                 <Input
                                                     id="pickup_end"
                                                     type="time"
@@ -383,19 +474,22 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                             pickup_time_end: e.target.value,
                                                         }))
                                                     }
+                                                    className="h-12 font-mono"
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t space-y-4">
-                                        <h3 className="font-medium font-mono uppercase tracking-wide text-sm">
-                                            Expected Return (optional)
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            When do you expect to return these items? If left blank,
-                                            a default window will be applied.
-                                        </p>
+                                    <div className="space-y-4 pt-4 border-t border-border/40">
+                                        <div className="space-y-1">
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Expected Return (optional)
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                When do you expect to return these items? If left
+                                                blank, a default window will be applied.
+                                            </p>
+                                        </div>
                                         <div className="max-w-xs">
                                             <Input
                                                 type="date"
@@ -406,12 +500,18 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                         expected_return_date: e.target.value,
                                                     }))
                                                 }
+                                                className="h-12 font-mono"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t space-y-2">
-                                        <Label htmlFor="notes">Notes (optional)</Label>
+                                    <div className="space-y-2 pt-4 border-t border-border/40">
+                                        <Label
+                                            htmlFor="notes"
+                                            className="font-mono uppercase text-xs tracking-wide"
+                                        >
+                                            Notes (optional)
+                                        </Label>
                                         <Textarea
                                             id="notes"
                                             placeholder="Any special instructions for pickup..."
@@ -425,91 +525,171 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                             rows={3}
                                         />
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </Card>
+                            </>
                         )}
 
                         {/* Step 3: Review */}
                         {currentStep === "review" && (
-                            <div className="space-y-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="font-mono uppercase tracking-wide">
-                                            Review Your Self-Pickup
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Collector
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.collector_name}
-                                                </p>
-                                                <p>{formData.collector_phone}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Collection Date
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.pickup_date}
-                                                </p>
-                                                <p>
-                                                    {formData.pickup_time_start} –{" "}
-                                                    {formData.pickup_time_end}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {formData.expected_return_date && (
-                                            <div className="text-sm">
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Expected Return
-                                                </p>
-                                                <p className="font-medium">
-                                                    {formData.expected_return_date}
-                                                </p>
-                                            </div>
-                                        )}
-                                        {formData.notes && (
-                                            <div className="text-sm">
-                                                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                    Notes
-                                                </p>
-                                                <p>{formData.notes}</p>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                            <>
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Review & Submit</h2>
+                                    <p className="text-muted-foreground">
+                                        Confirm your pickup details before sending the request
+                                    </p>
+                                </div>
 
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="font-mono uppercase tracking-wide">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* Items */}
+                                    <Card className="p-6 bg-card/50 border-border/50">
+                                        <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
                                             Items ({itemCount})
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {items.map((item) => (
-                                            <div
-                                                key={item.assetId}
-                                                className="flex items-center justify-between py-2 border-b last:border-0"
-                                            >
-                                                <span>{item.assetName}</span>
-                                                <span className="text-muted-foreground font-mono">
-                                                    x{item.quantity}
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {items.map((item) => (
+                                                <div
+                                                    key={item.assetId}
+                                                    className="flex items-center gap-3 text-sm"
+                                                >
+                                                    <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                        {item.image ? (
+                                                            <Image
+                                                                src={item.image}
+                                                                alt={item.assetName}
+                                                                width={48}
+                                                                height={48}
+                                                                className="object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium truncate">
+                                                            {item.assetName}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground font-mono">
+                                                            Qty: {item.quantity}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-border/60 space-y-2 text-sm font-mono">
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">
+                                                    Total Items:
+                                                </span>
+                                                <span className="font-bold">{itemCount}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">
+                                                    Total Volume:
+                                                </span>
+                                                <span className="font-bold text-primary">
+                                                    {totalVolume.toFixed(2)} m³
                                                 </span>
                                             </div>
-                                        ))}
-                                    </CardContent>
-                                </Card>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">
+                                                    Total Weight:
+                                                </span>
+                                                <span className="font-bold">
+                                                    {totalWeight.toFixed(1)} kg
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </Card>
+
+                                    {/* Collection Details */}
+                                    <div className="space-y-6">
+                                        <Card className="p-6 bg-card/50 border-border/50">
+                                            <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                Collector
+                                            </h3>
+                                            <div className="space-y-3 text-sm">
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Name
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formData.collector_name}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Phone
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formData.collector_phone}
+                                                    </p>
+                                                </div>
+                                                {formData.collector_email && (
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Email
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.collector_email}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Card>
+
+                                        <Card className="p-6 bg-card/50 border-border/50">
+                                            <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                Schedule
+                                            </h3>
+                                            <div className="space-y-3 text-sm">
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                        Pickup
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formData.pickup_date}
+                                                        <span className="text-muted-foreground font-mono">
+                                                            {" "}
+                                                            · {formData.pickup_time_start}–
+                                                            {formData.pickup_time_end}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                                {formData.expected_return_date && (
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                            Expected Return
+                                                        </p>
+                                                        <p className="font-medium">
+                                                            {formData.expected_return_date}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Card>
+
+                                        {formData.notes && (
+                                            <Card className="p-6 bg-card/50 border-border/50">
+                                                <h3 className="text-lg font-semibold mb-4 font-mono uppercase tracking-wide">
+                                                    Notes
+                                                </h3>
+                                                <p className="text-sm leading-relaxed">
+                                                    {formData.notes}
+                                                </p>
+                                            </Card>
+                                        )}
+                                    </div>
+                                </div>
 
                                 <p className="text-sm text-muted-foreground text-center">
                                     By submitting, this pickup request will be reviewed by our
                                     logistics team. Pricing and availability will be confirmed
                                     before collection.
                                 </p>
-                            </div>
+                            </>
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -552,12 +732,13 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                             size="lg"
                         >
                             {isSubmitting ? "Submitting..." : "Submit Pickup Request"}
+                            <Check className="h-4 w-4" />
                         </Button>
                     ) : (
                         <Button
                             onClick={handleNext}
                             disabled={!canProceed()}
-                            className="gap-2 font-mono uppercase tracking-wide"
+                            className="gap-2 font-mono"
                             size="lg"
                         >
                             Continue

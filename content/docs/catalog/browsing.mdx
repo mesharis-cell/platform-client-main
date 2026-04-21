@@ -5,11 +5,11 @@ category: catalog
 order: 0
 summary: Open the catalog and find your way around the three views, cards, and pagination.
 readMinutes: 3
-updated: "2026-04-13"
+updated: "2026-04-20"
 status: published
 ---
 
-The catalog is where you pick what you want on your order. It groups inventory three ways — individual assets, reusable **families**, and pre-bundled **collections** — so you can start from whichever level matches how you think.
+The catalog is where you pick what you want on your order. It groups inventory at three layers — individual **units**, reusable **assets** (also called families internally), and pre-bundled **collections** — so you can start from whichever level matches how you think.
 
 ## Open the catalog
 
@@ -24,7 +24,7 @@ Click **Catalog** in the left sidebar from any page in the portal. The URL is al
     height={800}
     annotations={[
         { at: { x: 440, y: 315 }, label: "1", text: "Filter bar — search, brand, category, team." },
-        { at: { x: 420, y: 375 }, label: "2", text: "View tabs — All / Families / Collections." },
+        { at: { x: 420, y: 375 }, label: "2", text: "View tabs — All / Assets / Collections." },
         {
             at: { x: 780, y: 530 },
             label: "3",
@@ -38,16 +38,18 @@ Click **Catalog** in the left sidebar from any page in the portal. The URL is al
 The tab strip at the top of the catalog switches between three views of the same
 underlying inventory.
 
-- **All** — every family and every collection mixed into one grid. Best when
+- **All** — every asset and every collection mixed into one grid. Best when
   you're exploring and don't know exactly what you need yet.
-- **Families** — only families. Best when you're looking for something specific
-  like a chair type or a backdrop.
+- **Assets** — asset-level cards only. Each card represents a whole family of
+  interchangeable units. Best when you're looking for something specific like
+  a chair type or a backdrop.
 - **Collections** — only bundled collections. Best when you want a pre-curated
   package and don't want to piece it together yourself.
 
-<Callout kind="tip" title="Families or collections?">
-    Every **collection** is made up of families and assets. You can order the whole collection with
-    one click, or dip into a specific family on its own — same inventory, two ways in.
+<Callout kind="tip" title="Assets or collections?">
+    Every **collection** is made up of assets and their underlying units. You can order the whole
+    collection with one click, or dip into a specific asset on its own — same inventory, two ways
+    in.
 </Callout>
 
 ## Reading a catalog card
@@ -56,9 +58,9 @@ Each card shows the essentials without you having to click in:
 
 - **Name + image.**
 - **Brand + category** pills so you know what flavour it is.
-- For a family: **&lt;available&gt; available / &lt;total&gt;** so you know what's
+- For an asset: **&lt;available&gt; available / &lt;total&gt;** so you know what's
   actually in the warehouse right now.
-- For a collection: **&lt;N&gt; items** with a hint of which families are inside.
+- For a collection: **&lt;N&gt; items** with a hint of which assets are inside.
 - A **condition flag** if any items in the group are flagged ORANGE or RED —
   covered in the [Conditions article](../catalog/conditions).
 

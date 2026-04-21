@@ -778,16 +778,17 @@ function CheckoutPageInner() {
 
             {/* Step 0 — Delivery Mode (only rendered when feature enabled). */}
             {checkoutMode === "standard" && currentStep === "mode" && (
-                <div className="max-w-5xl mx-auto px-8 pt-8 pb-4">
-                    <Card className="p-6">
-                        <h3 className="text-lg font-semibold mb-2">
-                            How would you like to receive these items?
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-6">
+                <div className="max-w-5xl mx-auto px-8 pt-8 pb-4 space-y-6">
+                    <div>
+                        <h2 className="text-3xl font-bold mb-2">Delivery Method</h2>
+                        <p className="text-muted-foreground">
                             Choose delivery for our logistics team to bring items to your venue, or
                             self-pickup to collect them yourself from the warehouse. You can change
                             this at any time before submitting.
                         </p>
+                    </div>
+
+                    <Card className="p-6 bg-card/50 border-border/50">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <button
                                 type="button"
