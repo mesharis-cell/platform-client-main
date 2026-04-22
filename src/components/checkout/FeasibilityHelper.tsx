@@ -110,10 +110,10 @@ export function FeasibilityHelper({
             <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                    <p className="text-sm font-medium text-amber-900">
                         This date is a bit too soon.
                     </p>
-                    <p className="text-xs text-amber-800 dark:text-amber-300">
+                    <p className="text-xs text-amber-800">
                         Soonest we can have everything ready:{" "}
                         <span className="font-mono font-semibold">
                             {fmtFriendlyDate(floorDate)}
