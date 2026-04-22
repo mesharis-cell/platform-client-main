@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
 import { useSubmitSelfPickupFromCart } from "@/hooks/use-self-pickups";
+import { useFeasibilityConfig } from "@/hooks/use-feasibility-check";
+import { composeZonedISO } from "@/lib/feasibility/compose-datetime";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     ShoppingCart,
@@ -40,6 +42,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     const { user } = useToken();
     const { items, itemCount, totalVolume, totalWeight, clearCart } = useCart();
     const submitMutation = useSubmitSelfPickupFromCart();
+    const { data: feasibilityConfig } = useFeasibilityConfig();
     const [currentStep, setCurrentStep] = useState<PickupStep>("cart");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -101,8 +104,28 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            const pickupWindowStart = `${formData.pickup_date}T${formData.pickup_time_start}:00`;
-            const pickupWindowEnd = `${formData.pickup_date}T${formData.pickup_time_end}:00`;
+            // Compose timezone-aware ISO strings using the platform timezone.
+            // Naive `${date}T${time}:00` strings get parsed by the server as
+            // UTC, which for Dubai (+04:00) surfaces as a 4-hour shift on
+            // display — 16:00 entered became 20:00 shown. composeZonedISO
+            // resolves the correct offset at that specific moment (DST-aware,
+            // half/quarter-hour zone aware). Falls back to naive composition
+            // only if the platform TZ hasn't loaded yet — but the submit
+            // button is disabled until formData is complete, so in practice
+            // the config is always resolved by the time we get here.
+            const tz = feasibilityConfig?.timezone;
+            const pickupWindowStart =
+                composeZonedISO({
+                    date: formData.pickup_date,
+                    time: formData.pickup_time_start,
+                    timezone: tz,
+                }) ?? `${formData.pickup_date}T${formData.pickup_time_start}:00`;
+            const pickupWindowEnd =
+                composeZonedISO({
+                    date: formData.pickup_date,
+                    time: formData.pickup_time_end,
+                    timezone: tz,
+                }) ?? `${formData.pickup_date}T${formData.pickup_time_end}:00`;
 
             const payload = {
                 items: items.map((item) => ({
@@ -119,7 +142,14 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 },
                 ...(formData.expected_return_date
                     ? {
-                          expected_return_at: `${formData.expected_return_date}T18:00:00`,
+                          // Same TZ-aware composition as the pickup window
+                          // above — don't let a naive string reach the API.
+                          expected_return_at:
+                              composeZonedISO({
+                                  date: formData.expected_return_date,
+                                  time: "18:00",
+                                  timezone: tz,
+                              }) ?? `${formData.expected_return_date}T18:00:00`,
                       }
                     : {}),
                 ...(formData.notes ? { notes: formData.notes } : {}),

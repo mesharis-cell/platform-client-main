@@ -61,8 +61,19 @@ export function useSubmitSelfPickupFromCart() {
 export function useClientApproveSelfPickupQuote() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: async (id: string) => {
-            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/approve-quote`);
+        mutationFn: async ({
+            id,
+            po_number,
+            notes,
+        }: {
+            id: string;
+            po_number: string;
+            notes?: string;
+        }) => {
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/approve-quote`, {
+                po_number,
+                notes,
+            });
             return data;
         },
         onSuccess: () => {
@@ -76,8 +87,10 @@ export function useClientApproveSelfPickupQuote() {
 export function useClientDeclineSelfPickupQuote() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: async (id: string) => {
-            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/decline-quote`);
+        mutationFn: async ({ id, decline_reason }: { id: string; decline_reason: string }) => {
+            const { data } = await apiClient.post(`/client/v1/self-pickup/${id}/decline-quote`, {
+                decline_reason,
+            });
             return data;
         },
         onSuccess: () => {
