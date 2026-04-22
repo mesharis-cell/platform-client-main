@@ -15,6 +15,11 @@ import { usePlatform } from "@/contexts/platform-context";
 import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
 import { FeasibilityHelper } from "@/components/checkout/FeasibilityHelper";
+import { AvailabilityHelper } from "@/components/checkout/AvailabilityHelper";
+import {
+    useAvailabilityPreview,
+    interpretAvailabilityPreview,
+} from "@/hooks/use-availability-preview";
 import { ClientNav } from "@/components/client-nav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,7 +68,7 @@ import {
     interpretFeasibilityPreview,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
-import { composeZonedISO } from "@/lib/feasibility/compose-datetime";
+import { composeZonedISO, timeInZone } from "@/lib/feasibility/compose-datetime";
 
 type Step = "mode" | "cart" | "installation" | "venue" | "contact" | "review";
 
@@ -303,6 +308,36 @@ function CheckoutPageInner() {
     const feasibilityHelperEnabled =
         (platform?.features as any)?.enable_feasibility_helper !== false;
 
+    // Availability preview — sibling to feasibility. Fires on items or
+    // delivery/pickup window change so the user sees booking conflicts
+    // at the date picker step, not surprise-on-submit. Same rules on
+    // memoization: `availabilityItems` and `availabilityWindow` must have
+    // stable references or the queryKey churns.
+    const availabilityItems = useMemo(
+        () => items.map((i) => ({ asset_id: i.assetId, quantity: i.quantity })),
+        [items]
+    );
+    const availabilityWindow = useMemo(() => {
+        const start = formData.requested_delivery_date || formData.event_start_date;
+        const end = formData.requested_pickup_date || formData.event_end_date;
+        if (!start || !end) return null;
+        return {
+            start: new Date(`${start}T00:00:00.000Z`).toISOString(),
+            end: new Date(`${end}T23:59:59.999Z`).toISOString(),
+        };
+    }, [
+        formData.requested_delivery_date,
+        formData.requested_pickup_date,
+        formData.event_start_date,
+        formData.event_end_date,
+    ]);
+    const availabilityPreview = useAvailabilityPreview({
+        items: availabilityItems,
+        window: availabilityWindow,
+        enabled: items.length > 0,
+    });
+    const availability = interpretAvailabilityPreview(availabilityPreview.data);
+
     // NEW: Calculate estimate using new system
     const {
         data: estimateData,
@@ -354,40 +389,79 @@ function CheckoutPageInner() {
               ?.cities ?? [])
         : [];
 
-    // Validate cart availability before review step
+    // Validate cart availability before review step.
+    //
+    // Calls the unified `POST /asset/availability` endpoint (replaces the
+    // legacy batch-availability check). The server returns a structured
+    // per-asset result — we don't interpret `asset.status` on the client
+    // anymore; the core decides what's bookable for the requested window
+    // and surfaces `reason_code` when something's blocked.
     useEffect(() => {
-        const validateAvailability = async () => {
+        const validate = async () => {
             if (items.length === 0 || currentStep !== "review") return;
 
-            try {
-                const assetIds = items.map((i) => i.assetId);
-                const response = await apiClient.post("/operations/v1/asset/batch-availability", {
-                    asset_ids: assetIds,
-                });
+            // Build window from delivery/pickup dates when present (the
+            // logistics window is what asset_bookings span). Falls back to
+            // the event dates for platforms where delivery inputs are
+            // hidden. Without any window the check still surfaces hard-
+            // blocks (TRANSFORMED, MAINTENANCE-on-serialized).
+            const windowStart = formData.requested_delivery_date || formData.event_start_date;
+            const windowEnd = formData.requested_pickup_date || formData.event_end_date;
 
+            const body: {
+                items: { asset_id: string; quantity: number }[];
+                window?: { start: string; end: string };
+            } = {
+                items: items.map((i) => ({ asset_id: i.assetId, quantity: i.quantity })),
+            };
+            if (windowStart && windowEnd) {
+                body.window = {
+                    start: new Date(`${windowStart}T00:00:00.000Z`).toISOString(),
+                    end: new Date(`${windowEnd}T23:59:59.999Z`).toISOString(),
+                };
+            }
+
+            try {
+                const response = await apiClient.post("/operations/v1/asset/availability", body);
                 if (!response.data.success) {
                     setAvailabilityIssues([]);
                     return;
                 }
 
-                const assets = response.data.data;
+                type AvailabilityItem = {
+                    asset_id: string;
+                    asset_name: string;
+                    is_available: boolean;
+                    available_quantity: number;
+                    requested_quantity?: number;
+                    reason_code?: string;
+                    next_available_date?: string;
+                };
+                const results: AvailabilityItem[] = response.data.data?.items ?? [];
+
                 const issues: string[] = [];
-
-                items.forEach((item) => {
-                    const asset = assets.find((a: any) => a.id === item.assetId);
-
-                    if (!asset || asset.status !== "AVAILABLE") {
-                        issues.push(`${item.assetName} is no longer available`);
-                    } else if (item.quantity > asset.available_quantity) {
+                for (const r of results) {
+                    if (r.is_available) continue;
+                    const item = items.find((i) => i.assetId === r.asset_id);
+                    const name = item?.assetName ?? r.asset_name;
+                    const suffix = r.next_available_date
+                        ? ` — earliest ${r.next_available_date}`
+                        : "";
+                    if (r.reason_code === "INSUFFICIENT_QUANTITY") {
                         issues.push(
-                            `${item.assetName}: only ${asset.available_quantity} available (you have ${item.quantity})`
+                            `${name}: only ${r.available_quantity} available (you need ${r.requested_quantity ?? item?.quantity ?? 0})${suffix}`
                         );
+                    } else if (r.reason_code === "TRANSFORMED") {
+                        issues.push(`${name} is no longer available (asset was replaced)`);
+                    } else if (r.reason_code === "MAINTENANCE") {
+                        issues.push(`${name} is in maintenance`);
+                    } else {
+                        issues.push(`${name} is no longer available`);
                     }
-                });
-
+                }
                 setAvailabilityIssues(issues);
             } catch (error) {
-                const status = (error as any)?.response?.status;
+                const status = (error as { response?: { status?: number } })?.response?.status;
                 if (status === 403) {
                     // Fallback for legacy CLIENT users missing availability permission;
                     // order submission still validates availability on the backend.
@@ -398,8 +472,15 @@ function CheckoutPageInner() {
             }
         };
 
-        validateAvailability();
-    }, [items, currentStep]);
+        validate();
+    }, [
+        items,
+        currentStep,
+        formData.requested_delivery_date,
+        formData.requested_pickup_date,
+        formData.event_start_date,
+        formData.event_end_date,
+    ]);
 
     useEffect(() => {
         if (redItems.length > 0) return;
@@ -1167,6 +1248,15 @@ function CheckoutPageInner() {
                                                 config={feasibilityPreview.data?.config ?? null}
                                                 onUseFloorDate={() => {
                                                     if (!feasibility.floorDate) return;
+                                                    // Also push the time forward. The floor is an ISO
+                                                    // datetime server-side; setting only the date kept
+                                                    // the user's earlier time (e.g. 06:00) beating a
+                                                    // 09:57 floor, so the check stayed red even after
+                                                    // the button.
+                                                    const floorTime = timeInZone(
+                                                        feasibility.floorDatetime,
+                                                        feasibilityConfig?.timezone
+                                                    );
                                                     if (eventDateInputsEnabled) {
                                                         setFormData({
                                                             ...formData,
@@ -1177,6 +1267,12 @@ function CheckoutPageInner() {
                                                                     feasibility.floorDate
                                                                     ? formData.event_end_date
                                                                     : feasibility.floorDate,
+                                                            ...(floorTime
+                                                                ? {
+                                                                      requested_delivery_time_start:
+                                                                          floorTime,
+                                                                  }
+                                                                : {}),
                                                         });
                                                     } else {
                                                         setFormData({
@@ -1189,9 +1285,25 @@ function CheckoutPageInner() {
                                                                     feasibility.floorDate
                                                                     ? formData.requested_pickup_date
                                                                     : feasibility.floorDate,
+                                                            ...(floorTime
+                                                                ? {
+                                                                      requested_delivery_time_start:
+                                                                          floorTime,
+                                                                  }
+                                                                : {}),
                                                         });
                                                     }
                                                 }}
+                                            />
+
+                                            {/* Availability sibling — shows cart items that
+                                        can't be booked in the chosen window (insufficient
+                                        pool, transformed, etc.) so the user sees it before
+                                        the review step. Renders nothing when everything's
+                                        available. */}
+                                            <AvailabilityHelper
+                                                isLoading={availabilityPreview.isLoading}
+                                                blockingItems={availability.blockingItems}
                                             />
 
                                             {/* Delivery + Pickup windows.
@@ -1968,6 +2080,12 @@ function CheckoutPageInner() {
                                         config={feasibilityPreview.data?.config ?? null}
                                         onUseFloorDate={() => {
                                             if (!feasibility.floorDate) return;
+                                            // Push the time forward too — see the sibling handler
+                                            // up top for the rationale.
+                                            const floorTime = timeInZone(
+                                                feasibility.floorDatetime,
+                                                feasibilityConfig?.timezone
+                                            );
                                             if (eventDateInputsEnabled) {
                                                 setFormData({
                                                     ...formData,
@@ -1978,6 +2096,12 @@ function CheckoutPageInner() {
                                                             feasibility.floorDate
                                                             ? formData.event_end_date
                                                             : feasibility.floorDate,
+                                                    ...(floorTime
+                                                        ? {
+                                                              requested_delivery_time_start:
+                                                                  floorTime,
+                                                          }
+                                                        : {}),
                                                 });
                                             } else {
                                                 setFormData({
@@ -1989,9 +2113,22 @@ function CheckoutPageInner() {
                                                             feasibility.floorDate
                                                             ? formData.requested_pickup_date
                                                             : feasibility.floorDate,
+                                                    ...(floorTime
+                                                        ? {
+                                                              requested_delivery_time_start:
+                                                                  floorTime,
+                                                          }
+                                                        : {}),
                                                 });
                                             }
                                         }}
+                                    />
+
+                                    {/* Availability sibling — see comment on the earlier
+                                render for rationale. */}
+                                    <AvailabilityHelper
+                                        isLoading={availabilityPreview.isLoading}
+                                        blockingItems={availability.blockingItems}
                                     />
 
                                     {/* Order Summary */}

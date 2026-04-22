@@ -82,3 +82,35 @@ export function composeZonedISO({
 
     return `${date}T${timeWithSeconds}${offset}`;
 }
+
+/**
+ * Extract the wall-clock time (HH:MM) from an ISO datetime as observed in
+ * a given IANA timezone. Used by the FeasibilityHelper's "Use this date"
+ * button — the floor we get back from the server is an ISO datetime, but
+ * `<input type="time">` inputs want the HH:MM wall-clock portion.
+ *
+ * Returns null for invalid inputs so callers can ignore and keep the user's
+ * existing time value instead of clobbering it with garbage.
+ *
+ * Example:
+ *   timeInZone("2026-04-23T05:57:57.402Z", "Asia/Dubai")
+ *   // → "09:57"  (UTC 05:57 is 09:57 Dubai time, +04:00)
+ */
+export function timeInZone(
+    isoDatetime: string | null | undefined,
+    timezone: string | null | undefined
+): string | null {
+    if (!isoDatetime || !timezone) return null;
+    const instant = new Date(isoDatetime);
+    if (Number.isNaN(instant.getTime())) return null;
+    try {
+        return new Intl.DateTimeFormat("en-GB", {
+            timeZone: timezone,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        }).format(instant);
+    } catch {
+        return null;
+    }
+}
