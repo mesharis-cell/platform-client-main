@@ -244,11 +244,16 @@ export function interpretFeasibilityPreview(
             ? platformFloorDatetime
             : issueFloorDatetime;
     const userDateFeasible = compareUserAgainstFloor(floorDate, floorDatetime);
-    // blockingItems remain date-granular: the per-item issue is "this asset
-    // can't be ready on that calendar day." Time-of-day nuance is captured
-    // at the aggregate floor above.
+    // blockingItems feed the helper's "Why this date?" breakdown. Two modes:
+    //   - User has picked a date → filter to issues that actually exceed it
+    //     (these are the items BLOCKING their choice specifically).
+    //   - User hasn't picked yet → return all issues, because they collectively
+    //     EXPLAIN why the floor is where it is. Without this, the Why
+    //     accordion at the early date-picker stage would only show the
+    //     generic lead-time line even when a RED item was pushing the floor
+    //     weeks forward.
     const blockingItems = userEventDate
         ? result.issues.filter((i) => i.earliest_feasible_date > userEventDate)
-        : [];
+        : result.issues;
     return { floorDate, floorDatetime, userDateFeasible, blockingItems };
 }

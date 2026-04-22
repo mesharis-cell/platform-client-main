@@ -24,10 +24,7 @@ import {
     MaintenanceFeasibilityIssue,
     MaintenanceFeasibilityResult,
 } from "@/hooks/use-feasibility-check";
-import {
-    roundedFloorTimeInZone,
-    shiftDateStr,
-} from "@/lib/feasibility/compose-datetime";
+import { roundedFloorTimeInZone, shiftDateStr } from "@/lib/feasibility/compose-datetime";
 
 function fmtFriendlyDate(ymd: string): string {
     try {
