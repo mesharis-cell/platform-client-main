@@ -24,6 +24,10 @@ import {
     MaintenanceFeasibilityIssue,
     MaintenanceFeasibilityResult,
 } from "@/hooks/use-feasibility-check";
+import {
+    roundedFloorTimeInZone,
+    shiftDateStr,
+} from "@/lib/feasibility/compose-datetime";
 
 function fmtFriendlyDate(ymd: string): string {
     try {
@@ -34,6 +38,29 @@ function fmtFriendlyDate(ymd: string): string {
     }
 }
 
+/**
+ * Compute the date+time the "Use this date" button will actually apply —
+ * the server-returned floor rounded up to the next 30-min boundary, with
+ * the date bumped if rounding crossed midnight. Returned in the same
+ * shape the button uses so the copy matches what the button does.
+ *
+ * Returns null when either floorDatetime or timezone is missing; callers
+ * fall back to showing just the floor date.
+ */
+function resolveRoundedFloor(
+    floorDate: string,
+    floorDatetime: string | null,
+    timezone: string | null | undefined
+): { date: string; time: string } | null {
+    if (!floorDatetime || !timezone) return null;
+    const rounded = roundedFloorTimeInZone(floorDatetime, timezone);
+    if (!rounded) return null;
+    return {
+        date: shiftDateStr(floorDate, rounded.dayOffset),
+        time: rounded.time,
+    };
+}
+
 interface FeasibilityHelperProps {
     /**
      * Whether to render the helper at all. When false the component returns
@@ -42,6 +69,8 @@ interface FeasibilityHelperProps {
     helperEnabled: boolean;
     isLoading: boolean;
     floorDate: string | null; // YYYY-MM-DD or null
+    /** ISO datetime from the API — drives the rounded-time shown in copy. */
+    floorDatetime: string | null;
     userEventDate: string; // YYYY-MM-DD or ""
     userDateFeasible: boolean | null;
     blockingItems: MaintenanceFeasibilityIssue[];
@@ -54,12 +83,24 @@ export function FeasibilityHelper({
     helperEnabled,
     isLoading,
     floorDate,
+    floorDatetime,
     userEventDate,
     userDateFeasible,
     blockingItems,
     config,
     onUseFloorDate,
 }: FeasibilityHelperProps) {
+    // Copy shows the date + time the button WILL apply so the user knows
+    // exactly what clicking it does. Falls back to date-only when we don't
+    // have the datetime (e.g. old API response shape).
+    const rounded = floorDate
+        ? resolveRoundedFloor(floorDate, floorDatetime, config?.timezone)
+        : null;
+    const floorLabel = rounded
+        ? `${fmtFriendlyDate(rounded.date)} · ${rounded.time}`
+        : floorDate
+          ? fmtFriendlyDate(floorDate)
+          : "";
     const [whyOpen, setWhyOpen] = React.useState(false);
 
     if (!helperEnabled) return null;
@@ -77,14 +118,14 @@ export function FeasibilityHelper({
                 <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
                     Soonest possible start
                 </p>
-                <p className="font-mono font-medium">{fmtFriendlyDate(floorDate)}</p>
+                <p className="font-mono font-medium">{floorLabel}</p>
                 <p className="text-xs text-muted-foreground">
                     Based on what's in your cart. Pick this date or later.
                 </p>
                 <WhyAccordion
                     open={whyOpen}
                     setOpen={setWhyOpen}
-                    floorDate={floorDate}
+                    floorLabel={floorLabel}
                     config={config}
                     blockingItems={blockingItems}
                 />
@@ -115,9 +156,7 @@ export function FeasibilityHelper({
                     </p>
                     <p className="text-xs text-amber-800">
                         Soonest we can have everything ready:{" "}
-                        <span className="font-mono font-semibold">
-                            {fmtFriendlyDate(floorDate)}
-                        </span>
+                        <span className="font-mono font-semibold">{floorLabel}</span>
                     </p>
                 </div>
             </div>
@@ -143,7 +182,7 @@ export function FeasibilityHelper({
                 </button>
             </div>
             {whyOpen ? (
-                <WhyBody floorDate={floorDate} config={config} blockingItems={blockingItems} />
+                <WhyBody floorLabel={floorLabel} config={config} blockingItems={blockingItems} />
             ) : null}
         </div>
     );
@@ -152,13 +191,13 @@ export function FeasibilityHelper({
 function WhyAccordion({
     open,
     setOpen,
-    floorDate,
+    floorLabel,
     config,
     blockingItems,
 }: {
     open: boolean;
     setOpen: (v: boolean) => void;
-    floorDate: string;
+    floorLabel: string;
     config: MaintenanceFeasibilityResult["config"] | null;
     blockingItems: MaintenanceFeasibilityIssue[];
 }) {
@@ -174,7 +213,11 @@ function WhyAccordion({
             </button>
             {open ? (
                 <div className="pt-2">
-                    <WhyBody floorDate={floorDate} config={config} blockingItems={blockingItems} />
+                    <WhyBody
+                        floorLabel={floorLabel}
+                        config={config}
+                        blockingItems={blockingItems}
+                    />
                 </div>
             ) : null}
         </div>
@@ -182,11 +225,11 @@ function WhyAccordion({
 }
 
 function WhyBody({
-    floorDate,
+    floorLabel,
     config,
     blockingItems,
 }: {
-    floorDate: string;
+    floorLabel: string;
     config: MaintenanceFeasibilityResult["config"] | null;
     blockingItems: MaintenanceFeasibilityIssue[];
 }) {
@@ -211,7 +254,7 @@ function WhyBody({
             ))}
             <li className="pt-1 text-foreground">
                 Earliest everything can be ready:{" "}
-                <span className="font-mono font-medium">{fmtFriendlyDate(floorDate)}</span>
+                <span className="font-mono font-medium">{floorLabel}</span>
             </li>
         </ul>
     );

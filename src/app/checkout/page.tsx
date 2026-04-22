@@ -68,7 +68,11 @@ import {
     interpretFeasibilityPreview,
     type MaintenanceFeasibilityIssue,
 } from "@/hooks/use-feasibility-check";
-import { composeZonedISO, timeInZone } from "@/lib/feasibility/compose-datetime";
+import {
+    composeZonedISO,
+    roundedFloorTimeInZone,
+    shiftDateStr,
+} from "@/lib/feasibility/compose-datetime";
 
 type Step = "mode" | "cart" | "installation" | "venue" | "contact" | "review";
 
@@ -1238,6 +1242,7 @@ function CheckoutPageInner() {
                                                 helperEnabled={feasibilityHelperEnabled}
                                                 isLoading={feasibilityPreview.isLoading}
                                                 floorDate={feasibility.floorDate}
+                                                floorDatetime={feasibility.floorDatetime}
                                                 userEventDate={
                                                     eventDateInputsEnabled
                                                         ? formData.event_start_date
@@ -1248,25 +1253,32 @@ function CheckoutPageInner() {
                                                 config={feasibilityPreview.data?.config ?? null}
                                                 onUseFloorDate={() => {
                                                     if (!feasibility.floorDate) return;
-                                                    // Also push the time forward. The floor is an ISO
-                                                    // datetime server-side; setting only the date kept
-                                                    // the user's earlier time (e.g. 06:00) beating a
-                                                    // 09:57 floor, so the check stayed red even after
-                                                    // the button.
-                                                    const floorTime = timeInZone(
+                                                    // Round the floor up to the next 30-min wall-
+                                                    // clock boundary, so an exact-match time
+                                                    // doesn't lose the race with the server's
+                                                    // continuously-advancing `Date.now() + lead`
+                                                    // floor. Also bumps the date if rounding
+                                                    // crossed midnight.
+                                                    const rounded = roundedFloorTimeInZone(
                                                         feasibility.floorDatetime,
                                                         feasibilityConfig?.timezone
                                                     );
+                                                    const targetDate = rounded
+                                                        ? shiftDateStr(
+                                                              feasibility.floorDate,
+                                                              rounded.dayOffset
+                                                          )
+                                                        : feasibility.floorDate;
+                                                    const floorTime = rounded?.time ?? null;
                                                     if (eventDateInputsEnabled) {
                                                         setFormData({
                                                             ...formData,
-                                                            event_start_date: feasibility.floorDate,
+                                                            event_start_date: targetDate,
                                                             event_end_date:
                                                                 formData.event_end_date &&
-                                                                formData.event_end_date >=
-                                                                    feasibility.floorDate
+                                                                formData.event_end_date >= targetDate
                                                                     ? formData.event_end_date
-                                                                    : feasibility.floorDate,
+                                                                    : targetDate,
                                                             ...(floorTime
                                                                 ? {
                                                                       requested_delivery_time_start:
@@ -1277,14 +1289,13 @@ function CheckoutPageInner() {
                                                     } else {
                                                         setFormData({
                                                             ...formData,
-                                                            requested_delivery_date:
-                                                                feasibility.floorDate,
+                                                            requested_delivery_date: targetDate,
                                                             requested_pickup_date:
                                                                 formData.requested_pickup_date &&
                                                                 formData.requested_pickup_date >=
-                                                                    feasibility.floorDate
+                                                                    targetDate
                                                                     ? formData.requested_pickup_date
-                                                                    : feasibility.floorDate,
+                                                                    : targetDate,
                                                             ...(floorTime
                                                                 ? {
                                                                       requested_delivery_time_start:
@@ -2070,6 +2081,7 @@ function CheckoutPageInner() {
                                         helperEnabled={feasibilityHelperEnabled}
                                         isLoading={feasibilityPreview.isLoading}
                                         floorDate={feasibility.floorDate}
+                                        floorDatetime={feasibility.floorDatetime}
                                         userEventDate={
                                             eventDateInputsEnabled
                                                 ? formData.event_start_date
@@ -2080,22 +2092,28 @@ function CheckoutPageInner() {
                                         config={feasibilityPreview.data?.config ?? null}
                                         onUseFloorDate={() => {
                                             if (!feasibility.floorDate) return;
-                                            // Push the time forward too — see the sibling handler
-                                            // up top for the rationale.
-                                            const floorTime = timeInZone(
+                                            // See sibling handler up top for rationale on the
+                                            // round-up + midnight-cross handling.
+                                            const rounded = roundedFloorTimeInZone(
                                                 feasibility.floorDatetime,
                                                 feasibilityConfig?.timezone
                                             );
+                                            const targetDate = rounded
+                                                ? shiftDateStr(
+                                                      feasibility.floorDate,
+                                                      rounded.dayOffset
+                                                  )
+                                                : feasibility.floorDate;
+                                            const floorTime = rounded?.time ?? null;
                                             if (eventDateInputsEnabled) {
                                                 setFormData({
                                                     ...formData,
-                                                    event_start_date: feasibility.floorDate,
+                                                    event_start_date: targetDate,
                                                     event_end_date:
                                                         formData.event_end_date &&
-                                                        formData.event_end_date >=
-                                                            feasibility.floorDate
+                                                        formData.event_end_date >= targetDate
                                                             ? formData.event_end_date
-                                                            : feasibility.floorDate,
+                                                            : targetDate,
                                                     ...(floorTime
                                                         ? {
                                                               requested_delivery_time_start:
@@ -2106,13 +2124,12 @@ function CheckoutPageInner() {
                                             } else {
                                                 setFormData({
                                                     ...formData,
-                                                    requested_delivery_date: feasibility.floorDate,
+                                                    requested_delivery_date: targetDate,
                                                     requested_pickup_date:
                                                         formData.requested_pickup_date &&
-                                                        formData.requested_pickup_date >=
-                                                            feasibility.floorDate
+                                                        formData.requested_pickup_date >= targetDate
                                                             ? formData.requested_pickup_date
-                                                            : feasibility.floorDate,
+                                                            : targetDate,
                                                     ...(floorTime
                                                         ? {
                                                               requested_delivery_time_start:

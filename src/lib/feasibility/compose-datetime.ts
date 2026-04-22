@@ -84,33 +84,81 @@ export function composeZonedISO({
 }
 
 /**
- * Extract the wall-clock time (HH:MM) from an ISO datetime as observed in
- * a given IANA timezone. Used by the FeasibilityHelper's "Use this date"
- * button — the floor we get back from the server is an ISO datetime, but
- * `<input type="time">` inputs want the HH:MM wall-clock portion.
+ * Round the floor datetime up to the next 30-minute wall-clock boundary
+ * strictly AFTER it, in the given IANA timezone. Returns the rounded
+ * HH:MM time plus a `dayOffset` indicating how many days to add to the
+ * caller's floor date (non-zero only when the rounded time crossed
+ * midnight — e.g. a 23:45 floor rounds to 00:00 the next day).
  *
- * Returns null for invalid inputs so callers can ignore and keep the user's
- * existing time value instead of clobbering it with garbage.
+ * Why rounding? The server-side floor is computed at request time using
+ * `Date.now() + lead_hours`. Between the user clicking "Use this date"
+ * and the next feasibility check firing, real time advances a few
+ * seconds and the new floor ends up slightly later than the one we
+ * captured — so an exact-match time (e.g. 09:57:57) reliably loses the
+ * race and the helper stays red. Rounding up to the next 30-min
+ * boundary buys a comfortable buffer (15–30 min in practice) AND gives
+ * the user a clean `10:00` / `10:30` in the time picker instead of a
+ * jagged `09:57`.
  *
- * Example:
- *   timeInZone("2026-04-23T05:57:57.402Z", "Asia/Dubai")
- *   // → "09:57"  (UTC 05:57 is 09:57 Dubai time, +04:00)
+ * Returns null for invalid inputs so callers can fall back to leaving
+ * the user's existing time untouched.
+ *
+ * Examples:
+ *   roundedFloorTimeInZone("2026-04-23T05:57:57Z", "Asia/Dubai")
+ *   // → { time: "10:00", dayOffset: 0 }   (UTC 05:57 is 09:57 Dubai → round to 10:00)
+ *
+ *   roundedFloorTimeInZone("2026-04-23T06:00:00Z", "Asia/Dubai")
+ *   // → { time: "10:30", dayOffset: 0 }   (UTC 06:00 is 10:00 Dubai → strictly-greater boundary is 10:30)
+ *
+ *   roundedFloorTimeInZone("2026-04-23T19:45:00Z", "Asia/Dubai")
+ *   // → { time: "00:00", dayOffset: 1 }   (UTC 19:45 is 23:45 Dubai → 00:00 next day)
  */
-export function timeInZone(
+export function roundedFloorTimeInZone(
     isoDatetime: string | null | undefined,
     timezone: string | null | undefined
-): string | null {
+): { time: string; dayOffset: number } | null {
     if (!isoDatetime || !timezone) return null;
     const instant = new Date(isoDatetime);
     if (Number.isNaN(instant.getTime())) return null;
     try {
-        return new Intl.DateTimeFormat("en-GB", {
+        const parts = new Intl.DateTimeFormat("en-GB", {
             timeZone: timezone,
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
-        }).format(instant);
+        }).formatToParts(instant);
+        const h = parseInt(parts.find((p) => p.type === "hour")?.value ?? "NaN", 10);
+        const m = parseInt(parts.find((p) => p.type === "minute")?.value ?? "NaN", 10);
+        if (Number.isNaN(h) || Number.isNaN(m)) return null;
+
+        // Round up to the next 30-min boundary STRICTLY AFTER h:m.
+        //   m in [0, 29]  → same-hour :30
+        //   m in [30, 59] → next-hour :00
+        const totalMinutes = m < 30 ? h * 60 + 30 : (h + 1) * 60;
+        const minutesInDay = 24 * 60;
+        const dayOffset = Math.floor(totalMinutes / minutesInDay);
+        const dayMinutes = totalMinutes % minutesInDay;
+        const newH = Math.floor(dayMinutes / 60);
+        const newM = dayMinutes % 60;
+        const time = `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
+        return { time, dayOffset };
     } catch {
         return null;
     }
+}
+
+/**
+ * Shift a YYYY-MM-DD calendar date by N days (positive or negative).
+ * Used by the "Use this date" handlers when rounding the floor time
+ * crosses midnight into the next day.
+ */
+export function shiftDateStr(ymd: string, dayOffset: number): string {
+    if (dayOffset === 0) return ymd;
+    const [y, mo, d] = ymd.split("-").map((n) => parseInt(n, 10));
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + dayOffset);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getUTCDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
 }
