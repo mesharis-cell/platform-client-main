@@ -163,11 +163,11 @@ export function FloatingCart() {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-start justify-between gap-2 mb-2">
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-medium text-sm truncate">
+                                                            <h4 className="font-medium text-sm line-clamp-2 break-words">
                                                                 {item.assetName}
                                                             </h4>
                                                             {item.fromCollectionName && (
-                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                <p className="text-xs text-muted-foreground font-mono line-clamp-1 break-words">
                                                                     From: {item.fromCollectionName}
                                                                 </p>
                                                             )}
@@ -176,9 +176,10 @@ export function FloatingCart() {
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() => removeItem(item.assetId)}
-                                                            className="h-6 w-6 p-0 shrink-0"
+                                                            aria-label="Remove item"
+                                                            className="h-8 w-8 p-0 shrink-0 hover:bg-destructive/10"
                                                         >
-                                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>
                                                     </div>
 
