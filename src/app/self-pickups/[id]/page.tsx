@@ -476,7 +476,6 @@ export default function ClientSelfPickupDetailPage({
                                                     >
                                                         <div className="shrink-0 w-16 h-16 rounded-md bg-muted/40 flex items-center justify-center overflow-hidden">
                                                             {firstImg ? (
-                                                                // eslint-disable-next-line @next/next/no-img-element
                                                                 <img
                                                                     src={firstImg}
                                                                     alt={item.asset_name}
