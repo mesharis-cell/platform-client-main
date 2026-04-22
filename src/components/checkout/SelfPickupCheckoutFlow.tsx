@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,12 @@ import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
 import { useSubmitSelfPickupFromCart } from "@/hooks/use-self-pickups";
 import { useFeasibilityConfig } from "@/hooks/use-feasibility-check";
-import { composeZonedISO } from "@/lib/feasibility/compose-datetime";
+import {
+    composeZonedISO,
+    computeSpLeadFloor,
+    roundedFloorTimeInZone,
+    shiftDateStr,
+} from "@/lib/feasibility/compose-datetime";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     ShoppingCart,
@@ -22,6 +27,7 @@ import {
     ChevronRight,
     Check,
     Package,
+    AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,20 +74,52 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
         }));
     }, [user]);
 
+    // SP lead-floor projection. Server validates on submit, but this keeps
+    // the helper + Next gate in sync with the server's verdict so the user
+    // sees the issue while picking the date, not after clicking Submit.
+    const spFloor = useMemo(
+        () =>
+            feasibilityConfig
+                ? computeSpLeadFloor({
+                      sp_minimum_lead_hours: feasibilityConfig.sp_minimum_lead_hours,
+                      exclude_weekends: feasibilityConfig.exclude_weekends,
+                      weekend_days: feasibilityConfig.weekend_days,
+                      timezone: feasibilityConfig.timezone,
+                  })
+                : null,
+        [feasibilityConfig]
+    );
+    const userPickupIso = useMemo(
+        () =>
+            feasibilityConfig?.timezone && formData.pickup_date && formData.pickup_time_start
+                ? composeZonedISO({
+                      date: formData.pickup_date,
+                      time: formData.pickup_time_start,
+                      timezone: feasibilityConfig.timezone,
+                  })
+                : null,
+        [feasibilityConfig?.timezone, formData.pickup_date, formData.pickup_time_start]
+    );
+    const userPickupFeasible =
+        spFloor && userPickupIso
+            ? new Date(userPickupIso).getTime() >= new Date(spFloor.floorDatetime).getTime()
+            : null;
+
     const canProceed = () => {
         switch (currentStep) {
             case "cart":
                 return items.length > 0;
             case "details":
-                return (
+                return Boolean(
                     formData.collector_name &&
-                    formData.collector_phone &&
-                    formData.pickup_date &&
-                    formData.pickup_time_start &&
-                    formData.pickup_time_end
+                        formData.collector_phone &&
+                        formData.pickup_date &&
+                        formData.pickup_time_start &&
+                        formData.pickup_time_end &&
+                        userPickupFeasible !== false
                 );
             case "review":
-                return true;
+                return userPickupFeasible !== false;
             default:
                 return false;
         }
@@ -508,6 +546,38 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                 />
                                             </div>
                                         </div>
+
+                                        {/* SP lead-time helper. Mirrors the one on the standard
+                                        order flow but uses sp_minimum_lead_hours (server-
+                                        validated at submit, client-projected here for UX). */}
+                                        <SpLeadHelper
+                                            floor={spFloor}
+                                            userDateFeasible={userPickupFeasible}
+                                            leadHours={
+                                                feasibilityConfig?.sp_minimum_lead_hours ?? 2
+                                            }
+                                            timezone={feasibilityConfig?.timezone}
+                                            onUseFloor={() => {
+                                                if (!spFloor) return;
+                                                const rounded = roundedFloorTimeInZone(
+                                                    spFloor.floorDatetime,
+                                                    feasibilityConfig?.timezone
+                                                );
+                                                const targetDate = rounded
+                                                    ? shiftDateStr(
+                                                          spFloor.floorDate,
+                                                          rounded.dayOffset
+                                                      )
+                                                    : spFloor.floorDate;
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    pickup_date: targetDate,
+                                                    ...(rounded
+                                                        ? { pickup_time_start: rounded.time }
+                                                        : {}),
+                                                }));
+                                            }}
+                                        />
                                     </div>
 
                                     <div className="space-y-4 pt-4 border-t border-border/40">
@@ -778,5 +848,104 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 </div>
             </div>
         </>
+    );
+}
+
+/**
+ * Inline helper on the SP pickup-window step. Shorter than the order-side
+ * FeasibilityHelper because self-pickups don't have maintenance decisions
+ * or per-item refurb timelines — just a platform-wide lead-hours check.
+ *
+ *   - No pickup date picked yet → show the soonest-possible start as a hint.
+ *   - User picked a workable date → subtle green confirmation.
+ *   - User picked a too-soon date → amber warning + "Use this date" shortcut.
+ */
+function SpLeadHelper({
+    floor,
+    userDateFeasible,
+    leadHours,
+    timezone,
+    onUseFloor,
+}: {
+    floor: { floorDate: string; floorDatetime: string } | null;
+    userDateFeasible: boolean | null;
+    leadHours: number;
+    timezone: string | undefined;
+    onUseFloor: () => void;
+}) {
+    if (!floor) return null;
+
+    const fmt = (iso: string) => {
+        try {
+            return new Intl.DateTimeFormat("en-GB", {
+                timeZone: timezone,
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+            }).format(new Date(iso));
+        } catch {
+            return iso;
+        }
+    };
+    const floorLabel = fmt(floor.floorDatetime);
+
+    if (userDateFeasible === null) {
+        return (
+            <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-sm space-y-1">
+                <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                    Soonest possible pickup
+                </p>
+                <p className="font-mono font-medium">{floorLabel}</p>
+                <p className="text-xs text-muted-foreground">
+                    {leadHours}h of warehouse prep is required before pickup.
+                </p>
+            </div>
+        );
+    }
+
+    if (userDateFeasible) {
+        return (
+            <div className="flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-sm">
+                <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                <p className="text-xs text-emerald-700">
+                    Your pickup time works — we can have everything ready in time.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-900">
+                        This pickup time is a bit too soon.
+                    </p>
+                    <p className="text-xs text-amber-800">
+                        Soonest we can have everything ready:{" "}
+                        <span className="font-mono font-semibold">{floorLabel}</span>
+                    </p>
+                    <p className="text-[11px] text-amber-700">
+                        Self-pickups need at least {leadHours}h of warehouse prep.
+                    </p>
+                </div>
+            </div>
+            <div className="flex items-center justify-start gap-2 pt-1">
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={onUseFloor}
+                >
+                    Use this time
+                </Button>
+            </div>
+        </div>
     );
 }
