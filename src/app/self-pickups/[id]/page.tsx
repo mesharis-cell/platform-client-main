@@ -460,6 +460,15 @@ export default function ClientSelfPickupDetailPage({
                                                     (Array.isArray(item.images) &&
                                                         item.images[0]?.url) ||
                                                     null;
+                                                const scanned = item.scanned_quantity;
+                                                const hasScannedQty =
+                                                    scanned !== null && scanned !== undefined;
+                                                const isSkipped = item.skipped === true;
+                                                const isPartial =
+                                                    hasScannedQty &&
+                                                    scanned > 0 &&
+                                                    scanned < item.quantity;
+                                                const isMidflow = item.added_midflow === true;
                                                 return (
                                                     <div
                                                         key={item.id || idx}
@@ -478,15 +487,63 @@ export default function ClientSelfPickupDetailPage({
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-semibold truncate">
-                                                                {item.asset_name}
+                                                            <p className="font-semibold truncate flex items-center gap-2">
+                                                                <span className="truncate">
+                                                                    {item.asset_name}
+                                                                </span>
+                                                                {isMidflow && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="text-[10px] font-mono shrink-0"
+                                                                    >
+                                                                        ADDED
+                                                                    </Badge>
+                                                                )}
+                                                                {isSkipped && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="text-[10px] font-mono bg-red-50 border-red-300 text-red-700 shrink-0"
+                                                                    >
+                                                                        NOT COLLECTED
+                                                                    </Badge>
+                                                                )}
+                                                                {isPartial && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="text-[10px] font-mono bg-amber-50 border-amber-300 text-amber-700 shrink-0"
+                                                                    >
+                                                                        PARTIAL
+                                                                    </Badge>
+                                                                )}
                                                             </p>
                                                             <div className="text-xs text-muted-foreground font-mono flex items-center gap-3 mt-1">
                                                                 <span>
-                                                                    Qty:{" "}
-                                                                    <span className="text-foreground">
-                                                                        {item.quantity}
-                                                                    </span>
+                                                                    {hasScannedQty ? (
+                                                                        <>
+                                                                            Ordered{" "}
+                                                                            <span className="text-foreground">
+                                                                                {item.quantity}
+                                                                            </span>{" "}
+                                                                            · Collected{" "}
+                                                                            <span
+                                                                                className={
+                                                                                    isSkipped ||
+                                                                                    isPartial
+                                                                                        ? "text-amber-700 font-semibold"
+                                                                                        : "text-foreground"
+                                                                                }
+                                                                            >
+                                                                                {scanned}
+                                                                            </span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            Qty:{" "}
+                                                                            <span className="text-foreground">
+                                                                                {item.quantity}
+                                                                            </span>
+                                                                        </>
+                                                                    )}
                                                                 </span>
                                                                 {item.total_volume && (
                                                                     <span>
@@ -502,7 +559,9 @@ export default function ClientSelfPickupDetailPage({
                                                             variant="outline"
                                                             className="font-mono text-xs shrink-0"
                                                         >
-                                                            × {item.quantity}
+                                                            {hasScannedQty
+                                                                ? `${scanned}/${item.quantity}`
+                                                                : `× ${item.quantity}`}
                                                         </Badge>
                                                     </div>
                                                 );
@@ -560,6 +619,17 @@ export default function ClientSelfPickupDetailPage({
                                     </Card>
                                 </motion.div>
                             )}
+
+                            {/* What's Next guidance — status-specific copy that
+                                tells the client what will happen and what they
+                                need to do. Mirrors the orders page pattern
+                                (orders/[orderId]/page.tsx:885-1085) but scoped
+                                to the NO_COST-reachable statuses. */}
+                            <WhatsNextCard
+                                status={pickup.self_pickup_status}
+                                pickupWindow={pickupWindow}
+                                collectorName={pickup.collector_name}
+                            />
                         </div>
 
                         {/* SIDEBAR (right, 1 col) */}
@@ -666,5 +736,88 @@ export default function ClientSelfPickupDetailPage({
                 }}
             />
         </ClientNav>
+    );
+}
+
+// Per-status "what happens next" guidance. Mirrors the orders detail
+// pattern but scoped to SP lifecycle — only the statuses clients will
+// reasonably see (no PENDING_APPROVAL / QUOTED since those are STANDARD-
+// mode only and we're polishing NO_COST first).
+function WhatsNextCard({
+    status,
+    pickupWindow,
+    collectorName,
+}: {
+    status: string;
+    pickupWindow: { start?: string; end?: string } | undefined;
+    collectorName?: string | null;
+}) {
+    const [title, body] = (() => {
+        const windowStr =
+            pickupWindow?.start && pickupWindow?.end
+                ? `${new Date(pickupWindow.start).toLocaleString()} – ${new Date(pickupWindow.end).toLocaleString()}`
+                : "your pickup window";
+        switch (status) {
+            case "SUBMITTED":
+            case "PRICING_REVIEW":
+                return [
+                    "What happens next",
+                    "Our team is reviewing your pickup details. We'll confirm shortly and prepare your items for collection.",
+                ];
+            case "CONFIRMED":
+                return [
+                    "What happens next",
+                    `Your pickup is confirmed. We're preparing your items for collection during ${windowStr}.`,
+                ];
+            case "READY_FOR_PICKUP":
+                return [
+                    "Ready for collection",
+                    `${collectorName ? collectorName + ", your" : "Your"} items are ready at our warehouse. Please come during ${windowStr}.`,
+                ];
+            case "PICKED_UP":
+                return [
+                    "Items collected",
+                    "When you're ready to return the items, click 'Start Return' above so our team can prepare to receive them.",
+                ];
+            case "AWAITING_RETURN":
+                return [
+                    "We're expecting your return",
+                    "Bring the items to our warehouse during your expected return window. Contact our team if you need more time.",
+                ];
+            case "CLOSED":
+                return [
+                    "All done",
+                    "Return scan complete and your pickup is fully closed. Thank you — we hope everything went smoothly.",
+                ];
+            case "CANCELLED":
+                return [
+                    "Pickup cancelled",
+                    "This pickup has been cancelled. If this was unexpected, please contact our team.",
+                ];
+            case "DECLINED":
+                return [
+                    "Quote declined",
+                    "You declined this quote. Our team may reach out with alternatives.",
+                ];
+            default:
+                return [null, null];
+        }
+    })();
+
+    if (!title) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+        >
+            <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                <h3 className="text-sm font-mono uppercase tracking-wide text-muted-foreground mb-2">
+                    {title}
+                </h3>
+                <p className="text-sm text-foreground leading-relaxed">{body}</p>
+            </Card>
+        </motion.div>
     );
 }
