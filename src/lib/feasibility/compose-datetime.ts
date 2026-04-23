@@ -148,6 +148,76 @@ export function roundedFloorTimeInZone(
 }
 
 /**
+ * Compute the self-pickup lead-time floor entirely client-side. Mirrors the
+ * server-side logic in `api/src/app/shared/feasibility/feasibility.core.ts`:
+ *   floor = now + sp_minimum_lead_hours, advanced past any weekend days.
+ *
+ * The server remains the authoritative gate at submit time; this client-side
+ * projection exists only to power the visual helper on the SP checkout page
+ * (so the user sees the warning before clicking Submit, not after).
+ *
+ * Simplification: we advance calendar days (not business-hour-aware) when
+ * weekends are excluded. For the 2h default lead this only matters right on
+ * a weekend boundary, and the server will reject anything the client lets
+ * through.
+ */
+export function computeSpLeadFloor(config: {
+    sp_minimum_lead_hours?: number;
+    exclude_weekends?: boolean;
+    weekend_days?: number[];
+    timezone?: string;
+}): { floorDate: string; floorDatetime: string } {
+    const leadHours = config.sp_minimum_lead_hours ?? 2;
+    const floor = new Date(Date.now() + leadHours * 60 * 60 * 1000);
+
+    if (config.exclude_weekends && config.timezone) {
+        const weekendDays = config.weekend_days ?? [0, 6];
+        // Advance day-by-day (in the platform TZ) until weekday isn't a weekend.
+        const weekdayInTz = (d: Date): number => {
+            try {
+                const short = new Intl.DateTimeFormat("en-US", {
+                    timeZone: config.timezone,
+                    weekday: "short",
+                }).format(d);
+                const map: Record<string, number> = {
+                    Sun: 0,
+                    Mon: 1,
+                    Tue: 2,
+                    Wed: 3,
+                    Thu: 4,
+                    Fri: 5,
+                    Sat: 6,
+                };
+                return map[short] ?? d.getDay();
+            } catch {
+                return d.getDay();
+            }
+        };
+        while (weekendDays.includes(weekdayInTz(floor))) {
+            floor.setUTCDate(floor.getUTCDate() + 1);
+        }
+    }
+
+    const floorDatetime = floor.toISOString();
+    // YYYY-MM-DD portion in the platform timezone (so date-input defaults line
+    // up with what the user sees in their calendar).
+    let floorDate = floorDatetime.split("T")[0];
+    if (config.timezone) {
+        try {
+            floorDate = new Intl.DateTimeFormat("en-CA", {
+                timeZone: config.timezone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            }).format(floor);
+        } catch {
+            // Fall through to UTC-date fallback.
+        }
+    }
+    return { floorDate, floorDatetime };
+}
+
+/**
  * Shift a YYYY-MM-DD calendar date by N days (positive or negative).
  * Used by the "Use this date" handlers when rounding the floor time
  * crosses midnight into the next day.

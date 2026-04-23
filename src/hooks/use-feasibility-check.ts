@@ -81,6 +81,8 @@ export function useMaintenanceFeasibilityCheck() {
 
 export type FeasibilityConfig = {
     minimum_lead_hours: number;
+    /** Self-pickup lead-time floor (default 2h). Separate from order lead time. */
+    sp_minimum_lead_hours: number;
     exclude_weekends: boolean;
     weekend_days: number[];
     timezone: string;
