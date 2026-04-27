@@ -39,6 +39,12 @@ const PICKUP_STEPS: { key: PickupStep; label: string; icon: any }[] = [
     { key: "review", label: "Review & Submit", icon: FileText },
 ];
 
+const PICKUP_HOURS_MIN = "08:00";
+const PICKUP_HOURS_MAX = "18:00";
+
+const isWithinPickupHours = (time: string): boolean =>
+    Boolean(time) && time >= PICKUP_HOURS_MIN && time <= PICKUP_HOURS_MAX;
+
 interface SelfPickupCheckoutFlowProps {
     onSwitchToStandard: () => void;
 }
@@ -116,6 +122,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                         formData.pickup_date &&
                         formData.pickup_time_start &&
                         formData.pickup_time_end &&
+                        isWithinPickupHours(formData.pickup_time_start) &&
+                        isWithinPickupHours(formData.pickup_time_end) &&
                         userPickupFeasible !== false
                 );
             case "review":
@@ -481,7 +489,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                             </Label>
                                             <p className="text-xs text-muted-foreground">
                                                 When do you plan to collect these items from the
-                                                warehouse?
+                                                warehouse? Pickup hours are 8:00 AM – 6:00 PM.
                                             </p>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -515,6 +523,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                 <Input
                                                     id="pickup_start"
                                                     type="time"
+                                                    min={PICKUP_HOURS_MIN}
+                                                    max={PICKUP_HOURS_MAX}
                                                     value={formData.pickup_time_start}
                                                     onChange={(e) =>
                                                         setFormData((prev) => ({
@@ -535,6 +545,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                 <Input
                                                     id="pickup_end"
                                                     type="time"
+                                                    min={PICKUP_HOURS_MIN}
+                                                    max={PICKUP_HOURS_MAX}
                                                     value={formData.pickup_time_end}
                                                     onChange={(e) =>
                                                         setFormData((prev) => ({
