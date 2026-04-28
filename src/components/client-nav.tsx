@@ -38,9 +38,12 @@ import {
     BookOpen,
     ExternalLink,
     LifeBuoy,
+    Menu,
+    X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const clientNav = [
@@ -87,6 +90,24 @@ function ClientNavInner({ children }: ClientNavProps) {
     const { user } = useToken();
     const { platform } = usePlatform();
     const { data: company, isLoading } = useCompany(user?.company_id || undefined);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+    // Auto-close the mobile drawer on route change so the user lands on the
+    // new page without having to dismiss the menu manually.
+    useEffect(() => {
+        setMobileNavOpen(false);
+    }, [pathname]);
+
+    // Lock body scroll while the mobile drawer is open — prevents the page
+    // from scrolling underneath the open menu on iOS Safari.
+    useEffect(() => {
+        if (typeof document === "undefined") return;
+        const original = document.body.style.overflow;
+        document.body.style.overflow = mobileNavOpen ? "hidden" : original;
+        return () => {
+            document.body.style.overflow = original;
+        };
+    }, [mobileNavOpen]);
 
     const features = platform?.features || {};
     const visibleNav = clientNav.filter((item) => {
@@ -117,8 +138,65 @@ function ClientNavInner({ children }: ClientNavProps) {
 
     return (
         <div className="min-h-screen flex bg-background">
-            {/* Sidebar Navigation */}
-            <aside className="w-72 border-r border-border bg-muted/30 shrink-0 sticky top-0 h-screen flex flex-col overflow-hidden">
+            {/* Mobile top bar — only on screens narrower than md. Holds the
+            hamburger toggle and a compact brand mark so the user can identify
+            which tenant they're in without opening the drawer. */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur-sm border-b border-border z-40 flex items-center px-3 gap-3">
+                <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(true)}
+                    aria-label="Open navigation menu"
+                    aria-expanded={mobileNavOpen}
+                    className="h-10 w-10 inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+                >
+                    <Menu className="h-5 w-5" />
+                </button>
+                <div className="flex items-center gap-2 min-w-0">
+                    {company?.data?.settings?.branding?.logo_url ? (
+                        <img
+                            src={company.data.settings.branding.logo_url}
+                            alt=""
+                            className="h-7 w-7 rounded object-contain shrink-0"
+                        />
+                    ) : null}
+                    <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground truncate">
+                        {company?.data?.name ?? platform?.company_name ?? ""}
+                    </span>
+                </div>
+            </div>
+
+            {/* Backdrop for the mobile drawer. Tapping outside the drawer
+            dismisses it. Hidden above md where the sidebar is persistent. */}
+            {mobileNavOpen && (
+                <div
+                    onClick={() => setMobileNavOpen(false)}
+                    aria-hidden
+                    className="md:hidden fixed inset-0 bg-black/50 z-40"
+                />
+            )}
+
+            {/* Sidebar Navigation
+            Desktop (md+): persistent sticky column, 72 wide.
+            Mobile: fixed slide-in drawer from the left, full-height. We use
+            translate-x to animate so it doesn't reflow the page underneath. */}
+            <aside
+                className={cn(
+                    "w-72 border-r border-border bg-muted/30 flex flex-col overflow-hidden z-50",
+                    "fixed top-0 left-0 h-screen transition-transform duration-200 ease-out",
+                    "md:static md:sticky md:top-0 md:shrink-0 md:translate-x-0 md:transition-none",
+                    mobileNavOpen ? "translate-x-0" : "-translate-x-full"
+                )}
+            >
+                {/* Drawer close button — mobile only. Doubles up with the
+                backdrop tap but is more discoverable for touch users. */}
+                <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(false)}
+                    aria-label="Close navigation menu"
+                    className="md:hidden absolute top-3 right-3 h-9 w-9 inline-flex items-center justify-center rounded-md bg-background/80 hover:bg-muted z-20"
+                >
+                    <X className="h-5 w-5" />
+                </button>
                 {/* Grid pattern overlay */}
                 <div
                     className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -345,8 +423,9 @@ function ClientNavInner({ children }: ClientNavProps) {
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-background relative">
+            {/* Main Content — pt-14 on mobile reserves space for the fixed
+            top bar; reset on md+ where the bar is hidden. */}
+            <main className="flex-1 overflow-auto bg-background relative pt-14 md:pt-0">
                 {children}
 
                 {/* Floating Cart Button */}
