@@ -12,6 +12,56 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Cuboid, Minus, Package, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// Lets the user type a quantity directly (paper cups etc. need thousands).
+// Local string state so intermediate values like "1" → "12" → "123" don't
+// fire the cart context's "only N available" toast on every keystroke. We
+// commit to the cart on blur or Enter; the +/- buttons still commit
+// instantly and we re-sync from props when they fire.
+function QuantityField({
+    value,
+    max,
+    onCommit,
+}: {
+    value: number;
+    max: number;
+    onCommit: (next: number) => void;
+}) {
+    const [draft, setDraft] = useState(String(value));
+
+    useEffect(() => {
+        setDraft(String(value));
+    }, [value]);
+
+    const commit = () => {
+        const parsed = parseInt(draft, 10);
+        if (Number.isFinite(parsed) && parsed !== value) {
+            onCommit(parsed);
+        } else {
+            setDraft(String(value));
+        }
+    };
+
+    return (
+        <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={max}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                    e.currentTarget.blur();
+                }
+            }}
+            className="px-3 font-mono text-sm font-medium w-16 text-center bg-transparent outline-none focus:bg-muted/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            aria-label="Quantity"
+        />
+    );
+}
 
 export function FloatingCart() {
     const {
@@ -207,9 +257,16 @@ export function FloatingCart() {
                                                             >
                                                                 <Minus className="h-3 w-3" />
                                                             </Button>
-                                                            <div className="px-3 font-mono text-sm font-medium min-w-[3ch] text-center">
-                                                                {item.quantity}
-                                                            </div>
+                                                            <QuantityField
+                                                                value={item.quantity}
+                                                                max={item.availableQuantity}
+                                                                onCommit={(next) =>
+                                                                    updateQuantity(
+                                                                        item.assetId,
+                                                                        next
+                                                                    )
+                                                                }
+                                                            />
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
