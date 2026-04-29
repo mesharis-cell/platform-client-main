@@ -765,17 +765,30 @@ function CheckoutPageInner() {
                 ...(() => {
                     const deliveryDate =
                         formData.requested_delivery_date || formData.event_start_date;
+                    const tz = feasibilityConfig?.timezone;
                     if (
                         deliveryDate &&
                         formData.requested_delivery_time_start &&
-                        formData.requested_delivery_time_end
+                        formData.requested_delivery_time_end &&
+                        tz
                     ) {
-                        return {
-                            requested_delivery_window: {
-                                start: `${deliveryDate}T${formData.requested_delivery_time_start}:00`,
-                                end: `${deliveryDate}T${formData.requested_delivery_time_end}:00`,
-                            },
-                        };
+                        // TZ-aware: produces "YYYY-MM-DDThh:mm:ss±HH:MM". The
+                        // naive form (no offset) was being parsed as UTC by the
+                        // server, drifting by the platform offset (e.g. 4h on
+                        // Dubai). Mirrors event_start_datetime + the SP flow.
+                        const start = composeZonedISO({
+                            date: deliveryDate,
+                            time: formData.requested_delivery_time_start,
+                            timezone: tz,
+                        });
+                        const end = composeZonedISO({
+                            date: deliveryDate,
+                            time: formData.requested_delivery_time_end,
+                            timezone: tz,
+                        });
+                        if (start && end) {
+                            return { requested_delivery_window: { start, end } };
+                        }
                     }
                     return {};
                 })(),
@@ -783,17 +796,26 @@ function CheckoutPageInner() {
                 // to event_end_date if user set times but not date explicitly.
                 ...(() => {
                     const pickupDate = formData.requested_pickup_date || formData.event_end_date;
+                    const tz = feasibilityConfig?.timezone;
                     if (
                         pickupDate &&
                         formData.requested_pickup_time_start &&
-                        formData.requested_pickup_time_end
+                        formData.requested_pickup_time_end &&
+                        tz
                     ) {
-                        return {
-                            requested_pickup_window: {
-                                start: `${pickupDate}T${formData.requested_pickup_time_start}:00`,
-                                end: `${pickupDate}T${formData.requested_pickup_time_end}:00`,
-                            },
-                        };
+                        const start = composeZonedISO({
+                            date: pickupDate,
+                            time: formData.requested_pickup_time_start,
+                            timezone: tz,
+                        });
+                        const end = composeZonedISO({
+                            date: pickupDate,
+                            time: formData.requested_pickup_time_end,
+                            timezone: tz,
+                        });
+                        if (start && end) {
+                            return { requested_pickup_window: { start, end } };
+                        }
                     }
                     return {};
                 })(),
