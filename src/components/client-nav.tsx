@@ -181,7 +181,7 @@ function ClientNavInner({ children }: ClientNavProps) {
             translate-x to animate so it doesn't reflow the page underneath. */}
             <aside
                 className={cn(
-                    "w-72 border-r border-border bg-muted/30 flex flex-col overflow-hidden z-50",
+                    "w-72 border-r border-border bg-background md:bg-muted/30 flex flex-col overflow-hidden z-50",
                     "fixed top-0 left-0 h-screen transition-transform duration-200 ease-out",
                     "md:static md:sticky md:top-0 md:shrink-0 md:translate-x-0 md:transition-none",
                     mobileNavOpen ? "translate-x-0" : "-translate-x-full"
