@@ -137,6 +137,7 @@ export interface CatalogAssetFamilyItem {
         color: string;
     } | null;
     images: string[];
+    onDisplayImage?: string | null;
     brand: {
         id: string;
         name: string;
@@ -209,6 +210,7 @@ export interface CatalogAssetDetails {
     description: string | null;
     category: string;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     brand: {
         id: string;
         name: string;
@@ -242,6 +244,7 @@ export interface CatalogFamilyStockItem {
     description: string | null;
     category: string;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     availableQuantity: number;
     totalQuantity: number;
     condition: Condition;
@@ -270,6 +273,7 @@ export interface CatalogAssetFamilyDetails {
         color: string;
     } | null;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     brand: {
         id: string | null;
         name: string | null;

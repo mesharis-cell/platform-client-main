@@ -136,6 +136,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                 category: cat.label,
                 categoryRef: cat.ref,
                 images: normalizeAssetImageUrls(family.images),
+                onDisplayImage: family.on_display_image || null,
                 brand: family.brand
                     ? {
                           id: family.brand.id,
@@ -234,6 +235,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
             description: asset.description,
             category: asset.category,
             images: normalizeAssetImages(asset.images),
+            onDisplayImage: asset.on_display_image || null,
             availableQuantity: Number(asset.available_quantity || 0),
             totalQuantity: Number(asset.total_quantity || 0),
             condition: asset.condition,
@@ -259,6 +261,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
                 description: family.description,
                 category: family.category,
                 images: normalizeAssetImages(family.images),
+                onDisplayImage: family.on_display_image || null,
                 brand: family.brand
                     ? {
                           id: family.brand.id,
@@ -323,6 +326,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
                 description: asset.description,
                 category: asset.category,
                 images: normalizeAssetImages(asset.images),
+                onDisplayImage: asset.on_display_image || null,
                 brand: asset.brand_details || null,
                 company: asset.company_details || null,
                 availableQuantity: asset.available_quantity,

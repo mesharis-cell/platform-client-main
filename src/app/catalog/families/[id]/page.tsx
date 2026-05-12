@@ -65,19 +65,27 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
         );
     }
 
-    const images = family.images || [];
-    const hasImages = images.length > 0;
+    // Build a combined image stream: curated `on_display_image` (admin-managed,
+    // never auto-updated) first, then the rotating scan/return `images[]`.
+    // Index 0 is always the curated hero when set, so clients land on it.
+    const scanImages = family.images || [];
+    const combinedImageUrls: string[] = [
+        ...(family.onDisplayImage ? [family.onDisplayImage] : []),
+        ...scanImages.map((i) => i.url).filter((url): url is string => Boolean(url)),
+    ];
+    const images = scanImages; // preserved for downstream usages (notes, etc.)
+    const hasImages = combinedImageUrls.length > 0;
     const isSerialized = family.stockMode === "INDIVIDUAL";
-    const safeIdx = hasImages ? Math.min(activeImgIdx, images.length - 1) : 0;
-    const currentImage = hasImages ? images[safeIdx]?.url : null;
+    const safeIdx = hasImages ? Math.min(activeImgIdx, combinedImageUrls.length - 1) : 0;
+    const currentImage = hasImages ? combinedImageUrls[safeIdx] : null;
 
     const conditionTotal =
         (family.conditionSummary?.green || 0) +
         (family.conditionSummary?.orange || 0) +
         (family.conditionSummary?.red || 0);
 
-    const goPrev = () => setActiveImgIdx((i) => (i - 1 + images.length) % images.length);
-    const goNext = () => setActiveImgIdx((i) => (i + 1) % images.length);
+    const goPrev = () => setActiveImgIdx((i) => (i - 1 + combinedImageUrls.length) % combinedImageUrls.length);
+    const goNext = () => setActiveImgIdx((i) => (i + 1) % combinedImageUrls.length);
 
     return (
         <ClientNav>
@@ -111,7 +119,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                                             priority
                                         />
                                     </button>
-                                    {images.length > 1 && (
+                                    {combinedImageUrls.length > 1 && (
                                         <>
                                             <button
                                                 type="button"
@@ -136,7 +144,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                                                 <ChevronRightArrow className="h-4 w-4" />
                                             </button>
                                             <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur-sm border border-border/60 text-[11px] font-mono">
-                                                {safeIdx + 1} / {images.length}
+                                                {safeIdx + 1} / {combinedImageUrls.length}
                                             </div>
                                         </>
                                     )}
@@ -270,7 +278,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                                 fill
                                 className="object-contain"
                             />
-                            {images.length > 1 && (
+                            {combinedImageUrls.length > 1 && (
                                 <>
                                     <button
                                         type="button"
@@ -289,7 +297,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                                         <ChevronRightArrow className="h-5 w-5 text-white" />
                                     </button>
                                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-mono text-white">
-                                        {safeIdx + 1} / {images.length}
+                                        {safeIdx + 1} / {combinedImageUrls.length}
                                     </div>
                                 </>
                             )}
