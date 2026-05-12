@@ -40,6 +40,20 @@ import {
     PermitWarningAlert,
     derivePermitChoice,
 } from "@/components/permits/permit-warning-alert";
+import {
+    useEvaluateCommerceRules,
+    type CommerceRuleHit,
+} from "@/hooks/use-commerce-rules";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
@@ -131,6 +145,12 @@ function CheckoutPageInner() {
     >([]);
     const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
     const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
+    // Item 6: commerce rule hits + acknowledgment state. When hits come
+    // back from /commerce-rules/evaluate, surface them in a confirm dialog
+    // so the client can acknowledge before final submit.
+    const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
+    const [commerceRulesAcknowledged, setCommerceRulesAcknowledged] = useState(false);
+    const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
 
@@ -677,6 +697,36 @@ function CheckoutPageInner() {
         if (items.length === 0) {
             toast.error("Cart is empty");
             return;
+        }
+
+        // Item 6: evaluate commerce rules before final submit. WARN hits
+        // pop a confirm dialog; once acknowledged the second submit skips
+        // the check. BLOCK hits would refuse outright — not exposed in v1
+        // but the future-proof codepath is here.
+        if (!commerceRulesAcknowledged) {
+            try {
+                const result = await evaluateCommerceRulesMutation.mutateAsync({
+                    cart: items.map((item) => ({
+                        asset_id: item.assetId,
+                        quantity: item.quantity,
+                    })),
+                });
+                if (result.hits.length > 0) {
+                    const blockHits = result.hits.filter((h) => h.severity === "BLOCK");
+                    if (blockHits.length > 0) {
+                        toast.error(
+                            `Cannot submit: ${blockHits.map((h) => h.message).join(" | ")}`
+                        );
+                        return;
+                    }
+                    setPendingRuleHits(result.hits);
+                    return;
+                }
+            } catch (err) {
+                // Evaluator failure must not block submit — log and proceed.
+                // eslint-disable-next-line no-console
+                console.warn("[checkout] commerce-rules evaluate failed", err);
+            }
         }
 
         setIsSubmitting(true);
@@ -2680,6 +2730,54 @@ function CheckoutPageInner() {
                     </div>
                 </>
             )}
+
+            {/* Item 6: commerce rules confirm dialog. Surfaces WARN hits
+                from /commerce-rules/evaluate before final submit. */}
+            <AlertDialog
+                open={pendingRuleHits.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setPendingRuleHits([]);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm before submitting</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 text-sm">
+                                <p>Heads up on the following items in your cart:</p>
+                                <ul className="list-disc pl-5 space-y-2 text-foreground">
+                                    {pendingRuleHits.map((hit) => (
+                                        <li key={hit.rule_id}>{hit.message}</li>
+                                    ))}
+                                </ul>
+                                <p className="text-muted-foreground">
+                                    Submit anyway, or go back and adjust your cart.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setPendingRuleHits([]);
+                            }}
+                        >
+                            Go back
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                setCommerceRulesAcknowledged(true);
+                                setPendingRuleHits([]);
+                                // Trigger the submit again — second pass
+                                // skips the evaluator because the flag is set.
+                                await handleSubmit();
+                            }}
+                        >
+                            Submit anyway
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
