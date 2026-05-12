@@ -124,20 +124,30 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
 
             {/* Items List */}
             <div className="space-y-3">
-                {collection.items.map((item) => (
+                {collection.items.map((item) => {
+                    const thumbUrl = item.onDisplayImage || item.images?.[0];
+                    const archived = Boolean(item.isArchived);
+                    return (
                     <div
                         key={`${item.assetId}-${item.defaultQuantity}`}
                         className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
-                            item.availableQuantity > 0
-                                ? "border-border bg-card hover:border-primary/30"
-                                : "border-destructive/30 bg-destructive/5"
+                            archived
+                                ? "border-muted bg-muted/30 opacity-60"
+                                : item.availableQuantity > 0
+                                  ? "border-border bg-card hover:border-primary/30"
+                                  : "border-destructive/30 bg-destructive/5"
                         }`}
+                        title={
+                            archived
+                                ? "This item has been archived and is no longer orderable. Contact ops to remove it from the collection."
+                                : undefined
+                        }
                     >
                         {/* Thumbnail */}
                         <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
-                            {item.images?.[0] ? (
+                            {thumbUrl ? (
                                 <Image
-                                    src={item.images[0]}
+                                    src={thumbUrl}
                                     alt={item.name}
                                     width={80}
                                     height={80}
@@ -169,13 +179,32 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                                                 </Badge>
                                             </Link>
                                         )}
+                                        {archived && (
+                                            <Badge
+                                                variant="outline"
+                                                className="bg-muted text-muted-foreground border-muted-foreground/30 font-mono text-xs"
+                                            >
+                                                ARCHIVED
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                                 <Badge
-                                    variant={item.availableQuantity > 0 ? "default" : "destructive"}
+                                    variant={
+                                        archived
+                                            ? "outline"
+                                            : item.availableQuantity > 0
+                                              ? "default"
+                                              : "destructive"
+                                    }
                                     className="font-mono text-xs shrink-0"
                                 >
-                                    {item.availableQuantity > 0 ? (
+                                    {archived ? (
+                                        <>
+                                            <XCircle className="w-3 h-3 mr-1" />
+                                            Archived
+                                        </>
+                                    ) : item.availableQuantity > 0 ? (
                                         <>
                                             <CheckCircle className="w-3 h-3 mr-1" />
                                             Available
@@ -255,7 +284,8 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                             </div>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Collection Totals */}
