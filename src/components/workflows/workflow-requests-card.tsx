@@ -81,7 +81,7 @@ export function ClientWorkflowRequestsCard({
                             className={`rounded-lg border p-4 ${
                                 isTerminal
                                     ? "border-border/40 bg-muted/10 opacity-80"
-                                    : "border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20"
+                                    : "border-amber-500/40 bg-amber-50/40"
                             }`}
                         >
                             <div className="flex items-start justify-between gap-3">

@@ -7,7 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+    useEvaluateCommerceRules,
+    type CommerceRuleHit,
+} from "@/hooks/use-commerce-rules";
 import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
 import { useSubmitSelfPickupFromCart } from "@/hooks/use-self-pickups";
@@ -67,7 +82,16 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
         pickup_time_end: "11:00",
         expected_return_date: "",
         notes: "",
+        // Item 7: required Yes/No on permanent placement. Blocks proceed.
+        is_permanent_placement: null as boolean | null,
     });
+
+    // Item 6: commerce rules state — mirrors the order checkout flow.
+    const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
+    const [acknowledgedRuleHits, setAcknowledgedRuleHits] = useState<CommerceRuleHit[]>([]);
+    const [commerceRulesAcknowledged, setCommerceRulesAcknowledged] = useState(false);
+    const [reviewStepEvaluated, setReviewStepEvaluated] = useState(false);
+    const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
 
     // Auto-fill collector from user
     useEffect(() => {
@@ -79,6 +103,34 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
             collector_phone: prev.collector_phone || (user as any).phone || "",
         }));
     }, [user]);
+
+    // Item 6: evaluate commerce rules when entering review step — same
+    // pattern as order checkout. Hits pop the dialog + leave a banner.
+    useEffect(() => {
+        if (currentStep !== "review") return;
+        if (reviewStepEvaluated) return;
+        if (commerceRulesAcknowledged) return;
+        if (items.length === 0) return;
+        setReviewStepEvaluated(true);
+        evaluateCommerceRulesMutation
+            .mutateAsync({
+                cart: items.map((item) => ({
+                    asset_id: item.assetId,
+                    quantity: item.quantity,
+                })),
+            })
+            .then((result) => {
+                if (result.hits.length > 0) {
+                    setPendingRuleHits(result.hits);
+                    setAcknowledgedRuleHits(result.hits);
+                }
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn("[sp-checkout] review commerce-rules evaluate failed", err);
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, items.length]);
 
     // SP lead-floor projection. Server validates on submit, but this keeps
     // the helper + Next gate in sync with the server's verdict so the user
@@ -122,6 +174,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                         formData.pickup_date &&
                         formData.pickup_time_start &&
                         formData.pickup_time_end &&
+                        formData.is_permanent_placement !== null &&
                         isWithinPickupHours(formData.pickup_time_start) &&
                         isWithinPickupHours(formData.pickup_time_end) &&
                         userPickupFeasible !== false
@@ -148,6 +201,35 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     };
 
     const handleSubmit = async () => {
+        // Item 6: commerce rules checkpoint — if there are pending hits the
+        // client hasn't acknowledged yet, re-evaluate and pop the dialog
+        // before letting the submit go through. Acknowledged state is sticky.
+        if (!commerceRulesAcknowledged) {
+            try {
+                const result = await evaluateCommerceRulesMutation.mutateAsync({
+                    cart: items.map((item) => ({
+                        asset_id: item.assetId,
+                        quantity: item.quantity,
+                    })),
+                });
+                if (result.hits.length > 0) {
+                    const blockHits = result.hits.filter((h) => h.severity === "BLOCK");
+                    if (blockHits.length > 0) {
+                        toast.error(
+                            `Cannot submit: ${blockHits.map((h) => h.message).join(" | ")}`
+                        );
+                        return;
+                    }
+                    setPendingRuleHits(result.hits);
+                    setAcknowledgedRuleHits(result.hits);
+                    return;
+                }
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn("[sp-checkout] commerce-rules evaluate failed", err);
+            }
+        }
+
         setIsSubmitting(true);
         try {
             // Compose timezone-aware ISO strings using the platform timezone.
@@ -199,6 +281,9 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                       }
                     : {}),
                 ...(formData.notes ? { notes: formData.notes } : {}),
+                // Item 7: required at the details step; canProceed gates
+                // non-null, so the boolean assertion is safe here.
+                is_permanent_placement: formData.is_permanent_placement === true,
             };
 
             const result = await submitMutation.mutateAsync(payload);
@@ -617,6 +702,48 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                         </div>
                                     </div>
 
+                                    {/* Item 7: required permanent placement Yes/No on SP too. */}
+                                    <div className="space-y-3 pt-4 border-t border-border/40">
+                                        <div className="space-y-1">
+                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                Permanent placement *
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Are these items being placed permanently? (Yes =
+                                                won't be returned; No = will be returned.)
+                                            </p>
+                                        </div>
+                                        <RadioGroup
+                                            value={
+                                                formData.is_permanent_placement === null
+                                                    ? ""
+                                                    : formData.is_permanent_placement
+                                                      ? "yes"
+                                                      : "no"
+                                            }
+                                            onValueChange={(value) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    is_permanent_placement: value === "yes",
+                                                }))
+                                            }
+                                            className="flex gap-3"
+                                        >
+                                            <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                <RadioGroupItem value="yes" id="spPermYes" />
+                                                <span className="text-sm font-medium">
+                                                    Yes — permanent
+                                                </span>
+                                            </label>
+                                            <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                <RadioGroupItem value="no" id="spPermNo" />
+                                                <span className="text-sm font-medium">
+                                                    No — will be returned
+                                                </span>
+                                            </label>
+                                        </RadioGroup>
+                                    </div>
+
                                     <div className="space-y-2 pt-4 border-t border-border/40">
                                         <Label
                                             htmlFor="notes"
@@ -650,6 +777,20 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                         Confirm your pickup details before sending the request
                                     </p>
                                 </div>
+
+                                {/* Item 6: inline commerce-rules banner. */}
+                                {acknowledgedRuleHits.length > 0 && (
+                                    <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
+                                        <p className="text-xs font-mono uppercase tracking-wide mb-2">
+                                            Please review before submitting
+                                        </p>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                                            {acknowledgedRuleHits.map((hit) => (
+                                                <li key={hit.rule_id}>{hit.message}</li>
+                                            ))}
+                                        </ul>
+                                    </Card>
+                                )}
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {/* Items */}
@@ -859,6 +1000,51 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                     )}
                 </div>
             </div>
+
+            {/* Item 6: commerce-rules popup — mirrors order checkout. */}
+            <AlertDialog
+                open={pendingRuleHits.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setPendingRuleHits([]);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm before submitting</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 text-sm">
+                                <p>Heads up on the following items in your cart:</p>
+                                <ul className="list-disc pl-5 space-y-2 text-foreground">
+                                    {pendingRuleHits.map((hit) => (
+                                        <li key={hit.rule_id}>{hit.message}</li>
+                                    ))}
+                                </ul>
+                                <p className="text-muted-foreground">
+                                    Acknowledge to clear this rules checkpoint, or go back and
+                                    adjust your cart.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setPendingRuleHits([]);
+                            }}
+                        >
+                            Go back
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                setCommerceRulesAcknowledged(true);
+                                setPendingRuleHits([]);
+                            }}
+                        >
+                            I understand, proceed
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

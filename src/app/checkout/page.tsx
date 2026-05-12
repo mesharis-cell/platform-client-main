@@ -147,9 +147,14 @@ function CheckoutPageInner() {
     const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
     // Item 6: commerce rule hits + acknowledgment state. When hits come
     // back from /commerce-rules/evaluate, surface them in a confirm dialog
-    // so the client can acknowledge before final submit.
+    // so the client can acknowledge before final submit. Auto-evaluated
+    // when the client lands on the Review step so warnings surface early.
     const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
+    // Hits that were acknowledged on the review step — kept around so the
+    // inline banner can keep showing them as a reminder until submit.
+    const [acknowledgedRuleHits, setAcknowledgedRuleHits] = useState<CommerceRuleHit[]>([]);
     const [commerceRulesAcknowledged, setCommerceRulesAcknowledged] = useState(false);
+    const [reviewStepEvaluated, setReviewStepEvaluated] = useState(false);
     const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
@@ -176,6 +181,9 @@ function CheckoutPageInner() {
         venue_contact_name: "",
         venue_contact_email: "",
         venue_contact_phone: "",
+        // Item 7: required Yes/No — true = items going out permanently
+        // (no return), false = normal rental. null = unanswered (blocks proceed).
+        is_permanent_placement: null as boolean | null,
         // Permits (venue contact is NOT here — it's first-class at top-level)
         // permit_decision is the explicit Yes/No answer; null = unanswered (required).
         permit_decision: null as "yes" | "no" | null,
@@ -519,6 +527,38 @@ function CheckoutPageInner() {
         setMaintenanceFeasibilityIssues([]);
     }, [redItems.length]);
 
+    // Item 6: when the client lands on the Review step, evaluate commerce
+    // rules once and surface any hits early — same dialog the final-submit
+    // path uses, so acknowledging here also greenlights the submit. The
+    // banner below stays visible as a reminder after acknowledgment.
+    useEffect(() => {
+        if (currentStep !== "review") return;
+        if (reviewStepEvaluated) return;
+        if (commerceRulesAcknowledged) return;
+        if (items.length === 0) return;
+        setReviewStepEvaluated(true);
+        evaluateCommerceRulesMutation
+            .mutateAsync({
+                cart: items.map((item) => ({
+                    asset_id: item.assetId,
+                    quantity: item.quantity,
+                })),
+            })
+            .then((result) => {
+                if (result.hits.length > 0) {
+                    setPendingRuleHits(result.hits);
+                    setAcknowledgedRuleHits(result.hits);
+                }
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn("[checkout] review-step commerce-rules evaluate failed", err);
+            });
+        // Re-evaluate only if step or cart fundamentally changes; the
+        // mutation object intentionally not in deps to avoid re-fires.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, items.length]);
+
     // Estimate is now handled by useCalculateEstimate hook above
 
     // Redirect if cart is empty (but allow "mode" step 0 as a pre-cart stop)
@@ -586,11 +626,14 @@ function CheckoutPageInner() {
                 // Permit decision is mandatory: client must explicitly answer
                 // yes or no. If yes, they must also pick an owner (CLIENT or
                 // PLATFORM — UNKNOWN is rejected to prevent ambiguity).
+                // is_permanent_placement is also required — explicit Yes/No,
+                // no default.
                 return Boolean(
                     formData.venue_name &&
                         formData.venue_country_id &&
                         formData.venue_city_id &&
                         formData.venue_address &&
+                        formData.is_permanent_placement !== null &&
                         formData.permit_decision !== null &&
                         (formData.permit_decision === "no" ||
                             formData.permit_owner === "CLIENT" ||
@@ -786,6 +829,9 @@ function CheckoutPageInner() {
                 venue_country_id: formData.venue_country_id,
                 venue_city_id: formData.venue_city_id,
                 venue_address: formData.venue_address,
+                // Item 7: required at the venue step; the canProceed gate
+                // ensures this is non-null by the time we hit submit.
+                is_permanent_placement: formData.is_permanent_placement === true,
                 ...(formData.venue_access_notes
                     ? { venue_access_notes: formData.venue_access_notes }
                     : {}),
@@ -1646,6 +1692,55 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
+                                    {/* Item 7: required Yes/No on permanent
+                                        placement. Blocks proceed until answered. */}
+                                    <Card className="p-6 bg-card/50 border-border/50">
+                                        <div className="space-y-3">
+                                            <div className="space-y-1">
+                                                <Label className="font-mono uppercase text-xs tracking-wide">
+                                                    Permanent placement *
+                                                </Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Are these items being placed permanently? (Yes
+                                                    = they won't be returned to us; No = they'll
+                                                    come back after the event.)
+                                                </p>
+                                            </div>
+                                            <RadioGroup
+                                                value={
+                                                    formData.is_permanent_placement === null
+                                                        ? ""
+                                                        : formData.is_permanent_placement
+                                                          ? "yes"
+                                                          : "no"
+                                                }
+                                                onValueChange={(value) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        is_permanent_placement: value === "yes",
+                                                    })
+                                                }
+                                                className="flex gap-3"
+                                            >
+                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                    <RadioGroupItem
+                                                        value="yes"
+                                                        id="permYes"
+                                                    />
+                                                    <span className="text-sm font-medium">
+                                                        Yes — permanent
+                                                    </span>
+                                                </label>
+                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                    <RadioGroupItem value="no" id="permNo" />
+                                                    <span className="text-sm font-medium">
+                                                        No — will be returned
+                                                    </span>
+                                                </label>
+                                            </RadioGroup>
+                                        </div>
+                                    </Card>
+
                                     <Card className="p-8 bg-card/50 border-border/50">
                                         <div className="space-y-6">
                                             <div className="space-y-2">
@@ -1935,6 +2030,23 @@ function CheckoutPageInner() {
                                                             </RadioGroup>
                                                         </div>
 
+                                                        {/* Visual separator + section label —
+                                                            the docs-required toggles are an
+                                                            independent concern from "who handles
+                                                            the permit", but they live in the same
+                                                            permit-required branch. */}
+                                                        <Separator className="my-2" />
+                                                        <div className="space-y-1">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Additional documentation
+                                                                requirements
+                                                            </Label>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Tick anything the venue asks for
+                                                                ahead of access.
+                                                            </p>
+                                                        </div>
+
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
                                                                 <Checkbox
@@ -2191,6 +2303,24 @@ function CheckoutPageInner() {
                                             Double-check all details before submitting your order
                                         </p>
                                     </div>
+
+                                    {/* Item 6: inline commerce-rules banner.
+                                        Shows the same hits the popup surfaces
+                                        — kept visible as a reminder once
+                                        acknowledged so clients don't forget
+                                        between review and submit. */}
+                                    {acknowledgedRuleHits.length > 0 && (
+                                        <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
+                                            <p className="text-xs font-mono uppercase tracking-wide mb-2">
+                                                Please review before submitting
+                                            </p>
+                                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                                                {acknowledgedRuleHits.map((hit) => (
+                                                    <li key={hit.rule_id}>{hit.message}</li>
+                                                ))}
+                                            </ul>
+                                        </Card>
+                                    )}
 
                                     {orangeItems.length > 0 ? (
                                         <MaintenanceDecisionCenter
@@ -2765,15 +2895,16 @@ function CheckoutPageInner() {
                             Go back
                         </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={async () => {
+                            onClick={() => {
                                 setCommerceRulesAcknowledged(true);
                                 setPendingRuleHits([]);
-                                // Trigger the submit again — second pass
-                                // skips the evaluator because the flag is set.
-                                await handleSubmit();
+                                // Don't auto-trigger submit — user clicks the
+                                // actual submit button next. This is the
+                                // "rules checkpoint": once cleared, future
+                                // submit attempts skip the evaluator.
                             }}
                         >
-                            Submit anyway
+                            I understand, proceed
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

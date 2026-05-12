@@ -23,6 +23,10 @@ type Props = {
  *   NO_PERMIT       — red, blocks delivery if wrong at venue
  *   CLIENT_HANDLES  — amber, surcharge if not provided by delivery day
  *   PLATFORM_HANDLES — info, charge line item will be added by ops
+ *
+ * Light-only — dark-mode overrides removed deliberately per the
+ * staging-review feedback (contrast was poor when the surrounding card
+ * forces a light bg regardless of theme).
  */
 export function PermitWarningAlert({ choice, companyName }: Props) {
     if (choice === "UNSELECTED") return null;
@@ -31,13 +35,12 @@ export function PermitWarningAlert({ choice, companyName }: Props) {
         return (
             <Alert
                 role="alert"
-                className="border-red-500/70 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200 [&>svg]:text-red-600 ring-2 ring-red-200"
+                className="border-red-500/70 bg-red-50 text-red-900 [&>svg]:text-red-600 ring-2 ring-red-200"
             >
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="font-medium">
                     If a permit is required at the venue and our crew arrives without one,{" "}
-                    <strong>delivery cannot proceed</strong>. Confirm with the venue before
-                    continuing.
+                    <strong>delivery cannot proceed</strong>.
                 </AlertDescription>
             </Alert>
         );
@@ -48,12 +51,12 @@ export function PermitWarningAlert({ choice, companyName }: Props) {
         return (
             <Alert
                 role="alert"
-                className="border-amber-500/70 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200 [&>svg]:text-amber-600 ring-2 ring-amber-200"
+                className="border-amber-500/70 bg-amber-50 text-amber-900 [&>svg]:text-amber-600 ring-2 ring-amber-200"
             >
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="font-medium">
-                    {who} will handle the permit. Permits must be provided to our crew before
-                    delivery day. If we arrive without permits in hand,{" "}
+                    {who} will handle the permit. Permits must be provided before delivery. If we
+                    arrive without permits in hand,{" "}
                     <strong>a surcharge and additional fees will apply</strong>, and delivery may
                     be delayed or cancelled.
                 </AlertDescription>
@@ -65,7 +68,7 @@ export function PermitWarningAlert({ choice, companyName }: Props) {
     return (
         <Alert
             role="alert"
-            className="border-blue-500/60 bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-blue-200 [&>svg]:text-blue-600"
+            className="border-blue-500/60 bg-blue-50 text-blue-900 [&>svg]:text-blue-600"
         >
             <Info className="h-4 w-4" />
             <AlertDescription>
