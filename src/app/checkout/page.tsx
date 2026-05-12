@@ -33,8 +33,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    PermitWarningAlert,
+    derivePermitChoice,
+} from "@/components/permits/permit-warning-alert";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
@@ -152,6 +157,8 @@ function CheckoutPageInner() {
         venue_contact_email: "",
         venue_contact_phone: "",
         // Permits (venue contact is NOT here — it's first-class at top-level)
+        // permit_decision is the explicit Yes/No answer; null = unanswered (required).
+        permit_decision: null as "yes" | "no" | null,
         requires_permit: false,
         permit_owner: "UNKNOWN" as "CLIENT" | "PLATFORM" | "UNKNOWN",
         requires_vehicle_docs: false,
@@ -556,12 +563,18 @@ function CheckoutPageInner() {
                 // date. Submit handler also checks as a last line of defense.
                 return feasibility.userDateFeasible !== false;
             case "venue":
+                // Permit decision is mandatory: client must explicitly answer
+                // yes or no. If yes, they must also pick an owner (CLIENT or
+                // PLATFORM — UNKNOWN is rejected to prevent ambiguity).
                 return Boolean(
                     formData.venue_name &&
                         formData.venue_country_id &&
                         formData.venue_city_id &&
                         formData.venue_address &&
-                        (!formData.requires_permit || formData.permit_owner)
+                        formData.permit_decision !== null &&
+                        (formData.permit_decision === "no" ||
+                            formData.permit_owner === "CLIENT" ||
+                            formData.permit_owner === "PLATFORM")
                 );
             case "contact":
                 return (
@@ -1766,66 +1779,110 @@ function CheckoutPageInner() {
                                             </div>
 
                                             <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                                                <div className="flex items-start gap-3">
-                                                    <Checkbox
-                                                        id="venueRequiresPermit"
-                                                        checked={formData.requires_permit}
-                                                        onCheckedChange={(checked) =>
+                                                {/* Required: explicit Yes/No to permit requirement.
+                                                    No default state — client must answer. */}
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Is a permit required for this delivery? *
+                                                    </Label>
+                                                    <RadioGroup
+                                                        value={formData.permit_decision ?? ""}
+                                                        onValueChange={(value) => {
+                                                            const decision = value as "yes" | "no";
                                                             setFormData({
                                                                 ...formData,
-                                                                requires_permit: checked === true,
-                                                            })
-                                                        }
-                                                    />
-                                                    <div className="space-y-1">
-                                                        <Label
-                                                            htmlFor="venueRequiresPermit"
-                                                            className="font-mono uppercase text-xs tracking-wide"
-                                                        >
-                                                            Venue requires permits or access
-                                                            coordination
-                                                        </Label>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Share what you know now. Additional
-                                                            charges may apply depending on venue
-                                                            requirements.
-                                                        </p>
-                                                    </div>
+                                                                permit_decision: decision,
+                                                                requires_permit: decision === "yes",
+                                                                // Reset owner when toggling to "no".
+                                                                permit_owner:
+                                                                    decision === "no"
+                                                                        ? "UNKNOWN"
+                                                                        : formData.permit_owner,
+                                                            });
+                                                        }}
+                                                        className="flex gap-3"
+                                                    >
+                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                            <RadioGroupItem
+                                                                value="yes"
+                                                                id="permitYes"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                Yes
+                                                            </span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                            <RadioGroupItem
+                                                                value="no"
+                                                                id="permitNo"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                No
+                                                            </span>
+                                                        </label>
+                                                    </RadioGroup>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Confirm with the venue if you're unsure —
+                                                        this decision is binding.
+                                                    </p>
                                                 </div>
+
+                                                {/* Contextual warning — three variants per the
+                                                    locked spec. Re-shown on quote approval too. */}
+                                                <PermitWarningAlert
+                                                    choice={derivePermitChoice(
+                                                        formData.requires_permit,
+                                                        formData.permit_decision === null
+                                                            ? null
+                                                            : formData.permit_owner
+                                                    )}
+                                                    companyName={platform?.company_name ?? null}
+                                                />
 
                                                 {formData.requires_permit && (
                                                     <div className="space-y-4">
                                                         <div className="space-y-2">
                                                             <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Permit Owner *
+                                                                Who will handle the permit? *
                                                             </Label>
-                                                            <Select
-                                                                value={formData.permit_owner}
+                                                            <RadioGroup
+                                                                value={
+                                                                    formData.permit_owner ===
+                                                                    "UNKNOWN"
+                                                                        ? ""
+                                                                        : formData.permit_owner
+                                                                }
                                                                 onValueChange={(value) =>
                                                                     setFormData({
                                                                         ...formData,
                                                                         permit_owner: value as
                                                                             | "CLIENT"
-                                                                            | "PLATFORM"
-                                                                            | "UNKNOWN",
+                                                                            | "PLATFORM",
                                                                     })
                                                                 }
+                                                                className="flex gap-3"
                                                             >
-                                                                <SelectTrigger className="h-12 font-mono">
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="CLIENT">
-                                                                        I will arrange
-                                                                    </SelectItem>
-                                                                    <SelectItem value="PLATFORM">
-                                                                        You should arrange
-                                                                    </SelectItem>
-                                                                    <SelectItem value="UNKNOWN">
-                                                                        Not sure yet
-                                                                    </SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
+                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                                    <RadioGroupItem
+                                                                        value="CLIENT"
+                                                                        id="permitOwnerClient"
+                                                                    />
+                                                                    <span className="text-sm font-medium">
+                                                                        {platform?.company_name ||
+                                                                            "We"}{" "}
+                                                                        will arrange it
+                                                                    </span>
+                                                                </label>
+                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                                    <RadioGroupItem
+                                                                        value="PLATFORM"
+                                                                        id="permitOwnerPlatform"
+                                                                    />
+                                                                    <span className="text-sm font-medium">
+                                                                        Ops should arrange it
+                                                                    </span>
+                                                                </label>
+                                                            </RadioGroup>
                                                         </div>
 
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2312,6 +2369,18 @@ function CheckoutPageInner() {
                                                             </p>
                                                         </div>
                                                     )}
+                                                    {/* Re-show the contextual permit warning on the
+                                                        Review step so clients re-confirm the
+                                                        decision at the commitment moment. */}
+                                                    {formData.permit_decision !== null && (
+                                                        <PermitWarningAlert
+                                                            choice={derivePermitChoice(
+                                                                formData.requires_permit,
+                                                                formData.permit_owner
+                                                            )}
+                                                            companyName={platform?.company_name ?? null}
+                                                        />
+                                                    )}
                                                     {formData.requires_permit && (
                                                         <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
                                                             <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
@@ -2320,10 +2389,10 @@ function CheckoutPageInner() {
                                                             <p className="font-medium">
                                                                 {formData.permit_owner ===
                                                                     "CLIENT" &&
-                                                                    "Client will arrange permits"}
+                                                                    `${platform?.company_name || "We"} will arrange permits`}
                                                                 {formData.permit_owner ===
                                                                     "PLATFORM" &&
-                                                                    "Platform should arrange permits"}
+                                                                    "Ops will arrange permits"}
                                                                 {formData.permit_owner ===
                                                                     "UNKNOWN" &&
                                                                     "Permit ownership still to be confirmed"}
