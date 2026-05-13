@@ -570,11 +570,13 @@ function CheckoutPageInner() {
     }, [acknowledgedRuleHits]);
 
     // Item 6: evaluate commerce rules on the "Order Review" step
-    // (currentStep === "cart" — the step that lists all items, labelled
-    // "Order Review" in the UI). Also fires on the final "review" step as
-    // a safety net for any cart edit that happens after the first pass.
-    // Gate on `lastEvaluatedSignature !== cartSignature` so we re-fire
-    // exactly once per distinct cart — cart edits invalidate naturally.
+    // (currentStep === "cart") AND on the final "review" step — so the
+    // per-item inline warnings have data to render on both screens. This
+    // effect only populates `acknowledgedRuleHits` for the inline display;
+    // it never opens the popup. The popup is only triggered by the
+    // Continue button on the Order Review step (see handleNext below).
+    // Re-fires when the cart signature changes so cart edits invalidate
+    // the prior eval naturally.
     useEffect(() => {
         if (currentStep !== "cart" && currentStep !== "review") return;
         if (items.length === 0) return;
@@ -588,13 +590,7 @@ function CheckoutPageInner() {
                 })),
             })
             .then((result) => {
-                if (result.hits.length > 0) {
-                    setPendingRuleHits(result.hits);
-                    setAcknowledgedRuleHits(result.hits);
-                } else {
-                    // Cart no longer hits any rule — clear the banner.
-                    setAcknowledgedRuleHits([]);
-                }
+                setAcknowledgedRuleHits(result.hits);
             })
             .catch((err) => {
                 // eslint-disable-next-line no-console
@@ -711,6 +707,21 @@ function CheckoutPageInner() {
             return;
         }
 
+        // Item 6: commerce-rules checkpoint — pops only when the client
+        // tries to advance PAST the Order Review (cart) step. Any active
+        // hits not yet acknowledged for the current cart signature gate
+        // the next-step transition. Acknowledging binds the signature, so
+        // re-clicking Continue proceeds. If they edit the cart and come
+        // back, the signature change invalidates and the gate re-fires.
+        if (
+            currentStep === "cart" &&
+            acknowledgedRuleHits.length > 0 &&
+            !commerceRulesAcknowledged
+        ) {
+            setPendingRuleHits(acknowledgedRuleHits);
+            return;
+        }
+
         // Commit the Delivery Mode selection on Continue (not on card click).
         if (currentStep === "mode" && pendingMode) {
             setCheckoutMode(pendingMode);
@@ -786,36 +797,10 @@ function CheckoutPageInner() {
             return;
         }
 
-        // Item 6: evaluate commerce rules before final submit. WARN hits
-        // pop a confirm dialog; once acknowledged the second submit skips
-        // the check. BLOCK hits would refuse outright — not exposed in v1
-        // but the future-proof codepath is here.
-        if (!commerceRulesAcknowledged) {
-            try {
-                const result = await evaluateCommerceRulesMutation.mutateAsync({
-                    cart: items.map((item) => ({
-                        asset_id: item.assetId,
-                        quantity: item.quantity,
-                    })),
-                });
-                if (result.hits.length > 0) {
-                    const blockHits = result.hits.filter((h) => h.severity === "BLOCK");
-                    if (blockHits.length > 0) {
-                        toast.error(
-                            `Cannot submit: ${blockHits.map((h) => h.message).join(" | ")}`
-                        );
-                        return;
-                    }
-                    setPendingRuleHits(result.hits);
-                    setAcknowledgedRuleHits(result.hits);
-                    return;
-                }
-            } catch (err) {
-                // Evaluator failure must not block submit — log and proceed.
-                // eslint-disable-next-line no-console
-                console.warn("[checkout] commerce-rules evaluate failed", err);
-            }
-        }
+        // Item 6: commerce-rules checkpoint lives on the Order Review
+        // step's Continue button (see handleNext), NOT at submit time.
+        // Final submit goes through cleanly — the gate was cleared
+        // upstream when the client moved past the Order Review step.
 
         setIsSubmitting(true);
         try {

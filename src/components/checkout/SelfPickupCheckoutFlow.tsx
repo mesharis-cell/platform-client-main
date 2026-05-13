@@ -137,10 +137,11 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     }, [user]);
 
     // Item 6: evaluate commerce rules on the items-listing step
-    // (currentStep === "cart" — labelled "Review Items") so warnings
-    // surface early. Also fires on the final "review" step as a safety
-    // net for any cart edit after the first pass. Cart-signature dedup
-    // means a single cart only evaluates once.
+    // (currentStep === "cart") AND on the final "review" step — so the
+    // per-item inline warnings have data to render on both screens. This
+    // effect only populates `acknowledgedRuleHits` for the inline display;
+    // the popup is triggered exclusively by handleNext when leaving the
+    // cart step (see below). Cart-signature dedup keeps re-fires honest.
     useEffect(() => {
         if (currentStep !== "cart" && currentStep !== "review") return;
         if (items.length === 0) return;
@@ -154,16 +155,11 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 })),
             })
             .then((result) => {
-                if (result.hits.length > 0) {
-                    setPendingRuleHits(result.hits);
-                    setAcknowledgedRuleHits(result.hits);
-                } else {
-                    setAcknowledgedRuleHits([]);
-                }
+                setAcknowledgedRuleHits(result.hits);
             })
             .catch((err) => {
                 // eslint-disable-next-line no-console
-                console.warn("[sp-checkout] review commerce-rules evaluate failed", err);
+                console.warn("[sp-checkout] commerce-rules evaluate failed", err);
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStep, cartSignature, lastEvaluatedSignature]);
@@ -223,6 +219,17 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     };
 
     const handleNext = () => {
+        // Item 6: commerce-rules checkpoint pops only when leaving the
+        // items-listing step (currentStep === "cart"). Acknowledged state
+        // is signature-bound, so cart edits re-arm the gate.
+        if (
+            currentStep === "cart" &&
+            acknowledgedRuleHits.length > 0 &&
+            !commerceRulesAcknowledged
+        ) {
+            setPendingRuleHits(acknowledgedRuleHits);
+            return;
+        }
         const stepIndex = PICKUP_STEPS.findIndex((s) => s.key === currentStep);
         if (stepIndex < PICKUP_STEPS.length - 1) {
             setCurrentStep(PICKUP_STEPS[stepIndex + 1].key);
@@ -237,34 +244,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     };
 
     const handleSubmit = async () => {
-        // Item 6: commerce rules checkpoint — if there are pending hits the
-        // client hasn't acknowledged yet, re-evaluate and pop the dialog
-        // before letting the submit go through. Acknowledged state is sticky.
-        if (!commerceRulesAcknowledged) {
-            try {
-                const result = await evaluateCommerceRulesMutation.mutateAsync({
-                    cart: items.map((item) => ({
-                        asset_id: item.assetId,
-                        quantity: item.quantity,
-                    })),
-                });
-                if (result.hits.length > 0) {
-                    const blockHits = result.hits.filter((h) => h.severity === "BLOCK");
-                    if (blockHits.length > 0) {
-                        toast.error(
-                            `Cannot submit: ${blockHits.map((h) => h.message).join(" | ")}`
-                        );
-                        return;
-                    }
-                    setPendingRuleHits(result.hits);
-                    setAcknowledgedRuleHits(result.hits);
-                    return;
-                }
-            } catch (err) {
-                // eslint-disable-next-line no-console
-                console.warn("[sp-checkout] commerce-rules evaluate failed", err);
-            }
-        }
+        // Item 6: commerce-rules checkpoint lives on handleNext for the
+        // cart step, not at submit time. Submit goes straight through.
 
         setIsSubmitting(true);
         try {
