@@ -48,7 +48,6 @@ import { PricingBreakdown } from "@/components/orders/PricingBreakdown";
 import { OrderItemsList } from "@/components/orders/OrderItemsList";
 import { ScanActivityTimeline } from "@/components/scanning/scan-activity-timeline";
 import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
-import { ClientWorkflowRequestsCard } from "@/components/workflows/workflow-requests-card";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -852,21 +851,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     </Card>
                                 </motion.div>
                             )}
-
-                            {/* Item 4: client-facing workflows surface — surfaces any workflow
-                                where CLIENT is in viewer_roles or actor_roles. Most common
-                                case is the auto-opened PERMIT_HANDLING workflow when the
-                                client picked "I'll handle the permit" at checkout. */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.42 }}
-                            >
-                                <ClientWorkflowRequestsCard
-                                    entityType="ORDER"
-                                    entityId={order.id}
-                                />
-                            </motion.div>
 
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}

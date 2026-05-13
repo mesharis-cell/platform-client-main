@@ -21,8 +21,6 @@ import {
 import { toast } from "sonner";
 import { CheckCircle, XCircle } from "lucide-react";
 import { PricingBreakdown } from "./PricingBreakdown";
-import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
-import { usePlatform } from "@/contexts/platform-context";
 import type { OrderLineItem } from "@/types/hybrid-pricing";
 import type { Order } from "@/types/order";
 
@@ -49,15 +47,6 @@ export function QuoteReviewSection({
     const [declineReason, setDeclineReason] = useState("");
     const [isApproving, setIsApproving] = useState(false);
     const [isDeclining, setIsDeclining] = useState(false);
-    const { platform } = usePlatform();
-
-    // Re-show the permit warning at quote-approval (fresh commitment moment).
-    // Mirrors the same component used at checkout. UNKNOWN owners (legacy
-    // pre-item-7 data) render no warning since the choice is ambiguous.
-    const permitChoice = derivePermitChoice(
-        Boolean(order.permitRequirements?.requires_permit),
-        order.permitRequirements?.permit_owner ?? null
-    );
 
     const handleApprove = async () => {
         if (!poNumber.trim()) {
@@ -118,14 +107,6 @@ export function QuoteReviewSection({
                         </p>
                     </CardContent>
                 </Card>
-            )}
-
-            {/* Permit reminder — re-shown at quote approval (commitment moment) */}
-            {permitChoice !== "UNSELECTED" && (
-                <PermitWarningAlert
-                    choice={permitChoice}
-                    companyName={platform?.company_name ?? null}
-                />
             )}
 
             {/* Actions */}

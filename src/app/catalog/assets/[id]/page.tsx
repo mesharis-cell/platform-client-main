@@ -75,7 +75,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             availableQuantity: asset.availableQuantity,
             volume: Number(asset.volume),
             weight: Number(asset.weight),
-            image: asset.onDisplayImage || asset.images[0]?.url,
+            image: asset.images[0]?.url,
             condition: asset.condition,
             conditionNotes: asset.conditionNotes,
             conditionImages: asset.images,
@@ -84,13 +84,6 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
         setSelectedQuantity(1);
     };
-
-    // Build a combined image stream: curated `on_display_image` (admin-managed)
-    // first, then the rotating scan/return `images[]`. Index 0 is the curated
-    // hero when set, so clients land on it.
-    const combinedImages: { url: string; note?: string }[] = asset
-        ? [...(asset.onDisplayImage ? [{ url: asset.onDisplayImage }] : []), ...asset.images]
-        : [];
 
     if (isLoading) {
         return (
@@ -152,9 +145,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="space-y-4">
                             {/* Main Image */}
                             <div className="aspect-square rounded-xl overflow-hidden border border-border bg-muted relative">
-                                {combinedImages.length > 0 ? (
+                                {asset.images.length > 0 ? (
                                     <Image
-                                        src={combinedImages[selectedImageIndex].url}
+                                        src={asset.images[selectedImageIndex].url}
                                         alt={asset.name}
                                         fill
                                         className="object-cover"
@@ -167,15 +160,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
 
                                 {/* Image Navigation */}
-                                {combinedImages.length > 1 && (
+                                {asset.images.length > 1 && (
                                     <>
                                         <button
                                             onClick={() =>
                                                 setSelectedImageIndex(
-                                                    (selectedImageIndex -
-                                                        1 +
-                                                        combinedImages.length) %
-                                                        combinedImages.length
+                                                    (selectedImageIndex - 1 + asset.images.length) %
+                                                        asset.images.length
                                                 )
                                             }
                                             className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -185,7 +176,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         <button
                                             onClick={() =>
                                                 setSelectedImageIndex(
-                                                    (selectedImageIndex + 1) % combinedImages.length
+                                                    (selectedImageIndex + 1) % asset.images.length
                                                 )
                                             }
                                             className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -197,16 +188,16 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
 
                             {/* Image note caption */}
-                            {combinedImages[selectedImageIndex]?.note && (
+                            {asset.images[selectedImageIndex]?.note && (
                                 <p className="text-xs text-muted-foreground italic">
-                                    {combinedImages[selectedImageIndex].note}
+                                    {asset.images[selectedImageIndex].note}
                                 </p>
                             )}
 
                             {/* Thumbnails */}
-                            {combinedImages.length > 1 && (
+                            {asset.images.length > 1 && (
                                 <div className="grid grid-cols-4 gap-3">
-                                    {combinedImages.map((image, index) => (
+                                    {asset.images.map((image, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
