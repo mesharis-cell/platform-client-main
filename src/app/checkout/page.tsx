@@ -551,12 +551,14 @@ function CheckoutPageInner() {
     const commerceRulesAcknowledged =
         acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
 
-    // Item 6: when the client lands on the Review step (or edits the cart
-    // while there), evaluate commerce rules and surface any hits. We gate
-    // on `lastEvaluatedSignature !== cartSignature` so we re-fire exactly
-    // once per distinct cart — cart edits invalidate the gate naturally.
+    // Item 6: evaluate commerce rules on the "Order Review" step
+    // (currentStep === "cart" — the step that lists all items, labelled
+    // "Order Review" in the UI). Also fires on the final "review" step as
+    // a safety net for any cart edit that happens after the first pass.
+    // Gate on `lastEvaluatedSignature !== cartSignature` so we re-fire
+    // exactly once per distinct cart — cart edits invalidate naturally.
     useEffect(() => {
-        if (currentStep !== "review") return;
+        if (currentStep !== "cart" && currentStep !== "review") return;
         if (items.length === 0) return;
         if (lastEvaluatedSignature === cartSignature) return;
         setLastEvaluatedSignature(cartSignature);
@@ -578,7 +580,7 @@ function CheckoutPageInner() {
             })
             .catch((err) => {
                 // eslint-disable-next-line no-console
-                console.warn("[checkout] review-step commerce-rules evaluate failed", err);
+                console.warn("[checkout] commerce-rules evaluate failed", err);
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStep, cartSignature, lastEvaluatedSignature]);
@@ -1187,6 +1189,25 @@ function CheckoutPageInner() {
                                             Verify your items before proceeding to event details
                                         </p>
                                     </div>
+
+                                    {/* Item 6: inline commerce-rules banner —
+                                        early warning here on the Order Review
+                                        step (the cart-listing step). Same
+                                        banner shows on the final Review step
+                                        too once they've passed through the
+                                        checkpoint. */}
+                                    {acknowledgedRuleHits.length > 0 && (
+                                        <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
+                                            <p className="text-xs font-mono uppercase tracking-wide mb-2">
+                                                Please review before submitting
+                                            </p>
+                                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                                                {acknowledgedRuleHits.map((hit) => (
+                                                    <li key={hit.rule_id}>{hit.message}</li>
+                                                ))}
+                                            </ul>
+                                        </Card>
+                                    )}
 
                                     <Card className="p-6 bg-card/50 border-border/50">
                                         <div className="space-y-4">
