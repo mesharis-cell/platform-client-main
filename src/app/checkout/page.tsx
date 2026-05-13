@@ -2963,10 +2963,44 @@ function CheckoutPageInner() {
                         <AlertDialogDescription asChild>
                             <div className="space-y-3 text-sm">
                                 <p>Heads up on the following items in your cart:</p>
-                                <ul className="list-disc pl-5 space-y-2 text-foreground">
-                                    {pendingRuleHits.map((hit) => (
-                                        <li key={hit.rule_id}>{hit.message}</li>
-                                    ))}
+                                <ul className="space-y-2 text-foreground">
+                                    {pendingRuleHits.map((hit) => {
+                                        const item = hit.related_asset_id
+                                            ? items.find(
+                                                  (i) => i.assetId === hit.related_asset_id
+                                              )
+                                            : null;
+                                        return (
+                                            <li
+                                                key={hit.rule_id}
+                                                className="flex gap-3 items-start"
+                                            >
+                                                {item?.image ? (
+                                                    <Image
+                                                        src={item.image}
+                                                        alt={item.assetName}
+                                                        width={40}
+                                                        height={40}
+                                                        className="rounded border border-border shrink-0 object-cover w-10 h-10"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded border border-border bg-muted flex items-center justify-center shrink-0">
+                                                        <Package className="h-4 w-4 text-muted-foreground/40" />
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    {item?.assetName && (
+                                                        <p className="font-medium text-foreground truncate">
+                                                            {item.assetName}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-muted-foreground">
+                                                        {hit.message}
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                                 <p className="text-muted-foreground">
                                     Acknowledge to clear this rules checkpoint, or go back and
