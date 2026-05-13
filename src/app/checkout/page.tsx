@@ -149,12 +149,20 @@ function CheckoutPageInner() {
     // back from /commerce-rules/evaluate, surface them in a confirm dialog
     // so the client can acknowledge before final submit. Auto-evaluated
     // when the client lands on the Review step so warnings surface early.
+    // Acknowledgment is bound to a specific cart signature — any edit
+    // invalidates and forces re-evaluation.
     const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
     // Hits that were acknowledged on the review step — kept around so the
     // inline banner can keep showing them as a reminder until submit.
     const [acknowledgedRuleHits, setAcknowledgedRuleHits] = useState<CommerceRuleHit[]>([]);
-    const [commerceRulesAcknowledged, setCommerceRulesAcknowledged] = useState(false);
-    const [reviewStepEvaluated, setReviewStepEvaluated] = useState(false);
+    // Signature of the cart at the moment hits were acknowledged. If the
+    // cart later mutates to a different signature, acknowledgment is
+    // considered stale and the checkpoint re-fires.
+    const [acknowledgedForSignature, setAcknowledgedForSignature] = useState<string | null>(null);
+    // Signature of the most recently evaluated cart. Used to fire the
+    // review-step useEffect exactly once per distinct cart, regardless of
+    // step transitions or React state batching.
+    const [lastEvaluatedSignature, setLastEvaluatedSignature] = useState<string | null>(null);
     const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
@@ -527,16 +535,31 @@ function CheckoutPageInner() {
         setMaintenanceFeasibilityIssues([]);
     }, [redItems.length]);
 
-    // Item 6: when the client lands on the Review step, evaluate commerce
-    // rules once and surface any hits early — same dialog the final-submit
-    // path uses, so acknowledging here also greenlights the submit. The
-    // banner below stays visible as a reminder after acknowledgment.
+    // Item 6: cart signature — stable string identity for the cart. Any
+    // add/remove/qty-change produces a new signature, which both
+    // invalidates prior acknowledgment and re-arms the evaluator.
+    const cartSignature = useMemo(
+        () =>
+            items
+                .map((i) => `${i.assetId}:${i.quantity}`)
+                .sort()
+                .join("|"),
+        [items]
+    );
+
+    // Derived: is the current acknowledgment still valid for this cart?
+    const commerceRulesAcknowledged =
+        acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
+
+    // Item 6: when the client lands on the Review step (or edits the cart
+    // while there), evaluate commerce rules and surface any hits. We gate
+    // on `lastEvaluatedSignature !== cartSignature` so we re-fire exactly
+    // once per distinct cart — cart edits invalidate the gate naturally.
     useEffect(() => {
         if (currentStep !== "review") return;
-        if (reviewStepEvaluated) return;
-        if (commerceRulesAcknowledged) return;
         if (items.length === 0) return;
-        setReviewStepEvaluated(true);
+        if (lastEvaluatedSignature === cartSignature) return;
+        setLastEvaluatedSignature(cartSignature);
         evaluateCommerceRulesMutation
             .mutateAsync({
                 cart: items.map((item) => ({
@@ -548,16 +571,17 @@ function CheckoutPageInner() {
                 if (result.hits.length > 0) {
                     setPendingRuleHits(result.hits);
                     setAcknowledgedRuleHits(result.hits);
+                } else {
+                    // Cart no longer hits any rule — clear the banner.
+                    setAcknowledgedRuleHits([]);
                 }
             })
             .catch((err) => {
                 // eslint-disable-next-line no-console
                 console.warn("[checkout] review-step commerce-rules evaluate failed", err);
             });
-        // Re-evaluate only if step or cart fundamentally changes; the
-        // mutation object intentionally not in deps to avoid re-fires.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentStep, items.length]);
+    }, [currentStep, cartSignature, lastEvaluatedSignature]);
 
     // Estimate is now handled by useCalculateEstimate hook above
 
@@ -763,6 +787,7 @@ function CheckoutPageInner() {
                         return;
                     }
                     setPendingRuleHits(result.hits);
+                    setAcknowledgedRuleHits(result.hits);
                     return;
                 }
             } catch (err) {
@@ -2881,7 +2906,8 @@ function CheckoutPageInner() {
                                     ))}
                                 </ul>
                                 <p className="text-muted-foreground">
-                                    Submit anyway, or go back and adjust your cart.
+                                    Acknowledge to clear this rules checkpoint, or go back and
+                                    adjust your cart.
                                 </p>
                             </div>
                         </AlertDialogDescription>
@@ -2896,12 +2922,12 @@ function CheckoutPageInner() {
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
-                                setCommerceRulesAcknowledged(true);
+                                // Bind the acknowledgment to THIS cart
+                                // signature. If the cart later changes,
+                                // commerceRulesAcknowledged becomes false
+                                // automatically and the checkpoint re-fires.
+                                setAcknowledgedForSignature(cartSignature);
                                 setPendingRuleHits([]);
-                                // Don't auto-trigger submit — user clicks the
-                                // actual submit button next. This is the
-                                // "rules checkpoint": once cleared, future
-                                // submit attempts skip the evaluator.
                             }}
                         >
                             I understand, proceed

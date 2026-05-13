@@ -87,11 +87,25 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     });
 
     // Item 6: commerce rules state — mirrors the order checkout flow.
+    // Acknowledgment is bound to a specific cart signature so any edit
+    // invalidates and re-fires the checkpoint.
     const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
     const [acknowledgedRuleHits, setAcknowledgedRuleHits] = useState<CommerceRuleHit[]>([]);
-    const [commerceRulesAcknowledged, setCommerceRulesAcknowledged] = useState(false);
-    const [reviewStepEvaluated, setReviewStepEvaluated] = useState(false);
+    const [acknowledgedForSignature, setAcknowledgedForSignature] = useState<string | null>(null);
+    const [lastEvaluatedSignature, setLastEvaluatedSignature] = useState<string | null>(null);
     const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
+
+    // Stable cart signature so order-of-render doesn't trip the dep check.
+    const cartSignature = useMemo(
+        () =>
+            items
+                .map((i) => `${i.assetId}:${i.quantity}`)
+                .sort()
+                .join("|"),
+        [items]
+    );
+    const commerceRulesAcknowledged =
+        acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
 
     // Auto-fill collector from user
     useEffect(() => {
@@ -105,13 +119,13 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     }, [user]);
 
     // Item 6: evaluate commerce rules when entering review step — same
-    // pattern as order checkout. Hits pop the dialog + leave a banner.
+    // pattern as order checkout. Re-fires when the cart signature changes
+    // so cart edits invalidate the prior checkpoint.
     useEffect(() => {
         if (currentStep !== "review") return;
-        if (reviewStepEvaluated) return;
-        if (commerceRulesAcknowledged) return;
         if (items.length === 0) return;
-        setReviewStepEvaluated(true);
+        if (lastEvaluatedSignature === cartSignature) return;
+        setLastEvaluatedSignature(cartSignature);
         evaluateCommerceRulesMutation
             .mutateAsync({
                 cart: items.map((item) => ({
@@ -123,6 +137,8 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 if (result.hits.length > 0) {
                     setPendingRuleHits(result.hits);
                     setAcknowledgedRuleHits(result.hits);
+                } else {
+                    setAcknowledgedRuleHits([]);
                 }
             })
             .catch((err) => {
@@ -130,7 +146,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 console.warn("[sp-checkout] review commerce-rules evaluate failed", err);
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentStep, items.length]);
+    }, [currentStep, cartSignature, lastEvaluatedSignature]);
 
     // SP lead-floor projection. Server validates on submit, but this keeps
     // the helper + Next gate in sync with the server's verdict so the user
@@ -1036,7 +1052,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
-                                setCommerceRulesAcknowledged(true);
+                                setAcknowledgedForSignature(cartSignature);
                                 setPendingRuleHits([]);
                             }}
                         >
