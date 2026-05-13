@@ -107,6 +107,24 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
     const commerceRulesAcknowledged =
         acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
 
+    // Item 6: per-item hit grouping for inline rendering (same shape as
+    // the standard checkout). Global hits without a related asset still
+    // surface in a compact top strip.
+    const { hitsByAsset, globalHits } = useMemo(() => {
+        const byAsset = new Map<string, CommerceRuleHit[]>();
+        const global: CommerceRuleHit[] = [];
+        for (const hit of acknowledgedRuleHits) {
+            if (hit.related_asset_id) {
+                const existing = byAsset.get(hit.related_asset_id) || [];
+                existing.push(hit);
+                byAsset.set(hit.related_asset_id, existing);
+            } else {
+                global.push(hit);
+            }
+        }
+        return { hitsByAsset: byAsset, globalHits: global };
+    }, [acknowledgedRuleHits]);
+
     // Auto-fill collector from user
     useEffect(() => {
         if (!user) return;
@@ -405,19 +423,21 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                     </p>
                                 </div>
 
-                                {/* Item 6: inline commerce-rules banner on
-                                    the items-listing step (early catch). */}
-                                {acknowledgedRuleHits.length > 0 && (
-                                    <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
-                                        <p className="text-xs font-mono uppercase tracking-wide mb-2">
-                                            Please review before submitting
-                                        </p>
-                                        <ul className="list-disc pl-5 space-y-1 text-sm">
-                                            {acknowledgedRuleHits.map((hit) => (
-                                                <li key={hit.rule_id}>{hit.message}</li>
-                                            ))}
-                                        </ul>
-                                    </Card>
+                                {/* Item 6: only global hits (no related
+                                    asset) surface at top; per-item hits go
+                                    inline inside each item below. */}
+                                {globalHits.length > 0 && (
+                                    <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                        {globalHits.map((hit) => (
+                                            <div
+                                                key={hit.rule_id}
+                                                className="flex items-start gap-1.5"
+                                            >
+                                                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                <span>{hit.message}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
 
                                 <Card className="p-6 bg-card/50 border-border/50">
@@ -427,7 +447,10 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                         </p>
                                     ) : (
                                         <div className="space-y-4">
-                                            {items.map((item) => (
+                                            {items.map((item) => {
+                                                const itemHits =
+                                                    hitsByAsset.get(item.assetId) || [];
+                                                return (
                                                 <div
                                                     key={item.assetId}
                                                     className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
@@ -477,9 +500,23 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                                 {item.fromCollectionName}
                                                             </p>
                                                         )}
+                                                        {itemHits.length > 0 && (
+                                                            <div className="mt-2 space-y-1">
+                                                                {itemHits.map((hit) => (
+                                                                    <div
+                                                                        key={hit.rule_id}
+                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                    >
+                                                                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                        <span>{hit.message}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </Card>
@@ -811,18 +848,21 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                     </p>
                                 </div>
 
-                                {/* Item 6: inline commerce-rules banner. */}
-                                {acknowledgedRuleHits.length > 0 && (
-                                    <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
-                                        <p className="text-xs font-mono uppercase tracking-wide mb-2">
-                                            Please review before submitting
-                                        </p>
-                                        <ul className="list-disc pl-5 space-y-1 text-sm">
-                                            {acknowledgedRuleHits.map((hit) => (
-                                                <li key={hit.rule_id}>{hit.message}</li>
-                                            ))}
-                                        </ul>
-                                    </Card>
+                                {/* Item 6: only global hits (no related
+                                    asset) surface at top here; per-item
+                                    hits embed inside each item row below. */}
+                                {globalHits.length > 0 && (
+                                    <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                        {globalHits.map((hit) => (
+                                            <div
+                                                key={hit.rule_id}
+                                                className="flex items-start gap-1.5"
+                                            >
+                                                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                <span>{hit.message}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -832,36 +872,55 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                             Items ({itemCount})
                                         </h3>
                                         <div className="space-y-3">
-                                            {items.map((item) => (
+                                            {items.map((item) => {
+                                                const itemHits =
+                                                    hitsByAsset.get(item.assetId) || [];
+                                                return (
                                                 <div
                                                     key={item.assetId}
-                                                    className="flex items-center gap-3 text-sm"
+                                                    className="text-sm"
                                                 >
-                                                    <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                        {item.image ? (
-                                                            <Image
-                                                                src={item.image}
-                                                                alt={item.assetName}
-                                                                width={48}
-                                                                height={48}
-                                                                className="object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                                <Package className="h-5 w-5 text-muted-foreground/30" />
-                                                            </div>
-                                                        )}
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                            {item.image ? (
+                                                                <Image
+                                                                    src={item.image}
+                                                                    alt={item.assetName}
+                                                                    width={48}
+                                                                    height={48}
+                                                                    className="object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                    <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium truncate">
+                                                                {item.assetName}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground font-mono">
+                                                                Qty: {item.quantity}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-medium truncate">
-                                                            {item.assetName}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground font-mono">
-                                                            Qty: {item.quantity}
-                                                        </p>
-                                                    </div>
+                                                    {itemHits.length > 0 && (
+                                                        <div className="mt-1.5 ml-15 space-y-1">
+                                                            {itemHits.map((hit) => (
+                                                                <div
+                                                                    key={hit.rule_id}
+                                                                    className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                >
+                                                                    <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                    <span>{hit.message}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-border/60 space-y-2 text-sm font-mono">

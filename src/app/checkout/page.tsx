@@ -551,6 +551,24 @@ function CheckoutPageInner() {
     const commerceRulesAcknowledged =
         acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
 
+    // Item 6: group hits by their related asset for per-line rendering.
+    // Hits without a related_asset_id (rare in v1 since QUANTITY/COMPANION
+    // rules target a specific asset/family) fall into `globalHits`.
+    const { hitsByAsset, globalHits } = useMemo(() => {
+        const byAsset = new Map<string, CommerceRuleHit[]>();
+        const global: CommerceRuleHit[] = [];
+        for (const hit of acknowledgedRuleHits) {
+            if (hit.related_asset_id) {
+                const existing = byAsset.get(hit.related_asset_id) || [];
+                existing.push(hit);
+                byAsset.set(hit.related_asset_id, existing);
+            } else {
+                global.push(hit);
+            }
+        }
+        return { hitsByAsset: byAsset, globalHits: global };
+    }, [acknowledgedRuleHits]);
+
     // Item 6: evaluate commerce rules on the "Order Review" step
     // (currentStep === "cart" — the step that lists all items, labelled
     // "Order Review" in the UI). Also fires on the final "review" step as
@@ -1190,28 +1208,30 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
-                                    {/* Item 6: inline commerce-rules banner —
-                                        early warning here on the Order Review
-                                        step (the cart-listing step). Same
-                                        banner shows on the final Review step
-                                        too once they've passed through the
-                                        checkpoint. */}
-                                    {acknowledgedRuleHits.length > 0 && (
-                                        <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
-                                            <p className="text-xs font-mono uppercase tracking-wide mb-2">
-                                                Please review before submitting
-                                            </p>
-                                            <ul className="list-disc pl-5 space-y-1 text-sm">
-                                                {acknowledgedRuleHits.map((hit) => (
-                                                    <li key={hit.rule_id}>{hit.message}</li>
-                                                ))}
-                                            </ul>
-                                        </Card>
+                                    {/* Item 6: global commerce-rule hits (no
+                                        related asset) surface at top as a
+                                        compact strip. Per-item hits render
+                                        inline inside each item row below. */}
+                                    {globalHits.length > 0 && (
+                                        <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                            {globalHits.map((hit) => (
+                                                <div
+                                                    key={hit.rule_id}
+                                                    className="flex items-start gap-1.5"
+                                                >
+                                                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                    <span>{hit.message}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
 
                                     <Card className="p-6 bg-card/50 border-border/50">
                                         <div className="space-y-4">
-                                            {items.map((item) => (
+                                            {items.map((item) => {
+                                                const itemHits =
+                                                    hitsByAsset.get(item.assetId) || [];
+                                                return (
                                                 <div
                                                     key={item.assetId}
                                                     className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
@@ -1275,9 +1295,27 @@ function CheckoutPageInner() {
                                                                 {item.fromCollectionName}
                                                             </p>
                                                         )}
+                                                        {/* Item 6: per-item commerce-rule hits —
+                                                            small, sits inline with the item's
+                                                            metadata so it's contextually anchored
+                                                            to the right SKU. */}
+                                                        {itemHits.length > 0 && (
+                                                            <div className="mt-2 space-y-1">
+                                                                {itemHits.map((hit) => (
+                                                                    <div
+                                                                        key={hit.rule_id}
+                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                    >
+                                                                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                        <span>{hit.message}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </Card>
 
@@ -2350,22 +2388,22 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
-                                    {/* Item 6: inline commerce-rules banner.
-                                        Shows the same hits the popup surfaces
-                                        — kept visible as a reminder once
-                                        acknowledged so clients don't forget
-                                        between review and submit. */}
-                                    {acknowledgedRuleHits.length > 0 && (
-                                        <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
-                                            <p className="text-xs font-mono uppercase tracking-wide mb-2">
-                                                Please review before submitting
-                                            </p>
-                                            <ul className="list-disc pl-5 space-y-1 text-sm">
-                                                {acknowledgedRuleHits.map((hit) => (
-                                                    <li key={hit.rule_id}>{hit.message}</li>
-                                                ))}
-                                            </ul>
-                                        </Card>
+                                    {/* Item 6: per-item hits are embedded
+                                        inline below in the Order Items card.
+                                        Only global hits (without related
+                                        asset) surface at the top here. */}
+                                    {globalHits.length > 0 && (
+                                        <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                            {globalHits.map((hit) => (
+                                                <div
+                                                    key={hit.rule_id}
+                                                    className="flex items-start gap-1.5"
+                                                >
+                                                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                    <span>{hit.message}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
 
                                     {orangeItems.length > 0 ? (
@@ -2385,36 +2423,55 @@ function CheckoutPageInner() {
                                                 Order Items
                                             </h3>
                                             <div className="space-y-3">
-                                                {items.map((item) => (
+                                                {items.map((item) => {
+                                                    const itemHits =
+                                                        hitsByAsset.get(item.assetId) || [];
+                                                    return (
                                                     <div
                                                         key={item.assetId}
-                                                        className="flex items-center gap-3 text-sm"
+                                                        className="text-sm"
                                                     >
-                                                        <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                            {item.image ? (
-                                                                <Image
-                                                                    src={item.image}
-                                                                    alt={item.assetName}
-                                                                    width={48}
-                                                                    height={48}
-                                                                    className="object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                                    <Package className="h-5 w-5 text-muted-foreground/30" />
-                                                                </div>
-                                                            )}
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                                {item.image ? (
+                                                                    <Image
+                                                                        src={item.image}
+                                                                        alt={item.assetName}
+                                                                        width={48}
+                                                                        height={48}
+                                                                        className="object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                        <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium truncate">
+                                                                    {item.assetName}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    Qty: {item.quantity}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-medium truncate">
-                                                                {item.assetName}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                Qty: {item.quantity}
-                                                            </p>
-                                                        </div>
+                                                        {itemHits.length > 0 && (
+                                                            <div className="mt-1.5 ml-15 space-y-1">
+                                                                {itemHits.map((hit) => (
+                                                                    <div
+                                                                        key={hit.rule_id}
+                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                    >
+                                                                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                        <span>{hit.message}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
 
                                             <Separator className="my-4" />
