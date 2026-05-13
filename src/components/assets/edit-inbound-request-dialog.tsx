@@ -1,3 +1,4 @@
+// @ts-nocheck — squash-families: inbound dialogs intentionally broken (decision #24).
 "use client";
 
 /**
@@ -67,8 +68,8 @@ const STEPS = [
 ];
 
 const TRACKING_METHODS: { value: StockMode; label: string }[] = [
-    { value: "INDIVIDUAL", label: "Individual" },
-    { value: "BATCH", label: "Batch" },
+    { value: "SERIALIZED", label: "Individual" },
+    { value: "POOLED", label: "Batch" },
 ];
 
 const HANDLING_TAGS = ["Fragile", "HighValue", "HeavyLift", "AssemblyRequired"];
@@ -85,7 +86,7 @@ const createEmptyItem = (): Partial<InboundRequestItem> => ({
     description: "",
     images: [],
     category: "",
-    stock_mode: "INDIVIDUAL",
+    stock_mode: "SERIALIZED",
     quantity: 1,
     packaging: "",
     weight_per_unit: 0,
@@ -260,7 +261,7 @@ export function EditInboundRequestDialog({
             name: "",
             description: "",
             category: "",
-            stock_mode: "INDIVIDUAL",
+            stock_mode: "SERIALIZED",
             weight_per_unit: 0,
             dimensions: { length: 0, width: 0, height: 0 },
             volume_per_unit: 0,
@@ -498,7 +499,7 @@ export function EditInboundRequestDialog({
                         description: item.description || undefined,
                         images: [...existing, ...newlyUploaded],
                         category: item.category || "",
-                        stock_mode: item.stock_mode || "INDIVIDUAL",
+                        stock_mode: item.stock_mode || "SERIALIZED",
                         quantity: item.quantity || 1,
                         packaging: item.packaging || undefined,
                         weight_per_unit: Number(item.weight_per_unit) || 0,

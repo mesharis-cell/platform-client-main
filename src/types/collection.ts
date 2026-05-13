@@ -6,7 +6,7 @@ import type {
     AssetImage,
     StockMode,
 } from "./asset";
-import type { AssetFamilyConditionSummary, AssetFamilySummary, StockMode } from "./asset-family";
+import type { AssetFamilyConditionSummary, AssetFamilySummary } from "./asset-family";
 
 export interface Collection {
     id: string;

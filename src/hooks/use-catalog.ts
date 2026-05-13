@@ -311,7 +311,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
             success: true,
             asset: {
                 id: asset.id,
-                familyId: asset.group_id || null,
+                groupId: asset.group_id || null,
                 family: asset.family
                     ? {
                           id: asset.family.id,

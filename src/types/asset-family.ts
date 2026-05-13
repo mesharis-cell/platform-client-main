@@ -1,6 +1,5 @@
-import type { AssetImage } from "./asset";
-
-export type StockMode = "SERIALIZED" | "POOLED";
+import type { AssetImage, StockMode } from "./asset";
+export type { StockMode };
 
 export interface AssetFamilySummary {
     available: number;
