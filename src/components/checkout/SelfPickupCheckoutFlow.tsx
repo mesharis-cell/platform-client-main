@@ -118,11 +118,13 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
         }));
     }, [user]);
 
-    // Item 6: evaluate commerce rules when entering review step — same
-    // pattern as order checkout. Re-fires when the cart signature changes
-    // so cart edits invalidate the prior checkpoint.
+    // Item 6: evaluate commerce rules on the items-listing step
+    // (currentStep === "cart" — labelled "Review Items") so warnings
+    // surface early. Also fires on the final "review" step as a safety
+    // net for any cart edit after the first pass. Cart-signature dedup
+    // means a single cart only evaluates once.
     useEffect(() => {
-        if (currentStep !== "review") return;
+        if (currentStep !== "cart" && currentStep !== "review") return;
         if (items.length === 0) return;
         if (lastEvaluatedSignature === cartSignature) return;
         setLastEvaluatedSignature(cartSignature);
@@ -402,6 +404,21 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                         Verify your items before providing collection details
                                     </p>
                                 </div>
+
+                                {/* Item 6: inline commerce-rules banner on
+                                    the items-listing step (early catch). */}
+                                {acknowledgedRuleHits.length > 0 && (
+                                    <Card className="border-amber-500/60 bg-amber-50 p-4 text-amber-900">
+                                        <p className="text-xs font-mono uppercase tracking-wide mb-2">
+                                            Please review before submitting
+                                        </p>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                                            {acknowledgedRuleHits.map((hit) => (
+                                                <li key={hit.rule_id}>{hit.message}</li>
+                                            ))}
+                                        </ul>
+                                    </Card>
+                                )}
 
                                 <Card className="p-6 bg-card/50 border-border/50">
                                     {items.length === 0 ? (
