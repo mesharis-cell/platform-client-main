@@ -16,7 +16,10 @@ function hexWithAlpha(hex: string | null | undefined, alphaHex: string) {
 export function CatalogCard({ item }: { item: CatalogItem }) {
     const isFamily = item.type === "family";
     const href = isFamily ? `/catalog/families/${item.id}` : `/catalog/collections/${item.id}`;
-    const image = item.images[0];
+    // Prefer the curated hero (`on_display_image`) which is admin-managed and
+    // never auto-updated by scan/return flows. Fall back to the first image
+    // in the rotating array so cards never go blank on legacy data.
+    const image = (isFamily && (item as any).onDisplayImage) || item.images[0];
     const Fallback = isFamily ? Boxes : Layers;
 
     const categoryColor = item.categoryRef?.color || null;

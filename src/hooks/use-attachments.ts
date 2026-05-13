@@ -4,11 +4,16 @@ import { apiClient } from "@/lib/api/api-client";
 import { throwApiError } from "@/lib/utils/throw-api-error";
 import { useQuery } from "@tanstack/react-query";
 
-export type AttachmentEntityType = "ORDER" | "INBOUND_REQUEST" | "SERVICE_REQUEST";
+export type AttachmentEntityType =
+    | "ORDER"
+    | "INBOUND_REQUEST"
+    | "SERVICE_REQUEST"
+    | "SELF_PICKUP"
+    | "WORKFLOW_REQUEST";
 
 export interface EntityAttachment {
     id: string;
-    entity_type: AttachmentEntityType | "WORKFLOW_REQUEST";
+    entity_type: AttachmentEntityType;
     entity_id: string;
     file_url: string;
     file_name: string;
@@ -34,6 +39,8 @@ const pathByEntityType: Record<AttachmentEntityType, string> = {
     ORDER: "order",
     INBOUND_REQUEST: "inbound-request",
     SERVICE_REQUEST: "service-request",
+    SELF_PICKUP: "self-pickup",
+    WORKFLOW_REQUEST: "workflow-request",
 };
 
 export function useEntityAttachments(
