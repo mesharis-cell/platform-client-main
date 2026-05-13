@@ -51,7 +51,7 @@ type CreateAssetPayload = {
     description?: string;
     category: CreateAssetRequest["category"];
     images: CreateAssetRequest["images"];
-    tracking_method: CreateAssetRequest["trackingMethod"];
+    stock_mode: CreateAssetRequest["trackingMethod"];
     total_quantity: number;
     available_quantity?: number;
     packaging?: string;
@@ -78,7 +78,7 @@ const toCreateAssetPayload = (data: CreateAssetRequest): CreateAssetPayload => (
     description: data.description,
     category: data.category,
     images: data.images,
-    tracking_method: data.trackingMethod,
+    stock_mode: data.trackingMethod,
     total_quantity: data.totalQuantity,
     available_quantity: data.availableQuantity,
     packaging: data.packaging,

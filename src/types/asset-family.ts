@@ -1,6 +1,6 @@
 import type { AssetImage } from "./asset";
 
-export type StockMode = "INDIVIDUAL" | "BATCH";
+export type StockMode = "SERIALIZED" | "POOLED";
 
 export interface AssetFamilySummary {
     available: number;

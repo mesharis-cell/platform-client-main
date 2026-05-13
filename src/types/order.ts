@@ -108,7 +108,7 @@ export interface ReskinRequest {
         description: string;
         category: string;
         images: AssetImage[];
-        tracking_method: string;
+        stock_mode: string;
         total_quantity: number;
         available_quantity: number;
         qr_code: string;
@@ -275,7 +275,7 @@ export interface OrderItemWithAsset extends OrderItem {
         images: AssetImage[];
         category: string;
         qrCode: string;
-        trackingMethod: "INDIVIDUAL" | "BATCH";
+        trackingMethod: "SERIALIZED" | "POOLED";
         status: "AVAILABLE" | "BOOKED" | "OUT" | "IN_MAINTENANCE";
     };
 }

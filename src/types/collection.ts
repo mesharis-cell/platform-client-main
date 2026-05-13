@@ -4,7 +4,7 @@ import type {
     HandlingTag,
     AssetCategory,
     AssetImage,
-    TrackingMethod,
+    StockMode,
 } from "./asset";
 import type { AssetFamilyConditionSummary, AssetFamilySummary, StockMode } from "./asset-family";
 
@@ -199,7 +199,7 @@ export interface CatalogListResponse {
 
 export interface CatalogAssetDetails {
     id: string;
-    familyId?: string | null;
+    groupId?: string | null;
     family?: {
         id: string;
         name: string;
@@ -231,13 +231,13 @@ export interface CatalogAssetDetails {
     dimensionWidth: string;
     dimensionHeight: string;
     handlingTags: HandlingTag[];
-    trackingMethod?: TrackingMethod;
+    trackingMethod?: StockMode;
     qrCode?: string | null;
 }
 
 export interface CatalogFamilyStockItem {
     id: string;
-    familyId: string | null;
+    groupId: string | null;
     name: string;
     description: string | null;
     category: string;
@@ -254,7 +254,7 @@ export interface CatalogFamilyStockItem {
     dimensionWidth: string;
     dimensionHeight: string;
     handlingTags: HandlingTag[];
-    trackingMethod: TrackingMethod;
+    trackingMethod: StockMode;
     status: AssetStatus | string;
     qrCode?: string | null;
 }

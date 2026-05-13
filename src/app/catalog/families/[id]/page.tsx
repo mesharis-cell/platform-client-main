@@ -67,7 +67,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
 
     const images = family.images || [];
     const hasImages = images.length > 0;
-    const isSerialized = family.stockMode === "INDIVIDUAL";
+    const isSerialized = family.stockMode === "SERIALIZED";
     const safeIdx = hasImages ? Math.min(activeImgIdx, images.length - 1) : 0;
     const currentImage = hasImages ? images[safeIdx]?.url : null;
 
@@ -251,7 +251,7 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
                             </span>
                         </h2>
                         <FamilyStockList
-                            familyName={family.name}
+                            groupName={family.name}
                             stockRecords={family.stockRecords}
                             isSerialized={isSerialized}
                         />

@@ -229,7 +229,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
         const family = familyResponse.data.data;
         const stockRecords = (stockResponse.data?.data || []).map((asset: any) => ({
             id: asset.id,
-            familyId: asset.family_id || null,
+            familyId: asset.group_id || null,
             name: asset.name,
             description: asset.description,
             category: asset.category,
@@ -246,7 +246,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
             dimensionWidth: String(asset.dimensions?.width || 0),
             dimensionHeight: String(asset.dimensions?.height || 0),
             handlingTags: asset.handling_tags || [],
-            trackingMethod: asset.tracking_method,
+            trackingMethod: asset.stock_mode,
             status: asset.status,
             qrCode: asset.qr_code,
         }));
@@ -311,7 +311,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
             success: true,
             asset: {
                 id: asset.id,
-                familyId: asset.family_id || null,
+                familyId: asset.group_id || null,
                 family: asset.family
                     ? {
                           id: asset.family.id,
@@ -337,7 +337,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
                 dimensionWidth: String(asset.dimensions?.width || 0),
                 dimensionHeight: String(asset.dimensions?.height || 0),
                 handlingTags: asset.handling_tags || [],
-                trackingMethod: asset.tracking_method,
+                trackingMethod: asset.stock_mode,
                 qrCode: asset.qr_code,
             },
         };
