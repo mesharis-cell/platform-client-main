@@ -36,14 +36,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    PermitWarningAlert,
-    derivePermitChoice,
-} from "@/components/permits/permit-warning-alert";
-import {
-    useEvaluateCommerceRules,
-    type CommerceRuleHit,
-} from "@/hooks/use-commerce-rules";
+import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
+import { useEvaluateCommerceRules, type CommerceRuleHit } from "@/hooks/use-commerce-rules";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -1217,88 +1211,90 @@ function CheckoutPageInner() {
                                                 const itemHits =
                                                     hitsByAsset.get(item.assetId) || [];
                                                 return (
-                                                <div
-                                                    key={item.assetId}
-                                                    className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
-                                                >
-                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
-                                                        {item.image ? (
-                                                            <Image
-                                                                src={item.image}
-                                                                alt={item.assetName}
-                                                                width={96}
-                                                                height={96}
-                                                                className="object-cover w-full h-full"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <Package className="h-10 w-10 text-muted-foreground/30" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold mb-1">
-                                                            {item.assetName}
-                                                        </h4>
-                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
-                                                            <span>Qty: {item.quantity}</span>
-                                                            <span>•</span>
-                                                            <span>{item.volume} m³ each</span>
-                                                            <span>•</span>
-                                                            <span>{item.weight} kg each</span>
+                                                    <div
+                                                        key={item.assetId}
+                                                        className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                                                    >
+                                                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                            {item.image ? (
+                                                                <Image
+                                                                    src={item.image}
+                                                                    alt={item.assetName}
+                                                                    width={96}
+                                                                    height={96}
+                                                                    className="object-cover w-full h-full"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Package className="h-10 w-10 text-muted-foreground/30" />
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        {item.condition === "RED" && (
-                                                            <div className="mt-1 space-y-1">
-                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
-                                                                    <AlertCircle className="h-3 w-3" />{" "}
-                                                                    RED — Requires repair
-                                                                </span>
-                                                                {item.conditionNotes && (
-                                                                    <p className="text-xs text-red-600 line-clamp-2">
-                                                                        {item.conditionNotes}
-                                                                    </p>
-                                                                )}
+
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold mb-1">
+                                                                {item.assetName}
+                                                            </h4>
+                                                            <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
+                                                                <span>Qty: {item.quantity}</span>
+                                                                <span>•</span>
+                                                                <span>{item.volume} m³ each</span>
+                                                                <span>•</span>
+                                                                <span>{item.weight} kg each</span>
                                                             </div>
-                                                        )}
-                                                        {item.condition === "ORANGE" && (
-                                                            <div className="mt-1 space-y-1">
-                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                                                    <AlertCircle className="h-3 w-3" />{" "}
-                                                                    ORANGE — Decision needed
-                                                                </span>
-                                                                {item.conditionNotes && (
-                                                                    <p className="text-xs text-amber-600 line-clamp-2">
-                                                                        {item.conditionNotes}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                        {item.fromCollectionName && (
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                From collection:{" "}
-                                                                {item.fromCollectionName}
-                                                            </p>
-                                                        )}
-                                                        {/* Item 6: per-item commerce-rule hits —
+                                                            {item.condition === "RED" && (
+                                                                <div className="mt-1 space-y-1">
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                                        <AlertCircle className="h-3 w-3" />{" "}
+                                                                        RED — Requires repair
+                                                                    </span>
+                                                                    {item.conditionNotes && (
+                                                                        <p className="text-xs text-red-600 line-clamp-2">
+                                                                            {item.conditionNotes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {item.condition === "ORANGE" && (
+                                                                <div className="mt-1 space-y-1">
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                                        <AlertCircle className="h-3 w-3" />{" "}
+                                                                        ORANGE — Decision needed
+                                                                    </span>
+                                                                    {item.conditionNotes && (
+                                                                        <p className="text-xs text-amber-600 line-clamp-2">
+                                                                            {item.conditionNotes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {item.fromCollectionName && (
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    From collection:{" "}
+                                                                    {item.fromCollectionName}
+                                                                </p>
+                                                            )}
+                                                            {/* Item 6: per-item commerce-rule hits —
                                                             small, sits inline with the item's
                                                             metadata so it's contextually anchored
                                                             to the right SKU. */}
-                                                        {itemHits.length > 0 && (
-                                                            <div className="mt-2 space-y-1">
-                                                                {itemHits.map((hit) => (
-                                                                    <div
-                                                                        key={hit.rule_id}
-                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
-                                                                    >
-                                                                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                                                        <span>{hit.message}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                            {itemHits.length > 0 && (
+                                                                <div className="mt-2 space-y-1">
+                                                                    {itemHits.map((hit) => (
+                                                                        <div
+                                                                            key={hit.rule_id}
+                                                                            className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                        >
+                                                                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                            <span>
+                                                                                {hit.message}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
                                                 );
                                             })}
                                         </div>
@@ -1770,9 +1766,9 @@ function CheckoutPageInner() {
                                                     Permanent placement *
                                                 </Label>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Are these items being placed permanently? (Yes
-                                                    = they won't be returned to us; No = they'll
-                                                    come back after the event.)
+                                                    Are these items being placed permanently? (Yes =
+                                                    they won't be returned to us; No = they'll come
+                                                    back after the event.)
                                                 </p>
                                             </div>
                                             <RadioGroup
@@ -1792,10 +1788,7 @@ function CheckoutPageInner() {
                                                 className="flex gap-3"
                                             >
                                                 <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                    <RadioGroupItem
-                                                        value="yes"
-                                                        id="permYes"
-                                                    />
+                                                    <RadioGroupItem value="yes" id="permYes" />
                                                     <span className="text-sm font-medium">
                                                         Yes — permanent
                                                     </span>
@@ -2412,49 +2405,48 @@ function CheckoutPageInner() {
                                                     const itemHits =
                                                         hitsByAsset.get(item.assetId) || [];
                                                     return (
-                                                    <div
-                                                        key={item.assetId}
-                                                        className="text-sm"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                                {item.image ? (
-                                                                    <Image
-                                                                        src={item.image}
-                                                                        alt={item.assetName}
-                                                                        width={48}
-                                                                        height={48}
-                                                                        className="object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                                        <Package className="h-5 w-5 text-muted-foreground/30" />
-                                                                    </div>
-                                                                )}
+                                                        <div key={item.assetId} className="text-sm">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                                    {item.image ? (
+                                                                        <Image
+                                                                            src={item.image}
+                                                                            alt={item.assetName}
+                                                                            width={48}
+                                                                            height={48}
+                                                                            className="object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                            <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-medium truncate">
+                                                                        {item.assetName}
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                                        Qty: {item.quantity}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="font-medium truncate">
-                                                                    {item.assetName}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground font-mono">
-                                                                    Qty: {item.quantity}
-                                                                </p>
-                                                            </div>
+                                                            {itemHits.length > 0 && (
+                                                                <div className="mt-1.5 ml-15 space-y-1">
+                                                                    {itemHits.map((hit) => (
+                                                                        <div
+                                                                            key={hit.rule_id}
+                                                                            className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                        >
+                                                                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                            <span>
+                                                                                {hit.message}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        {itemHits.length > 0 && (
-                                                            <div className="mt-1.5 ml-15 space-y-1">
-                                                                {itemHits.map((hit) => (
-                                                                    <div
-                                                                        key={hit.rule_id}
-                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
-                                                                    >
-                                                                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                                                        <span>{hit.message}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
                                                     );
                                                 })}
                                             </div>
@@ -2646,7 +2638,9 @@ function CheckoutPageInner() {
                                                                 formData.requires_permit,
                                                                 formData.permit_owner
                                                             )}
-                                                            companyName={platform?.company_name ?? null}
+                                                            companyName={
+                                                                platform?.company_name ?? null
+                                                            }
                                                         />
                                                     )}
                                                     {formData.requires_permit && (
@@ -2966,9 +2960,7 @@ function CheckoutPageInner() {
                                 <ul className="space-y-2 text-foreground">
                                     {pendingRuleHits.map((hit) => {
                                         const item = hit.related_asset_id
-                                            ? items.find(
-                                                  (i) => i.assetId === hit.related_asset_id
-                                              )
+                                            ? items.find((i) => i.assetId === hit.related_asset_id)
                                             : null;
                                         return (
                                             <li

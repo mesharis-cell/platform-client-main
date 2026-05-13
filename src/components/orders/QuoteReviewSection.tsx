@@ -21,10 +21,7 @@ import {
 import { toast } from "sonner";
 import { CheckCircle, XCircle } from "lucide-react";
 import { PricingBreakdown } from "./PricingBreakdown";
-import {
-    PermitWarningAlert,
-    derivePermitChoice,
-} from "@/components/permits/permit-warning-alert";
+import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
 import { usePlatform } from "@/contexts/platform-context";
 import type { OrderLineItem } from "@/types/hybrid-pricing";
 import type { Order } from "@/types/order";

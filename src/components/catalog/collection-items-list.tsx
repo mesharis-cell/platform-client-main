@@ -128,162 +128,172 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                     const thumbUrl = item.onDisplayImage || item.images?.[0];
                     const archived = Boolean(item.isArchived);
                     return (
-                    <div
-                        key={`${item.assetId}-${item.defaultQuantity}`}
-                        className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
-                            archived
-                                ? "border-muted bg-muted/30 opacity-60"
-                                : item.availableQuantity > 0
-                                  ? "border-border bg-card hover:border-primary/30"
-                                  : "border-destructive/30 bg-destructive/5"
-                        }`}
-                        title={
-                            archived
-                                ? "This item has been archived and is no longer orderable. Contact ops to remove it from the collection."
-                                : undefined
-                        }
-                    >
-                        {/* Thumbnail */}
-                        <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
-                            {thumbUrl ? (
-                                <Image
-                                    src={thumbUrl}
-                                    alt={item.name}
-                                    width={80}
-                                    height={80}
-                                    className="object-cover w-full h-full"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <Package className="h-8 w-8 text-muted-foreground/30" />
-                                </div>
-                            )}
-                        </div>
+                        <div
+                            key={`${item.assetId}-${item.defaultQuantity}`}
+                            className={`flex gap-4 p-4 border-2 rounded-lg transition-all ${
+                                archived
+                                    ? "border-muted bg-muted/30 opacity-60"
+                                    : item.availableQuantity > 0
+                                      ? "border-border bg-card hover:border-primary/30"
+                                      : "border-destructive/30 bg-destructive/5"
+                            }`}
+                            title={
+                                archived
+                                    ? "This item has been archived and is no longer orderable. Contact ops to remove it from the collection."
+                                    : undefined
+                            }
+                        >
+                            {/* Thumbnail */}
+                            <div className="w-20 h-20 rounded-md overflow-hidden border border-border shrink-0 bg-muted">
+                                {thumbUrl ? (
+                                    <Image
+                                        src={thumbUrl}
+                                        alt={item.name}
+                                        width={80}
+                                        height={80}
+                                        className="object-cover w-full h-full"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <Package className="h-8 w-8 text-muted-foreground/30" />
+                                    </div>
+                                )}
+                            </div>
 
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-3">
-                                <div className="flex-1 min-w-0">
-                                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                                        <h4 className="font-semibold text-base">{item.name}</h4>
-                                        <Badge variant="outline" className="font-mono text-xs">
-                                            {item.category}
-                                        </Badge>
-                                        {item.family && (
-                                            <Link href={`/catalog/families/${item.family.id}`}>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="font-mono text-xs"
-                                                >
-                                                    Family: {item.family.name}
-                                                </Badge>
-                                            </Link>
-                                        )}
-                                        {archived && (
-                                            <Badge
-                                                variant="outline"
-                                                className="bg-muted text-muted-foreground border-muted-foreground/30 font-mono text-xs"
-                                            >
-                                                ARCHIVED
+                            {/* Details */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-3">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                                            <h4 className="font-semibold text-base">{item.name}</h4>
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                                {item.category}
                                             </Badge>
+                                            {item.family && (
+                                                <Link href={`/catalog/families/${item.family.id}`}>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="font-mono text-xs"
+                                                    >
+                                                        Family: {item.family.name}
+                                                    </Badge>
+                                                </Link>
+                                            )}
+                                            {archived && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="bg-muted text-muted-foreground border-muted-foreground/30 font-mono text-xs"
+                                                >
+                                                    ARCHIVED
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Badge
+                                        variant={
+                                            archived
+                                                ? "outline"
+                                                : item.availableQuantity > 0
+                                                  ? "default"
+                                                  : "destructive"
+                                        }
+                                        className="font-mono text-xs shrink-0"
+                                    >
+                                        {archived ? (
+                                            <>
+                                                <XCircle className="w-3 h-3 mr-1" />
+                                                Archived
+                                            </>
+                                        ) : item.availableQuantity > 0 ? (
+                                            <>
+                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                Available
+                                            </>
+                                        ) : (
+                                            <>
+                                                <XCircle className="w-3 h-3 mr-1" />
+                                                Unavailable
+                                            </>
                                         )}
-                                    </div>
-                                </div>
-                                <Badge
-                                    variant={
-                                        archived
-                                            ? "outline"
-                                            : item.availableQuantity > 0
-                                              ? "default"
-                                              : "destructive"
-                                    }
-                                    className="font-mono text-xs shrink-0"
-                                >
-                                    {archived ? (
-                                        <>
-                                            <XCircle className="w-3 h-3 mr-1" />
-                                            Archived
-                                        </>
-                                    ) : item.availableQuantity > 0 ? (
-                                        <>
-                                            <CheckCircle className="w-3 h-3 mr-1" />
-                                            Available
-                                        </>
-                                    ) : (
-                                        <>
-                                            <XCircle className="w-3 h-3 mr-1" />
-                                            Unavailable
-                                        </>
-                                    )}
-                                </Badge>
-                            </div>
-
-                            {/* Specs Grid */}
-                            <div className="space-y-2">
-                                {/* Stock Info */}
-                                <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-muted-foreground">Qty:</span>
-                                        <span className="font-bold">{item.totalQuantity}</span>
-                                    </div>
-                                    <span className="text-muted-foreground">•</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-muted-foreground">Available:</span>
-                                        <span className="font-bold">{item.availableQuantity}</span>
-                                    </div>
+                                    </Badge>
                                 </div>
 
-                                {/* Dimensions Grid */}
-                                <div className="grid grid-cols-5 gap-1.5 max-w-sm">
-                                    <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                        <div className="text-[9px] text-muted-foreground uppercase font-mono">
-                                            L
+                                {/* Specs Grid */}
+                                <div className="space-y-2">
+                                    {/* Stock Info */}
+                                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-muted-foreground">Qty:</span>
+                                            <span className="font-bold">{item.totalQuantity}</span>
                                         </div>
-                                        <div className="font-bold font-mono text-xs">
-                                            {Number(item.dimensionLength).toFixed(0)}
+                                        <span className="text-muted-foreground">•</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-muted-foreground">
+                                                Available:
+                                            </span>
+                                            <span className="font-bold">
+                                                {item.availableQuantity}
+                                            </span>
                                         </div>
-                                        <div className="text-[8px] text-muted-foreground">cm</div>
                                     </div>
-                                    <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                        <div className="text-[9px] text-muted-foreground uppercase font-mono">
-                                            W
+
+                                    {/* Dimensions Grid */}
+                                    <div className="grid grid-cols-5 gap-1.5 max-w-sm">
+                                        <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
+                                            <div className="text-[9px] text-muted-foreground uppercase font-mono">
+                                                L
+                                            </div>
+                                            <div className="font-bold font-mono text-xs">
+                                                {Number(item.dimensionLength).toFixed(0)}
+                                            </div>
+                                            <div className="text-[8px] text-muted-foreground">
+                                                cm
+                                            </div>
                                         </div>
-                                        <div className="font-bold font-mono text-xs">
-                                            {Number(item.dimensionWidth).toFixed(0)}
+                                        <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
+                                            <div className="text-[9px] text-muted-foreground uppercase font-mono">
+                                                W
+                                            </div>
+                                            <div className="font-bold font-mono text-xs">
+                                                {Number(item.dimensionWidth).toFixed(0)}
+                                            </div>
+                                            <div className="text-[8px] text-muted-foreground">
+                                                cm
+                                            </div>
                                         </div>
-                                        <div className="text-[8px] text-muted-foreground">cm</div>
-                                    </div>
-                                    <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
-                                        <div className="text-[9px] text-muted-foreground uppercase font-mono">
-                                            H
+                                        <div className="text-center p-1.5 bg-muted/50 rounded border border-border/30">
+                                            <div className="text-[9px] text-muted-foreground uppercase font-mono">
+                                                H
+                                            </div>
+                                            <div className="font-bold font-mono text-xs">
+                                                {Number(item.dimensionHeight).toFixed(0)}
+                                            </div>
+                                            <div className="text-[8px] text-muted-foreground">
+                                                cm
+                                            </div>
                                         </div>
-                                        <div className="font-bold font-mono text-xs">
-                                            {Number(item.dimensionHeight).toFixed(0)}
+                                        <div className="text-center p-1.5 bg-primary/10 rounded border border-primary/20">
+                                            <div className="text-[9px] text-muted-foreground uppercase font-mono">
+                                                WT
+                                            </div>
+                                            <div className="font-bold font-mono text-xs text-primary">
+                                                {Number(item.weight).toFixed(1)}
+                                            </div>
+                                            <div className="text-[8px] text-primary/70">kg</div>
                                         </div>
-                                        <div className="text-[8px] text-muted-foreground">cm</div>
-                                    </div>
-                                    <div className="text-center p-1.5 bg-primary/10 rounded border border-primary/20">
-                                        <div className="text-[9px] text-muted-foreground uppercase font-mono">
-                                            WT
+                                        <div className="text-center p-1.5 bg-muted/10 rounded border border-secondary/20">
+                                            <div className="text-[9px] text-muted-foreground uppercase font-mono">
+                                                VOL
+                                            </div>
+                                            <div className="font-bold font-mono text-xs">
+                                                {Number(item.volume).toFixed(2)}
+                                            </div>
+                                            <div className="text-[8px] text-secondary/70">m³</div>
                                         </div>
-                                        <div className="font-bold font-mono text-xs text-primary">
-                                            {Number(item.weight).toFixed(1)}
-                                        </div>
-                                        <div className="text-[8px] text-primary/70">kg</div>
-                                    </div>
-                                    <div className="text-center p-1.5 bg-muted/10 rounded border border-secondary/20">
-                                        <div className="text-[9px] text-muted-foreground uppercase font-mono">
-                                            VOL
-                                        </div>
-                                        <div className="font-bold font-mono text-xs">
-                                            {Number(item.volume).toFixed(2)}
-                                        </div>
-                                        <div className="text-[8px] text-secondary/70">m³</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     );
                 })}
             </div>

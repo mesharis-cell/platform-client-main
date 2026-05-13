@@ -89,10 +89,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     // first, then the rotating scan/return `images[]`. Index 0 is the curated
     // hero when set, so clients land on it.
     const combinedImages: { url: string; note?: string }[] = asset
-        ? [
-              ...(asset.onDisplayImage ? [{ url: asset.onDisplayImage }] : []),
-              ...asset.images,
-          ]
+        ? [...(asset.onDisplayImage ? [{ url: asset.onDisplayImage }] : []), ...asset.images]
         : [];
 
     if (isLoading) {
@@ -175,7 +172,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         <button
                                             onClick={() =>
                                                 setSelectedImageIndex(
-                                                    (selectedImageIndex - 1 + combinedImages.length) %
+                                                    (selectedImageIndex -
+                                                        1 +
+                                                        combinedImages.length) %
                                                         combinedImages.length
                                                 )
                                             }

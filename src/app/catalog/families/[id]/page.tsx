@@ -84,7 +84,8 @@ export default function CatalogFamilyDetailPage({ params }: { params: Promise<{ 
         (family.conditionSummary?.orange || 0) +
         (family.conditionSummary?.red || 0);
 
-    const goPrev = () => setActiveImgIdx((i) => (i - 1 + combinedImageUrls.length) % combinedImageUrls.length);
+    const goPrev = () =>
+        setActiveImgIdx((i) => (i - 1 + combinedImageUrls.length) % combinedImageUrls.length);
     const goNext = () => setActiveImgIdx((i) => (i + 1) % combinedImageUrls.length);
 
     return (

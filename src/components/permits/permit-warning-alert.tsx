@@ -57,8 +57,8 @@ export function PermitWarningAlert({ choice, companyName }: Props) {
                 <AlertDescription className="font-medium">
                     {who} will handle the permit. Permits must be provided before delivery. If we
                     arrive without permits in hand,{" "}
-                    <strong>a surcharge and additional fees will apply</strong>, and delivery may
-                    be delayed or cancelled.
+                    <strong>a surcharge and additional fees will apply</strong>, and delivery may be
+                    delayed or cancelled.
                 </AlertDescription>
             </Alert>
         );
@@ -73,8 +73,8 @@ export function PermitWarningAlert({ choice, companyName }: Props) {
             <Info className="h-4 w-4" />
             <AlertDescription>
                 We will handle the venue permit on your behalf.{" "}
-                <strong>An additional cost line item will be added to your quote</strong> for
-                permit handling.
+                <strong>An additional cost line item will be added to your quote</strong> for permit
+                handling.
             </AlertDescription>
         </Alert>
     );

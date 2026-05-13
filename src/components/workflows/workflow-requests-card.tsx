@@ -104,9 +104,7 @@ export function ClientWorkflowRequestsCard({
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() =>
-                                        setExpandedId(isExpanded ? null : workflow.id)
-                                    }
+                                    onClick={() => setExpandedId(isExpanded ? null : workflow.id)}
                                 >
                                     {isExpanded ? (
                                         <ChevronUp className="h-4 w-4" />

@@ -329,7 +329,10 @@ export function FamilyStockList({
                                 <div className="h-10 w-10 shrink-0 rounded bg-muted overflow-hidden">
                                     {stock.onDisplayImage || stock.images[0]?.url ? (
                                         <Image
-                                            src={(stock.onDisplayImage || stock.images[0]?.url) as string}
+                                            src={
+                                                (stock.onDisplayImage ||
+                                                    stock.images[0]?.url) as string
+                                            }
                                             alt={stock.name}
                                             width={40}
                                             height={40}

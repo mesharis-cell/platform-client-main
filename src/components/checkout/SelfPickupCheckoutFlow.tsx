@@ -19,10 +19,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-    useEvaluateCommerceRules,
-    type CommerceRuleHit,
-} from "@/hooks/use-commerce-rules";
+import { useEvaluateCommerceRules, type CommerceRuleHit } from "@/hooks/use-commerce-rules";
 import { useCart } from "@/contexts/cart-context";
 import { useToken } from "@/lib/auth/use-token";
 import { useSubmitSelfPickupFromCart } from "@/hooks/use-self-pickups";
@@ -432,70 +429,72 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                 const itemHits =
                                                     hitsByAsset.get(item.assetId) || [];
                                                 return (
-                                                <div
-                                                    key={item.assetId}
-                                                    className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
-                                                >
-                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
-                                                        {item.image ? (
-                                                            <Image
-                                                                src={item.image}
-                                                                alt={item.assetName}
-                                                                width={96}
-                                                                height={96}
-                                                                className="object-cover w-full h-full"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <Package className="h-10 w-10 text-muted-foreground/30" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold mb-1">
-                                                            {item.assetName}
-                                                        </h4>
-                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
-                                                            <span>Qty: {item.quantity}</span>
-                                                            {item.volume != null && (
-                                                                <>
-                                                                    <span>•</span>
-                                                                    <span>
-                                                                        {item.volume} m³ each
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                            {item.weight != null && (
-                                                                <>
-                                                                    <span>•</span>
-                                                                    <span>
-                                                                        {item.weight} kg each
-                                                                    </span>
-                                                                </>
+                                                    <div
+                                                        key={item.assetId}
+                                                        className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                                                    >
+                                                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                            {item.image ? (
+                                                                <Image
+                                                                    src={item.image}
+                                                                    alt={item.assetName}
+                                                                    width={96}
+                                                                    height={96}
+                                                                    className="object-cover w-full h-full"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Package className="h-10 w-10 text-muted-foreground/30" />
+                                                                </div>
                                                             )}
                                                         </div>
-                                                        {item.fromCollectionName && (
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                From collection:{" "}
-                                                                {item.fromCollectionName}
-                                                            </p>
-                                                        )}
-                                                        {itemHits.length > 0 && (
-                                                            <div className="mt-2 space-y-1">
-                                                                {itemHits.map((hit) => (
-                                                                    <div
-                                                                        key={hit.rule_id}
-                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
-                                                                    >
-                                                                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-                                                                        <span>{hit.message}</span>
-                                                                    </div>
-                                                                ))}
+
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold mb-1">
+                                                                {item.assetName}
+                                                            </h4>
+                                                            <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
+                                                                <span>Qty: {item.quantity}</span>
+                                                                {item.volume != null && (
+                                                                    <>
+                                                                        <span>•</span>
+                                                                        <span>
+                                                                            {item.volume} m³ each
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                                {item.weight != null && (
+                                                                    <>
+                                                                        <span>•</span>
+                                                                        <span>
+                                                                            {item.weight} kg each
+                                                                        </span>
+                                                                    </>
+                                                                )}
                                                             </div>
-                                                        )}
+                                                            {item.fromCollectionName && (
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    From collection:{" "}
+                                                                    {item.fromCollectionName}
+                                                                </p>
+                                                            )}
+                                                            {itemHits.length > 0 && (
+                                                                <div className="mt-2 space-y-1">
+                                                                    {itemHits.map((hit) => (
+                                                                        <div
+                                                                            key={hit.rule_id}
+                                                                            className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                        >
+                                                                            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                            <span>
+                                                                                {hit.message}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
                                                 );
                                             })}
                                         </div>
@@ -857,49 +856,46 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                                 const itemHits =
                                                     hitsByAsset.get(item.assetId) || [];
                                                 return (
-                                                <div
-                                                    key={item.assetId}
-                                                    className="text-sm"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                            {item.image ? (
-                                                                <Image
-                                                                    src={item.image}
-                                                                    alt={item.assetName}
-                                                                    width={48}
-                                                                    height={48}
-                                                                    className="object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                                    <Package className="h-5 w-5 text-muted-foreground/30" />
-                                                                </div>
-                                                            )}
+                                                    <div key={item.assetId} className="text-sm">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                                {item.image ? (
+                                                                    <Image
+                                                                        src={item.image}
+                                                                        alt={item.assetName}
+                                                                        width={48}
+                                                                        height={48}
+                                                                        className="object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                        <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium truncate">
+                                                                    {item.assetName}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    Qty: {item.quantity}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-medium truncate">
-                                                                {item.assetName}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                Qty: {item.quantity}
-                                                            </p>
-                                                        </div>
+                                                        {itemHits.length > 0 && (
+                                                            <div className="mt-1.5 ml-15 space-y-1">
+                                                                {itemHits.map((hit) => (
+                                                                    <div
+                                                                        key={hit.rule_id}
+                                                                        className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                    >
+                                                                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                        <span>{hit.message}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {itemHits.length > 0 && (
-                                                        <div className="mt-1.5 ml-15 space-y-1">
-                                                            {itemHits.map((hit) => (
-                                                                <div
-                                                                    key={hit.rule_id}
-                                                                    className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
-                                                                >
-                                                                    <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-                                                                    <span>{hit.message}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
                                                 );
                                             })}
                                         </div>
@@ -1090,9 +1086,7 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                                 <ul className="space-y-2 text-foreground">
                                     {pendingRuleHits.map((hit) => {
                                         const item = hit.related_asset_id
-                                            ? items.find(
-                                                  (i) => i.assetId === hit.related_asset_id
-                                              )
+                                            ? items.find((i) => i.assetId === hit.related_asset_id)
                                             : null;
                                         return (
                                             <li
