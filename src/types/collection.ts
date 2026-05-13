@@ -137,6 +137,7 @@ export interface CatalogAssetFamilyItem {
         color: string;
     } | null;
     images: string[];
+    onDisplayImage?: string | null;
     brand: {
         id: string;
         name: string;
@@ -209,6 +210,7 @@ export interface CatalogAssetDetails {
     description: string | null;
     category: string;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     brand: {
         id: string;
         name: string;
@@ -242,6 +244,7 @@ export interface CatalogFamilyStockItem {
     description: string | null;
     category: string;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     availableQuantity: number;
     totalQuantity: number;
     condition: Condition;
@@ -270,6 +273,7 @@ export interface CatalogAssetFamilyDetails {
         color: string;
     } | null;
     images: AssetImage[];
+    onDisplayImage?: string | null;
     brand: {
         id: string | null;
         name: string | null;
@@ -305,6 +309,7 @@ export interface CatalogCollectionItemDetail {
     name: string;
     category: string;
     images: string[];
+    onDisplayImage?: string | null;
     defaultQuantity: number;
     availableQuantity: number;
     totalQuantity: number;
@@ -316,6 +321,10 @@ export interface CatalogCollectionItemDetail {
     dimensionWidth: string;
     dimensionHeight: string;
     isAvailable: boolean;
+    // Archived assets (asset.deleted_at is set) are kept in the collection
+    // payload so admin can clean them up, but the client UI greys them out
+    // and blocks add-to-cart. Item 5 of the 9-item bundle.
+    isArchived?: boolean;
 }
 
 export interface CatalogCollectionDetails {

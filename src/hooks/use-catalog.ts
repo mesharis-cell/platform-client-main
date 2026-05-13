@@ -136,6 +136,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                 category: cat.label,
                 categoryRef: cat.ref,
                 images: normalizeAssetImageUrls(family.images),
+                onDisplayImage: family.on_display_image || null,
                 brand: family.brand
                     ? {
                           id: family.brand.id,
@@ -234,6 +235,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
             description: asset.description,
             category: asset.category,
             images: normalizeAssetImages(asset.images),
+            onDisplayImage: asset.on_display_image || null,
             availableQuantity: Number(asset.available_quantity || 0),
             totalQuantity: Number(asset.total_quantity || 0),
             condition: asset.condition,
@@ -259,6 +261,7 @@ async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetails
                 description: family.description,
                 category: family.category,
                 images: normalizeAssetImages(family.images),
+                onDisplayImage: family.on_display_image || null,
                 brand: family.brand
                     ? {
                           id: family.brand.id,
@@ -323,6 +326,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
                 description: asset.description,
                 category: asset.category,
                 images: normalizeAssetImages(asset.images),
+                onDisplayImage: asset.on_display_image || null,
                 brand: asset.brand_details || null,
                 company: asset.company_details || null,
                 availableQuantity: asset.available_quantity,
@@ -363,31 +367,40 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
         const response = await apiClient.get(`/operations/v1/collection/${id}`);
         const raw = response.data.data;
 
-        const items = (raw.assets || []).map((item: any) => ({
-            id: item.asset.id,
-            assetId: item.asset.id,
-            family: item.asset.family
-                ? {
-                      id: item.asset.family.id,
-                      name: item.asset.family.name,
-                      stockMode: item.asset.family.stock_mode,
-                  }
-                : null,
-            name: item.asset.family?.name || item.asset.name,
-            category: item.asset.category,
-            images: normalizeAssetImageUrls(item.asset.images),
-            defaultQuantity: item.default_quantity,
-            availableQuantity: item.asset.available_quantity,
-            totalQuantity: item.asset.total_quantity,
-            condition: item.asset.condition,
-            refurbDaysEstimate: item.asset.refurb_days_estimate || null,
-            volume: String(item.asset.volume_per_unit || 0),
-            weight: String(item.asset.weight_per_unit || 0),
-            dimensionLength: String(item.asset.dimensions?.length || 0),
-            dimensionWidth: String(item.asset.dimensions?.width || 0),
-            dimensionHeight: String(item.asset.dimensions?.height || 0),
-            isAvailable: item.asset.available_quantity >= item.default_quantity,
-        }));
+        const items = (raw.assets || []).map((item: any) => {
+            const isArchived = Boolean(item.asset.deleted_at);
+            return {
+                id: item.asset.id,
+                assetId: item.asset.id,
+                family: item.asset.family
+                    ? {
+                          id: item.asset.family.id,
+                          name: item.asset.family.name,
+                          stockMode: item.asset.family.stock_mode,
+                      }
+                    : null,
+                name: item.asset.family?.name || item.asset.name,
+                category: item.asset.category,
+                images: normalizeAssetImageUrls(item.asset.images),
+                onDisplayImage: item.asset.on_display_image || null,
+                defaultQuantity: item.default_quantity,
+                availableQuantity: item.asset.available_quantity,
+                totalQuantity: item.asset.total_quantity,
+                condition: item.asset.condition,
+                refurbDaysEstimate: item.asset.refurb_days_estimate || null,
+                volume: String(item.asset.volume_per_unit || 0),
+                weight: String(item.asset.weight_per_unit || 0),
+                dimensionLength: String(item.asset.dimensions?.length || 0),
+                dimensionWidth: String(item.asset.dimensions?.width || 0),
+                dimensionHeight: String(item.asset.dimensions?.height || 0),
+                // Archived assets are no longer orderable. The API still
+                // returns them in the collection payload so admin can clean
+                // up the membership; the client UI greys them out and blocks
+                // add-to-cart. See item 5 of the 9-item bundle.
+                isArchived,
+                isAvailable: !isArchived && item.asset.available_quantity >= item.default_quantity,
+            };
+        });
 
         const totalVolume = items.reduce((sum: number, item: any) => sum + Number(item.volume), 0);
         const totalWeight = items.reduce((sum: number, item: any) => sum + Number(item.weight), 0);
