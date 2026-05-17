@@ -22,7 +22,7 @@ function buildCartDetails(stock: CatalogFamilyStockItem) {
         dimensionWidth: Number(stock.dimensionWidth),
         dimensionHeight: Number(stock.dimensionHeight),
         category: stock.category,
-        image: stock.images[0]?.url,
+        image: stock.onDisplayImage || stock.images[0]?.url,
         condition: stock.condition,
         conditionNotes: stock.conditionNotes,
         conditionImages: stock.images,
@@ -30,11 +30,31 @@ function buildCartDetails(stock: CatalogFamilyStockItem) {
     };
 }
 
+// Subtle styling for the preview-modal badge — used outside the catalog card
+// (where ORANGE/RED need to be much louder; see CONDITION_CARD_CLASSES below).
 const CONDITION_CLASSES: Record<string, string> = {
     RED: "bg-red-500/10 text-red-700 border-red-500/20",
     ORANGE: "bg-amber-500/10 text-amber-700 border-amber-500/20",
     GREEN: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
 };
+
+// Loud, high-contrast treatment for ORANGE/RED on the catalog cards — clients
+// were missing damaged units when the badge was at 10% opacity. Full
+// saturation backgrounds + bold text + ring for prominence.
+const CONDITION_CARD_BADGE_CLASSES: Record<string, string> = {
+    RED: "bg-red-600 text-white border-red-700 ring-2 ring-red-300 font-bold",
+    ORANGE: "bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300 font-bold",
+    GREEN: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+};
+
+// Card-level tint so the entire damaged unit catches the eye, not just the badge.
+const CONDITION_CARD_BORDER_CLASSES: Record<string, string> = {
+    RED: "border-red-500 ring-2 ring-red-200",
+    ORANGE: "border-amber-500 ring-2 ring-amber-200",
+    GREEN: "",
+};
+
+const CONDITION_SORT_ORDER: Record<string, number> = { GREEN: 0, ORANGE: 1, RED: 2 };
 
 export function FamilyStockList({
     groupName,
@@ -50,7 +70,16 @@ export function FamilyStockList({
     const [previewImgIdx, setPreviewImgIdx] = useState(0);
     const [selected, setSelected] = useState<Set<string>>(new Set());
 
-    const availableItems = stockRecords.filter((s) => s.availableQuantity > 0);
+    // Sort: GREEN → ORANGE → RED, then by name within each condition tier.
+    // Damaged units stay visible but predictably bottom of the list so clients
+    // see healthy stock first and don't accidentally pick a damaged unit.
+    const availableItems = stockRecords
+        .filter((s) => s.availableQuantity > 0)
+        .sort(
+            (a, b) =>
+                (CONDITION_SORT_ORDER[a.condition] ?? 99) -
+                    (CONDITION_SORT_ORDER[b.condition] ?? 99) || a.name.localeCompare(b.name)
+        );
     const unavailableItems = stockRecords.filter((s) => s.availableQuantity < 1);
     const hasSelection = selected.size > 0;
 
@@ -167,15 +196,22 @@ export function FamilyStockList({
                     {availableItems.map((stock) => {
                         const isDanger = stock.condition === "RED";
                         const isWarning = stock.condition === "ORANGE";
-                        const stockImage = stock.images[0]?.url;
-                        const conditionClass =
-                            CONDITION_CLASSES[stock.condition] || CONDITION_CLASSES.GREEN;
+                        const stockImage = stock.onDisplayImage || stock.images[0]?.url;
+                        const cardBadgeClass =
+                            CONDITION_CARD_BADGE_CLASSES[stock.condition] ||
+                            CONDITION_CARD_BADGE_CLASSES.GREEN;
+                        const cardBorderClass =
+                            CONDITION_CARD_BORDER_CLASSES[stock.condition] || "";
                         const isSelected = selected.has(stock.id);
 
                         return (
                             <Card
                                 key={stock.id}
-                                className={`group overflow-hidden transition-all ${isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/40"}`}
+                                className={`group overflow-hidden transition-all ${
+                                    isSelected
+                                        ? "ring-2 ring-primary border-primary"
+                                        : cardBorderClass || "hover:border-primary/40"
+                                }`}
                                 data-testid="family-stock-card"
                             >
                                 <button
@@ -200,13 +236,17 @@ export function FamilyStockList({
                                     {(isDanger || isWarning) && (
                                         <Badge
                                             variant="outline"
-                                            className={`absolute top-2 left-2 text-[10px] ${conditionClass}`}
+                                            className={`absolute top-2 left-2 text-sm px-2 py-1 ${cardBadgeClass}`}
                                         >
-                                            <AlertCircle className="mr-1 h-2.5 w-2.5" />
-                                            {stock.condition}
+                                            <AlertCircle className="mr-1.5 h-4 w-4" />
+                                            {isDanger ? "DAMAGED" : "INSPECT"}
                                         </Badge>
                                     )}
-                                    {/* Selection checkbox overlay */}
+                                    {/* Selection checkbox overlay
+                                        NOTE: top-right corner is reserved for item 8's NEW badge.
+                                        Keep this checkbox here for now since item 8 ships separately;
+                                        if NEW badge lands, move the checkbox to top-right-bottom or
+                                        adjust the layout in coordination with that work. */}
                                     {availableItems.length > 1 && (
                                         <div
                                             className="absolute top-2 right-2"
@@ -228,7 +268,11 @@ export function FamilyStockList({
                                         <p className="font-medium truncate">{stock.name}</p>
                                         <Badge
                                             variant="outline"
-                                            className={`text-[10px] shrink-0 ${conditionClass}`}
+                                            className={`shrink-0 ${
+                                                isDanger || isWarning
+                                                    ? "text-xs font-bold px-2 py-0.5"
+                                                    : "text-[10px]"
+                                            } ${cardBadgeClass}`}
                                         >
                                             {stock.condition}
                                         </Badge>
@@ -283,9 +327,12 @@ export function FamilyStockList({
                                 className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"
                             >
                                 <div className="h-10 w-10 shrink-0 rounded bg-muted overflow-hidden">
-                                    {stock.images[0]?.url ? (
+                                    {stock.onDisplayImage || stock.images[0]?.url ? (
                                         <Image
-                                            src={stock.images[0].url}
+                                            src={
+                                                (stock.onDisplayImage ||
+                                                    stock.images[0]?.url) as string
+                                            }
                                             alt={stock.name}
                                             width={40}
                                             height={40}

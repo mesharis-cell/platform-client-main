@@ -114,6 +114,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                 category: cat.label,
                 categoryRef: cat.ref,
                 images: normalizeAssetImageUrls(asset.images),
+                onDisplayImage: asset.on_display_image || null,
                 brand: asset.brand
                     ? {
                           id: asset.brand.id,
@@ -171,12 +172,16 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             }
 
             if (item.type === "group") {
+                const groupImageUrls = normalizeAssetImageUrls(item.group_images);
+                const fallbackImageUrls = normalizeAssetImageUrls(item.images);
+                const images = groupImageUrls.length > 0 ? groupImageUrls : fallbackImageUrls;
                 const base = mapAsset({
                     ...item.siblings?.[0],
                     id: item.group_id,
                     name: item.group_name,
                     description: item.description,
-                    images: item.group_images || item.images,
+                    images,
+                    on_display_image: item.group_on_display_image || images[0] || null,
                     total_quantity: item.total_quantity,
                     available_quantity: item.available_quantity,
                     condition: item.condition_summary?.red
@@ -194,7 +199,8 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                     groupId: item.group_id,
                     groupName: item.group_name,
                     name: item.group_name,
-                    images: normalizeAssetImageUrls(item.group_images),
+                    images,
+                    onDisplayImage: item.group_on_display_image || images[0] || null,
                     siblingCount: Number(item.sibling_count || item.siblings?.length || 0),
                     siblingThumbnails: normalizeAssetImageUrls(item.sibling_thumbnails),
                     siblings: (item.siblings || []).map((sibling: any) => ({
@@ -204,6 +210,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
                         description: sibling.description,
                         category: sibling.category || "",
                         images: normalizeAssetImages(sibling.images),
+                        onDisplayImage: sibling.on_display_image || null,
                         brand: sibling.brand
                             ? { id: sibling.brand.id, name: sibling.brand.name, logoUrl: null }
                             : null,
@@ -253,17 +260,18 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
             asset: {
                 id: asset.id,
                 groupId: asset.group_id || null,
-                family: asset.family
+                family: asset.group_id
                     ? {
-                          id: asset.family.id,
-                          name: asset.family.name,
-                          stockMode: asset.family.stock_mode,
+                          id: asset.group_id,
+                          name: asset.group_name || asset.name,
+                          stockMode: asset.stock_mode,
                       }
                     : null,
                 name: asset.name,
                 description: asset.description,
                 category: asset.category,
                 images: normalizeAssetImages(asset.images),
+                onDisplayImage: asset.on_display_image || null,
                 brand: asset.brand_details || null,
                 company: asset.company_details || null,
                 availableQuantity: asset.available_quantity,
@@ -304,31 +312,40 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
         const response = await apiClient.get(`/operations/v1/collection/${id}`);
         const raw = response.data.data;
 
-        const items = (raw.assets || []).map((item: any) => ({
-            id: item.asset.id,
-            assetId: item.asset.id,
-            family: item.asset.family
-                ? {
-                      id: item.asset.family.id,
-                      name: item.asset.family.name,
-                      stockMode: item.asset.family.stock_mode,
-                  }
-                : null,
-            name: item.asset.family?.name || item.asset.name,
-            category: item.asset.category,
-            images: normalizeAssetImageUrls(item.asset.images),
-            defaultQuantity: item.default_quantity,
-            availableQuantity: item.asset.available_quantity,
-            totalQuantity: item.asset.total_quantity,
-            condition: item.asset.condition,
-            refurbDaysEstimate: item.asset.refurb_days_estimate || null,
-            volume: String(item.asset.volume_per_unit || 0),
-            weight: String(item.asset.weight_per_unit || 0),
-            dimensionLength: String(item.asset.dimensions?.length || 0),
-            dimensionWidth: String(item.asset.dimensions?.width || 0),
-            dimensionHeight: String(item.asset.dimensions?.height || 0),
-            isAvailable: item.asset.available_quantity >= item.default_quantity,
-        }));
+        const items = (raw.assets || []).map((item: any) => {
+            const isArchived = Boolean(item.asset.deleted_at);
+            return {
+                id: item.asset.id,
+                assetId: item.asset.id,
+                family: item.asset.group_id
+                    ? {
+                          id: item.asset.group_id,
+                          name: item.asset.group_name || item.asset.name,
+                          stockMode: item.asset.stock_mode,
+                      }
+                    : null,
+                name: item.asset.group_name || item.asset.name,
+                category: item.asset.category,
+                images: normalizeAssetImageUrls(item.asset.images),
+                onDisplayImage: item.asset.on_display_image || null,
+                defaultQuantity: item.default_quantity,
+                availableQuantity: item.asset.available_quantity,
+                totalQuantity: item.asset.total_quantity,
+                condition: item.asset.condition,
+                refurbDaysEstimate: item.asset.refurb_days_estimate || null,
+                volume: String(item.asset.volume_per_unit || 0),
+                weight: String(item.asset.weight_per_unit || 0),
+                dimensionLength: String(item.asset.dimensions?.length || 0),
+                dimensionWidth: String(item.asset.dimensions?.width || 0),
+                dimensionHeight: String(item.asset.dimensions?.height || 0),
+                // Archived assets are no longer orderable. The API still
+                // returns them in the collection payload so admin can clean
+                // up the membership; the client UI greys them out and blocks
+                // add-to-cart. See item 5 of the 9-item bundle.
+                isArchived,
+                isAvailable: !isArchived && item.asset.available_quantity >= item.default_quantity,
+            };
+        });
 
         const totalVolume = items.reduce((sum: number, item: any) => sum + Number(item.volume), 0);
         const totalWeight = items.reduce((sum: number, item: any) => sum + Number(item.weight), 0);

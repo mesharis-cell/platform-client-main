@@ -47,8 +47,11 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
     const isCollection = item.type === "collection";
     const isGroup = item.type === "group";
     const isAsset = item.type === "asset";
-    const href = isCollection ? `/catalog/collections/${item.id}` : `/catalog/assets/${item.id}`;
-    const image = item.images[0];
+    const detailAssetId = isGroup ? item.siblings[0]?.id || item.id : item.id;
+    const href = isCollection
+        ? `/catalog/collections/${item.id}`
+        : `/catalog/assets/${detailAssetId}`;
+    const image = !isCollection ? item.onDisplayImage || item.images[0] : item.images[0];
     const Fallback = isCollection ? Layers : Boxes;
 
     const categoryColor = item.categoryRef?.color || null;
