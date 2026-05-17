@@ -236,11 +236,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         </Badge>
                                     )}
                                     {asset.family && (
-                                        <Link href={`/catalog/families/${asset.family.id}`}>
-                                            <Badge variant="outline" className="font-mono">
-                                                Family: {asset.family.name}
-                                            </Badge>
-                                        </Link>
+                                        <Badge variant="outline" className="font-mono">
+                                            Group: {asset.family.name}
+                                        </Badge>
                                     )}
                                     <Badge variant="outline" className="font-mono">
                                         {asset.category}

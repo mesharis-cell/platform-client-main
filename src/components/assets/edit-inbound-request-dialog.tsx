@@ -821,10 +821,8 @@ export function EditInboundRequestDialog({
                                                                             </div>
                                                                             <div className="text-xs text-muted-foreground font-mono">
                                                                                 {asset.category} •{" "}
-                                                                                {
-                                                                                    asset.stock_mode
-                                                                                }{" "}
-                                                                                • Qty:{" "}
+                                                                                {asset.stock_mode} •
+                                                                                Qty:{" "}
                                                                                 {
                                                                                     asset.available_quantity
                                                                                 }
@@ -1275,8 +1273,8 @@ export function EditInboundRequestDialog({
                                                         {item.name}
                                                     </h5>
                                                     <p className="text-xs text-muted-foreground font-mono">
-                                                        {item.category} • {item.stock_mode} •
-                                                        Qty: {item.quantity}
+                                                        {item.category} • {item.stock_mode} • Qty:{" "}
+                                                        {item.quantity}
                                                     </p>
                                                 </div>
                                                 <div className="text-right text-xs font-mono text-muted-foreground">

@@ -1,5 +1,4 @@
 import type { AssetImage, StockMode } from "./asset";
-export type { StockMode };
 
 export interface AssetFamilySummary {
     available: number;

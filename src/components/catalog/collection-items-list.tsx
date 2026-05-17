@@ -160,14 +160,12 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                                             {item.category}
                                         </Badge>
                                         {item.family && (
-                                            <Link href={`/catalog/families/${item.family.id}`}>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="font-mono text-xs"
-                                                >
-                                                    Family: {item.family.name}
-                                                </Badge>
-                                            </Link>
+                                            <Badge
+                                                variant="secondary"
+                                                className="font-mono text-xs"
+                                            >
+                                                Group: {item.family.name}
+                                            </Badge>
                                         )}
                                     </div>
                                 </div>
