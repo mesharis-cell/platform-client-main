@@ -36,24 +36,21 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
     failedQueue = [];
 };
 
-const getBrowserLocation = (): { href: string; pathname: string } | null => {
+type BrowserLocation = {
+    href: string;
+    pathname: string;
+};
+
+const getBrowserLocation = (): BrowserLocation | null => {
     const runtimeGlobal =
         typeof globalThis !== "undefined"
             ? (globalThis as unknown as Record<string, unknown>)
             : undefined;
-    const maybeLocation = runtimeGlobal?.["location"] as
-        | {
-              href?: string;
-              pathname?: string;
-          }
-        | undefined;
+    const maybeLocation = runtimeGlobal?.["location"] as BrowserLocation | undefined;
     if (!maybeLocation?.href || !maybeLocation.pathname) {
         return null;
     }
-    return {
-        href: maybeLocation.href,
-        pathname: maybeLocation.pathname,
-    };
+    return maybeLocation;
 };
 
 const redirectTo = (path: string) => {

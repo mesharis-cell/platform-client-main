@@ -1,5 +1,7 @@
 "use client";
 
+/* global globalThis */
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { PlatformDomain } from "../types/platform-domain";
 import { apiClient, setPlatformId } from "@/lib/api/api-client";
@@ -13,23 +15,66 @@ interface PlatformContextType {
 
 export const PLATFORM_CONTEXT = createContext<PlatformContextType | undefined>(undefined);
 
+type BrowserLocation = {
+    href: string;
+    pathname: string;
+};
+
+const getBrowserLocation = (): BrowserLocation | null => {
+    const runtimeGlobal =
+        typeof globalThis !== "undefined"
+            ? (globalThis as unknown as Record<string, unknown>)
+            : undefined;
+    const maybeLocation = runtimeGlobal?.["location"] as BrowserLocation | undefined;
+    if (!maybeLocation?.href || !maybeLocation.pathname) {
+        return null;
+    }
+    return maybeLocation;
+};
+
+const buildMaintenancePath = (maintenance: NonNullable<PlatformDomain["maintenance"]>) => {
+    const params = new URLSearchParams();
+    if (maintenance.message) params.set("message", maintenance.message);
+    if (maintenance.until) params.set("until", maintenance.until);
+    return `/maintenance${params.toString() ? `?${params.toString()}` : ""}`;
+};
+
+const redirectToMaintenanceIfNeeded = (platform: PlatformDomain | null) => {
+    const maintenance = platform?.maintenance;
+    if (!maintenance?.enabled) return false;
+    const location = getBrowserLocation();
+    if (!location || location.pathname === "/maintenance") {
+        return false;
+    }
+    location.href = buildMaintenancePath(maintenance);
+    return true;
+};
+
 export const PlatformProvider = ({ children }: { children: React.ReactNode }) => {
     const [platform, setPlatform] = useState<PlatformDomain | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchPlatform = async () => {
+            let redirected = false;
             try {
                 setLoading(true);
                 const devHost = process.env.NEXT_PUBLIC_DEV_HOST_OVERRIDE;
                 const response = await apiClient.get(`/auth/context`, {
                     headers: devHost ? { "x-dev-host": devHost } : undefined,
                 });
-                setPlatform(response.data.data);
+                const platformData = (response.data.data ?? null) as PlatformDomain | null;
+                setPlatform(platformData);
+                if (platformData?.platform_id) {
+                    setPlatformId(platformData.platform_id);
+                }
+                redirected = redirectToMaintenanceIfNeeded(platformData);
             } catch (error) {
                 console.error("Error fetching platform:", error);
             } finally {
-                setLoading(false);
+                if (!redirected) {
+                    setLoading(false);
+                }
             }
         };
         fetchPlatform();

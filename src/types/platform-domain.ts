@@ -9,4 +9,12 @@ export interface PlatformDomain {
     features?: Record<string, boolean>;
     platform_features?: Record<string, boolean>;
     company_features?: Record<string, boolean>;
+    maintenance?: {
+        enabled: boolean;
+        raw_enabled: boolean;
+        message: string | null;
+        until: string | null;
+        updated_at: string | null;
+        updated_by: string | null;
+    };
 }
