@@ -80,6 +80,7 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         );
 
         const payload = response.data?.data || {};
+        const meta = payload.meta || {};
         const rawItems = payload.items || [];
 
         const normalizeCategory = (raw: unknown) => {
@@ -238,12 +239,20 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         return {
             success: true,
             items: catalogItems,
-            total: Number(payload.total || catalogItems.length),
-            totalFamilies: Number(payload.total_grouped_assets || payload.total_raw_assets || 0),
-            totalCollections: catalogItems.filter((item: any) => item.type === "collection").length,
-            limit,
-            page: requestedPage,
-            totalPages: Number(payload.total_pages || 1),
+            total: Number(meta.total ?? payload.total ?? catalogItems.length),
+            totalFamilies: Number(
+                meta.total_assets ??
+                    payload.total_assets ??
+                    (meta.total_grouped_assets || 0) + (meta.total_raw_assets || 0)
+            ),
+            totalCollections: Number(
+                meta.total_collections ??
+                    payload.total_collections ??
+                    catalogItems.filter((item: any) => item.type === "collection").length
+            ),
+            limit: Number(meta.limit || limit),
+            page: Number(meta.page || requestedPage),
+            totalPages: Number(meta.total_pages || payload.total_pages || 1),
         };
     } catch (error) {
         throwApiError(error);
