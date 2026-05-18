@@ -298,6 +298,9 @@ export function SelfPickupCheckoutFlow({ onSwitchToStandard }: SelfPickupCheckou
                 // Item 7: required at the details step; canProceed gates
                 // non-null, so the boolean assertion is safe here.
                 is_permanent_placement: formData.is_permanent_placement === true,
+                commerce_rule_acknowledgements: acknowledgedRuleHits.map((hit) => ({
+                    rule_id: hit.rule_id,
+                })),
             };
 
             const result = await submitMutation.mutateAsync(payload);

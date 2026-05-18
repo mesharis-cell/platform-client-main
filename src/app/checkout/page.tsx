@@ -955,6 +955,9 @@ function CheckoutPageInner() {
                 ...(formData.special_instructions
                     ? { special_instructions: formData.special_instructions }
                     : {}),
+                commerce_rule_acknowledgements: acknowledgedRuleHits.map((hit) => ({
+                    rule_id: hit.rule_id,
+                })),
             };
 
             const result = await submitMutation.mutateAsync(submitData);

@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { SelfPickupQuoteReviewSection } from "@/components/self-pickups/QuoteReviewSection";
 import { SelfPickupStatusBanner } from "@/components/self-pickups/SelfPickupStatusBanner";
 import { StartReturnDialog } from "@/components/self-pickups/StartReturnDialog";
+import { ClientWorkflowRequestsCard } from "@/components/workflows/workflow-requests-card";
 
 const PICKUP_STATUS_CONFIG: Record<
     string,
@@ -327,6 +328,15 @@ export default function ClientSelfPickupDetailPage({
                         className="mb-6"
                     >
                         <SelfPickupStatusBanner pickup={pickup} />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.27 }}
+                        className="mb-6"
+                    >
+                        <ClientWorkflowRequestsCard entityType="SELF_PICKUP" entityId={pickup.id} />
                     </motion.div>
 
                     {/* Two-column grid: main content + sidebar */}
