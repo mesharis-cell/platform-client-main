@@ -33,8 +33,21 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
+import { useEvaluateCommerceRules, type CommerceRuleHit } from "@/hooks/use-commerce-rules";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useCart } from "@/contexts/cart-context";
 import { useCalculateEstimate } from "@/hooks/use-order-submission";
 import { useSubmitOrderFromCart } from "@/hooks/use-orders";
@@ -126,6 +139,25 @@ function CheckoutPageInner() {
     >([]);
     const [hasCheckedMaintenanceFeasibility, setHasCheckedMaintenanceFeasibility] = useState(false);
     const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
+    // Item 6: commerce rule hits + acknowledgment state. When hits come
+    // back from /commerce-rules/evaluate, surface them in a confirm dialog
+    // so the client can acknowledge before final submit. Auto-evaluated
+    // when the client lands on the Review step so warnings surface early.
+    // Acknowledgment is bound to a specific cart signature — any edit
+    // invalidates and forces re-evaluation.
+    const [pendingRuleHits, setPendingRuleHits] = useState<CommerceRuleHit[]>([]);
+    // Hits that were acknowledged on the review step — kept around so the
+    // inline banner can keep showing them as a reminder until submit.
+    const [acknowledgedRuleHits, setAcknowledgedRuleHits] = useState<CommerceRuleHit[]>([]);
+    // Signature of the cart at the moment hits were acknowledged. If the
+    // cart later mutates to a different signature, acknowledgment is
+    // considered stale and the checkpoint re-fires.
+    const [acknowledgedForSignature, setAcknowledgedForSignature] = useState<string | null>(null);
+    // Signature of the most recently evaluated cart. Used to fire the
+    // review-step useEffect exactly once per distinct cart, regardless of
+    // step transitions or React state batching.
+    const [lastEvaluatedSignature, setLastEvaluatedSignature] = useState<string | null>(null);
+    const evaluateCommerceRulesMutation = useEvaluateCommerceRules();
     const isEstimateFeatureEnabled =
         companyData?.data?.features?.show_estimate_on_order_creation === true;
 
@@ -151,7 +183,12 @@ function CheckoutPageInner() {
         venue_contact_name: "",
         venue_contact_email: "",
         venue_contact_phone: "",
+        // Item 7: required Yes/No — true = items going out permanently
+        // (no return), false = normal rental. null = unanswered (blocks proceed).
+        is_permanent_placement: null as boolean | null,
         // Permits (venue contact is NOT here — it's first-class at top-level)
+        // permit_decision is the explicit Yes/No answer; null = unanswered (required).
+        permit_decision: null as "yes" | "no" | null,
         requires_permit: false,
         permit_owner: "UNKNOWN" as "CLIENT" | "PLATFORM" | "UNKNOWN",
         requires_vehicle_docs: false,
@@ -492,6 +529,70 @@ function CheckoutPageInner() {
         setMaintenanceFeasibilityIssues([]);
     }, [redItems.length]);
 
+    // Item 6: cart signature — stable string identity for the cart. Any
+    // add/remove/qty-change produces a new signature, which both
+    // invalidates prior acknowledgment and re-arms the evaluator.
+    const cartSignature = useMemo(
+        () =>
+            items
+                .map((i) => `${i.assetId}:${i.quantity}`)
+                .sort()
+                .join("|"),
+        [items]
+    );
+
+    // Derived: is the current acknowledgment still valid for this cart?
+    const commerceRulesAcknowledged =
+        acknowledgedForSignature !== null && acknowledgedForSignature === cartSignature;
+
+    // Item 6: group hits by their related asset for per-line rendering.
+    // Hits without a related_asset_id (rare in v1 since QUANTITY/COMPANION
+    // rules target a specific asset/family) fall into `globalHits`.
+    const { hitsByAsset, globalHits } = useMemo(() => {
+        const byAsset = new Map<string, CommerceRuleHit[]>();
+        const global: CommerceRuleHit[] = [];
+        for (const hit of acknowledgedRuleHits) {
+            if (hit.related_asset_id) {
+                const existing = byAsset.get(hit.related_asset_id) || [];
+                existing.push(hit);
+                byAsset.set(hit.related_asset_id, existing);
+            } else {
+                global.push(hit);
+            }
+        }
+        return { hitsByAsset: byAsset, globalHits: global };
+    }, [acknowledgedRuleHits]);
+
+    // Item 6: evaluate commerce rules on the "Order Review" step
+    // (currentStep === "cart") AND on the final "review" step — so the
+    // per-item inline warnings have data to render on both screens. This
+    // effect only populates `acknowledgedRuleHits` for the inline display;
+    // it never opens the popup. The popup is only triggered by the
+    // Continue button on the Order Review step (see handleNext below).
+    // Re-fires when the cart signature changes so cart edits invalidate
+    // the prior eval naturally.
+    useEffect(() => {
+        if (currentStep !== "cart" && currentStep !== "review") return;
+        if (items.length === 0) return;
+        if (lastEvaluatedSignature === cartSignature) return;
+        setLastEvaluatedSignature(cartSignature);
+        evaluateCommerceRulesMutation
+            .mutateAsync({
+                cart: items.map((item) => ({
+                    asset_id: item.assetId,
+                    quantity: item.quantity,
+                })),
+            })
+            .then((result) => {
+                setAcknowledgedRuleHits(result.hits);
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn("[checkout] commerce-rules evaluate failed", err);
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, cartSignature, lastEvaluatedSignature]);
+
     // Estimate is now handled by useCalculateEstimate hook above
 
     // Redirect if cart is empty (but allow "mode" step 0 as a pre-cart stop)
@@ -556,12 +657,21 @@ function CheckoutPageInner() {
                 // date. Submit handler also checks as a last line of defense.
                 return feasibility.userDateFeasible !== false;
             case "venue":
+                // Permit decision is mandatory: client must explicitly answer
+                // yes or no. If yes, they must also pick an owner (CLIENT or
+                // PLATFORM — UNKNOWN is rejected to prevent ambiguity).
+                // is_permanent_placement is also required — explicit Yes/No,
+                // no default.
                 return Boolean(
                     formData.venue_name &&
                         formData.venue_country_id &&
                         formData.venue_city_id &&
                         formData.venue_address &&
-                        (!formData.requires_permit || formData.permit_owner)
+                        formData.is_permanent_placement !== null &&
+                        formData.permit_decision !== null &&
+                        (formData.permit_decision === "no" ||
+                            formData.permit_owner === "CLIENT" ||
+                            formData.permit_owner === "PLATFORM")
                 );
             case "contact":
                 return (
@@ -588,6 +698,21 @@ function CheckoutPageInner() {
             } else {
                 toast.error("Please fill all required fields");
             }
+            return;
+        }
+
+        // Item 6: commerce-rules checkpoint — pops only when the client
+        // tries to advance PAST the Order Review (cart) step. Any active
+        // hits not yet acknowledged for the current cart signature gate
+        // the next-step transition. Acknowledging binds the signature, so
+        // re-clicking Continue proceeds. If they edit the cart and come
+        // back, the signature change invalidates and the gate re-fires.
+        if (
+            currentStep === "cart" &&
+            acknowledgedRuleHits.length > 0 &&
+            !commerceRulesAcknowledged
+        ) {
+            setPendingRuleHits(acknowledgedRuleHits);
             return;
         }
 
@@ -666,6 +791,11 @@ function CheckoutPageInner() {
             return;
         }
 
+        // Item 6: commerce-rules checkpoint lives on the Order Review
+        // step's Continue button (see handleNext), NOT at submit time.
+        // Final submit goes through cleanly — the gate was cleared
+        // upstream when the client moved past the Order Review step.
+
         setIsSubmitting(true);
         try {
             // When the event-dates flag is off, delivery_date stands in for
@@ -723,6 +853,9 @@ function CheckoutPageInner() {
                 venue_country_id: formData.venue_country_id,
                 venue_city_id: formData.venue_city_id,
                 venue_address: formData.venue_address,
+                // Item 7: required at the venue step; the canProceed gate
+                // ensures this is non-null by the time we hit submit.
+                is_permanent_placement: formData.is_permanent_placement === true,
                 ...(formData.venue_access_notes
                     ? { venue_access_notes: formData.venue_access_notes }
                     : {}),
@@ -1054,75 +1187,116 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
-                                    <Card className="p-6 bg-card/50 border-border/50">
-                                        <div className="space-y-4">
-                                            {items.map((item) => (
+                                    {/* Item 6: global commerce-rule hits (no
+                                        related asset) surface at top as a
+                                        compact strip. Per-item hits render
+                                        inline inside each item row below. */}
+                                    {globalHits.length > 0 && (
+                                        <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                            {globalHits.map((hit) => (
                                                 <div
-                                                    key={item.assetId}
-                                                    className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                                                    key={hit.rule_id}
+                                                    className="flex items-start gap-1.5"
                                                 >
-                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
-                                                        {item.image ? (
-                                                            <Image
-                                                                src={item.image}
-                                                                alt={item.assetName}
-                                                                width={96}
-                                                                height={96}
-                                                                className="object-cover w-full h-full"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <Package className="h-10 w-10 text-muted-foreground/30" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold mb-1">
-                                                            {item.assetName}
-                                                        </h4>
-                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
-                                                            <span>Qty: {item.quantity}</span>
-                                                            <span>•</span>
-                                                            <span>{item.volume} m³ each</span>
-                                                            <span>•</span>
-                                                            <span>{item.weight} kg each</span>
-                                                        </div>
-                                                        {item.condition === "RED" && (
-                                                            <div className="mt-1 space-y-1">
-                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
-                                                                    <AlertCircle className="h-3 w-3" />{" "}
-                                                                    RED — Requires repair
-                                                                </span>
-                                                                {item.conditionNotes && (
-                                                                    <p className="text-xs text-red-600 line-clamp-2">
-                                                                        {item.conditionNotes}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                        {item.condition === "ORANGE" && (
-                                                            <div className="mt-1 space-y-1">
-                                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                                                    <AlertCircle className="h-3 w-3" />{" "}
-                                                                    ORANGE — Decision needed
-                                                                </span>
-                                                                {item.conditionNotes && (
-                                                                    <p className="text-xs text-amber-600 line-clamp-2">
-                                                                        {item.conditionNotes}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                        {item.fromCollectionName && (
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                From collection:{" "}
-                                                                {item.fromCollectionName}
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                    <span>{hit.message}</span>
                                                 </div>
                                             ))}
+                                        </div>
+                                    )}
+
+                                    <Card className="p-6 bg-card/50 border-border/50">
+                                        <div className="space-y-4">
+                                            {items.map((item) => {
+                                                const itemHits =
+                                                    hitsByAsset.get(item.assetId) || [];
+                                                return (
+                                                    <div
+                                                        key={item.assetId}
+                                                        className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                                                    >
+                                                        <div className="w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
+                                                            {item.image ? (
+                                                                <Image
+                                                                    src={item.image}
+                                                                    alt={item.assetName}
+                                                                    width={96}
+                                                                    height={96}
+                                                                    className="object-cover w-full h-full"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Package className="h-10 w-10 text-muted-foreground/30" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold mb-1">
+                                                                {item.assetName}
+                                                            </h4>
+                                                            <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono mb-2">
+                                                                <span>Qty: {item.quantity}</span>
+                                                                <span>•</span>
+                                                                <span>{item.volume} m³ each</span>
+                                                                <span>•</span>
+                                                                <span>{item.weight} kg each</span>
+                                                            </div>
+                                                            {item.condition === "RED" && (
+                                                                <div className="mt-1 space-y-1">
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                                        <AlertCircle className="h-3 w-3" />{" "}
+                                                                        RED — Requires repair
+                                                                    </span>
+                                                                    {item.conditionNotes && (
+                                                                        <p className="text-xs text-red-600 line-clamp-2">
+                                                                            {item.conditionNotes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {item.condition === "ORANGE" && (
+                                                                <div className="mt-1 space-y-1">
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                                        <AlertCircle className="h-3 w-3" />{" "}
+                                                                        ORANGE — Decision needed
+                                                                    </span>
+                                                                    {item.conditionNotes && (
+                                                                        <p className="text-xs text-amber-600 line-clamp-2">
+                                                                            {item.conditionNotes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {item.fromCollectionName && (
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    From collection:{" "}
+                                                                    {item.fromCollectionName}
+                                                                </p>
+                                                            )}
+                                                            {/* Item 6: per-item commerce-rule hits —
+                                                            small, sits inline with the item's
+                                                            metadata so it's contextually anchored
+                                                            to the right SKU. */}
+                                                            {itemHits.length > 0 && (
+                                                                <div className="mt-2 space-y-1">
+                                                                    {itemHits.map((hit) => (
+                                                                        <div
+                                                                            key={hit.rule_id}
+                                                                            className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                        >
+                                                                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                            <span>
+                                                                                {hit.message}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </Card>
 
@@ -1583,6 +1757,52 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
+                                    {/* Item 7: required Yes/No on permanent
+                                        placement. Blocks proceed until answered. */}
+                                    <Card className="p-6 bg-card/50 border-border/50">
+                                        <div className="space-y-3">
+                                            <div className="space-y-1">
+                                                <Label className="font-mono uppercase text-xs tracking-wide">
+                                                    Permanent placement *
+                                                </Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Are these items being placed permanently? (Yes =
+                                                    they won't be returned to us; No = they'll come
+                                                    back after the event.)
+                                                </p>
+                                            </div>
+                                            <RadioGroup
+                                                value={
+                                                    formData.is_permanent_placement === null
+                                                        ? ""
+                                                        : formData.is_permanent_placement
+                                                          ? "yes"
+                                                          : "no"
+                                                }
+                                                onValueChange={(value) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        is_permanent_placement: value === "yes",
+                                                    })
+                                                }
+                                                className="flex gap-3"
+                                            >
+                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                    <RadioGroupItem value="yes" id="permYes" />
+                                                    <span className="text-sm font-medium">
+                                                        Yes — permanent
+                                                    </span>
+                                                </label>
+                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                    <RadioGroupItem value="no" id="permNo" />
+                                                    <span className="text-sm font-medium">
+                                                        No — will be returned
+                                                    </span>
+                                                </label>
+                                            </RadioGroup>
+                                        </div>
+                                    </Card>
+
                                     <Card className="p-8 bg-card/50 border-border/50">
                                         <div className="space-y-6">
                                             <div className="space-y-2">
@@ -1766,66 +1986,127 @@ function CheckoutPageInner() {
                                             </div>
 
                                             <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                                                <div className="flex items-start gap-3">
-                                                    <Checkbox
-                                                        id="venueRequiresPermit"
-                                                        checked={formData.requires_permit}
-                                                        onCheckedChange={(checked) =>
+                                                {/* Required: explicit Yes/No to permit requirement.
+                                                    No default state — client must answer. */}
+                                                <div className="space-y-2">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Is a permit required for this delivery? *
+                                                    </Label>
+                                                    <RadioGroup
+                                                        value={formData.permit_decision ?? ""}
+                                                        onValueChange={(value) => {
+                                                            const decision = value as "yes" | "no";
                                                             setFormData({
                                                                 ...formData,
-                                                                requires_permit: checked === true,
-                                                            })
-                                                        }
-                                                    />
-                                                    <div className="space-y-1">
-                                                        <Label
-                                                            htmlFor="venueRequiresPermit"
-                                                            className="font-mono uppercase text-xs tracking-wide"
-                                                        >
-                                                            Venue requires permits or access
-                                                            coordination
-                                                        </Label>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Share what you know now. Additional
-                                                            charges may apply depending on venue
-                                                            requirements.
-                                                        </p>
-                                                    </div>
+                                                                permit_decision: decision,
+                                                                requires_permit: decision === "yes",
+                                                                // Reset owner when toggling to "no".
+                                                                permit_owner:
+                                                                    decision === "no"
+                                                                        ? "UNKNOWN"
+                                                                        : formData.permit_owner,
+                                                            });
+                                                        }}
+                                                        className="flex gap-3"
+                                                    >
+                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                            <RadioGroupItem
+                                                                value="yes"
+                                                                id="permitYes"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                Yes
+                                                            </span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                            <RadioGroupItem
+                                                                value="no"
+                                                                id="permitNo"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                No
+                                                            </span>
+                                                        </label>
+                                                    </RadioGroup>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Confirm with the venue if you're unsure —
+                                                        this decision is binding.
+                                                    </p>
                                                 </div>
+
+                                                {/* Contextual warning — three variants per the
+                                                    locked spec. Re-shown on quote approval too. */}
+                                                <PermitWarningAlert
+                                                    choice={derivePermitChoice(
+                                                        formData.requires_permit,
+                                                        formData.permit_decision === null
+                                                            ? null
+                                                            : formData.permit_owner
+                                                    )}
+                                                    companyName={platform?.company_name ?? null}
+                                                />
 
                                                 {formData.requires_permit && (
                                                     <div className="space-y-4">
                                                         <div className="space-y-2">
                                                             <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Permit Owner *
+                                                                Who will handle the permit? *
                                                             </Label>
-                                                            <Select
-                                                                value={formData.permit_owner}
+                                                            <RadioGroup
+                                                                value={
+                                                                    formData.permit_owner ===
+                                                                    "UNKNOWN"
+                                                                        ? ""
+                                                                        : formData.permit_owner
+                                                                }
                                                                 onValueChange={(value) =>
                                                                     setFormData({
                                                                         ...formData,
                                                                         permit_owner: value as
                                                                             | "CLIENT"
-                                                                            | "PLATFORM"
-                                                                            | "UNKNOWN",
+                                                                            | "PLATFORM",
                                                                     })
                                                                 }
+                                                                className="flex gap-3"
                                                             >
-                                                                <SelectTrigger className="h-12 font-mono">
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="CLIENT">
-                                                                        I will arrange
-                                                                    </SelectItem>
-                                                                    <SelectItem value="PLATFORM">
-                                                                        You should arrange
-                                                                    </SelectItem>
-                                                                    <SelectItem value="UNKNOWN">
-                                                                        Not sure yet
-                                                                    </SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
+                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                                    <RadioGroupItem
+                                                                        value="CLIENT"
+                                                                        id="permitOwnerClient"
+                                                                    />
+                                                                    <span className="text-sm font-medium">
+                                                                        {platform?.company_name ||
+                                                                            "We"}{" "}
+                                                                        will arrange it
+                                                                    </span>
+                                                                </label>
+                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                                    <RadioGroupItem
+                                                                        value="PLATFORM"
+                                                                        id="permitOwnerPlatform"
+                                                                    />
+                                                                    <span className="text-sm font-medium">
+                                                                        Ops should arrange it
+                                                                    </span>
+                                                                </label>
+                                                            </RadioGroup>
+                                                        </div>
+
+                                                        {/* Visual separator + section label —
+                                                            the docs-required toggles are an
+                                                            independent concern from "who handles
+                                                            the permit", but they live in the same
+                                                            permit-required branch. */}
+                                                        <Separator className="my-2" />
+                                                        <div className="space-y-1">
+                                                            <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                Additional documentation
+                                                                requirements
+                                                            </Label>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Tick anything the venue asks for
+                                                                ahead of access.
+                                                            </p>
                                                         </div>
 
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2085,6 +2366,24 @@ function CheckoutPageInner() {
                                         </p>
                                     </div>
 
+                                    {/* Item 6: per-item hits are embedded
+                                        inline below in the Order Items card.
+                                        Only global hits (without related
+                                        asset) surface at the top here. */}
+                                    {globalHits.length > 0 && (
+                                        <div className="rounded-md border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                            {globalHits.map((hit) => (
+                                                <div
+                                                    key={hit.rule_id}
+                                                    className="flex items-start gap-1.5"
+                                                >
+                                                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                    <span>{hit.message}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     {orangeItems.length > 0 ? (
                                         <MaintenanceDecisionCenter
                                             items={orangeItems}
@@ -2102,36 +2401,54 @@ function CheckoutPageInner() {
                                                 Order Items
                                             </h3>
                                             <div className="space-y-3">
-                                                {items.map((item) => (
-                                                    <div
-                                                        key={item.assetId}
-                                                        className="flex items-center gap-3 text-sm"
-                                                    >
-                                                        <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
-                                                            {item.image ? (
-                                                                <Image
-                                                                    src={item.image}
-                                                                    alt={item.assetName}
-                                                                    width={48}
-                                                                    height={48}
-                                                                    className="object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                                                    <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                {items.map((item) => {
+                                                    const itemHits =
+                                                        hitsByAsset.get(item.assetId) || [];
+                                                    return (
+                                                        <div key={item.assetId} className="text-sm">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-12 h-12 rounded border border-border overflow-hidden shrink-0">
+                                                                    {item.image ? (
+                                                                        <Image
+                                                                            src={item.image}
+                                                                            alt={item.assetName}
+                                                                            width={48}
+                                                                            height={48}
+                                                                            className="object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                                            <Package className="h-5 w-5 text-muted-foreground/30" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-medium truncate">
+                                                                        {item.assetName}
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground font-mono">
+                                                                        Qty: {item.quantity}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {itemHits.length > 0 && (
+                                                                <div className="mt-1.5 ml-15 space-y-1">
+                                                                    {itemHits.map((hit) => (
+                                                                        <div
+                                                                            key={hit.rule_id}
+                                                                            className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-300/60 rounded px-2 py-1"
+                                                                        >
+                                                                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                                                            <span>
+                                                                                {hit.message}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-medium truncate">
-                                                                {item.assetName}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                Qty: {item.quantity}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
 
                                             <Separator className="my-4" />
@@ -2312,6 +2629,20 @@ function CheckoutPageInner() {
                                                             </p>
                                                         </div>
                                                     )}
+                                                    {/* Re-show the contextual permit warning on the
+                                                        Review step so clients re-confirm the
+                                                        decision at the commitment moment. */}
+                                                    {formData.permit_decision !== null && (
+                                                        <PermitWarningAlert
+                                                            choice={derivePermitChoice(
+                                                                formData.requires_permit,
+                                                                formData.permit_owner
+                                                            )}
+                                                            companyName={
+                                                                platform?.company_name ?? null
+                                                            }
+                                                        />
+                                                    )}
                                                     {formData.requires_permit && (
                                                         <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
                                                             <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">
@@ -2320,10 +2651,10 @@ function CheckoutPageInner() {
                                                             <p className="font-medium">
                                                                 {formData.permit_owner ===
                                                                     "CLIENT" &&
-                                                                    "Client will arrange permits"}
+                                                                    `${platform?.company_name || "We"} will arrange permits`}
                                                                 {formData.permit_owner ===
                                                                     "PLATFORM" &&
-                                                                    "Platform should arrange permits"}
+                                                                    "Ops will arrange permits"}
                                                                 {formData.permit_owner ===
                                                                     "UNKNOWN" &&
                                                                     "Permit ownership still to be confirmed"}
@@ -2611,6 +2942,88 @@ function CheckoutPageInner() {
                     </div>
                 </>
             )}
+
+            {/* Item 6: commerce rules confirm dialog. Surfaces WARN hits
+                from /commerce-rules/evaluate before final submit. */}
+            <AlertDialog
+                open={pendingRuleHits.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setPendingRuleHits([]);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm before submitting</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 text-sm">
+                                <p>Heads up on the following items in your cart:</p>
+                                <ul className="space-y-2 text-foreground">
+                                    {pendingRuleHits.map((hit) => {
+                                        const item = hit.related_asset_id
+                                            ? items.find((i) => i.assetId === hit.related_asset_id)
+                                            : null;
+                                        return (
+                                            <li
+                                                key={hit.rule_id}
+                                                className="flex gap-3 items-start"
+                                            >
+                                                {item?.image ? (
+                                                    <Image
+                                                        src={item.image}
+                                                        alt={item.assetName}
+                                                        width={40}
+                                                        height={40}
+                                                        className="rounded border border-border shrink-0 object-cover w-10 h-10"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded border border-border bg-muted flex items-center justify-center shrink-0">
+                                                        <Package className="h-4 w-4 text-muted-foreground/40" />
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    {item?.assetName && (
+                                                        <p className="font-medium text-foreground truncate">
+                                                            {item.assetName}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-muted-foreground">
+                                                        {hit.message}
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                <p className="text-muted-foreground">
+                                    Acknowledge to clear this rules checkpoint, or go back and
+                                    adjust your cart.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setPendingRuleHits([]);
+                            }}
+                        >
+                            Go back
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                // Bind the acknowledgment to THIS cart
+                                // signature. If the cart later changes,
+                                // commerceRulesAcknowledged becomes false
+                                // automatically and the checkpoint re-fires.
+                                setAcknowledgedForSignature(cartSignature);
+                                setPendingRuleHits([]);
+                            }}
+                        >
+                            I understand, proceed
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

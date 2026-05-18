@@ -1,11 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEntityAttachments, type AttachmentEntityType } from "@/hooks/use-attachments";
 import { usePlatform } from "@/contexts/platform-context";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FileTypeIcon } from "@/components/shared/file-type-icon";
+import { AttachmentPreviewModal } from "@/components/shared/attachment-preview-modal";
+
+function formatFileSize(bytes: number | null | undefined): string {
+    if (!bytes || bytes <= 0) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export function EntityAttachmentsCard({
     entityType,
@@ -20,6 +30,11 @@ export function EntityAttachmentsCard({
     const attachmentsEnabled = platform?.features?.enable_attachments !== false;
     const { data, isLoading } = useEntityAttachments(entityType, entityId, attachmentsEnabled);
     const attachments = data?.data || [];
+    const [previewAttachment, setPreviewAttachment] = useState<{
+        file_url: string;
+        file_name?: string | null;
+        mime_type?: string | null;
+    } | null>(null);
 
     if (!attachmentsEnabled) {
         return null;
@@ -53,31 +68,77 @@ export function EntityAttachmentsCard({
                         className="rounded-lg border border-border/60 bg-muted/10 p-3"
                     >
                         <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
-                                    {attachment.attachment_type.label}
-                                </p>
-                                <p className="font-medium break-all">{attachment.file_name}</p>
-                                {attachment.note && (
-                                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                                        {attachment.note}
+                            <div className="min-w-0 flex items-start gap-3">
+                                <FileTypeIcon
+                                    mimeType={attachment.mime_type}
+                                    fileName={attachment.file_name}
+                                    className="h-6 w-6 text-muted-foreground shrink-0 mt-0.5"
+                                />
+                                <div className="min-w-0">
+                                    <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                                        {attachment.attachment_type.label}
                                     </p>
-                                )}
+                                    <p className="font-medium break-all">{attachment.file_name}</p>
+                                    {/* Display field parity with staff cards — added date + size
+                                        per item 3 polish so clients see the same metadata. */}
+                                    <div className="flex flex-wrap gap-2 mt-1 text-xs font-mono text-muted-foreground">
+                                        <span>
+                                            {new Date(attachment.created_at).toLocaleString()}
+                                        </span>
+                                        {attachment.file_size_bytes ? (
+                                            <span>
+                                                {formatFileSize(attachment.file_size_bytes)}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                    {attachment.note && (
+                                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                                            {attachment.note}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                            <Button asChild size="icon" variant="outline" className="shrink-0">
-                                <a
-                                    href={attachment.file_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    download={attachment.file_name}
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() =>
+                                        setPreviewAttachment({
+                                            file_url: attachment.file_url,
+                                            file_name: attachment.file_name,
+                                            mime_type: attachment.mime_type,
+                                        })
+                                    }
+                                    title="Preview"
                                 >
-                                    <Download className="h-4 w-4" />
-                                </a>
-                            </Button>
+                                    <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button asChild size="icon" variant="outline">
+                                    <a
+                                        href={attachment.file_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        download={attachment.file_name}
+                                        title="Download"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ))}
             </CardContent>
+
+            <AttachmentPreviewModal
+                open={!!previewAttachment}
+                onOpenChange={(open) => {
+                    if (!open) setPreviewAttachment(null);
+                }}
+                fileUrl={previewAttachment?.file_url ?? null}
+                fileName={previewAttachment?.file_name}
+                mimeType={previewAttachment?.mime_type}
+            />
         </Card>
     );
 }
