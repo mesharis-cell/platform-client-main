@@ -70,7 +70,7 @@ export interface ValidatedAssetData {
     zone: string;
     name: string;
     category: string;
-    trackingMethod: "INDIVIDUAL" | "BATCH";
+    trackingMethod: "SERIALIZED" | "POOLED";
     weight: number;
     dimensionLength: number;
     dimensionWidth: number;

@@ -6,7 +6,7 @@ export interface AssetImage {
 }
 
 // Tracking Method
-export type TrackingMethod = "INDIVIDUAL" | "BATCH";
+export type StockMode = "SERIALIZED" | "POOLED";
 
 // Condition
 export type Condition = "GREEN" | "ORANGE" | "RED";
@@ -32,7 +32,7 @@ export interface Asset {
     description?: string;
     category: AssetCategory;
     images: AssetImage[];
-    trackingMethod: TrackingMethod;
+    trackingMethod: StockMode;
     totalQuantity: number;
     availableQuantity: number;
     bookedQuantity?: number;
@@ -75,7 +75,7 @@ export interface AssetsListResponse {
         description: string | null;
         category: string;
         images: AssetImage[];
-        tracking_method: TrackingMethod;
+        stock_mode: StockMode;
         total_quantity: number;
         available_quantity: number;
         qr_code: string;
@@ -170,7 +170,7 @@ export interface CreateAssetRequest {
     description?: string;
     category: AssetCategory;
     images: AssetImage[]; // array of uploaded image objects
-    trackingMethod: TrackingMethod;
+    trackingMethod: StockMode;
     totalQuantity: number;
     availableQuantity?: number;
     packaging?: string; // required if BATCH
@@ -276,7 +276,7 @@ export interface AssetsDetails {
 
     images: AssetImage[];
 
-    tracking_method: TrackingMethod;
+    stock_mode: StockMode;
 
     total_quantity: number;
     available_quantity: number;

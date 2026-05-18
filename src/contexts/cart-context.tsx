@@ -90,7 +90,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Cross-tab synchronization (silent — no toast to avoid loops)
     useEffect(() => {
         const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === "asset-cart-v1" && e.newValue) {
+            if (e.key === "asset-cart-v2" && e.newValue) {
                 try {
                     const cart = JSON.parse(e.newValue);
                     setItems(cart.items);

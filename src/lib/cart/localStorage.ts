@@ -8,8 +8,8 @@
 
 import { toast } from "sonner";
 
-const CART_KEY = "asset-cart-v1";
-const CART_VERSION = 1;
+const CART_KEY = "asset-cart-v2";
+const CART_VERSION = 2;
 
 export interface LocalCartItem {
     assetId: string;

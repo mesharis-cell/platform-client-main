@@ -4,9 +4,9 @@ import type {
     HandlingTag,
     AssetCategory,
     AssetImage,
-    TrackingMethod,
+    StockMode,
 } from "./asset";
-import type { AssetFamilyConditionSummary, AssetFamilySummary, StockMode } from "./asset-family";
+import type { AssetFamilyConditionSummary, AssetFamilySummary } from "./asset-family";
 
 export interface Collection {
     id: string;
@@ -124,9 +124,11 @@ export interface CollectionAvailabilityResponse {
     items: CollectionAvailabilityItem[];
 }
 
-export interface CatalogAssetFamilyItem {
-    type: "family";
+export interface CatalogAssetItem {
+    type: "asset";
     id: string;
+    groupId?: string | null;
+    groupName?: string | null;
     name: string;
     description: string | null;
     category: string | null;
@@ -157,6 +159,13 @@ export interface CatalogAssetFamilyItem {
     code?: string | null;
 }
 
+export interface CatalogGroupItem extends Omit<CatalogAssetItem, "type"> {
+    type: "group";
+    siblingCount: number;
+    siblingThumbnails: string[];
+    siblings: CatalogAssetDetails[];
+}
+
 export interface CatalogCollectionItem {
     type: "collection";
     id: string;
@@ -173,7 +182,7 @@ export interface CatalogCollectionItem {
     itemCount: number;
 }
 
-export type CatalogItem = CatalogAssetFamilyItem | CatalogCollectionItem;
+export type CatalogItem = CatalogAssetItem | CatalogGroupItem | CatalogCollectionItem;
 
 export interface CatalogListParams {
     company?: string;
@@ -181,7 +190,7 @@ export interface CatalogListParams {
     category?: string;
     team?: string;
     search_term?: string;
-    type?: "family" | "collection" | "all";
+    type?: "asset" | "collection" | "all";
     limit?: number;
     page?: number;
 }
@@ -199,7 +208,7 @@ export interface CatalogListResponse {
 
 export interface CatalogAssetDetails {
     id: string;
-    familyId?: string | null;
+    groupId?: string | null;
     family?: {
         id: string;
         name: string;
@@ -231,13 +240,13 @@ export interface CatalogAssetDetails {
     dimensionWidth: string;
     dimensionHeight: string;
     handlingTags: HandlingTag[];
-    trackingMethod?: TrackingMethod;
+    trackingMethod?: StockMode;
     qrCode?: string | null;
 }
 
 export interface CatalogFamilyStockItem {
     id: string;
-    familyId: string | null;
+    groupId: string | null;
     name: string;
     description: string | null;
     category: string;
@@ -254,7 +263,7 @@ export interface CatalogFamilyStockItem {
     dimensionWidth: string;
     dimensionHeight: string;
     handlingTags: HandlingTag[];
-    trackingMethod: TrackingMethod;
+    trackingMethod: StockMode;
     status: AssetStatus | string;
     qrCode?: string | null;
 }

@@ -37,11 +37,11 @@ const CONDITION_CLASSES: Record<string, string> = {
 };
 
 export function FamilyStockList({
-    familyName,
+    groupName,
     stockRecords,
     isSerialized = false,
 }: {
-    familyName: string;
+    groupName: string;
     stockRecords: CatalogFamilyStockItem[];
     isSerialized?: boolean;
 }) {

@@ -17,7 +17,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CartProvider, useCart } from "@/contexts/cart-context";
+import { useCart } from "@/contexts/cart-context";
 import { useCompany } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
 import { usePlatform } from "@/contexts/platform-context";
@@ -458,9 +458,5 @@ function ClientNavInner({ children }: ClientNavProps) {
 }
 
 export function ClientNav({ children }: ClientNavProps) {
-    return (
-        <CartProvider>
-            <ClientNavInner>{children}</ClientNavInner>
-        </CartProvider>
-    );
+    return <ClientNavInner>{children}</ClientNavInner>;
 }
