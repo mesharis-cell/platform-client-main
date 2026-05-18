@@ -5,7 +5,6 @@ import { apiClient } from "@/lib/api/api-client";
 import type {
     AssetUsageReportResponse,
     CatalogAssetDetailsResponse,
-    CatalogAssetFamilyDetailsResponse,
     CatalogCollectionDetailsResponse,
     CatalogListParams,
     CatalogListResponse,
@@ -17,8 +16,6 @@ export const catalogKeys = {
     lists: () => [...catalogKeys.all, "list"] as const,
     list: (params?: CatalogListParams) => [...catalogKeys.lists(), params] as const,
     details: () => [...catalogKeys.all, "detail"] as const,
-    families: () => [...catalogKeys.all, "families"] as const,
-    family: (id: string) => [...catalogKeys.families(), id] as const,
     assets: () => [...catalogKeys.all, "assets"] as const,
     asset: (id: string) => [...catalogKeys.assets(), id] as const,
     assetUsageReport: (id: string) => [...catalogKeys.assets(), id, "usage-report"] as const,
@@ -70,42 +67,22 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
         const requestedPage = params.page || 1;
         const limit = params.limit || 24;
 
-        const familyQuery: Record<string, string | undefined> = {
-            brand: params.brand,
-            category_id: params.category,
-            team_id: params.team,
-            search_term: params.search_term,
-            limit: String(limit),
-            page: String(requestedPage),
-        };
+        const response = await apiClient.get(
+            `/client/v1/catalog?${buildSearchParams({
+                brand: params.brand,
+                category_id: params.category,
+                team_id: params.team,
+                search_term: params.search_term,
+                type: params.type === "asset" ? "asset" : params.type,
+                limit: String(limit),
+                page: String(requestedPage),
+            })}`
+        );
 
-        const shouldFetchFamilies = params.type !== "collection";
-        const shouldFetchCollections = params.type !== "family";
+        const payload = response.data?.data || {};
+        const meta = payload.meta || {};
+        const rawItems = payload.items || [];
 
-        const [familyResponse, collectionResponse] = await Promise.all([
-            shouldFetchFamilies
-                ? apiClient.get(`/operations/v1/asset-family?${buildSearchParams(familyQuery)}`)
-                : Promise.resolve(null),
-            shouldFetchCollections
-                ? apiClient.get(
-                      `/client/v1/catalog?${buildSearchParams({
-                          brand: params.brand,
-                          category_id: params.category,
-                          search_term: params.search_term,
-                          type: "collection",
-                      })}`
-                  )
-                : Promise.resolve(null),
-        ]);
-
-        const families = familyResponse?.data?.data || [];
-        const familyMeta = familyResponse?.data?.meta || { total: 0, page: 1, limit };
-        const collections = collectionResponse?.data?.data?.collections || [];
-
-        // Normalize category to a stable shape regardless of whether the API
-        // returns a flat string (legacy) or the new nested { id, name, slug, color }
-        // object. Downstream React components render both `.category` (string) and
-        // `.categoryRef` (structured) so filter dedup can still use the reference.
         const normalizeCategory = (raw: unknown) => {
             if (!raw)
                 return {
@@ -126,176 +103,156 @@ async function fetchCatalog(params: CatalogListParams = {}): Promise<CatalogList
             return { label: null, ref: null };
         };
 
-        const familyItems = families.map((family: any) => {
-            const cat = normalizeCategory(family.category);
+        const mapAsset = (asset: any) => {
+            const cat = normalizeCategory(asset.category);
             return {
-                type: "family" as const,
-                id: family.id,
-                name: family.name,
-                description: family.description,
+                type: "asset" as const,
+                id: asset.id,
+                groupId: asset.group_id || null,
+                groupName: asset.group_name || null,
+                name: asset.name,
+                description: asset.description,
                 category: cat.label,
                 categoryRef: cat.ref,
-                images: normalizeAssetImageUrls(family.images),
-                brand: family.brand
+                images: normalizeAssetImageUrls(asset.images),
+                onDisplayImage: asset.on_display_image || null,
+                brand: asset.brand
                     ? {
-                          id: family.brand.id,
-                          name: family.brand.name,
+                          id: asset.brand.id,
+                          name: asset.brand.name,
                           logoUrl: null,
                       }
                     : null,
-                team: family.team?.id ? { id: family.team.id, name: family.team.name } : null,
-                stockMode: family.stock_mode,
-                stockRecordCount: Number(family.stock_record_count || family.asset_count || 0),
-                totalQuantity: Number(family.total_quantity || 0),
-                availableQuantity: Number(family.available_quantity || 0),
+                team: asset.team?.id ? { id: asset.team.id, name: asset.team.name } : null,
+                stockMode: asset.stock_mode,
+                stockRecordCount: 1,
+                totalQuantity: Number(asset.total_quantity || 0),
+                availableQuantity: Number(asset.available_quantity || 0),
                 statusSummary: {
-                    available: Number(family.status_summary?.available || 0),
-                    booked: Number(family.status_summary?.booked || 0),
-                    out: Number(family.status_summary?.out || 0),
-                    maintenance: Number(family.status_summary?.maintenance || 0),
-                    transformed: Number(family.status_summary?.transformed || 0),
+                    available: asset.status === "AVAILABLE" ? 1 : 0,
+                    booked: asset.status === "BOOKED" ? 1 : 0,
+                    out: asset.status === "OUT" ? 1 : 0,
+                    maintenance: asset.status === "MAINTENANCE" ? 1 : 0,
+                    transformed: asset.status === "TRANSFORMED" ? 1 : 0,
                 },
                 conditionSummary: {
-                    green: Number(family.condition_summary?.green || 0),
-                    orange: Number(family.condition_summary?.orange || 0),
-                    red: Number(family.condition_summary?.red || 0),
+                    green: asset.condition === "GREEN" ? 1 : 0,
+                    orange: asset.condition === "ORANGE" ? 1 : 0,
+                    red: asset.condition === "RED" ? 1 : 0,
                 },
-                volume: String(family.volume_per_unit || 0),
-                weight: String(family.weight_per_unit || 0),
-                dimensionLength: String(family.dimensions?.length || 0),
-                dimensionWidth: String(family.dimensions?.width || 0),
-                dimensionHeight: String(family.dimensions?.height || 0),
-                packaging: family.packaging,
-                code: family.company_item_code || null,
+                volume: String(asset.volume_per_unit || 0),
+                weight: String(asset.weight_per_unit || 0),
+                dimensionLength: String(asset.dimensions?.length || 0),
+                dimensionWidth: String(asset.dimensions?.width || 0),
+                dimensionHeight: String(asset.dimensions?.height || 0),
+                packaging: asset.packaging,
+                code: asset.qr_code || null,
             };
-        });
-
-        const collectionItems = collections.map((collection: any) => {
-            const cat = normalizeCategory(collection.category);
-            return {
-                type: "collection" as const,
-                id: collection.id,
-                name: collection.name,
-                description: collection.description,
-                category: cat.label,
-                categoryRef: cat.ref,
-                images: normalizeCollectionImageUrls(collection.images),
-                brand: collection.brand
-                    ? {
-                          id: collection.brand.id,
-                          name: collection.brand.name,
-                          logoUrl: collection.brand.logo_url,
-                      }
-                    : null,
-                itemCount: Number(collection.assets?.length || 0),
-            };
-        });
-
-        // Families are server-paginated; collections are fetched in full (typically small count)
-        const items =
-            params.type === "family"
-                ? familyItems
-                : params.type === "collection"
-                  ? collectionItems
-                  : [...familyItems, ...collectionItems];
-
-        const totalItems =
-            params.type === "collection"
-                ? collectionItems.length
-                : Number(familyMeta.total) + (params.type === "all" ? collectionItems.length : 0);
-
-        return {
-            success: true,
-            items,
-            total: totalItems,
-            totalFamilies: Number(familyMeta.total),
-            totalCollections: collectionItems.length,
-            limit,
-            page: requestedPage,
-            totalPages: Math.max(1, Math.ceil(totalItems / limit)),
         };
-    } catch (error) {
-        throwApiError(error);
-    }
-}
 
-async function fetchCatalogFamily(id: string): Promise<CatalogAssetFamilyDetailsResponse> {
-    try {
-        const [familyResponse, stockResponse] = await Promise.all([
-            apiClient.get(`/operations/v1/asset-family/${id}`),
-            apiClient.get(`/operations/v1/asset?family_id=${id}&limit=500`),
-        ]);
+        const catalogItems = rawItems.map((item: any) => {
+            if (item.type === "collection") {
+                const cat = normalizeCategory(item.category);
+                return {
+                    type: "collection" as const,
+                    id: item.id,
+                    name: item.name,
+                    description: item.description,
+                    category: cat.label,
+                    categoryRef: cat.ref,
+                    images: normalizeCollectionImageUrls(item.images),
+                    brand: item.brand
+                        ? {
+                              id: item.brand.id,
+                              name: item.brand.name,
+                              logoUrl: item.brand.logo_url,
+                          }
+                        : null,
+                    itemCount: Number(item.item_count || item.assets?.length || 0),
+                };
+            }
 
-        const family = familyResponse.data.data;
-        const stockRecords = (stockResponse.data?.data || []).map((asset: any) => ({
-            id: asset.id,
-            familyId: asset.family_id || null,
-            name: asset.name,
-            description: asset.description,
-            category: asset.category,
-            images: normalizeAssetImages(asset.images),
-            availableQuantity: Number(asset.available_quantity || 0),
-            totalQuantity: Number(asset.total_quantity || 0),
-            condition: asset.condition,
-            conditionNotes: asset.condition_notes,
-            refurbDaysEstimate: asset.refurb_days_estimate,
-            lastScannedAt: asset.last_scanned_at,
-            volume: String(asset.volume_per_unit || 0),
-            weight: String(asset.weight_per_unit || 0),
-            dimensionLength: String(asset.dimensions?.length || 0),
-            dimensionWidth: String(asset.dimensions?.width || 0),
-            dimensionHeight: String(asset.dimensions?.height || 0),
-            handlingTags: asset.handling_tags || [],
-            trackingMethod: asset.tracking_method,
-            status: asset.status,
-            qrCode: asset.qr_code,
-        }));
+            if (item.type === "group") {
+                const groupImageUrls = normalizeAssetImageUrls(item.group_images);
+                const fallbackImageUrls = normalizeAssetImageUrls(item.images);
+                const images = groupImageUrls.length > 0 ? groupImageUrls : fallbackImageUrls;
+                const base = mapAsset({
+                    ...item.siblings?.[0],
+                    id: item.group_id,
+                    name: item.group_name,
+                    description: item.description,
+                    images,
+                    on_display_image: item.group_on_display_image || images[0] || null,
+                    total_quantity: item.total_quantity,
+                    available_quantity: item.available_quantity,
+                    condition: item.condition_summary?.red
+                        ? "RED"
+                        : item.condition_summary?.orange
+                          ? "ORANGE"
+                          : "GREEN",
+                    status: item.available_quantity > 0 ? "AVAILABLE" : "OUT",
+                    stock_mode: item.stock_mode,
+                });
+                return {
+                    ...base,
+                    type: "group" as const,
+                    id: item.group_id,
+                    groupId: item.group_id,
+                    groupName: item.group_name,
+                    name: item.group_name,
+                    images,
+                    onDisplayImage: item.group_on_display_image || images[0] || null,
+                    siblingCount: Number(item.sibling_count || item.siblings?.length || 0),
+                    siblingThumbnails: normalizeAssetImageUrls(item.sibling_thumbnails),
+                    siblings: (item.siblings || []).map((sibling: any) => ({
+                        id: sibling.id,
+                        groupId: sibling.group_id || null,
+                        name: sibling.name,
+                        description: sibling.description,
+                        category: sibling.category || "",
+                        images: normalizeAssetImages(sibling.images),
+                        onDisplayImage: sibling.on_display_image || null,
+                        brand: sibling.brand
+                            ? { id: sibling.brand.id, name: sibling.brand.name, logoUrl: null }
+                            : null,
+                        availableQuantity: Number(sibling.available_quantity || 0),
+                        totalQuantity: Number(sibling.total_quantity || 0),
+                        condition: sibling.condition,
+                        conditionNotes: sibling.condition_notes,
+                        refurbDaysEstimate: sibling.refurb_days_estimate,
+                        lastScannedAt: sibling.last_scanned_at,
+                        volume: String(sibling.volume_per_unit || 0),
+                        weight: String(sibling.weight_per_unit || 0),
+                        dimensionLength: String(sibling.dimensions?.length || 0),
+                        dimensionWidth: String(sibling.dimensions?.width || 0),
+                        dimensionHeight: String(sibling.dimensions?.height || 0),
+                        handlingTags: sibling.handling_tags || [],
+                        trackingMethod: sibling.stock_mode,
+                        qrCode: sibling.qr_code,
+                    })),
+                };
+            }
+
+            return mapAsset(item);
+        });
 
         return {
             success: true,
-            family: {
-                id: family.id,
-                name: family.name,
-                description: family.description,
-                category: family.category,
-                images: normalizeAssetImages(family.images),
-                brand: family.brand
-                    ? {
-                          id: family.brand.id,
-                          name: family.brand.name,
-                      }
-                    : null,
-                company: family.company
-                    ? {
-                          id: family.company.id,
-                          name: family.company.name,
-                      }
-                    : null,
-                stockMode: family.stock_mode,
-                packaging: family.packaging,
-                volume: String(family.volume_per_unit || 0),
-                weight: String(family.weight_per_unit || 0),
-                dimensionLength: String(family.dimensions?.length || 0),
-                dimensionWidth: String(family.dimensions?.width || 0),
-                dimensionHeight: String(family.dimensions?.height || 0),
-                availableQuantity: Number(family.available_quantity || 0),
-                totalQuantity: Number(family.total_quantity || 0),
-                stockRecordCount: Number(family.stock_record_count || family.asset_count || 0),
-                statusSummary: {
-                    available: Number(family.status_summary?.available || 0),
-                    booked: Number(family.status_summary?.booked || 0),
-                    out: Number(family.status_summary?.out || 0),
-                    maintenance: Number(family.status_summary?.maintenance || 0),
-                    transformed: Number(family.status_summary?.transformed || 0),
-                },
-                conditionSummary: {
-                    green: Number(family.condition_summary?.green || 0),
-                    orange: Number(family.condition_summary?.orange || 0),
-                    red: Number(family.condition_summary?.red || 0),
-                },
-                handlingTags: family.handling_tags || [],
-                stockRecords,
-            },
+            items: catalogItems,
+            total: Number(meta.total ?? payload.total ?? catalogItems.length),
+            totalFamilies: Number(
+                meta.total_assets ??
+                    payload.total_assets ??
+                    (meta.total_grouped_assets || 0) + (meta.total_raw_assets || 0)
+            ),
+            totalCollections: Number(
+                meta.total_collections ??
+                    payload.total_collections ??
+                    catalogItems.filter((item: any) => item.type === "collection").length
+            ),
+            limit: Number(meta.limit || limit),
+            page: Number(meta.page || requestedPage),
+            totalPages: Number(meta.total_pages || payload.total_pages || 1),
         };
     } catch (error) {
         throwApiError(error);
@@ -311,18 +268,19 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
             success: true,
             asset: {
                 id: asset.id,
-                familyId: asset.family_id || null,
-                family: asset.family
+                groupId: asset.group_id || null,
+                family: asset.group_id
                     ? {
-                          id: asset.family.id,
-                          name: asset.family.name,
-                          stockMode: asset.family.stock_mode,
+                          id: asset.group_id,
+                          name: asset.group_name || asset.name,
+                          stockMode: asset.stock_mode,
                       }
                     : null,
                 name: asset.name,
                 description: asset.description,
                 category: asset.category,
                 images: normalizeAssetImages(asset.images),
+                onDisplayImage: asset.on_display_image || null,
                 brand: asset.brand_details || null,
                 company: asset.company_details || null,
                 availableQuantity: asset.available_quantity,
@@ -337,7 +295,7 @@ async function fetchCatalogAsset(id: string): Promise<CatalogAssetDetailsRespons
                 dimensionWidth: String(asset.dimensions?.width || 0),
                 dimensionHeight: String(asset.dimensions?.height || 0),
                 handlingTags: asset.handling_tags || [],
-                trackingMethod: asset.tracking_method,
+                trackingMethod: asset.stock_mode,
                 qrCode: asset.qr_code,
             },
         };
@@ -363,31 +321,40 @@ async function fetchCatalogCollection(id: string): Promise<CatalogCollectionDeta
         const response = await apiClient.get(`/operations/v1/collection/${id}`);
         const raw = response.data.data;
 
-        const items = (raw.assets || []).map((item: any) => ({
-            id: item.asset.id,
-            assetId: item.asset.id,
-            family: item.asset.family
-                ? {
-                      id: item.asset.family.id,
-                      name: item.asset.family.name,
-                      stockMode: item.asset.family.stock_mode,
-                  }
-                : null,
-            name: item.asset.family?.name || item.asset.name,
-            category: item.asset.category,
-            images: normalizeAssetImageUrls(item.asset.images),
-            defaultQuantity: item.default_quantity,
-            availableQuantity: item.asset.available_quantity,
-            totalQuantity: item.asset.total_quantity,
-            condition: item.asset.condition,
-            refurbDaysEstimate: item.asset.refurb_days_estimate || null,
-            volume: String(item.asset.volume_per_unit || 0),
-            weight: String(item.asset.weight_per_unit || 0),
-            dimensionLength: String(item.asset.dimensions?.length || 0),
-            dimensionWidth: String(item.asset.dimensions?.width || 0),
-            dimensionHeight: String(item.asset.dimensions?.height || 0),
-            isAvailable: item.asset.available_quantity >= item.default_quantity,
-        }));
+        const items = (raw.assets || []).map((item: any) => {
+            const isArchived = Boolean(item.asset.deleted_at);
+            return {
+                id: item.asset.id,
+                assetId: item.asset.id,
+                family: item.asset.group_id
+                    ? {
+                          id: item.asset.group_id,
+                          name: item.asset.group_name || item.asset.name,
+                          stockMode: item.asset.stock_mode,
+                      }
+                    : null,
+                name: item.asset.group_name || item.asset.name,
+                category: item.asset.category,
+                images: normalizeAssetImageUrls(item.asset.images),
+                onDisplayImage: item.asset.on_display_image || null,
+                defaultQuantity: item.default_quantity,
+                availableQuantity: item.asset.available_quantity,
+                totalQuantity: item.asset.total_quantity,
+                condition: item.asset.condition,
+                refurbDaysEstimate: item.asset.refurb_days_estimate || null,
+                volume: String(item.asset.volume_per_unit || 0),
+                weight: String(item.asset.weight_per_unit || 0),
+                dimensionLength: String(item.asset.dimensions?.length || 0),
+                dimensionWidth: String(item.asset.dimensions?.width || 0),
+                dimensionHeight: String(item.asset.dimensions?.height || 0),
+                // Archived assets are no longer orderable. The API still
+                // returns them in the collection payload so admin can clean
+                // up the membership; the client UI greys them out and blocks
+                // add-to-cart. See item 5 of the 9-item bundle.
+                isArchived,
+                isAvailable: !isArchived && item.asset.available_quantity >= item.default_quantity,
+            };
+        });
 
         const totalVolume = items.reduce((sum: number, item: any) => sum + Number(item.volume), 0);
         const totalWeight = items.reduce((sum: number, item: any) => sum + Number(item.weight), 0);
@@ -423,15 +390,6 @@ export function useCatalog(params: CatalogListParams = {}) {
     return useQuery({
         queryKey: catalogKeys.list(params),
         queryFn: () => fetchCatalog(params),
-        staleTime: 30000,
-    });
-}
-
-export function useCatalogFamily(id: string | undefined) {
-    return useQuery({
-        queryKey: catalogKeys.family(id || ""),
-        queryFn: () => fetchCatalogFamily(id!),
-        enabled: !!id,
         staleTime: 30000,
     });
 }

@@ -75,7 +75,11 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             availableQuantity: asset.availableQuantity,
             volume: Number(asset.volume),
             weight: Number(asset.weight),
-            image: asset.images[0]?.url,
+            dimensionLength: Number(asset.dimensionLength),
+            dimensionWidth: Number(asset.dimensionWidth),
+            dimensionHeight: Number(asset.dimensionHeight),
+            category: asset.category,
+            image: asset.onDisplayImage || asset.images[0]?.url,
             condition: asset.condition,
             conditionNotes: asset.conditionNotes,
             conditionImages: asset.images,
@@ -84,6 +88,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
         setSelectedQuantity(1);
     };
+
+    // Build a combined image stream: curated `on_display_image` (admin-managed)
+    // first, then the rotating scan/return `images[]`. Index 0 is the curated
+    // hero when set, so clients land on it.
+    const combinedImages: { url: string; note?: string }[] = asset
+        ? [...(asset.onDisplayImage ? [{ url: asset.onDisplayImage }] : []), ...asset.images]
+        : [];
 
     if (isLoading) {
         return (
@@ -145,9 +156,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="space-y-4">
                             {/* Main Image */}
                             <div className="aspect-square rounded-xl overflow-hidden border border-border bg-muted relative">
-                                {asset.images.length > 0 ? (
+                                {combinedImages.length > 0 ? (
                                     <Image
-                                        src={asset.images[selectedImageIndex].url}
+                                        src={combinedImages[selectedImageIndex].url}
                                         alt={asset.name}
                                         fill
                                         className="object-cover"
@@ -160,13 +171,15 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
 
                                 {/* Image Navigation */}
-                                {asset.images.length > 1 && (
+                                {combinedImages.length > 1 && (
                                     <>
                                         <button
                                             onClick={() =>
                                                 setSelectedImageIndex(
-                                                    (selectedImageIndex - 1 + asset.images.length) %
-                                                        asset.images.length
+                                                    (selectedImageIndex -
+                                                        1 +
+                                                        combinedImages.length) %
+                                                        combinedImages.length
                                                 )
                                             }
                                             className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -176,7 +189,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         <button
                                             onClick={() =>
                                                 setSelectedImageIndex(
-                                                    (selectedImageIndex + 1) % asset.images.length
+                                                    (selectedImageIndex + 1) % combinedImages.length
                                                 )
                                             }
                                             className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors"
@@ -188,16 +201,16 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
 
                             {/* Image note caption */}
-                            {asset.images[selectedImageIndex]?.note && (
+                            {combinedImages[selectedImageIndex]?.note && (
                                 <p className="text-xs text-muted-foreground italic">
-                                    {asset.images[selectedImageIndex].note}
+                                    {combinedImages[selectedImageIndex].note}
                                 </p>
                             )}
 
                             {/* Thumbnails */}
-                            {asset.images.length > 1 && (
+                            {combinedImages.length > 1 && (
                                 <div className="grid grid-cols-4 gap-3">
-                                    {asset.images.map((image, index) => (
+                                    {combinedImages.map((image, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
@@ -236,11 +249,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                         </Badge>
                                     )}
                                     {asset.family && (
-                                        <Link href={`/catalog/families/${asset.family.id}`}>
-                                            <Badge variant="outline" className="font-mono">
-                                                Family: {asset.family.name}
-                                            </Badge>
-                                        </Link>
+                                        <Badge variant="outline" className="font-mono">
+                                            Group: {asset.family.name}
+                                        </Badge>
                                     )}
                                     <Badge variant="outline" className="font-mono">
                                         {asset.category}

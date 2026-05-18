@@ -29,7 +29,7 @@ export type AvailabilityReasonCode =
 export interface AvailabilityPreviewItem {
     asset_id: string;
     asset_name: string;
-    tracking_method: "INDIVIDUAL" | "BATCH";
+    stock_mode: "SERIALIZED" | "POOLED";
     total_quantity: number;
     booked_quantity: number;
     self_booked_quantity: number;

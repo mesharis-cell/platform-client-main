@@ -3,7 +3,7 @@
 import type { AssetImage } from "./asset";
 
 // Tracking method enum values
-export type TrackingMethod = "INDIVIDUAL" | "BATCH";
+export type StockMode = "SERIALIZED" | "POOLED";
 
 // Inbound Request Status
 export type InboundRequestStatus =
@@ -23,7 +23,7 @@ export interface InboundRequestItem {
         name: string;
         images: AssetImage[];
         qr_code: string;
-        tracking_method: TrackingMethod;
+        stock_mode: StockMode;
         category: string;
         status: string;
         total_quantity: number;
@@ -36,7 +36,7 @@ export interface InboundRequestItem {
     name: string;
     description: string | null;
     category: string;
-    tracking_method: TrackingMethod;
+    stock_mode: StockMode;
     quantity: number;
     packaging: string | null;
     weight_per_unit: number;

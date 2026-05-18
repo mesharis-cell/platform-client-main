@@ -30,7 +30,7 @@ export default function CatalogPage() {
     const [selectedBrand, setSelectedBrand] = useState<string>("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [selectedTeam, setSelectedTeam] = useState<string>("");
-    const [viewType, setViewType] = useState<"family" | "collection" | "all">("all");
+    const [viewType, setViewType] = useState<"asset" | "collection" | "all">("all");
     const [page, setPage] = useState(1);
 
     const ITEMS_PER_PAGE = 24;
@@ -192,7 +192,7 @@ export default function CatalogPage() {
                             >
                                 <TabsList>
                                     <TabsTrigger value="all">All</TabsTrigger>
-                                    <TabsTrigger value="family">Assets</TabsTrigger>
+                                    <TabsTrigger value="asset">Assets</TabsTrigger>
                                     <TabsTrigger value="collection">Collections</TabsTrigger>
                                 </TabsList>
                             </Tabs>
@@ -230,7 +230,7 @@ export default function CatalogPage() {
                         ) : (
                             <div
                                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-                                data-testid="client-family-browser"
+                                data-testid="client-catalog-browser"
                             >
                                 {items.map((item) => (
                                     <CatalogCard key={`${item.type}-${item.id}`} item={item} />
