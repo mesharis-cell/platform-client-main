@@ -1249,7 +1249,7 @@ function CheckoutPageInner() {
                                                                 <div className="mt-1 space-y-1">
                                                                     <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
                                                                         <AlertCircle className="h-3 w-3" />{" "}
-                                                                        RED — Requires repair
+                                                                        RED
                                                                     </span>
                                                                     {item.conditionNotes && (
                                                                         <p className="text-xs text-red-600 line-clamp-2">
@@ -1262,7 +1262,7 @@ function CheckoutPageInner() {
                                                                 <div className="mt-1 space-y-1">
                                                                     <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                                                         <AlertCircle className="h-3 w-3" />{" "}
-                                                                        ORANGE — Decision needed
+                                                                        ORANGE
                                                                     </span>
                                                                     {item.conditionNotes && (
                                                                         <p className="text-xs text-amber-600 line-clamp-2">

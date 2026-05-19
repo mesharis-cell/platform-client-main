@@ -508,17 +508,17 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                                 {asset.condition === "RED" ? (
                                                     <>
                                                         <AlertCircle className="w-3 h-3 mr-1" />
-                                                        Damaged / In Maintenance
+                                                        RED
                                                     </>
                                                 ) : asset.condition === "ORANGE" ? (
                                                     <>
                                                         <AlertCircle className="w-3 h-3 mr-1" />
-                                                        Minor Issues
+                                                        ORANGE
                                                     </>
                                                 ) : (
                                                     <>
                                                         <CheckCircle className="w-3 h-3 mr-1" />
-                                                        Good Condition
+                                                        GREEN
                                                     </>
                                                 )}
                                             </Badge>

@@ -366,9 +366,7 @@ const OrderItemCard = ({
                                         }`}
                                     >
                                         <AlertCircle className="w-3 h-3 mr-1" />
-                                        {item.asset.condition === "RED"
-                                            ? "Damaged"
-                                            : "Minor Issues"}
+                                        {item.asset.condition === "RED" ? "RED" : "ORANGE"}
                                     </Badge>
                                     {item.asset.refurbishment_days_estimate && (
                                         <span className="text-xs font-mono text-muted-foreground">

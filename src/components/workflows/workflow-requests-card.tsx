@@ -134,7 +134,7 @@ export function ClientWorkflowRequestsCard({
         }));
     };
 
-    const handleUpload = async (workflow: WorkflowRequest) => {
+    const handleUpload = async (workflow: WorkflowRequest, showToast = true) => {
         if (selectedFiles.length === 0) {
             toast.error("Select files to upload");
             return false;
@@ -160,7 +160,7 @@ export function ClientWorkflowRequestsCard({
                     visible_to_client: true,
                 }))
             );
-            toast.success("Files uploaded");
+            if (showToast) toast.success("Files saved");
             resetUploadDraft();
             return true;
         } catch (err: any) {
@@ -185,7 +185,7 @@ export function ClientWorkflowRequestsCard({
             }
 
             if (selectedFiles.length > 0) {
-                const uploaded = await handleUpload(workflow);
+                const uploaded = await handleUpload(workflow, false);
                 if (!uploaded) return;
             }
 
@@ -425,7 +425,7 @@ export function ClientWorkflowRequestsCard({
                                                     size="sm"
                                                 >
                                                     <Upload className="mr-1 h-4 w-4" />
-                                                    Upload
+                                                    Save file draft
                                                 </Button>
                                                 <Button
                                                     onClick={() => handleSubmit(workflow)}

@@ -169,8 +169,8 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
                                     >
                                         <AlertCircle className="mr-1 h-2.5 w-2.5" />
                                         {conditionFlags.red > 0
-                                            ? `${conditionFlags.red} need repair`
-                                            : `${conditionFlags.orange} minor`}
+                                            ? `${conditionFlags.red} RED`
+                                            : `${conditionFlags.orange} ORANGE`}
                                     </Badge>
                                 </div>
                             )}
