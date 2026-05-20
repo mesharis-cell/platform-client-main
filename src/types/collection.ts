@@ -151,6 +151,9 @@ export interface CatalogAssetItem {
     availableQuantity: number;
     statusSummary: AssetFamilySummary;
     conditionSummary: AssetFamilyConditionSummary;
+    condition: Condition;
+    conditionNotes?: string | null;
+    refurbDaysEstimate?: number | null;
     volume: string;
     weight: string;
     dimensionLength: string;

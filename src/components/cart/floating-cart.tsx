@@ -9,7 +9,17 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCart } from "@/contexts/cart-context";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Cuboid, Minus, Package, Plus, ShoppingCart, Trash2, X } from "lucide-react";
+import {
+    AlertCircle,
+    ArrowRight,
+    Cuboid,
+    Minus,
+    Package,
+    Plus,
+    ShoppingCart,
+    Trash2,
+    X,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -239,6 +249,31 @@ export function FloatingCart() {
                                                         <span className="text-border">•</span>
                                                         <span>{item.weight} kg</span>
                                                     </div>
+
+                                                    {(item.condition === "ORANGE" ||
+                                                        item.condition === "RED") && (
+                                                        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+                                                            <span
+                                                                className={
+                                                                    item.condition === "RED"
+                                                                        ? "inline-flex items-center gap-1 rounded-full bg-red-100 px-1.5 py-0.5 font-medium text-red-700"
+                                                                        : "inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700"
+                                                                }
+                                                            >
+                                                                <AlertCircle className="h-3 w-3" />
+                                                                {item.condition}
+                                                            </span>
+                                                            <span className="text-muted-foreground">
+                                                                {item.maintenanceDecision ===
+                                                                "FIX_IN_ORDER"
+                                                                    ? "Repair before event"
+                                                                    : item.maintenanceDecision ===
+                                                                        "USE_AS_IS"
+                                                                      ? "Accept current condition"
+                                                                      : "Decision needed"}
+                                                            </span>
+                                                        </div>
+                                                    )}
 
                                                     {/* Quantity Controls */}
                                                     <div className="flex items-center gap-2">

@@ -53,6 +53,7 @@ interface CartContextType {
         assetId: string,
         maintenanceDecision?: MaintenanceDecision
     ) => void;
+    updateItemDetails: (assetId: string, assetDetails: Partial<LocalCartItem>) => void;
     updateItemRebrand: (assetId: string, rebrandData: RebrandData) => void;
     removeItemRebrand: (assetId: string) => void;
     removeItem: (assetId: string) => void;
@@ -365,6 +366,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
         [items]
     );
 
+    const updateItemDetails = useCallback(
+        (assetId: string, assetDetails: Partial<LocalCartItem>) => {
+            setItems((currentItems) => {
+                const newItems = currentItems.map((item) => {
+                    if (item.assetId !== assetId) return item;
+                    const next = { ...item, ...assetDetails };
+                    if (assetDetails.condition === "GREEN" || assetDetails.condition === "") {
+                        next.maintenanceDecision = undefined;
+                    }
+                    return next;
+                });
+                saveCart(newItems);
+                return newItems;
+            });
+        },
+        []
+    );
+
     // Update rebrand data for existing item
     const updateItemRebrand = useCallback(
         (assetId: string, rebrandData: RebrandData) => {
@@ -437,6 +456,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 addItem,
                 addItemWithRebrand,
                 updateItemMaintenanceDecision,
+                updateItemDetails,
                 updateItemRebrand,
                 removeItemRebrand,
                 removeItem,

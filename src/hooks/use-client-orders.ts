@@ -171,6 +171,64 @@ export function useClientOrderDetail(orderId: string | null) {
     });
 }
 
+export function useCreateMaintenanceDecisionChangeRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            orderId,
+            orderItemId,
+            requestedDecision,
+        }: {
+            orderId: string;
+            orderItemId: string;
+            requestedDecision: "FIX_IN_ORDER" | "USE_AS_IS";
+        }) => {
+            try {
+                const response = await apiClient.post(
+                    `/client/v1/order/${orderId}/maintenance-decision-change-requests`,
+                    {
+                        order_item_id: orderItemId,
+                        requested_decision: requestedDecision,
+                    }
+                );
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
+            }
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: ["client-order-detail", variables.orderId],
+            });
+            queryClient.invalidateQueries({ queryKey: ["client-orders"] });
+        },
+    });
+}
+
+export function useCancelMaintenanceDecisionChangeRequest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ orderId, requestId }: { orderId: string; requestId: string }) => {
+            try {
+                const response = await apiClient.patch(
+                    `/client/v1/order/${orderId}/maintenance-decision-change-requests/${requestId}/cancel`
+                );
+                return response.data;
+            } catch (error) {
+                throwApiError(error);
+            }
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: ["client-order-detail", variables.orderId],
+            });
+            queryClient.invalidateQueries({ queryKey: ["client-orders"] });
+        },
+    });
+}
+
 /**
  * Hook to approve a quote
  */

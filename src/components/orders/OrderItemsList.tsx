@@ -5,14 +5,29 @@
  * Displays the list of order items with dimensions, totals, and reskin status
  */
 
+import { useState } from "react";
 import { Package, Paintbrush, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Condition } from "@/types";
 import type { AssetImage } from "@/types/asset";
+import {
+    useCancelMaintenanceDecisionChangeRequest,
+    useCreateMaintenanceDecisionChangeRequest,
+} from "@/hooks/use-client-orders";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface ReskinList {
     id: string;
@@ -49,6 +64,17 @@ interface OrderItem {
         volume_per_unit: number;
         total_volume: number;
         total_weight: number;
+        maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS" | null;
+        maintenance_decision_label?: string | null;
+        accepted_current_condition?: boolean;
+        repair_status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | null;
+        repair_status_label?: string | null;
+        maintenance_decision_change_request?: {
+            id: string;
+            requested_decision_label?: string | null;
+            status: string;
+            rejection_reason?: string | null;
+        } | null;
     };
     asset?: {
         condition: Condition;
@@ -68,6 +94,7 @@ interface CalculatedTotals {
 interface OrderItemsListProps {
     items: OrderItem[];
     orderStatus: string;
+    orderId?: string;
     reskinList?: ReskinList[];
     calculatedTotals?: CalculatedTotals;
 }
@@ -132,6 +159,7 @@ function getReskinStyles(status: ReskinStatus): {
 export function OrderItemsList({
     items,
     orderStatus,
+    orderId,
     reskinList,
     calculatedTotals,
 }: OrderItemsListProps) {
@@ -152,6 +180,7 @@ export function OrderItemsList({
                             item.id || item.order_item.id || `${item.order_item.asset_id}-${index}`
                         }
                         orderStatus={orderStatus}
+                        orderId={orderId}
                         item={item}
                         reskinList={reskinList}
                         index={index}
@@ -193,21 +222,84 @@ export function OrderItemsList({
 const OrderItemCard = ({
     item,
     orderStatus,
+    orderId,
     reskinList,
     index,
 }: {
     item: OrderItem;
     orderStatus: string;
+    orderId?: string;
     reskinList?: ReskinList[];
     index: number;
 }) => {
+    const [decisionDialogOpen, setDecisionDialogOpen] = useState(false);
+    const [requestedDecision, setRequestedDecision] = useState<"FIX_IN_ORDER" | "USE_AS_IS" | null>(
+        null
+    );
+    const createDecisionRequest = useCreateMaintenanceDecisionChangeRequest();
+    const cancelDecisionRequest = useCancelMaintenanceDecisionChangeRequest();
     const { status, reskin } = getReskinStatus(item, reskinList);
     const styles = getReskinStyles(status);
 
     const statusForReskin = ["PRICING_REVIEW", "PENDING_APPROVAL", "QUOTED", "CONFIRMED"];
+    const currentDecision = item.order_item.maintenance_decision;
+    const activeDecisionRequest = item.order_item.maintenance_decision_change_request;
+    const pendingDecisionRequest = activeDecisionRequest?.status === "PENDING";
+    const canRequestDecisionChange =
+        !!orderId &&
+        item.asset?.condition === "ORANGE" &&
+        ["SUBMITTED", "PRICING_REVIEW", "PENDING_APPROVAL", "QUOTED"].includes(orderStatus) &&
+        (currentDecision === "FIX_IN_ORDER" || currentDecision === "USE_AS_IS") &&
+        !pendingDecisionRequest;
+    const alternateDecision =
+        currentDecision === "FIX_IN_ORDER"
+            ? ("USE_AS_IS" as const)
+            : currentDecision === "USE_AS_IS"
+              ? ("FIX_IN_ORDER" as const)
+              : null;
+    const alternateDecisionLabel =
+        alternateDecision === "FIX_IN_ORDER"
+            ? "Repair before event"
+            : alternateDecision === "USE_AS_IS"
+              ? "Accept current condition"
+              : "";
+
+    const handleOpenDecisionRequest = () => {
+        if (!alternateDecision) return;
+        setRequestedDecision(alternateDecision);
+        setDecisionDialogOpen(true);
+    };
+
+    const handleCreateDecisionRequest = async () => {
+        if (!orderId || !requestedDecision) return;
+        try {
+            await createDecisionRequest.mutateAsync({
+                orderId,
+                orderItemId: item.order_item.id,
+                requestedDecision,
+            });
+            toast.success("Decision change request sent");
+            setDecisionDialogOpen(false);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to request decision change");
+        }
+    };
+
+    const handleCancelDecisionRequest = async () => {
+        if (!orderId || !activeDecisionRequest?.id) return;
+        try {
+            await cancelDecisionRequest.mutateAsync({
+                orderId,
+                requestId: activeDecisionRequest.id,
+            });
+            toast.success("Decision change request cancelled");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to cancel request");
+        }
+    };
 
     return (
-        <Link href={`/catalog/assets/${item.asset.id}`} className="block">
+        <>
             <div
                 className={`p-4 border rounded-lg transition-colors hover:border-primary/50 ${styles.containerClass}`}
             >
@@ -229,7 +321,12 @@ const OrderItemCard = ({
                     )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                            <div className="font-semibold">{item.order_item.asset_name}</div>
+                            <Link
+                                href={`/catalog/assets/${item.asset.id}`}
+                                className="font-semibold hover:underline"
+                            >
+                                {item.order_item.asset_name}
+                            </Link>
                             {status !== "none" && statusForReskin.includes(orderStatus) && (
                                 <Badge
                                     className={`font-mono text-[10px] gap-1 ${styles.badgeClass}`}
@@ -349,42 +446,148 @@ const OrderItemCard = ({
                         </div>
 
                         {/* Condition section */}
-                        {item.asset && item.asset.condition !== "GREEN" && (
-                            <div
-                                className={`mt-2 rounded-lg p-3 border ${
-                                    item.asset.condition === "RED"
-                                        ? "bg-destructive/10 border-destructive/30"
-                                        : "bg-orange-500/10 border-orange-500/30"
-                                }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Badge
-                                        className={`font-mono text-xs ${
-                                            item.asset.condition === "RED"
-                                                ? "bg-destructive"
-                                                : "bg-orange-500"
-                                        }`}
-                                    >
-                                        <AlertCircle className="w-3 h-3 mr-1" />
-                                        {item.asset.condition === "RED" ? "RED" : "ORANGE"}
-                                    </Badge>
-                                    {item.asset.refurbishment_days_estimate && (
-                                        <span className="text-xs font-mono text-muted-foreground">
-                                            Est. {item.asset.refurbishment_days_estimate} days
-                                            refurb
-                                        </span>
+                        {item.asset &&
+                            (item.asset.condition !== "GREEN" ||
+                                item.order_item.maintenance_decision) && (
+                                <div
+                                    className={`mt-2 rounded-lg p-3 border ${
+                                        item.asset.condition === "RED"
+                                            ? "bg-destructive/10 border-destructive/30"
+                                            : item.asset.condition === "ORANGE"
+                                              ? "bg-orange-500/10 border-orange-500/30"
+                                              : "bg-orange-500/10 border-orange-500/30"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        {item.asset.condition !== "GREEN" && (
+                                            <Badge
+                                                className={`font-mono text-xs ${
+                                                    item.asset.condition === "RED"
+                                                        ? "bg-destructive"
+                                                        : "bg-orange-500"
+                                                }`}
+                                            >
+                                                <AlertCircle className="w-3 h-3 mr-1" />
+                                                {item.asset.condition === "RED" ? "RED" : "ORANGE"}
+                                            </Badge>
+                                        )}
+                                        {item.asset.refurbishment_days_estimate && (
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                Est. {item.asset.refurbishment_days_estimate} days
+                                                refurb
+                                            </span>
+                                        )}
+                                        {item.order_item.maintenance_decision_label && (
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                                {item.order_item.maintenance_decision_label}
+                                            </Badge>
+                                        )}
+                                        {item.order_item.repair_status_label && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="font-mono text-xs"
+                                            >
+                                                Repair {item.order_item.repair_status_label}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {item.asset.condition_notes && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {item.asset.condition_notes}
+                                        </p>
                                     )}
+                                    {item.order_item.maintenance_decision_change_request && (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono text-[10px]"
+                                            >
+                                                Request{" "}
+                                                {item.order_item.maintenance_decision_change_request.status.replace(
+                                                    /_/g,
+                                                    " "
+                                                )}
+                                            </Badge>
+                                            {item.order_item.maintenance_decision_change_request
+                                                .requested_decision_label && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    Requested:{" "}
+                                                    {
+                                                        item.order_item
+                                                            .maintenance_decision_change_request
+                                                            .requested_decision_label
+                                                    }
+                                                </span>
+                                            )}
+                                            {pendingDecisionRequest && (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-7 px-2 text-xs"
+                                                    disabled={cancelDecisionRequest.isPending}
+                                                    onClick={handleCancelDecisionRequest}
+                                                >
+                                                    Cancel request
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {canRequestDecisionChange && alternateDecision && (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-2 h-8 text-xs"
+                                            onClick={handleOpenDecisionRequest}
+                                        >
+                                            Request {alternateDecisionLabel}
+                                        </Button>
+                                    )}
+                                    {activeDecisionRequest?.status === "REJECTED" &&
+                                        activeDecisionRequest.rejection_reason && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Rejection reason:{" "}
+                                                {activeDecisionRequest.rejection_reason}
+                                            </p>
+                                        )}
                                 </div>
-                                {item.asset.condition_notes && (
-                                    <p className="text-xs text-muted-foreground">
-                                        {item.asset.condition_notes}
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                            )}
                     </div>
                 </div>
             </div>
-        </Link>
+            <Dialog open={decisionDialogOpen} onOpenChange={setDecisionDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Request Decision Change</DialogTitle>
+                        <DialogDescription>
+                            This sends an internal review request. Your current order decision stays
+                            active until the request is approved.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                        <p className="font-medium">{item.order_item.asset_name}</p>
+                        <p className="mt-1 text-muted-foreground">
+                            Requested decision: {alternateDecisionLabel}
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDecisionDialogOpen(false)}
+                            disabled={createDecisionRequest.isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateDecisionRequest}
+                            disabled={createDecisionRequest.isPending || !requestedDecision}
+                        >
+                            {createDecisionRequest.isPending ? "Sending..." : "Send request"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 };

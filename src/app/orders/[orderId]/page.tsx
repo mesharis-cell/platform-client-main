@@ -749,6 +749,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                             >
                                 <OrderItemsList
                                     items={order.items}
+                                    orderId={order.id}
                                     orderStatus={order.order_status}
                                     calculatedTotals={order.calculated_totals}
                                 />

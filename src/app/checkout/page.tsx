@@ -12,7 +12,6 @@ import "react-phone-number-input/style.css";
 import { OrderEstimate } from "@/components/checkout/OrderEstimate";
 import { SelfPickupCheckoutFlow } from "@/components/checkout/SelfPickupCheckoutFlow";
 import { usePlatform } from "@/contexts/platform-context";
-import { MaintenanceDecisionCenter } from "@/components/checkout/MaintenanceDecisionCenter";
 import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
 import { FeasibilityHelper } from "@/components/checkout/FeasibilityHelper";
 import { AvailabilityHelper } from "@/components/checkout/AvailabilityHelper";
@@ -111,11 +110,13 @@ function CheckoutPageInner() {
         clearCart,
         isInitialized,
         updateItemMaintenanceDecision,
+        updateItemDetails,
     } = useCart();
     const [checkoutMode, setCheckoutMode] = useState<"standard" | "self-pickup">("standard");
     const [currentStep, setCurrentStep] = useState<Step>("cart");
     const [pendingMode, setPendingMode] = useState<"standard" | "self-pickup" | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [cartRefreshDone, setCartRefreshDone] = useState(false);
     // Guards the persist→localStorage effect so it doesn't fire on the
     // initial render with default state (which would clobber the stored
     // checkpoint BEFORE the restore effect has had a chance to read it).
@@ -279,6 +280,97 @@ function CheckoutPageInner() {
     const orangeItems = items.filter((item) => item.condition === "ORANGE");
     const redItems = items.filter((item) => item.condition === "RED");
     const missingOrangeDecisions = orangeItems.filter((item) => !item.maintenanceDecision);
+    const missingRedAcknowledgements = redItems.filter(
+        (item) => item.maintenanceDecision !== "FIX_IN_ORDER"
+    );
+    const repairChoiceBlockedItems = items.filter(
+        (item) =>
+            (item.condition === "RED" || item.maintenanceDecision === "FIX_IN_ORDER") &&
+            !item.refurbDaysEstimate
+    );
+
+    useEffect(() => {
+        if (!isInitialized || cartRefreshDone || items.length === 0) return;
+        let cancelled = false;
+
+        const normalizeImages = (images: unknown): { url: string; note?: string }[] => {
+            if (!Array.isArray(images)) return [];
+            const normalized: { url: string; note?: string }[] = [];
+            images.forEach((image) => {
+                if (typeof image === "string") {
+                    normalized.push({ url: image });
+                    return;
+                }
+                if (image && typeof image === "object" && typeof (image as any).url === "string") {
+                    normalized.push({
+                        url: (image as any).url,
+                        note:
+                            typeof (image as any).note === "string"
+                                ? (image as any).note
+                                : undefined,
+                    });
+                }
+            });
+            return normalized;
+        };
+
+        apiClient
+            .post("/client/v1/order/refresh-cart-items", {
+                items: items.map((item) => ({
+                    asset_id: item.assetId,
+                    quantity: item.quantity,
+                    from_collection_id: item.fromCollection,
+                })),
+            })
+            .then((response) => {
+                if (cancelled) return;
+                const refreshed = Array.isArray(response.data?.data) ? response.data.data : [];
+                let changedCount = 0;
+                refreshed.forEach((row: any) => {
+                    const existing = items.find((item) => item.assetId === row.asset_id);
+                    if (!existing) return;
+                    const asset = row.asset;
+                    if (!asset) {
+                        updateItemDetails(row.asset_id, {
+                            availableQuantity: 0,
+                            maintenanceDecision: undefined,
+                        });
+                        changedCount += 1;
+                        return;
+                    }
+                    if (
+                        existing.condition !== asset.condition ||
+                        existing.refurbDaysEstimate !== asset.refurb_days_estimate ||
+                        existing.availableQuantity !== Number(asset.available_quantity || 0)
+                    ) {
+                        changedCount += 1;
+                    }
+                    updateItemDetails(row.asset_id, {
+                        assetName: asset.name,
+                        availableQuantity: Number(asset.available_quantity || 0),
+                        condition: asset.condition || "GREEN",
+                        conditionNotes: asset.condition_notes || undefined,
+                        conditionImages: normalizeImages(asset.condition_photos),
+                        refurbDaysEstimate: asset.refurb_days_estimate ?? undefined,
+                        image:
+                            asset.on_display_image ||
+                            normalizeImages(asset.images)[0]?.url ||
+                            existing.image,
+                    });
+                });
+                if (changedCount > 0) {
+                    toast.info("Cart condition data was refreshed");
+                }
+                setCartRefreshDone(true);
+            })
+            .catch(() => {
+                if (!cancelled) setCartRefreshDone(true);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isInitialized, cartRefreshDone, items, updateItemDetails]);
 
     // Fetch resolved feasibility config (platform default + company override).
     // Loaded before the feasibility query so the composer has a timezone
@@ -618,7 +710,12 @@ function CheckoutPageInner() {
             case "mode":
                 return pendingMode !== null;
             case "cart":
-                return items.length > 0;
+                return (
+                    items.length > 0 &&
+                    missingOrangeDecisions.length === 0 &&
+                    missingRedAcknowledgements.length === 0 &&
+                    repairChoiceBlockedItems.length === 0
+                );
             case "installation": {
                 const deliveryComplete = Boolean(
                     formData.requested_delivery_date &&
@@ -693,6 +790,12 @@ function CheckoutPageInner() {
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)
             ) {
                 toast.error("Please enter a valid email address");
+            } else if (currentStep === "cart" && missingOrangeDecisions.length > 0) {
+                toast.error("Select a decision for each ORANGE item");
+            } else if (currentStep === "cart" && missingRedAcknowledgements.length > 0) {
+                toast.error("Acknowledge repair before event for each RED item");
+            } else if (currentStep === "cart" && repairChoiceBlockedItems.length > 0) {
+                toast.error("Repair before event is unavailable until refurb days are recorded");
             } else if (currentStep === "mode") {
                 toast.error("Please pick a delivery mode to continue");
             } else {
@@ -779,6 +882,14 @@ function CheckoutPageInner() {
     const handleSubmit = async () => {
         if (missingOrangeDecisions.length > 0) {
             toast.error("Select a maintenance decision for all ORANGE items before submitting");
+            return;
+        }
+        if (missingRedAcknowledgements.length > 0) {
+            toast.error("Acknowledge repair before event for all RED items before submitting");
+            return;
+        }
+        if (repairChoiceBlockedItems.length > 0) {
+            toast.error("Repair before event is unavailable until refurb days are recorded");
             return;
         }
         if (availabilityIssues.length > 0) {
@@ -1246,29 +1357,209 @@ function CheckoutPageInner() {
                                                                 <span>{item.weight} kg each</span>
                                                             </div>
                                                             {item.condition === "RED" && (
-                                                                <div className="mt-1 space-y-1">
-                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
-                                                                        <AlertCircle className="h-3 w-3" />{" "}
-                                                                        RED
-                                                                    </span>
-                                                                    {item.conditionNotes && (
-                                                                        <p className="text-xs text-red-600 line-clamp-2">
-                                                                            {item.conditionNotes}
+                                                                <div className="mt-2 space-y-2 rounded-md border border-red-200 bg-red-50 p-3">
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                                            <AlertCircle className="h-3 w-3" />{" "}
+                                                                            RED
+                                                                        </span>
+                                                                        <span className="text-xs text-red-700">
+                                                                            Repair before event is
+                                                                            required.
+                                                                        </span>
+                                                                    </div>
+                                                                    {!item.refurbDaysEstimate && (
+                                                                        <p className="text-xs text-red-700">
+                                                                            Repair cannot be
+                                                                            scheduled until refurb
+                                                                            days are recorded.
                                                                         </p>
                                                                     )}
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant={
+                                                                                item.maintenanceDecision ===
+                                                                                "FIX_IN_ORDER"
+                                                                                    ? "default"
+                                                                                    : "outline"
+                                                                            }
+                                                                            disabled={
+                                                                                !item.refurbDaysEstimate
+                                                                            }
+                                                                            onClick={() =>
+                                                                                updateItemMaintenanceDecision(
+                                                                                    item.assetId,
+                                                                                    "FIX_IN_ORDER"
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Repair before event
+                                                                        </Button>
+                                                                    </div>
+                                                                    <details className="text-xs text-red-700">
+                                                                        <summary className="cursor-pointer font-medium">
+                                                                            Condition details
+                                                                        </summary>
+                                                                        <div className="mt-2 space-y-2">
+                                                                            {item.conditionNotes && (
+                                                                                <p>
+                                                                                    {
+                                                                                        item.conditionNotes
+                                                                                    }
+                                                                                </p>
+                                                                            )}
+                                                                            {item.conditionImages
+                                                                                ?.length ? (
+                                                                                <div className="grid grid-cols-3 gap-2">
+                                                                                    {item.conditionImages
+                                                                                        .slice(0, 6)
+                                                                                        .map(
+                                                                                            (
+                                                                                                photo,
+                                                                                                photoIndex
+                                                                                            ) => (
+                                                                                                <div
+                                                                                                    key={`${photo.url}-${photoIndex}`}
+                                                                                                    className="relative aspect-square overflow-hidden rounded-md border border-red-200 bg-white"
+                                                                                                >
+                                                                                                    <Image
+                                                                                                        src={
+                                                                                                            photo.url
+                                                                                                        }
+                                                                                                        alt={`Condition photo ${photoIndex + 1}`}
+                                                                                                        fill
+                                                                                                        className="object-cover"
+                                                                                                    />
+                                                                                                </div>
+                                                                                            )
+                                                                                        )}
+                                                                                </div>
+                                                                            ) : null}
+                                                                            {item.refurbDaysEstimate && (
+                                                                                <p>
+                                                                                    Est. repair:{" "}
+                                                                                    {
+                                                                                        item.refurbDaysEstimate
+                                                                                    }{" "}
+                                                                                    days
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </details>
                                                                 </div>
                                                             )}
                                                             {item.condition === "ORANGE" && (
-                                                                <div className="mt-1 space-y-1">
-                                                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                                                        <AlertCircle className="h-3 w-3" />{" "}
-                                                                        ORANGE
-                                                                    </span>
-                                                                    {item.conditionNotes && (
-                                                                        <p className="text-xs text-amber-600 line-clamp-2">
-                                                                            {item.conditionNotes}
+                                                                <div className="mt-2 space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                                            <AlertCircle className="h-3 w-3" />{" "}
+                                                                            ORANGE
+                                                                        </span>
+                                                                        <span className="text-xs text-amber-700">
+                                                                            Choose how this item
+                                                                            should be handled.
+                                                                        </span>
+                                                                    </div>
+                                                                    {!item.refurbDaysEstimate && (
+                                                                        <p className="text-xs text-amber-700">
+                                                                            Repair before event is
+                                                                            unavailable until refurb
+                                                                            days are recorded.
                                                                         </p>
                                                                     )}
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant={
+                                                                                item.maintenanceDecision ===
+                                                                                "FIX_IN_ORDER"
+                                                                                    ? "default"
+                                                                                    : "outline"
+                                                                            }
+                                                                            disabled={
+                                                                                !item.refurbDaysEstimate
+                                                                            }
+                                                                            onClick={() =>
+                                                                                updateItemMaintenanceDecision(
+                                                                                    item.assetId,
+                                                                                    "FIX_IN_ORDER"
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Repair before event
+                                                                        </Button>
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant={
+                                                                                item.maintenanceDecision ===
+                                                                                "USE_AS_IS"
+                                                                                    ? "default"
+                                                                                    : "outline"
+                                                                            }
+                                                                            onClick={() =>
+                                                                                updateItemMaintenanceDecision(
+                                                                                    item.assetId,
+                                                                                    "USE_AS_IS"
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Accept current condition
+                                                                        </Button>
+                                                                    </div>
+                                                                    <details className="text-xs text-amber-700">
+                                                                        <summary className="cursor-pointer font-medium">
+                                                                            Condition details
+                                                                        </summary>
+                                                                        <div className="mt-2 space-y-2">
+                                                                            {item.conditionNotes && (
+                                                                                <p>
+                                                                                    {
+                                                                                        item.conditionNotes
+                                                                                    }
+                                                                                </p>
+                                                                            )}
+                                                                            {item.conditionImages
+                                                                                ?.length ? (
+                                                                                <div className="grid grid-cols-3 gap-2">
+                                                                                    {item.conditionImages
+                                                                                        .slice(0, 6)
+                                                                                        .map(
+                                                                                            (
+                                                                                                photo,
+                                                                                                photoIndex
+                                                                                            ) => (
+                                                                                                <div
+                                                                                                    key={`${photo.url}-${photoIndex}`}
+                                                                                                    className="relative aspect-square overflow-hidden rounded-md border border-amber-200 bg-white"
+                                                                                                >
+                                                                                                    <Image
+                                                                                                        src={
+                                                                                                            photo.url
+                                                                                                        }
+                                                                                                        alt={`Condition photo ${photoIndex + 1}`}
+                                                                                                        fill
+                                                                                                        className="object-cover"
+                                                                                                    />
+                                                                                                </div>
+                                                                                            )
+                                                                                        )}
+                                                                                </div>
+                                                                            ) : null}
+                                                                            {item.refurbDaysEstimate && (
+                                                                                <p>
+                                                                                    Est. repair:{" "}
+                                                                                    {
+                                                                                        item.refurbDaysEstimate
+                                                                                    }{" "}
+                                                                                    days
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </details>
                                                                 </div>
                                                             )}
                                                             {item.fromCollectionName && (
@@ -2387,15 +2678,6 @@ function CheckoutPageInner() {
                                         </div>
                                     )}
 
-                                    {orangeItems.length > 0 ? (
-                                        <MaintenanceDecisionCenter
-                                            items={orangeItems}
-                                            onDecisionChange={(assetId, decision) =>
-                                                updateItemMaintenanceDecision(assetId, decision)
-                                            }
-                                        />
-                                    ) : null}
-
                                     {/* Order Summary */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         {/* Items */}
@@ -2432,6 +2714,42 @@ function CheckoutPageInner() {
                                                                     <p className="text-xs text-muted-foreground font-mono">
                                                                         Qty: {item.quantity}
                                                                     </p>
+                                                                    {(item.condition === "ORANGE" ||
+                                                                        item.condition ===
+                                                                            "RED") && (
+                                                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                                                                            <span
+                                                                                className={
+                                                                                    item.condition ===
+                                                                                    "RED"
+                                                                                        ? "rounded-full bg-red-100 px-1.5 py-0.5 font-medium text-red-700"
+                                                                                        : "rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700"
+                                                                                }
+                                                                            >
+                                                                                {item.condition}
+                                                                            </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {item.maintenanceDecision ===
+                                                                                "FIX_IN_ORDER"
+                                                                                    ? "Repair before event"
+                                                                                    : item.maintenanceDecision ===
+                                                                                        "USE_AS_IS"
+                                                                                      ? "Accept current condition"
+                                                                                      : "Decision missing"}
+                                                                            </span>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="font-medium text-primary underline-offset-2 hover:underline"
+                                                                                onClick={() =>
+                                                                                    setCurrentStep(
+                                                                                        "cart"
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Edit
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             {itemHits.length > 0 && (
@@ -2910,6 +3228,8 @@ function CheckoutPageInner() {
                                         isSubmitting ||
                                         availabilityIssues.length > 0 ||
                                         missingOrangeDecisions.length > 0 ||
+                                        missingRedAcknowledgements.length > 0 ||
+                                        repairChoiceBlockedItems.length > 0 ||
                                         (redItems.length > 0 &&
                                             !hasCheckedMaintenanceFeasibility) ||
                                         // Orange-FIX decisions can push the earliest feasible
