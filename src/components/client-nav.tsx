@@ -21,6 +21,8 @@ import { useCart } from "@/contexts/cart-context";
 import { useCompany } from "@/hooks/use-companies";
 import { useToken } from "@/lib/auth/use-token";
 import { usePlatform } from "@/contexts/platform-context";
+import { hasAnyPermission } from "@/lib/auth/permissions";
+import { COMPANY_PERMISSIONS } from "@/app/company/company-gate";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -30,6 +32,7 @@ import {
     ShoppingCart,
     FileText,
     Box,
+    Building2,
     Calendar,
     Lock,
     ClipboardList,
@@ -55,6 +58,15 @@ const clientNav = [
         href: "/self-pickups",
         icon: PackageCheck,
         featureFlag: "enable_self_pickup",
+    },
+    {
+        // Company Back Office — visible only to company managers (CLIENT users
+        // holding a company:* permission) when the feature flag is on.
+        name: "Company",
+        href: "/company",
+        icon: Building2,
+        featureFlag: "enable_company_backoffice",
+        requiresCompanyAccess: true,
     },
     { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
     {
@@ -111,8 +123,18 @@ function ClientNavInner({ children }: ClientNavProps) {
 
     const features = platform?.features || {};
     const visibleNav = clientNav.filter((item) => {
-        if ("featureFlag" in item && item.featureFlag) {
-            return features[item.featureFlag] !== false;
+        // Feature-flag gate: hide only when the flag is explicitly off.
+        if ("featureFlag" in item && item.featureFlag && features[item.featureFlag] === false) {
+            return false;
+        }
+        // Permission gate (Company Back Office): hide unless the user holds a
+        // company:* permission. Double-gate with the flag above.
+        if (
+            "requiresCompanyAccess" in item &&
+            item.requiresCompanyAccess &&
+            !hasAnyPermission(user, COMPANY_PERMISSIONS)
+        ) {
+            return false;
         }
         return true;
     });

@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     useClientSelfPickupDetail,
@@ -10,6 +10,12 @@ import {
     useClientDeclineSelfPickupQuote,
     useTriggerSelfPickupReturn,
 } from "@/hooks/use-self-pickups";
+import {
+    useCompanyApproveSelfPickupQuote,
+    useCompanyDeclineSelfPickupQuote,
+} from "@/hooks/use-company";
+import { useToken } from "@/lib/auth/use-token";
+import { hasPermission } from "@/lib/auth/permissions";
 import { usePlatform } from "@/contexts/platform-context";
 import { ClientNav } from "@/components/client-nav";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +154,14 @@ export default function ClientSelfPickupDetailPage({
 }) {
     const { id } = use(params);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    // Company Back Office: a manager opening a colleague's pickup arrives with
+    // ?company=1 — fetch from the company endpoint, gate actions on
+    // company:manage_quotes, show attribution, and route back to /company.
+    const isCompanyView = searchParams.get("company") === "1";
+    const { user } = useToken();
+    const canManageCompanyQuotes = hasPermission(user, "company:manage_quotes");
+    const pickupsBackHref = isCompanyView ? "/company/orders" : "/self-pickups";
     const { platform, isLoading: platformLoading } = usePlatform();
     const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
 
@@ -158,9 +172,13 @@ export default function ClientSelfPickupDetailPage({
         }
     }, [platformLoading, selfPickupEnabled, router]);
 
-    const { data: pickupData, isLoading } = useClientSelfPickupDetail(id);
+    const { data: pickupData, isLoading } = useClientSelfPickupDetail(id, {
+        company: isCompanyView,
+    });
     const approveQuote = useClientApproveSelfPickupQuote();
     const declineQuote = useClientDeclineSelfPickupQuote();
+    const companyApproveQuote = useCompanyApproveSelfPickupQuote();
+    const companyDeclineQuote = useCompanyDeclineSelfPickupQuote();
     const triggerReturn = useTriggerSelfPickupReturn();
 
     const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -231,15 +249,25 @@ export default function ClientSelfPickupDetailPage({
                         className="flex items-center gap-2 text-sm text-muted-foreground mb-6 sm:mb-8 font-mono"
                     >
                         <Link
-                            href="/self-pickups"
+                            href={pickupsBackHref}
                             className="hover:text-foreground transition-colors flex items-center gap-1"
                         >
                             <ArrowLeft className="w-3 h-3" />
-                            My Pickups
+                            {isCompanyView ? "Company" : "My Pickups"}
                         </Link>
                         <span>/</span>
                         <span className="text-foreground truncate">{pickup.self_pickup_id}</span>
                     </motion.div>
+
+                    {/* Company Back Office attribution banner */}
+                    {isCompanyView && (
+                        <div className="mb-6 rounded-md border border-primary/30 bg-primary/5 px-4 py-3 font-mono text-xs uppercase tracking-wide text-foreground/80">
+                            Viewing as company manager
+                            {pickup?.created_by_user?.name
+                                ? ` · created by ${pickup.created_by_user.name}`
+                                : ""}
+                        </div>
+                    )}
 
                     {/* Status Hero */}
                     <motion.div
@@ -343,32 +371,50 @@ export default function ClientSelfPickupDetailPage({
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* MAIN content (left, 2 cols) */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Quote Review — QUOTED only, and never when NO_COST */}
-                            {isQuoted && !isNoCost && pricing && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                >
-                                    <SelfPickupQuoteReviewSection
-                                        pickup={pickup}
-                                        pricing={pricing}
-                                        lineItems={lineItems}
-                                        onApprove={async (poNumber: string) => {
-                                            await approveQuote.mutateAsync({
-                                                id: pickup.id,
-                                                po_number: poNumber,
-                                            });
-                                        }}
-                                        onDecline={async (reason: string) => {
-                                            await declineQuote.mutateAsync({
-                                                id: pickup.id,
-                                                decline_reason: reason,
-                                            });
-                                        }}
-                                    />
-                                </motion.div>
-                            )}
+                            {/* Quote Review — QUOTED only, never NO_COST. In company view the
+                            actions render only for a manager with company:manage_quotes. */}
+                            {isQuoted &&
+                                !isNoCost &&
+                                pricing &&
+                                (!isCompanyView || canManageCompanyQuotes) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                    >
+                                        <SelfPickupQuoteReviewSection
+                                            pickup={pickup}
+                                            pricing={pricing}
+                                            lineItems={lineItems}
+                                            onApprove={async (poNumber: string) => {
+                                                if (isCompanyView) {
+                                                    await companyApproveQuote.mutateAsync({
+                                                        id: pickup.id,
+                                                        po_number: poNumber,
+                                                    });
+                                                } else {
+                                                    await approveQuote.mutateAsync({
+                                                        id: pickup.id,
+                                                        po_number: poNumber,
+                                                    });
+                                                }
+                                            }}
+                                            onDecline={async (reason: string) => {
+                                                if (isCompanyView) {
+                                                    await companyDeclineQuote.mutateAsync({
+                                                        id: pickup.id,
+                                                        decline_reason: reason,
+                                                    });
+                                                } else {
+                                                    await declineQuote.mutateAsync({
+                                                        id: pickup.id,
+                                                        decline_reason: reason,
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </motion.div>
+                                )}
 
                             {/* Status Timeline */}
                             {statusHistory.length > 0 && (

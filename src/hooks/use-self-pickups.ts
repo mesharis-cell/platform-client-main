@@ -30,11 +30,17 @@ export function useClientSelfPickups(
     });
 }
 
-export function useClientSelfPickupDetail(id: string | null) {
+export function useClientSelfPickupDetail(id: string | null, opts: { company?: boolean } = {}) {
+    const company = !!opts.company;
     return useQuery({
-        queryKey: selfPickupKeys.detail(id),
+        // Distinct key per scope (owner vs company) so a peer's pickup can't
+        // leak into the owner cache for the same id.
+        queryKey: [...selfPickupKeys.detail(id), company],
         queryFn: async () => {
-            const { data } = await apiClient.get(`/client/v1/self-pickup/${id}`);
+            const path = company
+                ? `/client/v1/company/self-pickup/${id}`
+                : `/client/v1/self-pickup/${id}`;
+            const { data } = await apiClient.get(path);
             return data;
         },
         enabled: !!id,

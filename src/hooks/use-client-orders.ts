@@ -155,13 +155,19 @@ export function useClientOrders(params: ClientOrderListParams = {}) {
 /**
  * Hook to fetch single order detail
  */
-export function useClientOrderDetail(orderId: string | null) {
+export function useClientOrderDetail(orderId: string | null, opts: { company?: boolean } = {}) {
+    const company = !!opts.company;
     return useQuery({
-        queryKey: ["client-order-detail", orderId],
+        // Distinct key per scope so a peer's order (company view) can't leak
+        // into the owner cache for the same id.
+        queryKey: ["client-order-detail", orderId, company],
         queryFn: async () => {
             try {
                 if (!orderId) return null;
-                const response = await apiClient.get(`/client/v1/order/${orderId}`);
+                const path = company
+                    ? `/client/v1/company/order/${orderId}`
+                    : `/client/v1/order/${orderId}`;
+                const response = await apiClient.get(path);
                 return response.data;
             } catch (error) {
                 throwApiError(error);

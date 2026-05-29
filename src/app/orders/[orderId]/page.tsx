@@ -7,7 +7,7 @@
 
 import { use, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     CheckCircle2,
     Package,
@@ -38,6 +38,9 @@ import {
     useDownloadCostEstimate,
     useDownloadInvoice,
 } from "@/hooks/use-client-orders";
+import { useCompanyApproveOrderQuote, useCompanyDeclineOrderQuote } from "@/hooks/use-company";
+import { useToken } from "@/lib/auth/use-token";
+import { hasPermission } from "@/lib/auth/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ClientNav } from "@/components/client-nav";
@@ -67,10 +70,22 @@ const costEstimatedStatus = [
 export default function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {
     const { orderId } = use(params);
     const router = useRouter();
-    const { data: orderData, isLoading } = useClientOrderDetail(orderId);
+    const searchParams = useSearchParams();
+    // Company Back Office: a manager opening a colleague's order arrives with
+    // ?company=1. The page fetches from the company endpoint, gates the
+    // approve/decline actions on company:manage_quotes, and shows attribution.
+    const isCompanyView = searchParams.get("company") === "1";
+    const { user } = useToken();
+    const canManageCompanyQuotes = hasPermission(user, "company:manage_quotes");
+    const { data: orderData, isLoading } = useClientOrderDetail(orderId, {
+        company: isCompanyView,
+    });
     const order = orderData?.data;
     const approveQuote = useClientApproveQuote();
     const declineQuote = useClientDeclineQuote();
+    const companyApproveQuote = useCompanyApproveOrderQuote();
+    const companyDeclineQuote = useCompanyDeclineOrderQuote();
+    const ordersBackHref = isCompanyView ? "/company/orders" : "/my-orders";
     const downloadInvoice = useDownloadInvoice();
     const downloadCostEstimate = useDownloadCostEstimate();
     const { platform } = usePlatform();
@@ -144,7 +159,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                             Order {orderId} does not exist or you don't have access to it.
                         </p>
                         <Button
-                            onClick={() => router.push("/my-orders")}
+                            onClick={() => router.push(ordersBackHref)}
                             variant="outline"
                             className="gap-2 font-mono"
                         >
@@ -236,14 +251,24 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         className="flex items-center gap-2 text-sm text-muted-foreground mb-8 font-mono"
                     >
                         <button
-                            onClick={() => router.push("/orders")}
+                            onClick={() => router.push(ordersBackHref)}
                             className="hover:text-foreground transition-colors"
                         >
-                            Orders
+                            {isCompanyView ? "Company Orders" : "Orders"}
                         </button>
                         <span>/</span>
                         <span className="text-foreground">{order?.order_id}</span>
                     </motion.div>
+
+                    {/* Company Back Office attribution banner — only when a
+                    manager is viewing a colleague's order. */}
+                    {isCompanyView && (
+                        <div className="mb-6 rounded-md border border-primary/30 bg-primary/5 px-4 py-3 font-mono text-xs uppercase tracking-wide text-foreground/80 flex items-center gap-2">
+                            <User className="h-4 w-4 text-primary" />
+                            Viewing as company manager
+                            {order?.user?.name ? ` · created by ${order.user.name}` : ""}
+                        </div>
+                    )}
 
                     {/* Status Hero */}
                     <motion.div
@@ -441,32 +466,64 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* NEW: Hybrid Pricing Quote Section */}
-                            {isQuoted && order?.order_pricing && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                    data-testid="client-order-quote-review"
-                                >
-                                    <QuoteReviewSection
+                            {/* Actionable quote review. In company view it renders only for a
+                            manager with company:manage_quotes; otherwise (read-only manager)
+                            the quote shows as a non-actionable breakdown below. */}
+                            {isQuoted &&
+                                order?.order_pricing &&
+                                (!isCompanyView || canManageCompanyQuotes) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        data-testid="client-order-quote-review"
+                                    >
+                                        <QuoteReviewSection
+                                            order={order}
+                                            pricing={order.order_pricing}
+                                            lineItems={order.line_items || []}
+                                            onApprove={async (poNumber: string) => {
+                                                if (isCompanyView) {
+                                                    await companyApproveQuote.mutateAsync({
+                                                        id: order.id,
+                                                        po_number: poNumber,
+                                                    });
+                                                } else {
+                                                    await approveQuote.mutateAsync({
+                                                        orderId: order.id,
+                                                        poNumber,
+                                                    });
+                                                }
+                                            }}
+                                            onDecline={async (reason: string) => {
+                                                if (isCompanyView) {
+                                                    await companyDeclineQuote.mutateAsync({
+                                                        id: order.id,
+                                                        decline_reason: reason,
+                                                    });
+                                                } else {
+                                                    await declineQuote.mutateAsync({
+                                                        orderId: order.id,
+                                                        declineReason: reason,
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </motion.div>
+                                )}
+
+                            {/* Read-only quote for a company manager without
+                            manage_quotes — they can see the quote but not act. */}
+                            {isQuoted &&
+                                order?.order_pricing &&
+                                isCompanyView &&
+                                !canManageCompanyQuotes && (
+                                    <PricingBreakdown
                                         order={order}
                                         pricing={order.order_pricing}
                                         lineItems={order.line_items || []}
-                                        onApprove={async (poNumber: string) => {
-                                            await approveQuote.mutateAsync({
-                                                orderId: order.id,
-                                                poNumber,
-                                            });
-                                        }}
-                                        onDecline={async (reason: string) => {
-                                            await declineQuote.mutateAsync({
-                                                orderId: order.id,
-                                                declineReason: reason,
-                                            });
-                                        }}
                                     />
-                                </motion.div>
-                            )}
+                                )}
 
                             {/* Quote Summary for Approved/Declined/Confirmed States */}
                             {(isApproved || isDeclined || isConfirmed) && order?.order_pricing && (
@@ -1258,7 +1315,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     >
                         <Button
                             variant="outline"
-                            onClick={() => router.push("/my-orders")}
+                            onClick={() => router.push(ordersBackHref)}
                             className="font-mono gap-2"
                         >
                             <ArrowLeft className="w-4 h-4" />

@@ -151,6 +151,15 @@ export type Permission =
     | "conditions:*"
     | "analytics:*"
     | "system:*"
+    // Company Back Office — granted to CLIENT users acting as company managers
+    | "company:view_dashboard"
+    | "company:view_all_orders"
+    | "company:manage_quotes"
+    | "company:view_estimates"
+    | "company:edit_assets"
+    | "company:view_users"
+    | "company:export"
+    | "company:*"
     | string; // Allow custom permissions
 
 // User object returned from API
