@@ -12,6 +12,7 @@ import {
     useEffect,
     useMemo,
     useCallback,
+    useRef,
     ReactNode,
 } from "react";
 import {
@@ -77,9 +78,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsInitialized(true);
     }, []);
 
-    // Save to localStorage whenever items change (skip on initial mount)
+    // When an `items` change originates from another tab's storage event,
+    // we MUST NOT re-persist it here — doing so re-broadcasts the change,
+    // which the originating tab's listener picks up and re-applies, creating
+    // a feedback loop that resurrects just-removed items (the "deleted item
+    // pops right back when multiple tabs are open" bug). This ref marks such
+    // remote-origin updates so the save effect skips exactly one write.
+    const remoteSyncRef = useRef(false);
+
+    // Save to localStorage whenever items change (skip on initial mount, and
+    // skip echoing back a change that came from another tab).
     useEffect(() => {
         if (!isInitialized) return;
+
+        if (remoteSyncRef.current) {
+            remoteSyncRef.current = false;
+            return;
+        }
 
         if (items.length > 0) {
             saveCart(items);
@@ -88,16 +103,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    // Cross-tab synchronization (silent — no toast to avoid loops)
+    // Cross-tab synchronization (silent — no toast to avoid loops). Applies
+    // the other tab's cart to this tab WITHOUT re-persisting (see remoteSyncRef).
     useEffect(() => {
         const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === "asset-cart-v2" && e.newValue) {
+            if (e.key !== "asset-cart-v2") return;
+            if (e.newValue) {
                 try {
                     const cart = JSON.parse(e.newValue);
-                    setItems(cart.items);
+                    remoteSyncRef.current = true;
+                    setItems(Array.isArray(cart.items) ? cart.items : []);
                 } catch {
                     // ignore parse errors from other tabs
                 }
+            } else {
+                // Cart was cleared/emptied in another tab — mirror that here
+                // instead of leaving a stale item visible.
+                remoteSyncRef.current = true;
+                setItems([]);
             }
         };
 
