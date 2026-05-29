@@ -63,6 +63,7 @@ export default function CompanyOrdersPage() {
                     icon={ShoppingCart}
                     title="Company Orders"
                     description="Every order across your company. Open one to review and approve its quote."
+                    breadcrumbs={[{ label: "Company", href: "/company" }, { label: "Orders" }]}
                 />
                 <div className="border-b border-border bg-card px-8 py-4 flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-56">

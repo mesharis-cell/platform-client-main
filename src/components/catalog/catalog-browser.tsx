@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import type { Breadcrumb } from "@/components/client-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +39,7 @@ export type CatalogBrowserProps = {
     showCounts?: boolean;
     defaultViewType?: "all" | "asset" | "collection";
     renderCard?: (item: CatalogItem) => ReactNode;
+    breadcrumbs?: Breadcrumb[];
 };
 
 export function CatalogBrowser({
@@ -46,6 +49,7 @@ export function CatalogBrowser({
     showCounts = true,
     defaultViewType = "all",
     renderCard,
+    breadcrumbs,
 }: CatalogBrowserProps) {
     const { user } = useToken();
     const [searchQuery, setSearchQuery] = useState("");
@@ -104,6 +108,40 @@ export function CatalogBrowser({
         <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
             <div className="border-b border-border bg-card/70 backdrop-blur-sm">
                 <div className="mx-auto max-w-7xl px-8 py-10">
+                    {breadcrumbs && breadcrumbs.length > 0 && (
+                        <nav
+                            aria-label="Breadcrumb"
+                            className="mb-4 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground"
+                        >
+                            {breadcrumbs.map((crumb, i) => {
+                                const isLast = i === breadcrumbs.length - 1;
+                                return (
+                                    <span
+                                        key={`${crumb.label}-${i}`}
+                                        className="flex items-center gap-1.5"
+                                    >
+                                        {crumb.href && !isLast ? (
+                                            <Link
+                                                href={crumb.href}
+                                                className="transition-colors hover:text-foreground"
+                                            >
+                                                {crumb.label}
+                                            </Link>
+                                        ) : (
+                                            <span
+                                                className={isLast ? "text-foreground" : undefined}
+                                            >
+                                                {crumb.label}
+                                            </span>
+                                        )}
+                                        {!isLast && (
+                                            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                                        )}
+                                    </span>
+                                );
+                            })}
+                        </nav>
+                    )}
                     <Badge className="mb-4">{badgeLabel}</Badge>
                     <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
                     <p className="mt-3 max-w-2xl text-muted-foreground">{description}</p>

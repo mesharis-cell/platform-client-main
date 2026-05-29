@@ -108,6 +108,11 @@ export default function CompanyAssetEditPage({ params }: { params: Promise<{ id:
                     icon={Boxes}
                     title="Edit Asset"
                     description="Update the presentation details shown to your team and on documents."
+                    breadcrumbs={[
+                        { label: "Company", href: "/company" },
+                        { label: "Assets", href: "/company/assets" },
+                        { label: "Edit" },
+                    ]}
                 />
                 <div className="px-8 py-6">
                     <Button

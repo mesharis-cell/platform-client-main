@@ -43,6 +43,8 @@ import {
     LifeBuoy,
     Menu,
     X,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -103,6 +105,26 @@ function ClientNavInner({ children }: ClientNavProps) {
     const { platform } = usePlatform();
     const { data: company, isLoading } = useCompany(user?.company_id || undefined);
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    // Desktop sidebar fold (icon-only rail). Persisted; mobile uses the drawer
+    // and ignores this. Collapsed styles are all md:-gated so the mobile drawer
+    // stays full-width with labels.
+    const [collapsed, setCollapsed] = useState(false);
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        // eslint-disable-next-line creatr/no-browser-globals-in-ssr
+        setCollapsed(localStorage.getItem("client-nav-collapsed") === "1");
+    }, []);
+    const toggleCollapsed = () =>
+        setCollapsed((c) => {
+            const next = !c;
+            try {
+                // eslint-disable-next-line creatr/no-browser-globals-in-ssr
+                localStorage.setItem("client-nav-collapsed", next ? "1" : "0");
+            } catch {
+                /* ignore */
+            }
+            return next;
+        });
 
     // Auto-close the mobile drawer on route change so the user lands on the
     // new page without having to dismiss the menu manually.
@@ -205,7 +227,9 @@ function ClientNavInner({ children }: ClientNavProps) {
                 className={cn(
                     "w-72 border-r border-border bg-background md:bg-muted/30 flex flex-col overflow-hidden z-50",
                     "fixed top-0 left-0 h-screen transition-transform duration-200 ease-out",
-                    "md:static md:sticky md:top-0 md:shrink-0 md:translate-x-0 md:transition-none",
+                    "md:static md:sticky md:top-0 md:shrink-0 md:translate-x-0 md:transition-[width] md:duration-200",
+                    // Desktop fold: icon-only rail when collapsed (mobile stays w-72).
+                    collapsed ? "md:w-[72px]" : "md:w-72",
                     mobileNavOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
@@ -232,16 +256,36 @@ function ClientNavInner({ children }: ClientNavProps) {
                 />
 
                 {/* Zone markers */}
-                <div className="absolute top-4 left-4 text-[10px] font-mono text-muted-foreground/40 tracking-[0.2em] uppercase z-0">
+                <div
+                    className={cn(
+                        "absolute top-4 left-4 text-[10px] font-mono text-muted-foreground/40 tracking-[0.2em] uppercase z-0",
+                        collapsed && "md:hidden"
+                    )}
+                >
                     CLIENT-01
                 </div>
-                <div className="absolute top-4 right-4 text-[10px] font-mono text-muted-foreground/40 tracking-[0.2em] uppercase z-0">
+                <div
+                    className={cn(
+                        "absolute top-4 right-4 text-[10px] font-mono text-muted-foreground/40 tracking-[0.2em] uppercase z-0",
+                        collapsed && "md:hidden"
+                    )}
+                >
                     SEC-L1
                 </div>
 
                 {/* Header */}
-                <div className="relative z-10 p-6 pb-4 border-b border-border">
-                    <div className="flex items-center gap-3 mb-2">
+                <div
+                    className={cn(
+                        "relative z-10 p-6 pb-4 border-b border-border",
+                        collapsed && "md:px-3"
+                    )}
+                >
+                    <div
+                        className={cn(
+                            "flex items-center gap-3 mb-2",
+                            collapsed && "md:justify-center md:gap-0"
+                        )}
+                    >
                         {isLoading ? (
                             <Skeleton className="h-10 w-10 rounded-lg" />
                         ) : company?.data?.settings?.branding?.logo_url ? (
@@ -264,7 +308,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 <div className="absolute inset-0 bg-primary/5 animate-pulse" />
                             </div>
                         )}
-                        <div>
+                        <div className={cn(collapsed && "md:hidden")}>
                             {isLoading ? (
                                 <>
                                     <Skeleton className="h-5 w-32 mb-1" />
@@ -283,6 +327,28 @@ function ClientNavInner({ children }: ClientNavProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* Desktop fold toggle (hidden on mobile — the drawer has its own controls) */}
+                <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+                    className={cn(
+                        "relative z-10 hidden md:flex items-center gap-2 mx-3 mt-2 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+                        collapsed ? "justify-center" : "justify-end"
+                    )}
+                >
+                    {collapsed ? (
+                        <PanelLeftOpen className="h-4 w-4 shrink-0" />
+                    ) : (
+                        <>
+                            <span className="text-[10px] font-mono uppercase tracking-wide">
+                                Collapse
+                            </span>
+                            <PanelLeftClose className="h-4 w-4 shrink-0" />
+                        </>
+                    )}
+                </button>
 
                 {/* Navigation Links */}
                 <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto relative z-10">
@@ -305,8 +371,10 @@ function ClientNavInner({ children }: ClientNavProps) {
                                     <Link
                                         key={item.href}
                                         href={item.href}
+                                        title={collapsed ? item.name : undefined}
                                         className={cn(
                                             "group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all relative overflow-hidden",
+                                            collapsed && "md:justify-center md:px-0",
                                             isActive
                                                 ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                                                 : "text-foreground/70 hover:text-foreground hover:bg-muted"
@@ -317,7 +385,12 @@ function ClientNavInner({ children }: ClientNavProps) {
                                         )}
 
                                         <Icon className="h-4 w-4 relative z-10 shrink-0" />
-                                        <span className="flex-1 relative z-10 uppercase tracking-wide text-xs">
+                                        <span
+                                            className={cn(
+                                                "flex-1 relative z-10 uppercase tracking-wide text-xs",
+                                                collapsed && "md:hidden"
+                                            )}
+                                        >
                                             {item.name}
                                         </span>
 
@@ -338,20 +411,34 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 href="/docs"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
+                                title={collapsed ? "Help & Guides" : undefined}
+                                className={cn(
+                                    "group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all text-muted-foreground hover:text-foreground hover:bg-muted",
+                                    collapsed && "md:justify-center md:px-0"
+                                )}
                             >
                                 <BookOpen className="h-4 w-4 shrink-0" />
-                                <span className="flex-1 uppercase tracking-wide text-xs">
+                                <span
+                                    className={cn(
+                                        "flex-1 uppercase tracking-wide text-xs",
+                                        collapsed && "md:hidden"
+                                    )}
+                                >
                                     Help &amp; Guides
                                 </span>
-                                <ExternalLink className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                <ExternalLink
+                                    className={cn(
+                                        "h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity",
+                                        collapsed && "md:hidden"
+                                    )}
+                                />
                             </a>
                         </>
                     )}
                 </nav>
 
                 {/* Divider */}
-                <div className="relative z-10 px-6 py-2">
+                <div className={cn("relative z-10 px-6 py-2", collapsed && "md:hidden")}>
                     <div className="flex items-center gap-2">
                         <div className="h-px flex-1 bg-border" />
                         <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] uppercase">
@@ -362,12 +449,12 @@ function ClientNavInner({ children }: ClientNavProps) {
                 </div>
 
                 {/* User Profile */}
-                <div className="relative z-10 p-4 space-y-3">
+                <div className={cn("relative z-10 p-4 space-y-3", collapsed && "md:px-2")}>
                     {isLoading ? (
                         <>
                             <div className="flex items-center gap-3 px-2">
                                 <Skeleton className="h-10 w-10 rounded-lg" />
-                                <div className="flex-1 space-y-2">
+                                <div className={cn("flex-1 space-y-2", collapsed && "md:hidden")}>
                                     <Skeleton className="h-3.5 w-28" />
                                     <Skeleton className="h-3 w-20" />
                                 </div>
@@ -376,7 +463,12 @@ function ClientNavInner({ children }: ClientNavProps) {
                         </>
                     ) : (
                         <>
-                            <div className="flex items-center gap-3 px-2 py-1">
+                            <div
+                                className={cn(
+                                    "flex items-center gap-3 px-2 py-1",
+                                    collapsed && "md:justify-center md:px-0"
+                                )}
+                            >
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button
@@ -426,7 +518,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <div className="flex-1 min-w-0">
+                                <div className={cn("flex-1 min-w-0", collapsed && "md:hidden")}>
                                     <p className="text-sm font-mono font-semibold truncate">
                                         {user?.name || "Client User"}
                                     </p>
@@ -440,7 +532,12 @@ function ClientNavInner({ children }: ClientNavProps) {
                 </div>
 
                 {/* Bottom zone marker */}
-                <div className="absolute bottom-4 left-4 right-4 text-[9px] font-mono text-muted-foreground/30 tracking-[0.2em] uppercase text-center z-0">
+                <div
+                    className={cn(
+                        "absolute bottom-4 left-4 right-4 text-[9px] font-mono text-muted-foreground/30 tracking-[0.2em] uppercase text-center z-0",
+                        collapsed && "md:hidden"
+                    )}
+                >
                     Platform Asset Fulfillment v1.0
                 </div>
             </aside>

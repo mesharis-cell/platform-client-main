@@ -46,6 +46,10 @@ export default function CompanyCostEstimatesPage() {
                     icon={FileText}
                     title="Cost Estimates"
                     description="Cost estimates across your company's orders and self-pickups. Download the PDF for full pricing."
+                    breadcrumbs={[
+                        { label: "Company", href: "/company" },
+                        { label: "Cost Estimates" },
+                    ]}
                 />
                 <div className="px-8 py-6">
                     <div className="border border-border rounded-lg overflow-hidden bg-card">

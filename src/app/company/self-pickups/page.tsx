@@ -33,6 +33,10 @@ export default function CompanySelfPickupsPage() {
                     icon={PackageCheck}
                     title="Company Self-Pickups"
                     description="Every self-pickup across your company. Open one to review and approve its quote."
+                    breadcrumbs={[
+                        { label: "Company", href: "/company" },
+                        { label: "Self-Pickups" },
+                    ]}
                 />
                 <div className="border-b border-border bg-card px-8 py-4">
                     <div className="relative max-w-md">

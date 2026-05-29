@@ -45,6 +45,10 @@ export default function CompanyDashboardPage() {
                     icon={Building2}
                     title="Company Back Office"
                     description="Oversee your whole company's activity — orders, self-pickups, estimates and assets."
+                    breadcrumbs={[
+                        { label: "Portal", href: "/client-dashboard" },
+                        { label: "Company" },
+                    ]}
                 />
                 <div className="px-8 py-6 space-y-8">
                     {/* Stat tiles */}

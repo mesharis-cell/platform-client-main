@@ -27,6 +27,7 @@ export default function CompanyMembersPage() {
                     icon={Users}
                     title="Company Members"
                     description="People in your company with portal access."
+                    breadcrumbs={[{ label: "Company", href: "/company" }, { label: "Members" }]}
                 />
                 <div className="px-8 py-6">
                     <div className="border border-border rounded-lg overflow-hidden bg-card">

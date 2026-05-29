@@ -19,6 +19,7 @@ export default function CompanyAssetsPage() {
                     showCounts={false}
                     defaultViewType="asset"
                     renderCard={(item) => <CompanyAssetCard item={item} />}
+                    breadcrumbs={[{ label: "Company", href: "/company" }, { label: "Assets" }]}
                 />
             </ClientNav>
         </CompanyGate>
