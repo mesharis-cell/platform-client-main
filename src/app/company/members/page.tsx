@@ -18,7 +18,7 @@ import { useCompanyMembers } from "@/hooks/use-company";
 
 export default function CompanyMembersPage() {
     const { data, isLoading } = useCompanyMembers();
-    const members: any[] = data?.data || [];
+    const members: any[] = data?.data?.data || [];
 
     return (
         <CompanyGate requiredPermission="company:view_users">

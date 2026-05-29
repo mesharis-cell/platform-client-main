@@ -22,8 +22,8 @@ export default function CompanyAssetsPage() {
         search_term: search || undefined,
     });
 
-    const assets: any[] = data?.data || [];
-    const total: number = data?.meta?.total || 0;
+    const assets: any[] = data?.data?.data || [];
+    const total: number = data?.data?.meta?.total || 0;
     const totalPages = Math.max(1, Math.ceil(total / 24));
 
     return (

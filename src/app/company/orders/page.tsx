@@ -50,8 +50,8 @@ export default function CompanyOrdersPage() {
         search_term: search || undefined,
     });
 
-    const orders: any[] = data?.data || [];
-    const total: number = data?.meta?.total || 0;
+    const orders: any[] = data?.data?.data || [];
+    const total: number = data?.data?.meta?.total || 0;
     const totalPages = Math.max(1, Math.ceil(total / 20));
 
     return (

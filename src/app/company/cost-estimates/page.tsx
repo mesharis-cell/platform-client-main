@@ -13,7 +13,7 @@ import { useCompanyCostEstimates, useDownloadCompanyEstimate } from "@/hooks/use
 export default function CompanyCostEstimatesPage() {
     const { data, isLoading } = useCompanyCostEstimates();
     const download = useDownloadCompanyEstimate();
-    const estimates: any[] = data?.data || [];
+    const estimates: any[] = data?.data?.data || [];
 
     const handleDownload = async (e: {
         id: string;
