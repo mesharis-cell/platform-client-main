@@ -29,71 +29,79 @@ export default function CompanyMembersPage() {
                     description="People in your company with portal access."
                     breadcrumbs={[{ label: "Company", href: "/company" }, { label: "Members" }]}
                 />
-                <div className="px-8 py-6">
-                    <div className="border border-border rounded-lg overflow-hidden bg-card">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/50 border-border/50">
-                                    <TableHead className="font-mono text-xs font-bold uppercase">
-                                        Name
-                                    </TableHead>
-                                    <TableHead className="font-mono text-xs font-bold uppercase">
-                                        Email
-                                    </TableHead>
-                                    <TableHead className="font-mono text-xs font-bold uppercase">
-                                        Status
-                                    </TableHead>
-                                    <TableHead className="font-mono text-xs font-bold uppercase">
-                                        Last Login
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    [...Array(5)].map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell colSpan={4}>
-                                                <Skeleton className="h-6 w-full" />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : members.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={4}
-                                            className="text-center py-10 text-muted-foreground font-mono text-sm"
-                                        >
-                                            No members found.
-                                        </TableCell>
+                <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
+                    <div className="container mx-auto px-6 py-8">
+                        <div className="border border-border rounded-lg overflow-hidden bg-card">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/50 border-border/50">
+                                        <TableHead className="font-mono text-xs font-bold uppercase">
+                                            Name
+                                        </TableHead>
+                                        <TableHead className="font-mono text-xs font-bold uppercase">
+                                            Email
+                                        </TableHead>
+                                        <TableHead className="font-mono text-xs font-bold uppercase">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="font-mono text-xs font-bold uppercase">
+                                            Last Login
+                                        </TableHead>
                                     </TableRow>
-                                ) : (
-                                    members.map((m) => (
-                                        <TableRow key={m.id} className="border-border/50">
-                                            <TableCell className="font-medium">{m.name}</TableCell>
-                                            <TableCell className="text-muted-foreground">
-                                                {m.email}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    className={`font-mono text-[10px] uppercase border ${
-                                                        m.is_active === false
-                                                            ? "bg-red-50 text-red-600 border-red-200"
-                                                            : "bg-green-100 text-green-700 border-green-300"
-                                                    }`}
-                                                >
-                                                    {m.is_active === false ? "Inactive" : "Active"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs text-muted-foreground">
-                                                {m.last_login_at
-                                                    ? new Date(m.last_login_at).toLocaleDateString()
-                                                    : "—"}
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? (
+                                        [...Array(5)].map((_, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell colSpan={4}>
+                                                    <Skeleton className="h-6 w-full" />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : members.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={4}
+                                                className="text-center py-10 text-muted-foreground font-mono text-sm"
+                                            >
+                                                No members found.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : (
+                                        members.map((m) => (
+                                            <TableRow key={m.id} className="border-border/50">
+                                                <TableCell className="font-medium">
+                                                    {m.name}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {m.email}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        className={`font-mono text-[10px] uppercase border ${
+                                                            m.is_active === false
+                                                                ? "bg-red-50 text-red-600 border-red-200"
+                                                                : "bg-green-100 text-green-700 border-green-300"
+                                                        }`}
+                                                    >
+                                                        {m.is_active === false
+                                                            ? "Inactive"
+                                                            : "Active"}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                                    {m.last_login_at
+                                                        ? new Date(
+                                                              m.last_login_at
+                                                          ).toLocaleDateString()
+                                                        : "—"}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
                 </div>
             </ClientNav>

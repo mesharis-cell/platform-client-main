@@ -282,8 +282,8 @@ function ClientNavInner({ children }: ClientNavProps) {
                 >
                     <div
                         className={cn(
-                            "flex items-center gap-3 mb-2",
-                            collapsed && "md:justify-center md:gap-0"
+                            "flex items-center gap-3",
+                            collapsed && "md:flex-col md:items-center md:gap-3"
                         )}
                     >
                         {isLoading ? (
@@ -308,7 +308,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 <div className="absolute inset-0 bg-primary/5 animate-pulse" />
                             </div>
                         )}
-                        <div className={cn(collapsed && "md:hidden")}>
+                        <div className={cn("min-w-0", collapsed && "md:hidden")}>
                             {isLoading ? (
                                 <>
                                     <Skeleton className="h-5 w-32 mb-1" />
@@ -316,7 +316,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 </>
                             ) : (
                                 <>
-                                    <h2 className="text-lg font-mono font-bold tracking-tight uppercase">
+                                    <h2 className="text-lg font-mono font-bold tracking-tight uppercase truncate">
                                         {company?.data?.name ? company.data.name : "Client Portal"}
                                     </h2>
                                     <p className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
@@ -325,30 +325,26 @@ function ClientNavInner({ children }: ClientNavProps) {
                                 </>
                             )}
                         </div>
+                        {/* Collapse / expand toggle — desktop only, inline with the brand
+                        (sits to the right when open, centered under the logo when folded) */}
+                        <button
+                            type="button"
+                            onClick={toggleCollapsed}
+                            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            className={cn(
+                                "hidden md:inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                                !collapsed && "ml-auto"
+                            )}
+                        >
+                            {collapsed ? (
+                                <PanelLeftOpen className="h-4 w-4" />
+                            ) : (
+                                <PanelLeftClose className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                {/* Desktop fold toggle (hidden on mobile — the drawer has its own controls) */}
-                <button
-                    type="button"
-                    onClick={toggleCollapsed}
-                    aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
-                    className={cn(
-                        "relative z-10 hidden md:flex items-center gap-2 mx-3 mt-2 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
-                        collapsed ? "justify-center" : "justify-end"
-                    )}
-                >
-                    {collapsed ? (
-                        <PanelLeftOpen className="h-4 w-4 shrink-0" />
-                    ) : (
-                        <>
-                            <span className="text-[10px] font-mono uppercase tracking-wide">
-                                Collapse
-                            </span>
-                            <PanelLeftClose className="h-4 w-4 shrink-0" />
-                        </>
-                    )}
-                </button>
 
                 {/* Navigation Links */}
                 <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto relative z-10">

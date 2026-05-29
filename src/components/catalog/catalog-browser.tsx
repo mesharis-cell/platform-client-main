@@ -40,6 +40,12 @@ export type CatalogBrowserProps = {
     defaultViewType?: "all" | "asset" | "collection";
     renderCard?: (item: CatalogItem) => ReactNode;
     breadcrumbs?: Breadcrumb[];
+    /**
+     * When false, the built-in hero header is omitted and the body renders in
+     * the canonical client container — so the page can supply a consistent
+     * <ClientHeader> instead (used by the Company Back Office assets page).
+     */
+    showHeader?: boolean;
 };
 
 export function CatalogBrowser({
@@ -50,6 +56,7 @@ export function CatalogBrowser({
     defaultViewType = "all",
     renderCard,
     breadcrumbs,
+    showHeader = true,
 }: CatalogBrowserProps) {
     const { user } = useToken();
     const [searchQuery, setSearchQuery] = useState("");
@@ -106,55 +113,63 @@ export function CatalogBrowser({
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-            <div className="border-b border-border bg-card/70 backdrop-blur-sm">
-                <div className="mx-auto max-w-7xl px-8 py-10">
-                    {breadcrumbs && breadcrumbs.length > 0 && (
-                        <nav
-                            aria-label="Breadcrumb"
-                            className="mb-4 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground"
-                        >
-                            {breadcrumbs.map((crumb, i) => {
-                                const isLast = i === breadcrumbs.length - 1;
-                                return (
-                                    <span
-                                        key={`${crumb.label}-${i}`}
-                                        className="flex items-center gap-1.5"
-                                    >
-                                        {crumb.href && !isLast ? (
-                                            <Link
-                                                href={crumb.href}
-                                                className="transition-colors hover:text-foreground"
-                                            >
-                                                {crumb.label}
-                                            </Link>
-                                        ) : (
-                                            <span
-                                                className={isLast ? "text-foreground" : undefined}
-                                            >
-                                                {crumb.label}
-                                            </span>
-                                        )}
-                                        {!isLast && (
-                                            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-                                        )}
-                                    </span>
-                                );
-                            })}
-                        </nav>
-                    )}
-                    <Badge className="mb-4">{badgeLabel}</Badge>
-                    <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
-                    <p className="mt-3 max-w-2xl text-muted-foreground">{description}</p>
-                    {showCounts && (
-                        <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted-foreground">
-                            <span>{catalogData?.totalFamilies ?? 0} assets</span>
-                            <span>{catalogData?.totalCollections ?? 0} collections</span>
-                        </div>
-                    )}
+            {showHeader && (
+                <div className="border-b border-border bg-card/70 backdrop-blur-sm">
+                    <div className="mx-auto max-w-7xl px-8 py-10">
+                        {breadcrumbs && breadcrumbs.length > 0 && (
+                            <nav
+                                aria-label="Breadcrumb"
+                                className="mb-4 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground"
+                            >
+                                {breadcrumbs.map((crumb, i) => {
+                                    const isLast = i === breadcrumbs.length - 1;
+                                    return (
+                                        <span
+                                            key={`${crumb.label}-${i}`}
+                                            className="flex items-center gap-1.5"
+                                        >
+                                            {crumb.href && !isLast ? (
+                                                <Link
+                                                    href={crumb.href}
+                                                    className="transition-colors hover:text-foreground"
+                                                >
+                                                    {crumb.label}
+                                                </Link>
+                                            ) : (
+                                                <span
+                                                    className={
+                                                        isLast ? "text-foreground" : undefined
+                                                    }
+                                                >
+                                                    {crumb.label}
+                                                </span>
+                                            )}
+                                            {!isLast && (
+                                                <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                                            )}
+                                        </span>
+                                    );
+                                })}
+                            </nav>
+                        )}
+                        <Badge className="mb-4">{badgeLabel}</Badge>
+                        <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
+                        <p className="mt-3 max-w-2xl text-muted-foreground">{description}</p>
+                        {showCounts && (
+                            <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted-foreground">
+                                <span>{catalogData?.totalFamilies ?? 0} assets</span>
+                                <span>{catalogData?.totalCollections ?? 0} collections</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
-            <div className="mx-auto max-w-7xl px-8 py-8">
+            <div
+                className={
+                    showHeader ? "mx-auto max-w-7xl px-8 py-8" : "container mx-auto px-6 py-8"
+                }
+            >
                 <div className="space-y-6">
                     <div className="grid gap-4 lg:grid-cols-[2fr_1fr_1fr]">
                         <div className="relative">
