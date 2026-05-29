@@ -6,7 +6,9 @@ import { CatalogBrowser } from "@/components/catalog/catalog-browser";
 export default function CatalogPage() {
     return (
         <ClientNav>
-            <CatalogBrowser />
+            <CatalogBrowser
+                breadcrumbs={[{ label: "Home", href: "/client-dashboard" }, { label: "Catalog" }]}
+            />
         </ClientNav>
     );
 }

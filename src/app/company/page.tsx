@@ -45,10 +45,7 @@ export default function CompanyDashboardPage() {
                     icon={Building2}
                     title="Company Back Office"
                     description="Oversee your whole company's activity — orders, self-pickups, estimates and assets."
-                    breadcrumbs={[
-                        { label: "Portal", href: "/client-dashboard" },
-                        { label: "Company" },
-                    ]}
+                    breadcrumbs={[{ label: "Company" }]}
                 />
                 <div className="min-h-screen bg-linear-to-br from-background via-muted/30 to-background">
                     <div className="container mx-auto px-6 py-8 space-y-8">

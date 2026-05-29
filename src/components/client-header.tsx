@@ -1,14 +1,21 @@
+"use client";
+
 /**
  * Client Page Header Component
  *
- * Consistent header design across all client list/index pages.
- * Simpler than AdminHeader — clean, approachable, not overwhelming.
- * Supports an optional breadcrumb trail for nested pages (e.g. Company Back
- * Office) so users have a clear "go back up" affordance.
+ * Consistent header across every client page: icon + title + description, with
+ * a breadcrumb that is ALWAYS present and rooted at "Home" (the client
+ * dashboard). Top-level pages render "Home › <Page>"; nested pages pass a
+ * deeper `breadcrumbs` trail (e.g. Company › Orders) which is appended after
+ * Home. The dashboard itself is Home, so it shows no breadcrumb.
+ *
+ * The rule, in one line: Home is the root everywhere; `breadcrumbs` (if given)
+ * is the path under Home, otherwise the page title is the single crumb.
  */
 
 import { ChevronRight, LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 export interface Breadcrumb {
@@ -17,11 +24,14 @@ export interface Breadcrumb {
     href?: string;
 }
 
+const HOME_HREF = "/client-dashboard";
+
 interface ClientHeaderProps {
     icon: LucideIcon;
     title: string;
     description?: string;
     actions?: ReactNode;
+    /** Path under Home. Omit on top-level pages (the title becomes the crumb). */
     breadcrumbs?: Breadcrumb[];
 }
 
@@ -32,16 +42,24 @@ export function ClientHeader({
     actions,
     breadcrumbs,
 }: ClientHeaderProps) {
+    const pathname = usePathname();
+    const isHome = pathname === HOME_HREF;
+
+    // Always rooted at Home; append the page's trail (explicit, or just title).
+    const crumbs: Breadcrumb[] = isHome
+        ? []
+        : [{ label: "Home", href: HOME_HREF }, ...(breadcrumbs ?? [{ label: title }])];
+
     return (
         <div className="border-b border-border bg-card/50">
             <div className="container mx-auto px-6 py-6">
-                {breadcrumbs && breadcrumbs.length > 0 && (
+                {crumbs.length > 0 && (
                     <nav
                         aria-label="Breadcrumb"
                         className="mb-3 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground"
                     >
-                        {breadcrumbs.map((crumb, i) => {
-                            const isLast = i === breadcrumbs.length - 1;
+                        {crumbs.map((crumb, i) => {
+                            const isLast = i === crumbs.length - 1;
                             return (
                                 <span
                                     key={`${crumb.label}-${i}`}
