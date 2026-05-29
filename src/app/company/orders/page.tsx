@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
 import { ClientHeader } from "@/components/client-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -17,28 +16,31 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { CompanyGate } from "../company-gate";
 import { useCompanyOrders } from "@/hooks/use-company";
+import { ORDER_STATUS_CONFIG, statusBadge } from "@/lib/order-status";
 
-const ORDER_STATUSES = [
-    "SUBMITTED",
-    "PRICING_REVIEW",
-    "PENDING_APPROVAL",
-    "QUOTED",
-    "CONFIRMED",
-    "DECLINED",
-    "IN_PREPARATION",
-    "READY_FOR_DELIVERY",
-    "IN_TRANSIT",
-    "DELIVERED",
-    "IN_USE",
-    "AWAITING_RETURN",
-    "RETURN_IN_TRANSIT",
-    "CLOSED",
-    "CANCELLED",
-];
+const ORDER_STATUSES = Object.keys(ORDER_STATUS_CONFIG);
+
+const fmtDate = (v?: string | null) =>
+    v
+        ? new Date(v).toLocaleDateString(undefined, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+          })
+        : "—";
 
 export default function CompanyOrdersPage() {
+    const router = useRouter();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("");
@@ -89,58 +91,87 @@ export default function CompanyOrdersPage() {
                             <SelectItem value="ALL">All statuses</SelectItem>
                             {ORDER_STATUSES.map((s) => (
                                 <SelectItem key={s} value={s}>
-                                    {s.replace(/_/g, " ")}
+                                    {ORDER_STATUS_CONFIG[s].label}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 </div>
 
-                <div className="px-8 py-6 space-y-3">
-                    {isLoading ? (
-                        [...Array(6)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
-                    ) : orders.length === 0 ? (
-                        <div className="text-center py-16 text-muted-foreground font-mono text-sm">
-                            No orders found.
-                        </div>
-                    ) : (
-                        orders.map((order) => (
-                            <Link
-                                key={order.id}
-                                href={`/orders/${order.order_id}?company=1`}
-                                className="block"
-                            >
-                                <Card className="bg-card border-border hover:border-primary/50 transition-colors">
-                                    <CardContent className="p-4 flex items-center justify-between gap-4">
-                                        <div className="min-w-0">
-                                            <p className="font-mono font-bold text-sm">
-                                                {order.order_id}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground truncate">
-                                                {order.contact_name || "—"}
-                                                {order.created_by_user?.name
-                                                    ? ` · by ${order.created_by_user.name}`
-                                                    : ""}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 shrink-0">
-                                            {order.order_pricing?.final_total ? (
-                                                <span className="font-mono text-sm">
-                                                    {Number(
-                                                        order.order_pricing.final_total
-                                                    ).toLocaleString()}{" "}
-                                                    AED
-                                                </span>
-                                            ) : null}
-                                            <Badge className="font-mono text-[10px] uppercase border bg-muted text-foreground border-border whitespace-nowrap">
-                                                {String(order.order_status).replace(/_/g, " ")}
-                                            </Badge>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))
-                    )}
+                <div className="px-8 py-6">
+                    <div className="border border-border rounded-lg overflow-hidden bg-card">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50 border-border/50 hover:bg-muted/50">
+                                    <TableHead className="font-mono text-xs font-bold uppercase">
+                                        Order ID
+                                    </TableHead>
+                                    <TableHead className="font-mono text-xs font-bold uppercase">
+                                        Ordered By
+                                    </TableHead>
+                                    <TableHead className="font-mono text-xs font-bold uppercase">
+                                        Event Date
+                                    </TableHead>
+                                    <TableHead className="font-mono text-xs font-bold uppercase text-right">
+                                        Status
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {isLoading ? (
+                                    [...Array(8)].map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell colSpan={4}>
+                                                <Skeleton className="h-6 w-full" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : orders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={4}
+                                            className="text-center py-12 text-muted-foreground font-mono text-sm"
+                                        >
+                                            No orders found.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    orders.map((order) => {
+                                        const badge = statusBadge(order.order_status);
+                                        return (
+                                            <TableRow
+                                                key={order.id}
+                                                className="border-border/50 cursor-pointer"
+                                                onClick={() =>
+                                                    router.push(
+                                                        `/orders/${order.order_id}?company=1`
+                                                    )
+                                                }
+                                            >
+                                                <TableCell className="font-mono font-medium">
+                                                    {order.order_id}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {order.created_by_user?.name || "—"}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {fmtDate(order.event_start_date)}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`${badge.color} font-medium border whitespace-nowrap`}
+                                                    >
+                                                        {badge.label}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
                     {totalPages > 1 && (
                         <div className="flex items-center justify-center gap-3 pt-4">

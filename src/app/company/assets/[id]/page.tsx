@@ -2,12 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes, ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { Boxes, ArrowLeft, Upload, Loader2, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import { ClientNav } from "@/components/client-nav";
 import { ClientHeader } from "@/components/client-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,7 +51,6 @@ export default function CompanyAssetEditPage({ params }: { params: Promise<{ id:
     });
     const [uploading, setUploading] = useState(false);
 
-    // Hydrate the form once the asset loads.
     useEffect(() => {
         if (asset) {
             setForm({
@@ -108,45 +107,55 @@ export default function CompanyAssetEditPage({ params }: { params: Promise<{ id:
                 <ClientHeader
                     icon={Boxes}
                     title="Edit Asset"
-                    description="Update the presentation details for this asset."
+                    description="Update the presentation details shown to your team and on documents."
                 />
-                <div className="px-8 py-6 max-w-2xl">
+                <div className="px-8 py-6">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push("/company/assets")}
-                        className="gap-2 font-mono text-xs mb-4"
+                        className="gap-2 font-mono text-xs mb-5"
                     >
                         <ArrowLeft className="h-4 w-4" /> Back to assets
                     </Button>
 
                     {isLoading ? (
-                        <Skeleton className="h-96 w-full" />
+                        <div className="grid gap-6 lg:grid-cols-3">
+                            <Skeleton className="h-80 w-full lg:col-span-1" />
+                            <Skeleton className="h-80 w-full lg:col-span-2" />
+                        </div>
                     ) : !asset ? (
                         <div className="text-center py-16 text-muted-foreground font-mono text-sm">
                             Asset not found.
                         </div>
                     ) : (
-                        <Card className="bg-card border-border">
-                            <CardContent className="p-6 space-y-5">
-                                {/* Display image */}
-                                <div className="space-y-2">
-                                    <Label className="font-mono text-xs uppercase">
-                                        Display Image
-                                    </Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-24 w-24 rounded-md border border-border bg-muted/40 overflow-hidden flex items-center justify-center shrink-0">
+                        <>
+                            <div className="grid gap-6 lg:grid-cols-3 items-start">
+                                {/* Left: display image */}
+                                <Card className="bg-card border-border lg:col-span-1">
+                                    <CardHeader>
+                                        <CardTitle className="font-mono text-sm uppercase tracking-wide">
+                                            Display Image
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="relative aspect-square w-full rounded-lg border border-border bg-muted/30 overflow-hidden flex items-center justify-center">
                                             {form.on_display_image ? (
                                                 <img
                                                     src={form.on_display_image}
-                                                    alt=""
-                                                    className="w-full h-full object-cover"
+                                                    alt={form.name}
+                                                    className="w-full h-full object-contain p-3"
                                                 />
                                             ) : (
-                                                <Boxes className="h-8 w-8 text-muted-foreground/40" />
+                                                <div className="flex flex-col items-center gap-2 text-muted-foreground/40">
+                                                    <ImageOff className="h-10 w-10" />
+                                                    <span className="text-xs font-mono">
+                                                        No image
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
-                                        <label className="cursor-pointer">
+                                        <label className="block">
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -154,109 +163,146 @@ export default function CompanyAssetEditPage({ params }: { params: Promise<{ id:
                                                 onChange={handleFile}
                                                 disabled={uploading}
                                             />
-                                            <span className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 font-mono text-xs hover:bg-muted transition-colors">
+                                            <span className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 font-mono text-xs hover:bg-muted transition-colors cursor-pointer">
                                                 {uploading ? (
                                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                                 ) : (
                                                     <Upload className="h-3.5 w-3.5" />
                                                 )}
-                                                Replace image
+                                                {form.on_display_image
+                                                    ? "Replace image"
+                                                    : "Upload image"}
                                             </span>
                                         </label>
-                                    </div>
-                                </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            Shown on the catalog and order documents. PNG or JPG,
+                                            ideally on a clean background.
+                                        </p>
+                                    </CardContent>
+                                </Card>
 
-                                {/* Name */}
-                                <div className="space-y-2">
-                                    <Label className="font-mono text-xs uppercase">Name</Label>
-                                    <Input
-                                        value={form.name}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, name: e.target.value }))
-                                        }
-                                    />
-                                </div>
+                                {/* Right: details */}
+                                <Card className="bg-card border-border lg:col-span-2">
+                                    <CardHeader>
+                                        <CardTitle className="font-mono text-sm uppercase tracking-wide">
+                                            Details
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-5">
+                                        <div className="space-y-2">
+                                            <Label className="font-mono text-xs uppercase">
+                                                Name
+                                            </Label>
+                                            <Input
+                                                value={form.name}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({ ...f, name: e.target.value }))
+                                                }
+                                                placeholder="Asset name"
+                                            />
+                                        </div>
 
-                                {/* Description */}
-                                <div className="space-y-2">
-                                    <Label className="font-mono text-xs uppercase">
-                                        Description
-                                    </Label>
-                                    <Textarea
-                                        rows={3}
-                                        value={form.description}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, description: e.target.value }))
-                                        }
-                                    />
-                                </div>
+                                        <div className="space-y-2">
+                                            <Label className="font-mono text-xs uppercase">
+                                                Description
+                                            </Label>
+                                            <Textarea
+                                                rows={4}
+                                                value={form.description}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        description: e.target.value,
+                                                    }))
+                                                }
+                                                placeholder="Short description shown to your team"
+                                            />
+                                        </div>
 
-                                {/* Category */}
-                                <div className="space-y-2">
-                                    <Label className="font-mono text-xs uppercase">Category</Label>
-                                    <Select
-                                        value={form.category || undefined}
-                                        onValueChange={(v) =>
-                                            setForm((f) => ({ ...f, category: v }))
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((c) => (
-                                                <SelectItem key={c.id} value={c.name}>
-                                                    {c.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                        <div className="grid gap-5 sm:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label className="font-mono text-xs uppercase">
+                                                    Category
+                                                </Label>
+                                                <Select
+                                                    value={form.category || undefined}
+                                                    onValueChange={(v) =>
+                                                        setForm((f) => ({ ...f, category: v }))
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select a category" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {categories.map((c) => (
+                                                            <SelectItem key={c.id} value={c.name}>
+                                                                <span className="flex items-center gap-2">
+                                                                    <span
+                                                                        className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                c.color,
+                                                                        }}
+                                                                    />
+                                                                    {c.name}
+                                                                </span>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
 
-                                {/* Brand */}
-                                <div className="space-y-2">
-                                    <Label className="font-mono text-xs uppercase">Brand</Label>
-                                    <Select
-                                        value={form.brand_id}
-                                        onValueChange={(v) =>
-                                            setForm((f) => ({ ...f, brand_id: v }))
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a brand" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value={NO_BRAND}>No brand</SelectItem>
-                                            {brands.map((b) => (
-                                                <SelectItem key={b.id} value={b.id}>
-                                                    {b.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                            <div className="space-y-2">
+                                                <Label className="font-mono text-xs uppercase">
+                                                    Brand
+                                                </Label>
+                                                <Select
+                                                    value={form.brand_id}
+                                                    onValueChange={(v) =>
+                                                        setForm((f) => ({ ...f, brand_id: v }))
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select a brand" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value={NO_BRAND}>
+                                                            No brand
+                                                        </SelectItem>
+                                                        {brands.map((b) => (
+                                                            <SelectItem key={b.id} value={b.id}>
+                                                                {b.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
 
-                                <div className="flex justify-end gap-3 pt-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => router.push("/company/assets")}
-                                        className="font-mono text-xs"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={handleSave}
-                                        disabled={update.isPending || uploading}
-                                        className="font-mono text-xs gap-2"
-                                    >
-                                        {update.isPending && (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        )}
-                                        Save changes
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            {/* Save bar */}
+                            <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-5">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.push("/company/assets")}
+                                    className="font-mono text-xs"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={update.isPending || uploading}
+                                    className="font-mono text-xs gap-2"
+                                >
+                                    {update.isPending && (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    )}
+                                    Save changes
+                                </Button>
+                            </div>
+                        </>
                     )}
                 </div>
             </ClientNav>
