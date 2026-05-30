@@ -29,6 +29,7 @@ import {
     type DescriptiveDraft,
     type PermitDraft,
 } from "./DescriptiveFieldsEditor";
+import { EventDatesEditor, type EventDatesDraft } from "./EventDatesEditor";
 
 // Shape we read off the order detail response (snake_case, as returned by the API).
 interface OrderForEdit {
@@ -50,6 +51,9 @@ interface OrderForEdit {
     special_instructions?: string | null;
     is_permanent_placement?: boolean | null;
     po_number?: string | null;
+    // ISO date/datetime strings as returned by the API.
+    event_start_date?: string | null;
+    event_end_date?: string | null;
     permit_requirements?: {
         requires_permit?: boolean;
         permit_owner?: "CLIENT" | "PLATFORM" | "UNKNOWN";
@@ -63,9 +67,25 @@ interface Draft {
     contact: ContactDraft;
     venueContact: VenueContactDraft;
     descriptive: DescriptiveDraft;
+    eventDates: EventDatesDraft;
 }
 
 const s = (v: string | null | undefined) => v ?? "";
+
+// Normalise an ISO date/datetime string from the API to "YYYY-MM-DD" for the
+// native date input. Returns "" when absent/unparseable.
+const toDateInput = (v: string | null | undefined): string => {
+    if (!v) return "";
+    // Fast path: already date-only or an ISO datetime — take the leading 10 chars.
+    const m = /^(\d{4}-\d{2}-\d{2})/.exec(v);
+    if (m) return m[1];
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+    return `${y}-${mo}-${da}`;
+};
 
 function buildDraft(order: OrderForEdit): Draft {
     const permit = order.permit_requirements ?? null;
@@ -96,6 +116,10 @@ function buildDraft(order: OrderForEdit): Draft {
             is_permanent_placement: !!order.is_permanent_placement,
             po_number: s(order.po_number),
             permit: permitDraft,
+        },
+        eventDates: {
+            event_start_date: toDateInput(order.event_start_date),
+            event_end_date: toDateInput(order.event_end_date),
         },
     };
 }
@@ -186,6 +210,15 @@ function diffPayload(original: Draft, next: Draft): OrderEditPayload {
         }
     }
 
+    // Event dates: compared as "YYYY-MM-DD"; sent as ISO date-only strings so a
+    // full calendar-day edit re-derives the booking window server-side.
+    const ed = next.eventDates;
+    const oed = original.eventDates;
+    if (ed.event_start_date && ed.event_start_date !== oed.event_start_date)
+        body.event_start_date = ed.event_start_date;
+    if (ed.event_end_date && ed.event_end_date !== oed.event_end_date)
+        body.event_end_date = ed.event_end_date;
+
     return body;
 }
 
@@ -234,8 +267,9 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to save changes";
             // The API returns 409 (with a descriptive message) when the order has
-            // left the editable band. Surface it inline as well as via toast.
-            if (/editable|locked|confirmed|409/i.test(message)) {
+            // left the editable band, OR when the new event dates lack asset
+            // availability. Surface either inline as well as via toast.
+            if (/editable|locked|confirmed|availability|available|409/i.test(message)) {
                 setBandError(message);
             }
             toast.error(message);
@@ -350,6 +384,24 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                                 setDraft((prev) => ({
                                     ...prev,
                                     descriptive: { ...prev.descriptive, ...patch },
+                                }))
+                            }
+                            disabled={updateOrder.isPending}
+                        />
+                    </section>
+
+                    <Separator />
+
+                    <section>
+                        <h4 className="font-mono uppercase text-xs tracking-wide text-muted-foreground mb-3">
+                            Event Dates
+                        </h4>
+                        <EventDatesEditor
+                            value={draft.eventDates}
+                            onChange={(patch) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    eventDates: { ...prev.eventDates, ...patch },
                                 }))
                             }
                             disabled={updateOrder.isPending}

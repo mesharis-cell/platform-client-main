@@ -39,6 +39,11 @@ export interface OrderEditPayload {
     } | null;
     is_permanent_placement?: boolean;
     po_number?: string | null;
+    // Event dates (ISO strings). Editing these re-derives the booking window
+    // server-side; insufficient availability returns 409 with a descriptive
+    // message. A QUOTED order reverts to PRICING_REVIEW + QUOTE_REVISED.
+    event_start_date?: string;
+    event_end_date?: string;
 }
 
 export interface OrderEditResponseData {
