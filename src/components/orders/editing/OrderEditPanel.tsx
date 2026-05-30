@@ -30,10 +30,27 @@ import {
     type PermitDraft,
 } from "./DescriptiveFieldsEditor";
 import { EventDatesEditor, type EventDatesDraft } from "./EventDatesEditor";
+import {
+    OrderItemsQuantityEditor,
+    type ItemQuantitiesDraft,
+    type QuantityEditorItem,
+} from "./OrderItemsQuantityEditor";
+
+// One physical order item as returned by the order detail response. The order
+// item UUID + asset name + quantity live on the nested `order_item` object.
+interface OrderForEditItem {
+    id?: string;
+    order_item: {
+        id: string;
+        asset_name: string;
+        quantity: number;
+    };
+}
 
 // Shape we read off the order detail response (snake_case, as returned by the API).
 interface OrderForEdit {
     id: string;
+    items?: OrderForEditItem[] | null;
     contact_name?: string | null;
     contact_email?: string | null;
     contact_phone?: string | null;
@@ -68,6 +85,8 @@ interface Draft {
     venueContact: VenueContactDraft;
     descriptive: DescriptiveDraft;
     eventDates: EventDatesDraft;
+    // Existing-item quantities keyed by order_item_id.
+    itemQuantities: ItemQuantitiesDraft;
 }
 
 const s = (v: string | null | undefined) => v ?? "";
@@ -86,6 +105,22 @@ const toDateInput = (v: string | null | undefined): string => {
     const da = String(d.getDate()).padStart(2, "0");
     return `${y}-${mo}-${da}`;
 };
+
+// Normalised list of editable items (order_item UUID + asset name), filtering
+// any malformed rows that lack an id.
+function buildItemRows(order: OrderForEdit): QuantityEditorItem[] {
+    return (order.items ?? [])
+        .filter((it) => !!it?.order_item?.id)
+        .map((it) => ({ id: it.order_item.id, name: it.order_item.asset_name }));
+}
+
+function buildItemQuantities(order: OrderForEdit): ItemQuantitiesDraft {
+    const map: ItemQuantitiesDraft = {};
+    for (const it of order.items ?? []) {
+        if (it?.order_item?.id) map[it.order_item.id] = Number(it.order_item.quantity) || 1;
+    }
+    return map;
+}
 
 function buildDraft(order: OrderForEdit): Draft {
     const permit = order.permit_requirements ?? null;
@@ -121,6 +156,7 @@ function buildDraft(order: OrderForEdit): Draft {
             event_start_date: toDateInput(order.event_start_date),
             event_end_date: toDateInput(order.event_end_date),
         },
+        itemQuantities: buildItemQuantities(order),
     };
 }
 
@@ -219,6 +255,13 @@ function diffPayload(original: Draft, next: Draft): OrderEditPayload {
     if (ed.event_end_date && ed.event_end_date !== oed.event_end_date)
         body.event_end_date = ed.event_end_date;
 
+    // Existing-item quantities: emit only the items whose quantity changed
+    // (compared against the baseline). Omit `items` entirely when none changed.
+    const changedItems = Object.entries(next.itemQuantities)
+        .filter(([id, qty]) => original.itemQuantities[id] !== qty)
+        .map(([order_item_id, quantity]) => ({ order_item_id, quantity }));
+    if (changedItems.length > 0) body.items = changedItems;
+
     return body;
 }
 
@@ -230,6 +273,7 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
     // Snapshot the order at the moment edit mode opens. Memoised on the order
     // identity + version so an external refetch reseeds the baseline in view mode.
     const baseline = useMemo(() => buildDraft(order), [order]);
+    const itemRows = useMemo(() => buildItemRows(order), [order]);
     const [draft, setDraft] = useState<Draft>(baseline);
 
     const openEdit = () => {
@@ -407,6 +451,29 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                             disabled={updateOrder.isPending}
                         />
                     </section>
+
+                    {itemRows.length > 0 && (
+                        <>
+                            <Separator />
+
+                            <section>
+                                <h4 className="font-mono uppercase text-xs tracking-wide text-muted-foreground mb-3">
+                                    Item Quantities
+                                </h4>
+                                <OrderItemsQuantityEditor
+                                    items={itemRows}
+                                    value={draft.itemQuantities}
+                                    onChange={(patch) =>
+                                        setDraft((prev) => ({
+                                            ...prev,
+                                            itemQuantities: { ...prev.itemQuantities, ...patch },
+                                        }))
+                                    }
+                                    disabled={updateOrder.isPending}
+                                />
+                            </section>
+                        </>
+                    )}
                 </div>
 
                 <div className="mt-6 flex items-center justify-end gap-3">

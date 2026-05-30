@@ -44,6 +44,11 @@ export interface OrderEditPayload {
     // message. A QUOTED order reverts to PRICING_REVIEW + QUOTE_REVISED.
     event_start_date?: string;
     event_end_date?: string;
+    // Existing-item quantity changes (P3b). Each entry retargets the booking for
+    // one already-present order item; the server reconciles bookings (409 on
+    // insufficient availability) and reprices BASE_OPS. Send ONLY changed items;
+    // omit the key entirely when no quantity changed.
+    items?: { order_item_id: string; quantity: number }[];
 }
 
 export interface OrderEditResponseData {
