@@ -52,6 +52,8 @@ import { OrderItemsList } from "@/components/orders/OrderItemsList";
 import { ScanActivityTimeline } from "@/components/scanning/scan-activity-timeline";
 import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
 import { ClientWorkflowRequestsCard } from "@/components/workflows/workflow-requests-card";
+import { OrderEditPanel } from "@/components/orders/editing/OrderEditPanel";
+import { canEditOrderDetails } from "@/lib/order-helpers";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -77,6 +79,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isCompanyView = searchParams.get("company") === "1";
     const { user } = useToken();
     const canManageCompanyQuotes = hasPermission(user, "company:manage_quotes");
+    // Order-editing (P1): CLIENT users have orders:edit_details by default.
+    const canEditDetailsPermission = hasPermission(user, "orders:edit_details");
     const { data: orderData, isLoading } = useClientOrderDetail(orderId, {
         company: isCompanyView,
     });
@@ -227,6 +231,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         isClosed;
 
     const total = Number(order?.order_pricing?.final_total || 0).toFixed(2);
+
+    // Order-editing (P1): show the edit panel only inside the pre-CONFIRMED band
+    // AND only to someone allowed to edit this order — its creator (owner view),
+    // or a company manager viewing a colleague's order via ?company=1. At
+    // CONFIRMED+ the order is frozen, so no edit affordance renders at all.
+    const isPreConfirmed = canEditOrderDetails(order.order_status);
+    const isOwnOrder = !!user?.id && order.created_by === user.id;
+    const isCompanyManagerViewingCompanyOrder = isCompanyView && canManageCompanyQuotes;
+    const canEditOrder =
+        isPreConfirmed &&
+        canEditDetailsPermission &&
+        (isOwnOrder || isCompanyManagerViewingCompanyOrder);
 
     return (
         <ClientNav>
@@ -465,6 +481,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
+                            {/* Order-editing (P1): pre-CONFIRMED descriptive-field editor.
+                            Owner or company-manager scope; frozen (hidden) at CONFIRMED+. */}
+                            {canEditOrder && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.25 }}
+                                >
+                                    <OrderEditPanel order={order} />
+                                </motion.div>
+                            )}
+
                             {/* NEW: Hybrid Pricing Quote Section */}
                             {/* Actionable quote review. In company view it renders only for a
                             manager with company:manage_quotes; otherwise (read-only manager)

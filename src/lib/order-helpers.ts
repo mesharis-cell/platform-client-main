@@ -13,6 +13,24 @@ export function canModifyOrder(status: OrderStatus): boolean {
 }
 
 /**
+ * Order-editing feature (Phase 1): the pre-CONFIRMED "editable band". Descriptive
+ * details can be edited while the order is still being priced/quoted. At CONFIRMED
+ * and beyond the order is frozen — no edit affordance. Do NOT confuse with the
+ * DRAFT-only `canModifyOrder` above.
+ */
+const ORDER_EDIT_BAND: OrderStatus[] = [
+    "SUBMITTED",
+    "PRICING_REVIEW",
+    "PENDING_APPROVAL",
+    "QUOTED",
+];
+
+export function canEditOrderDetails(status: OrderStatus | string | null | undefined): boolean {
+    if (!status) return false;
+    return ORDER_EDIT_BAND.includes(status as OrderStatus);
+}
+
+/**
  * Check if quote can be accepted
  */
 export function canAcceptQuote(status: OrderStatus): boolean {
