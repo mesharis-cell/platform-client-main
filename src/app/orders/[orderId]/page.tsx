@@ -493,6 +493,33 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                 </motion.div>
                             )}
 
+                            {/* Order-editing (P2): the order was edited after a quote
+                            was sent, so it bounced back for re-pricing. Informational
+                            notice — display-only, no action for the client. */}
+                            {order.financial_status === "QUOTE_REVISED" && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.28 }}
+                                >
+                                    <Card className="p-6 bg-secondary/5 border-secondary/20">
+                                        <div className="flex items-start gap-3">
+                                            <AlertCircle className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+                                            <div>
+                                                <h3 className="font-bold font-mono mb-1 uppercase tracking-wide text-sm">
+                                                    Quote Being Revised
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                                    Your order was updated and your quote is being
+                                                    revised. You'll receive an updated quote
+                                                    shortly.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            )}
+
                             {/* NEW: Hybrid Pricing Quote Section */}
                             {/* Actionable quote review. In company view it renders only for a
                             manager with company:manage_quotes; otherwise (read-only manager)
