@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
 import { useClientReports, type ReportCardMeta, type ReportFilterMeta } from "@/hooks/use-reports";
@@ -59,7 +65,9 @@ export default function ClientReportsPage() {
             const response = await apiClient.get(url, { responseType: "blob" });
             const contentType = String(response.headers?.["content-type"] ?? "");
             const blob =
-                response.data instanceof Blob ? response.data : new Blob([response.data], { type: contentType });
+                response.data instanceof Blob
+                    ? response.data
+                    : new Blob([response.data], { type: contentType });
             /* eslint-disable no-undef */
             const rg =
                 typeof globalThis !== "undefined"
@@ -120,7 +128,9 @@ export default function ClientReportsPage() {
                         <Input
                             value={cat.text ?? ""}
                             placeholder="e.g. Beverages, Glassware"
-                            onChange={(e) => setF(card.key, flt.key, { ...cat, text: e.target.value })}
+                            onChange={(e) =>
+                                setF(card.key, flt.key, { ...cat, text: e.target.value })
+                            }
                             className="flex-1"
                         />
                     </div>
@@ -177,7 +187,9 @@ export default function ClientReportsPage() {
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-3">
-                                            {shownFilters(card).map((flt) => renderFilter(card, flt))}
+                                            {shownFilters(card).map((flt) =>
+                                                renderFilter(card, flt)
+                                            )}
                                             <Button
                                                 className="w-full"
                                                 variant="outline"
