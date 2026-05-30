@@ -8,67 +8,58 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/api-client";
+import { useClientReports, type ReportCardMeta, type ReportFilterMeta } from "@/hooks/use-reports";
 
-interface ReportConfig {
-    id: string;
-    title: string;
-    description: string;
-    endpoint: string;
-    filename: string;
-    supportsDateRange: boolean;
-}
-
-const REPORTS: ReportConfig[] = [
-    {
-        id: "orders",
-        title: "My Orders",
-        description:
-            "Full export of your orders including status, event dates, items, and pricing.",
-        endpoint: "/operations/v1/export/orders",
-        filename: "my-orders",
-        supportsDateRange: true,
-    },
-    {
-        id: "orderHistory",
-        title: "Order History",
-        description: "Timeline of your orders with status changes and financial snapshots.",
-        endpoint: "/operations/v1/export/order-history",
-        filename: "order-history",
-        supportsDateRange: true,
-    },
-    {
-        id: "assetUtilization",
-        title: "Asset Utilization",
-        description:
-            "Items you've used, how often, and how recently. Useful for planning future orders.",
-        endpoint: "/operations/v1/export/asset-utilization",
-        filename: "asset-utilization",
-        supportsDateRange: false,
-    },
-];
+type CardFilterState = Record<string, any>;
 
 export default function ClientReportsPage() {
-    const [dateFrom, setDateFrom] = useState("");
-    const [dateTo, setDateTo] = useState("");
+    const { data: reports, isLoading } = useClientReports();
+    const [filters, setFilters] = useState<Record<string, CardFilterState>>({});
     const [downloading, setDownloading] = useState<string | null>(null);
 
-    async function handleDownload(report: ReportConfig) {
-        setDownloading(report.id);
-        try {
-            const params = new URLSearchParams();
-            if (report.supportsDateRange) {
-                if (dateFrom) params.set("dateFrom", dateFrom);
-                if (dateTo) params.set("dateTo", dateTo);
+    const cards = reports ?? [];
+
+    const setF = (cardKey: string, fKey: string, value: any) =>
+        setFilters((prev) => ({ ...prev, [cardKey]: { ...(prev[cardKey] ?? {}), [fKey]: value } }));
+    const getF = (cardKey: string, fKey: string) => filters[cardKey]?.[fKey];
+
+    // company is forced to the caller's company server-side — never rendered/sent here.
+    const shownFilters = (card: ReportCardMeta) => card.filters.filter((f) => f.type !== "company");
+
+    const buildQuery = (card: ReportCardMeta): string => {
+        const f = filters[card.key] ?? {};
+        const q = new URLSearchParams();
+        for (const flt of shownFilters(card)) {
+            if (flt.type === "category-include-exclude") {
+                const raw = (f[flt.key] as { mode?: string; text?: string }) ?? {};
+                const values = (raw.text ?? "")
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                if (values.length) {
+                    const param = raw.mode === "exclude" ? "category_exclude" : "category_include";
+                    values.forEach((v) => q.append(param, v));
+                }
+            } else {
+                const v = f[flt.key];
+                if (v) q.append(flt.key, String(v));
             }
+        }
+        return q.toString();
+    };
 
-            const response = await apiClient.get(
-                `${report.endpoint}${params.toString() ? `?${params}` : ""}`,
-                { responseType: "blob" }
-            );
-
-            const blob = new Blob([response.data], { type: "text/csv" });
+    const run = async (card: ReportCardMeta) => {
+        const query = buildQuery(card);
+        const url = `/client/v1/reports/${card.key}/run${query ? `?${query}` : ""}`;
+        setDownloading(card.key);
+        try {
+            const response = await apiClient.get(url, { responseType: "blob" });
+            const contentType = String(response.headers?.["content-type"] ?? "");
+            const blob =
+                response.data instanceof Blob ? response.data : new Blob([response.data], { type: contentType });
             /* eslint-disable no-undef */
             const rg =
                 typeof globalThis !== "undefined"
@@ -77,24 +68,76 @@ export default function ClientReportsPage() {
             /* eslint-enable no-undef */
             const doc = rg?.["document"] as Document | undefined;
             if (!doc) return;
-            const url = URL.createObjectURL(blob);
+            const downloadUrl = URL.createObjectURL(blob);
             const a = doc.createElement("a");
-            a.href = url;
-            a.download = `${report.filename}-${new Date().toISOString().split("T")[0]}.csv`;
+            a.href = downloadUrl;
+            a.download = `${card.key}-${new Date().toISOString().split("T")[0]}.xlsx`;
             doc.body.appendChild(a);
             a.click();
             doc.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success(`${report.title} downloaded`);
+            URL.revokeObjectURL(downloadUrl);
+            toast.success(`${card.label} downloaded`);
         } catch {
-            toast.error(`Failed to download ${report.title}`);
+            toast.error(`Failed to download ${card.label}`);
         } finally {
             setDownloading(null);
         }
-    }
+    };
 
-    const hasDateFilter = dateFrom || dateTo;
+    const renderFilter = (card: ReportCardMeta, flt: ReportFilterMeta) => {
+        const value = getF(card.key, flt.key);
+        if (flt.type === "date") {
+            return (
+                <div key={flt.key} className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{flt.label}</Label>
+                    <Input
+                        type="date"
+                        value={value || ""}
+                        onChange={(e) => setF(card.key, flt.key, e.target.value)}
+                        className="w-40"
+                    />
+                </div>
+            );
+        }
+        if (flt.type === "category-include-exclude") {
+            const cat = (value as { mode?: string; text?: string }) ?? {};
+            return (
+                <div key={flt.key} className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{flt.label}</Label>
+                    <div className="flex gap-2">
+                        <Select
+                            value={cat.mode ?? "include"}
+                            onValueChange={(m) => setF(card.key, flt.key, { ...cat, mode: m })}
+                        >
+                            <SelectTrigger className="h-9 w-28 text-xs">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="include">Include</SelectItem>
+                                <SelectItem value="exclude">Exclude</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            value={cat.text ?? ""}
+                            placeholder="e.g. Beverages, Glassware"
+                            onChange={(e) => setF(card.key, flt.key, { ...cat, text: e.target.value })}
+                            className="flex-1"
+                        />
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div key={flt.key} className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{flt.label}</Label>
+                <Input
+                    value={value || ""}
+                    placeholder={flt.label}
+                    onChange={(e) => setF(card.key, flt.key, e.target.value)}
+                />
+            </div>
+        );
+    };
 
     return (
         <ClientNav>
@@ -106,89 +149,59 @@ export default function ClientReportsPage() {
                 />
 
                 <div className="container mx-auto px-6 py-8 space-y-6">
-                    {/* Date range filter */}
-                    <Card>
-                        <CardContent className="py-4">
-                            <div className="flex flex-wrap items-end gap-4">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">From</Label>
-                                    <Input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(e) => setDateFrom(e.target.value)}
-                                        className="w-40"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">To</Label>
-                                    <Input
-                                        type="date"
-                                        value={dateTo}
-                                        onChange={(e) => setDateTo(e.target.value)}
-                                        className="w-40"
-                                    />
-                                </div>
-                                {hasDateFilter && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            setDateFrom("");
-                                            setDateTo("");
-                                        }}
-                                    >
-                                        Clear dates
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Report cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {REPORTS.map((report) => {
-                            const isDownloading = downloading === report.id;
-
-                            return (
-                                <Card key={report.id}>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-base flex items-center gap-2">
-                                            <FileSpreadsheet className="h-4 w-4 text-primary" />
-                                            {report.title}
-                                        </CardTitle>
-                                        <CardDescription className="text-xs">
-                                            {report.description}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Button
-                                            className="w-full"
-                                            variant="outline"
-                                            disabled={isDownloading}
-                                            onClick={() => handleDownload(report)}
-                                        >
-                                            {isDownloading ? (
-                                                <>
-                                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                    Downloading...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Download className="h-4 w-4 mr-2" />
-                                                    Download CSV
-                                                </>
-                                            )}
-                                        </Button>
-                                        {!report.supportsDateRange && hasDateFilter && (
-                                            <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                                                Date filter not applicable
-                                            </p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
+                    {isLoading ? (
+                        <Card>
+                            <CardContent className="py-10 text-center text-muted-foreground">
+                                Loading reports…
+                            </CardContent>
+                        </Card>
+                    ) : cards.length === 0 ? (
+                        <Card>
+                            <CardContent className="py-10 text-center text-muted-foreground">
+                                No reports are available for your account yet.
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {cards.map((card) => {
+                                const isDownloading = downloading === card.key;
+                                return (
+                                    <Card key={card.key}>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="text-base flex items-center gap-2">
+                                                <FileSpreadsheet className="h-4 w-4 text-primary" />
+                                                {card.label}
+                                            </CardTitle>
+                                            <CardDescription className="text-xs">
+                                                {card.description}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-3">
+                                            {shownFilters(card).map((flt) => renderFilter(card, flt))}
+                                            <Button
+                                                className="w-full"
+                                                variant="outline"
+                                                disabled={isDownloading}
+                                                onClick={() => run(card)}
+                                            >
+                                                {isDownloading ? (
+                                                    <>
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        Downloading…
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Download className="h-4 w-4 mr-2" />
+                                                        Download XLSX
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </ClientNav>
