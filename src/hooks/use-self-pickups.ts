@@ -122,6 +122,71 @@ export function useTriggerSelfPickupReturn() {
     });
 }
 
+/**
+ * Self-pickup editing payload (order-editing Phase 4). Mirrors OrderEditPayload
+ * but scoped to SP-applicable fields: collector contact, descriptive fields, the
+ * pickup_window / expected_return_at booking-window drivers, and item ops.
+ *
+ * `job_number` is admin-only and is NEVER sent from the client.
+ *
+ * Only changed, allowlisted keys are ever sent. Editing pickup_window /
+ * expected_return_at / items reconciles asset bookings server-side (409 on
+ * insufficient availability); removing the last item is rejected; a QUOTED
+ * pickup bounces back to PRICING_REVIEW on a Tier C / item edit.
+ */
+export interface SelfPickupEditPayload {
+    collector_name?: string;
+    collector_phone?: string;
+    collector_email?: string | null;
+    notes?: string | null;
+    special_instructions?: string | null;
+    is_permanent_placement?: boolean;
+    po_number?: string | null;
+    // Booking-window drivers (ISO strings). expected_return_at is clearable (null).
+    pickup_window?: { start: string; end: string };
+    expected_return_at?: string | null;
+    // Item ops — same op model as orders (SP items have no maintenance):
+    //   UPDATE (default): { order_item_id, quantity }
+    //   ADD:              { op:"ADD", asset_id, quantity }
+    //   REMOVE:           { op:"REMOVE", order_item_id } — last item rejected.
+    items?: {
+        op?: "UPDATE" | "ADD" | "REMOVE";
+        order_item_id?: string;
+        asset_id?: string;
+        quantity?: number;
+    }[];
+}
+
+export interface SelfPickupEditResponseData {
+    changed_fields: { field: string; old: unknown; new: unknown }[];
+    status: string;
+    financial_status: string;
+    status_reverted: boolean;
+}
+
+/**
+ * Patch a self-pickup's details. `id` is the SP UUID (`pickup.id`). Prefix-
+ * invalidates the detail key (which carries a trailing boolean scope element so
+ * both owner + company-manager views refetch) plus the list query.
+ */
+export function useUpdateSelfPickupDetails(id: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (body: SelfPickupEditPayload): Promise<SelfPickupEditResponseData> => {
+            try {
+                const response = await apiClient.patch(`/client/v1/self-pickup/${id}`, body);
+                return response.data?.data as SelfPickupEditResponseData;
+            } catch (error) {
+                return throwApiError(error) as never;
+            }
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["client-self-pickup", id] });
+            qc.invalidateQueries({ queryKey: ["client-self-pickups"] });
+        },
+    });
+}
+
 export function useCancelSelfPickup() {
     const qc = useQueryClient();
     return useMutation({

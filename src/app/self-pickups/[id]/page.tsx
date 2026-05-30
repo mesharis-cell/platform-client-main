@@ -44,6 +44,15 @@ import { SelfPickupQuoteReviewSection } from "@/components/self-pickups/QuoteRev
 import { SelfPickupStatusBanner } from "@/components/self-pickups/SelfPickupStatusBanner";
 import { StartReturnDialog } from "@/components/self-pickups/StartReturnDialog";
 import { ClientWorkflowRequestsCard } from "@/components/workflows/workflow-requests-card";
+import { SelfPickupEditPanel } from "@/components/self-pickups/editing/SelfPickupEditPanel";
+
+// Order-editing (Phase 4): the pre-CONFIRMED "editable band" for self-pickups.
+// Mirrors canEditOrderDetails — details can be edited while still being
+// priced/quoted; at CONFIRMED+ the pickup is frozen (no edit affordance).
+const SELF_PICKUP_EDIT_BAND = ["SUBMITTED", "PRICING_REVIEW", "PENDING_APPROVAL", "QUOTED"];
+function canEditSelfPickupDetails(status: string | null | undefined): boolean {
+    return !!status && SELF_PICKUP_EDIT_BAND.includes(status);
+}
 
 const PICKUP_STATUS_CONFIG: Record<
     string,
@@ -161,6 +170,8 @@ export default function ClientSelfPickupDetailPage({
     const isCompanyView = searchParams.get("company") === "1";
     const { user } = useToken();
     const canManageCompanyQuotes = hasPermission(user, "company:manage_quotes");
+    // Order-editing (Phase 4): CLIENT users have self_pickups:edit_details by default.
+    const canEditDetailsPermission = hasPermission(user, "self_pickups:edit_details");
     const pickupsBackHref = isCompanyView ? "/company/orders" : "/self-pickups";
     const { platform, isLoading: platformLoading } = usePlatform();
     const selfPickupEnabled = (platform?.features as any)?.enable_self_pickup === true;
@@ -225,6 +236,18 @@ export default function ClientSelfPickupDetailPage({
     const isNoCost = pickup.pricing_mode === "NO_COST";
     const isNoCostConfirmed = isNoCost && pickup.self_pickup_status === "CONFIRMED";
     const statusHistory: any[] = pickup.self_pickup_status_history || [];
+
+    // Order-editing (Phase 4): show the edit panel only inside the pre-CONFIRMED
+    // band AND only to someone allowed to edit this pickup — its creator (owner
+    // view), or a company manager viewing a colleague's pickup via ?company=1.
+    // At CONFIRMED+ the pickup is frozen, so no edit affordance renders at all.
+    const isPreConfirmed = canEditSelfPickupDetails(pickup.self_pickup_status);
+    const isOwnPickup = !!user?.id && pickup.created_by === user.id;
+    const isCompanyManagerViewingCompanyPickup = isCompanyView && canManageCompanyQuotes;
+    const canEditPickup =
+        isPreConfirmed &&
+        canEditDetailsPermission &&
+        (isOwnPickup || isCompanyManagerViewingCompanyPickup);
 
     return (
         <ClientNav>
@@ -371,6 +394,18 @@ export default function ClientSelfPickupDetailPage({
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* MAIN content (left, 2 cols) */}
                         <div className="lg:col-span-2 space-y-6">
+                            {/* Edit panel (order-editing Phase 4) — pre-CONFIRMED band only,
+                            owner or company-manager scope; frozen (hidden) at CONFIRMED+. */}
+                            {canEditPickup && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.28 }}
+                                >
+                                    <SelfPickupEditPanel pickup={pickup} />
+                                </motion.div>
+                            )}
+
                             {/* Quote Review — QUOTED only, never NO_COST. In company view the
                             actions render only for a manager with company:manage_quotes. */}
                             {isQuoted &&
