@@ -34,6 +34,7 @@ import {
     OrderItemsQuantityEditor,
     type ItemQuantitiesDraft,
     type QuantityEditorItem,
+    type StagedAdd,
 } from "./OrderItemsQuantityEditor";
 
 // One physical order item as returned by the order detail response. The order
@@ -87,6 +88,10 @@ interface Draft {
     eventDates: EventDatesDraft;
     // Existing-item quantities keyed by order_item_id.
     itemQuantities: ItemQuantitiesDraft;
+    // order_item_ids marked for removal (REMOVE op on save).
+    removedItemIds: string[];
+    // New assets staged to add (ADD op on save), keyed by asset_id.
+    stagedAdds: StagedAdd[];
 }
 
 const s = (v: string | null | undefined) => v ?? "";
@@ -157,6 +162,8 @@ function buildDraft(order: OrderForEdit): Draft {
             event_end_date: toDateInput(order.event_end_date),
         },
         itemQuantities: buildItemQuantities(order),
+        removedItemIds: [],
+        stagedAdds: [],
     };
 }
 
@@ -255,12 +262,28 @@ function diffPayload(original: Draft, next: Draft): OrderEditPayload {
     if (ed.event_end_date && ed.event_end_date !== oed.event_end_date)
         body.event_end_date = ed.event_end_date;
 
-    // Existing-item quantities: emit only the items whose quantity changed
-    // (compared against the baseline). Omit `items` entirely when none changed.
-    const changedItems = Object.entries(next.itemQuantities)
-        .filter(([id, qty]) => original.itemQuantities[id] !== qty)
-        .map(([order_item_id, quantity]) => ({ order_item_id, quantity }));
-    if (changedItems.length > 0) body.items = changedItems;
+    // Item ops: build a single mixed array of UPDATE / REMOVE / ADD entries.
+    //   REMOVE — every order_item_id marked for removal.
+    //   UPDATE — existing items whose quantity changed AND that aren't being
+    //            removed (a removed row never also emits an UPDATE).
+    //   ADD    — every staged new asset.
+    // Omit `items` entirely when there are none.
+    const removed = new Set(next.removedItemIds);
+    const itemOps: NonNullable<OrderEditPayload["items"]> = [];
+
+    for (const id of next.removedItemIds) {
+        itemOps.push({ op: "REMOVE", order_item_id: id });
+    }
+    for (const [order_item_id, quantity] of Object.entries(next.itemQuantities)) {
+        if (removed.has(order_item_id)) continue;
+        if (original.itemQuantities[order_item_id] !== quantity) {
+            itemOps.push({ order_item_id, quantity });
+        }
+    }
+    for (const add of next.stagedAdds) {
+        itemOps.push({ op: "ADD", asset_id: add.asset_id, quantity: add.quantity });
+    }
+    if (itemOps.length > 0) body.items = itemOps;
 
     return body;
 }
@@ -290,6 +313,7 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
 
     const payload = useMemo(() => diffPayload(baseline, draft), [baseline, draft]);
     const hasChanges = Object.keys(payload).length > 0;
+    const removedSet = useMemo(() => new Set(draft.removedItemIds), [draft.removedItemIds]);
 
     const handleSave = async () => {
         if (!hasChanges) {
@@ -310,10 +334,16 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
             setIsEditing(false);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to save changes";
-            // The API returns 409 (with a descriptive message) when the order has
-            // left the editable band, OR when the new event dates lack asset
-            // availability. Surface either inline as well as via toast.
-            if (/editable|locked|confirmed|availability|available|409/i.test(message)) {
+            // The API returns a descriptive 4xx when the order has left the
+            // editable band, when event dates / quantities / a staged add lack
+            // availability, when an item op is invalid (last-item removal, a
+            // maintenance-requiring/cross-company asset add), etc. Surface those
+            // inline as well as via toast.
+            if (
+                /editable|locked|confirmed|availability|available|maintenance|at least one item|another company|409/i.test(
+                    message
+                )
+            ) {
                 setBandError(message);
             }
             toast.error(message);
@@ -452,28 +482,57 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                         />
                     </section>
 
-                    {itemRows.length > 0 && (
-                        <>
-                            <Separator />
+                    <Separator />
 
-                            <section>
-                                <h4 className="font-mono uppercase text-xs tracking-wide text-muted-foreground mb-3">
-                                    Item Quantities
-                                </h4>
-                                <OrderItemsQuantityEditor
-                                    items={itemRows}
-                                    value={draft.itemQuantities}
-                                    onChange={(patch) =>
-                                        setDraft((prev) => ({
-                                            ...prev,
-                                            itemQuantities: { ...prev.itemQuantities, ...patch },
-                                        }))
-                                    }
-                                    disabled={updateOrder.isPending}
-                                />
-                            </section>
-                        </>
-                    )}
+                    <section>
+                        <h4 className="font-mono uppercase text-xs tracking-wide text-muted-foreground mb-3">
+                            Items
+                        </h4>
+                        <OrderItemsQuantityEditor
+                            items={itemRows}
+                            value={draft.itemQuantities}
+                            onChange={(patch) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    itemQuantities: { ...prev.itemQuantities, ...patch },
+                                }))
+                            }
+                            removedIds={removedSet}
+                            onToggleRemove={(id) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    removedItemIds: prev.removedItemIds.includes(id)
+                                        ? prev.removedItemIds.filter((x) => x !== id)
+                                        : [...prev.removedItemIds, id],
+                                }))
+                            }
+                            stagedAdds={draft.stagedAdds}
+                            onAddAsset={(add) =>
+                                setDraft((prev) =>
+                                    prev.stagedAdds.some((a) => a.asset_id === add.asset_id)
+                                        ? prev
+                                        : { ...prev, stagedAdds: [...prev.stagedAdds, add] }
+                                )
+                            }
+                            onChangeAddQty={(assetId, quantity) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    stagedAdds: prev.stagedAdds.map((a) =>
+                                        a.asset_id === assetId ? { ...a, quantity } : a
+                                    ),
+                                }))
+                            }
+                            onRemoveAdd={(assetId) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    stagedAdds: prev.stagedAdds.filter(
+                                        (a) => a.asset_id !== assetId
+                                    ),
+                                }))
+                            }
+                            disabled={updateOrder.isPending}
+                        />
+                    </section>
                 </div>
 
                 <div className="mt-6 flex items-center justify-end gap-3">

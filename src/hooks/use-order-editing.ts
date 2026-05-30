@@ -44,11 +44,21 @@ export interface OrderEditPayload {
     // message. A QUOTED order reverts to PRICING_REVIEW + QUOTE_REVISED.
     event_start_date?: string;
     event_end_date?: string;
-    // Existing-item quantity changes (P3b). Each entry retargets the booking for
-    // one already-present order item; the server reconciles bookings (409 on
-    // insufficient availability) and reprices BASE_OPS. Send ONLY changed items;
-    // omit the key entirely when no quantity changed.
-    items?: { order_item_id: string; quantity: number }[];
+    // Item ops (P3b quantity + P3c add/remove "swap"). The server reconciles
+    // bookings (409 on insufficient availability) and reprices BASE_OPS on any op.
+    // Send ONLY changed items; omit the key entirely when nothing changed. Each
+    // entry is one of:
+    //   UPDATE (default): { order_item_id, quantity } — change an existing item's quantity.
+    //   ADD:              { op:"ADD", asset_id, quantity } — add a new asset (RED/maintenance
+    //                     rejected; duplicates merged; availability-checked).
+    //   REMOVE:           { op:"REMOVE", order_item_id } — drop an item (last item rejected;
+    //                     cancels its bundled maintenance SR).
+    items?: {
+        op?: "UPDATE" | "ADD" | "REMOVE";
+        order_item_id?: string;
+        asset_id?: string;
+        quantity?: number;
+    }[];
 }
 
 export interface OrderEditResponseData {
