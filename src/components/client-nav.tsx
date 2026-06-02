@@ -546,7 +546,7 @@ function ClientNavInner({ children }: ClientNavProps) {
                 {/* Floating Cart Button */}
                 <motion.button
                     onClick={toggleCart}
-                    className="fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-30 border-4 border-background"
+                    className="fixed bottom-20 right-8 h-16 w-16 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-30 border-4 border-background"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                 >
