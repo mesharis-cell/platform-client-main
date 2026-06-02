@@ -859,15 +859,15 @@ function CheckoutPageInner() {
                 ...(formData.venue_access_notes
                     ? { venue_access_notes: formData.venue_access_notes }
                     : {}),
-                ...(formData.requires_permit
+                ...(formData.permit_decision !== null
                     ? {
                           permit_requirements: {
-                              requires_permit: true,
-                              permit_owner: formData.permit_owner,
-                              ...(formData.requires_vehicle_docs
-                                  ? { requires_vehicle_docs: true }
-                                  : {}),
-                              ...(formData.requires_staff_ids ? { requires_staff_ids: true } : {}),
+                              requires_permit: formData.requires_permit,
+                              permit_owner: formData.requires_permit
+                                  ? formData.permit_owner
+                                  : "UNKNOWN",
+                              requires_vehicle_docs: formData.requires_vehicle_docs,
+                              requires_staff_ids: formData.requires_staff_ids,
                               ...(formData.permit_notes ? { notes: formData.permit_notes } : {}),
                           },
                       }
