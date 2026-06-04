@@ -175,6 +175,7 @@ export interface User {
     permission_grants?: string[];
     permission_revokes?: string[];
     companies: string[];
+    company_id?: string | null;
     company?: {
         id: string;
         name: string;

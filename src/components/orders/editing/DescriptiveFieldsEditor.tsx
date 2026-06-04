@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useCountries } from "@/hooks/use-countries";
+import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
 
 export interface PermitDraft {
     requires_permit: boolean;
@@ -47,10 +48,12 @@ export function DescriptiveFieldsEditor({
     value,
     onChange,
     disabled,
+    companyName,
 }: {
     value: DescriptiveDraft;
     onChange: (patch: Partial<DescriptiveDraft>) => void;
     disabled?: boolean;
+    companyName?: string | null;
 }) {
     const { data: countriesData } = useCountries();
 
@@ -308,6 +311,26 @@ export function DescriptiveFieldsEditor({
                             />
                         </div>
                     </div>
+                )}
+
+                {/* Consequence parity with checkout: surface the same three
+                    context-sensitive warnings so the client re-confirms the
+                    implication of their permit choice while editing. When permits
+                    are required but the owner is still UNKNOWN, derivePermitChoice
+                    returns UNSELECTED (no alert) — we show an explicit validation
+                    message instead and the parent blocks save. */}
+                <PermitWarningAlert
+                    choice={derivePermitChoice(
+                        value.permit.requires_permit,
+                        value.permit.permit_owner
+                    )}
+                    companyName={companyName ?? null}
+                />
+
+                {value.permit.requires_permit && value.permit.permit_owner === "UNKNOWN" && (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                        Please choose who arranges the permit before saving.
+                    </p>
                 )}
             </div>
         </div>

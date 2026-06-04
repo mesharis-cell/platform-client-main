@@ -49,8 +49,11 @@ export interface OrderEditPayload {
     // Send ONLY changed items; omit the key entirely when nothing changed. Each
     // entry is one of:
     //   UPDATE (default): { order_item_id, quantity } — change an existing item's quantity.
-    //   ADD:              { op:"ADD", asset_id, quantity } — add a new asset (RED/maintenance
-    //                     rejected; duplicates merged; availability-checked).
+    //   ADD:              { op:"ADD", asset_id, quantity, maintenance_decision? } — add a new
+    //                     asset (RED rejected; duplicates merged; availability-checked). For an
+    //                     ORANGE asset the client's in-picker decision rides along:
+    //                     FIX_IN_ORDER (server runs the maintenance-feasibility check + snapshots
+    //                     refurb) or USE_AS_IS. Omitted for GREEN adds.
     //   REMOVE:           { op:"REMOVE", order_item_id } — drop an item (last item rejected;
     //                     cancels its bundled maintenance SR).
     items?: {
@@ -58,6 +61,7 @@ export interface OrderEditPayload {
         order_item_id?: string;
         asset_id?: string;
         quantity?: number;
+        maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS";
     }[];
 }
 
@@ -87,8 +91,10 @@ export function useUpdateOrderDetails(orderId: string) {
             }
         },
         onSuccess: () => {
-            // Prefix-invalidate: the detail key has a trailing boolean scope element.
-            queryClient.invalidateQueries({ queryKey: ["client-order-detail", orderId] });
+            // Broad-prefix invalidate: the detail query is keyed by the route param
+            // (human order_id / K-number), NOT this UUID `orderId`, so a key that
+            // pins the id never matches. Invalidate the whole detail family instead.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
             queryClient.invalidateQueries({ queryKey: ["client-dashboard-summary"] });
         },

@@ -74,8 +74,9 @@ export function useCompanyApproveOrderQuote() {
         onSuccess: (_d, vars) => {
             qc.invalidateQueries({ queryKey: ["company-orders"] });
             qc.invalidateQueries({ queryKey: companyKeys.order(vars.id) });
-            // The shared detail page may hold either scope key for this id.
-            qc.invalidateQueries({ queryKey: ["client-order-detail", vars.id] });
+            // Broad prefix — the shared detail page keys by the route param
+            // (K-number) + scope, not this UUID, so a pinned key never matched.
+            qc.invalidateQueries({ queryKey: ["client-order-detail"] });
         },
         onError: throwApiError,
     });
@@ -93,7 +94,9 @@ export function useCompanyDeclineOrderQuote() {
         onSuccess: (_d, vars) => {
             qc.invalidateQueries({ queryKey: ["company-orders"] });
             qc.invalidateQueries({ queryKey: companyKeys.order(vars.id) });
-            qc.invalidateQueries({ queryKey: ["client-order-detail", vars.id] });
+            // Broad prefix — the shared detail page keys by the route param
+            // (K-number) + scope, not this UUID, so a pinned key never matched.
+            qc.invalidateQueries({ queryKey: ["client-order-detail"] });
         },
         onError: throwApiError,
     });
@@ -133,7 +136,9 @@ export function useCompanyApproveSelfPickupQuote() {
         onSuccess: (_d, vars) => {
             qc.invalidateQueries({ queryKey: ["company-self-pickups"] });
             qc.invalidateQueries({ queryKey: companyKeys.selfPickup(vars.id) });
-            qc.invalidateQueries({ queryKey: ["client-self-pickup", vars.id] });
+            // Broad prefix — the shared detail page keys by the route param
+            // + scope, not this UUID, so a pinned key never matched.
+            qc.invalidateQueries({ queryKey: ["client-self-pickup"] });
         },
         onError: throwApiError,
     });
@@ -152,7 +157,9 @@ export function useCompanyDeclineSelfPickupQuote() {
         onSuccess: (_d, vars) => {
             qc.invalidateQueries({ queryKey: ["company-self-pickups"] });
             qc.invalidateQueries({ queryKey: companyKeys.selfPickup(vars.id) });
-            qc.invalidateQueries({ queryKey: ["client-self-pickup", vars.id] });
+            // Broad prefix — the shared detail page keys by the route param
+            // + scope, not this UUID, so a pinned key never matched.
+            qc.invalidateQueries({ queryKey: ["client-self-pickup"] });
         },
         onError: throwApiError,
     });

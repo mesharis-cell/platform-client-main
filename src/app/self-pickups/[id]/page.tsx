@@ -251,7 +251,7 @@ export default function ClientSelfPickupDetailPage({
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/10 to-background relative">
+            <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background relative">
                 {/* Subtle grid pattern — matches order detail backdrop */}
                 <div
                     className="fixed inset-0 opacity-[0.015] pointer-events-none"

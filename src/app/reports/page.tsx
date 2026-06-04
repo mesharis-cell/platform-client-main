@@ -85,8 +85,25 @@ export default function ClientReportsPage() {
             doc.body.removeChild(a);
             URL.revokeObjectURL(downloadUrl);
             toast.success(`${card.label} downloaded`);
-        } catch {
-            toast.error(`Failed to download ${card.label}`);
+        } catch (err) {
+            // With responseType: "blob", an error response body is delivered as
+            // a Blob too — so the JSON { message } the API sends is hidden inside
+            // it. Read the blob, parse the JSON, and surface the real message;
+            // fall back to the generic toast if anything in that chain fails.
+            let message = `Failed to download ${card.label}`;
+            try {
+                const data = (err as { response?: { data?: unknown } })?.response?.data;
+                if (data instanceof Blob) {
+                    const text = await data.text();
+                    const parsed = JSON.parse(text) as { message?: unknown };
+                    if (typeof parsed?.message === "string" && parsed.message) {
+                        message = parsed.message;
+                    }
+                }
+            } catch {
+                /* keep the generic message */
+            }
+            toast.error(message);
         } finally {
             setDownloading(null);
         }

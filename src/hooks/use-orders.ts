@@ -473,11 +473,11 @@ export function useClientApproveQuote() {
                 throwApiError(error);
             }
         },
-        onSuccess: (data) => {
-            console.log(data.data.order_id);
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", data.data.order_id],
-            });
+        onSuccess: () => {
+            // Invalidate the BROAD detail prefix — the detail query is keyed by
+            // the route param (K-number) + scope, not by the API's order_id, so a
+            // pinned key never matched and the detail went stale on approve.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
             queryClient.invalidateQueries({ queryKey: ["orders", "my-orders"] });
         },
@@ -509,10 +509,11 @@ export function useClientDeclineQuote() {
                 throwApiError(error);
             }
         },
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", data.data.order_id],
-            });
+        onSuccess: () => {
+            // Invalidate the BROAD detail prefix — the detail query is keyed by
+            // the route param (K-number) + scope, not by the API's order_id, so a
+            // pinned key never matched and the detail went stale on decline.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
             queryClient.invalidateQueries({ queryKey: ["orders", "my-orders"] });
         },

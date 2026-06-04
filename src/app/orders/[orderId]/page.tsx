@@ -246,7 +246,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
     return (
         <ClientNav>
-            <div className="min-h-screen bg-linear-gradient-to-br from-background via-muted/10 to-background relative">
+            <div className="min-h-screen bg-linear-to-br from-background via-muted/10 to-background relative">
                 {/* Subtle grid pattern */}
                 <div
                     className="fixed inset-0 opacity-[0.015] pointer-events-none"

@@ -18,7 +18,12 @@ export const COMPANY_PERMISSIONS = [
     "company:view_estimates",
     "company:edit_assets",
     "company:view_users",
-    "company:export",
+    // NOTE: "company:export" is intentionally NOT in this list. It's a valid
+    // permission in the union type (types/auth.ts) reserved for a future export
+    // feature, but it has no backing API route today. Including it here would let
+    // a user granted ONLY company:export pass the "any company perm" visibility
+    // gate and open the entire /company section with nothing behind it. Add it
+    // back once the export feature ships.
 ];
 
 /** Is the Company Back Office available to this user on this platform? */

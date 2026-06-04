@@ -203,10 +203,11 @@ export function useCreateMaintenanceDecisionChangeRequest() {
                 throwApiError(error);
             }
         },
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", variables.orderId],
-            });
+        onSuccess: () => {
+            // Broad prefix — the detail query is keyed by the route param
+            // (K-number) + scope, not the UUID passed here, so a pinned key
+            // never matched and the detail went stale.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
         },
     });
@@ -226,10 +227,11 @@ export function useCancelMaintenanceDecisionChangeRequest() {
                 throwApiError(error);
             }
         },
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", variables.orderId],
-            });
+        onSuccess: () => {
+            // Broad prefix — the detail query is keyed by the route param
+            // (K-number) + scope, not the UUID passed here, so a pinned key
+            // never matched and the detail went stale.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
         },
     });
@@ -253,11 +255,11 @@ export function useApproveQuote() {
             }
             return response.json();
         },
-        onSuccess: (data, orderId) => {
-            // Invalidate order detail and list queries
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", data?.data?.order_id],
-            });
+        onSuccess: () => {
+            // Invalidate the BROAD detail prefix + list queries. The detail query
+            // is keyed by the route param (K-number) + scope, not the API's
+            // order_id, so a pinned key never matched.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
             queryClient.invalidateQueries({ queryKey: ["client-dashboard-summary"] });
         },
@@ -283,11 +285,11 @@ export function useDeclineQuote() {
             }
             return response.json();
         },
-        onSuccess: (data, { orderId }) => {
-            // Invalidate order detail and list queries
-            queryClient.invalidateQueries({
-                queryKey: ["client-order-detail", data?.data?.order_id],
-            });
+        onSuccess: () => {
+            // Invalidate the BROAD detail prefix + list queries. The detail query
+            // is keyed by the route param (K-number) + scope, not the API's
+            // order_id, so a pinned key never matched.
+            queryClient.invalidateQueries({ queryKey: ["client-order-detail"] });
             queryClient.invalidateQueries({ queryKey: ["client-orders"] });
             queryClient.invalidateQueries({ queryKey: ["client-dashboard-summary"] });
         },

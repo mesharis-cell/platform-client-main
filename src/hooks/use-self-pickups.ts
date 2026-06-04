@@ -145,15 +145,18 @@ export interface SelfPickupEditPayload {
     // Booking-window drivers (ISO strings). expected_return_at is clearable (null).
     pickup_window?: { start: string; end: string };
     expected_return_at?: string | null;
-    // Item ops — same op model as orders (SP items have no maintenance):
+    // Item ops — same op model as orders. SP surfaces ORANGE assets, so an ADD may
+    // carry the client's in-picker maintenance_decision:
     //   UPDATE (default): { order_item_id, quantity }
-    //   ADD:              { op:"ADD", asset_id, quantity }
+    //   ADD:              { op:"ADD", asset_id, quantity, maintenance_decision? }
+    //                     (ORANGE → FIX_IN_ORDER / USE_AS_IS; omitted for GREEN).
     //   REMOVE:           { op:"REMOVE", order_item_id } — last item rejected.
     items?: {
         op?: "UPDATE" | "ADD" | "REMOVE";
         order_item_id?: string;
         asset_id?: string;
         quantity?: number;
+        maintenance_decision?: "FIX_IN_ORDER" | "USE_AS_IS";
     }[];
 }
 
@@ -181,7 +184,10 @@ export function useUpdateSelfPickupDetails(id: string) {
             }
         },
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["client-self-pickup", id] });
+            // Broad-prefix invalidate: the detail query is keyed by the route param,
+            // NOT this UUID `id`, so a key that pins the id never matches. Invalidate
+            // the whole detail family instead.
+            qc.invalidateQueries({ queryKey: ["client-self-pickup"] });
             qc.invalidateQueries({ queryKey: ["client-self-pickups"] });
         },
     });

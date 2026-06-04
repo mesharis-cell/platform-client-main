@@ -3,24 +3,26 @@
 /**
  * Order item editor (order-editing P3b quantity + P3c add/remove "swap"). Lists
  * each physical order item with a quantity stepper (min 1, integers only) and a
- * remove control, plus an "Add item" affordance that opens the shared catalog
- * browser to stage new assets. Controlled by the parent OrderEditPanel, which
- * owns the draft state and diffs it against the baseline.
+ * remove control, plus an "Add item" affordance that opens the unified
+ * ClientAssetPicker (rich catalog-style cards, multi-select + qty, and the ORANGE
+ * maintenance decision in-flow) to stage new assets. Controlled by the parent
+ * OrderEditPanel, which owns the draft state and diffs it against the baseline.
  *
  * The parent translates the draft into the item-ops array:
  *   - existing item with changed quantity → { order_item_id, quantity }   (UPDATE)
  *   - existing item marked pending-removal → { op:"REMOVE", order_item_id }
- *   - staged add                          → { op:"ADD", asset_id, quantity }
+ *   - staged add → { op:"ADD", asset_id, quantity, maintenance_decision? }
  * A removed row never also emits an UPDATE. On save the server reconciles asset
  * bookings (availability-checked: a shortfall returns 409 with a message
- * mentioning availability), rejects RED/maintenance-requiring assets on ADD,
+ * mentioning availability), rejects RED assets on ADD (the picker blocks RED up
+ * front), honors the per-ORANGE maintenance_decision (FIX_IN_ORDER / USE_AS_IS),
  * merges duplicate assets, and blocks removing the LAST item. A change on a
  * QUOTED order bounces it to PRICING_REVIEW + QUOTE_REVISED. The server is
  * authoritative; this editor performs no optimistic update.
  */
 
 import { useState } from "react";
-import { Minus, Plus, Trash2, RotateCcw, PackagePlus, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Trash2, RotateCcw, PackagePlus, Wrench } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +34,11 @@ import {
     DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { CatalogBrowser } from "@/components/catalog/catalog-browser";
-import type { CatalogItem } from "@/types/collection";
+import {
+    ClientAssetPicker,
+    type MaintenanceDecision,
+    type NamedAssetSelection,
+} from "@/components/assets/asset-picker";
 
 // One editable EXISTING row. `id` is the order_item UUID (item.order_item.id on
 // the order detail response); `name` is the asset name.
@@ -45,11 +50,14 @@ export interface QuantityEditorItem {
 // Draft is a map of order_item_id → quantity (positive integer).
 export type ItemQuantitiesDraft = Record<string, number>;
 
-// A staged ADD — a new asset chosen from the catalog (not yet on the order).
+// A staged ADD — a new asset chosen from the picker (not yet on the order).
+// `maintenance_decision` is carried for ORANGE adds (FIX_IN_ORDER / USE_AS_IS),
+// chosen in the picker and sent on the ADD op so the server honors it.
 export interface StagedAdd {
     asset_id: string;
     name: string;
     quantity: number;
+    maintenance_decision?: MaintenanceDecision;
 }
 
 const clampQty = (n: number): number => {
@@ -118,87 +126,6 @@ function QtyStepper({
     );
 }
 
-// The card the catalog browser renders for each result inside the add dialog.
-// Only single assets (or grouped families, picking the first available sibling)
-// are addable; collections aren't (the server adds one asset_id at a time).
-function AddPickerCard({
-    item,
-    stagedIds,
-    onAdd,
-}: {
-    item: CatalogItem;
-    stagedIds: Set<string>;
-    onAdd: (assetId: string, name: string) => void;
-}) {
-    if (item.type === "collection") {
-        return (
-            <div className="flex h-full flex-col justify-between gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
-                <div>
-                    <Badge variant="secondary" className="mb-2 text-[10px]">
-                        Collection
-                    </Badge>
-                    <p className="line-clamp-2 text-sm font-semibold leading-tight">{item.name}</p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                    Collections can&apos;t be added here — add individual assets.
-                </p>
-            </div>
-        );
-    }
-
-    // For a grouped family, target the first sibling with availability (fall back
-    // to the first sibling) so the ADD targets a concrete asset_id.
-    const targetId =
-        item.type === "group"
-            ? (item.siblings.find((s) => s.availableQuantity > 0)?.id ??
-              item.siblings[0]?.id ??
-              item.id)
-            : item.id;
-    const available = item.availableQuantity;
-    const alreadyStaged = stagedIds.has(targetId);
-    const canAdd = available > 0 && !alreadyStaged;
-
-    return (
-        <div className="flex h-full flex-col justify-between gap-3 rounded-xl border border-border/60 bg-card p-4">
-            <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {item.type === "group" && (
-                        <Badge variant="secondary" className="text-[10px]">
-                            Grouped
-                        </Badge>
-                    )}
-                    {item.brand && (
-                        <Badge variant="outline" className="text-[10px]">
-                            {item.brand.name}
-                        </Badge>
-                    )}
-                </div>
-                <p className="line-clamp-2 text-sm font-semibold leading-tight">{item.name}</p>
-                <p className="text-sm">
-                    <span
-                        className={`font-mono font-bold ${
-                            available > 0 ? "text-emerald-600" : "text-muted-foreground"
-                        }`}
-                    >
-                        {available}
-                    </span>
-                    <span className="ml-2 text-xs text-muted-foreground">available</span>
-                </p>
-            </div>
-            <Button
-                size="sm"
-                className="gap-1.5"
-                disabled={!canAdd}
-                onClick={() => onAdd(targetId, item.name)}
-                data-testid="order-edit-add-pick"
-            >
-                <ShoppingCart className="h-3.5 w-3.5" />
-                {alreadyStaged ? "Added" : available > 0 ? "Add to order" : "Unavailable"}
-            </Button>
-        </div>
-    );
-}
-
 export function OrderItemsQuantityEditor({
     items,
     value,
@@ -206,7 +133,7 @@ export function OrderItemsQuantityEditor({
     removedIds,
     onToggleRemove,
     stagedAdds,
-    onAddAsset,
+    onAddAssets,
     onChangeAddQty,
     onRemoveAdd,
     disabled,
@@ -219,7 +146,8 @@ export function OrderItemsQuantityEditor({
     onToggleRemove: (id: string) => void;
     // Staged ADDs, keyed by asset_id (parent owns the array).
     stagedAdds: StagedAdd[];
-    onAddAsset: (add: StagedAdd) => void;
+    // Confirm a batch of picker selections — parent merges/dedupes into stagedAdds.
+    onAddAssets: (adds: StagedAdd[]) => void;
     onChangeAddQty: (assetId: string, quantity: number) => void;
     onRemoveAdd: (assetId: string) => void;
     disabled?: boolean;
@@ -233,7 +161,9 @@ export function OrderItemsQuantityEditor({
     // How many existing items remain (not pending-removal). With no staged adds,
     // the last remaining existing item can't be removed (server also blocks it).
     const remainingExisting = items.filter((it) => !removedIds.has(it.id)).length;
-    const stagedIds = new Set(stagedAdds.map((a) => a.asset_id));
+    // Mark assets already staged as "already added" in the picker so a second
+    // selection of the same asset is blocked (the parent merges duplicates anyway).
+    const stagedIds = stagedAdds.map((a) => a.asset_id);
 
     return (
         <div className="space-y-4">
@@ -335,6 +265,23 @@ export function OrderItemsQuantityEditor({
                             >
                                 New
                             </Badge>
+                            {add.maintenance_decision === "FIX_IN_ORDER" && (
+                                <Badge
+                                    variant="outline"
+                                    className="ml-2 gap-1 border-amber-300 text-[10px] text-amber-700"
+                                >
+                                    <Wrench className="h-2.5 w-2.5" />
+                                    Fix before event
+                                </Badge>
+                            )}
+                            {add.maintenance_decision === "USE_AS_IS" && (
+                                <Badge
+                                    variant="outline"
+                                    className="ml-2 border-amber-300 text-[10px] text-amber-700"
+                                >
+                                    Use as-is
+                                </Badge>
+                            )}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
                             <QtyStepper
@@ -379,34 +326,28 @@ export function OrderItemsQuantityEditor({
                             Add an item to your order
                         </DialogTitle>
                         <DialogDescription>
-                            Browse your catalog and add assets. Availability is re-checked when you
-                            save your changes.
+                            Search your catalog and add assets. Availability is re-checked when you
+                            save your changes. Items needing repair require a maintenance decision.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="max-h-[70vh] overflow-y-auto">
-                        <CatalogBrowser
-                            showHeader={false}
-                            showCounts={false}
-                            defaultViewType="asset"
-                            renderCard={(item) => (
-                                <AddPickerCard
-                                    item={item}
-                                    stagedIds={stagedIds}
-                                    onAdd={(assetId, name) => {
-                                        const existingStaged = stagedAdds.find(
-                                            (a) => a.asset_id === assetId
-                                        );
-                                        if (existingStaged) {
-                                            onChangeAddQty(assetId, existingStaged.quantity + 1);
-                                        } else {
-                                            onAddAsset({ asset_id: assetId, name, quantity: 1 });
-                                        }
-                                        setPickerOpen(false);
-                                    }}
-                                />
-                            )}
-                        />
-                    </div>
+                    <ClientAssetPicker
+                        alreadyOnEntity={stagedIds}
+                        conditionDecision="require"
+                        entityNoun="order"
+                        onConfirm={(selections: NamedAssetSelection[]) => {
+                            onAddAssets(
+                                selections.map((s) => ({
+                                    asset_id: s.assetId,
+                                    name: s.name,
+                                    quantity: s.quantity,
+                                    ...(s.maintenanceDecision
+                                        ? { maintenance_decision: s.maintenanceDecision }
+                                        : {}),
+                                }))
+                            );
+                            setPickerOpen(false);
+                        }}
+                    />
                 </DialogContent>
             </Dialog>
         </div>

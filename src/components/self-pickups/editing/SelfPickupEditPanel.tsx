@@ -37,6 +37,18 @@ import {
     type SelfPickupStagedAdd,
 } from "./SelfPickupItemsEditor";
 
+// Machine-readable error codes the API returns on edit-flow failures. When the
+// thrown error carries one of these (or a 409/400 status), surface it inline in
+// the band rather than only as a toast.
+const EDIT_ERROR_CODES = new Set([
+    "EDIT_NOT_EDITABLE",
+    "INSUFFICIENT_AVAILABILITY",
+    "LAST_ITEM",
+    "MAINTENANCE_ASSET",
+    "TRANSFORMED_ASSET",
+    "CROSS_COMPANY",
+]);
+
 // One self-pickup item as returned by the SP detail response. Unlike orders
 // (which nest under `order_item`), the SP item row is flat: `id` is the
 // self_pickup_items PK (sent as `order_item_id`), with asset_name + quantity.
@@ -207,7 +219,13 @@ function diffPayload(original: Draft, next: Draft): SelfPickupEditPayload {
         }
     }
     for (const add of next.stagedAdds) {
-        itemOps.push({ op: "ADD", asset_id: add.asset_id, quantity: add.quantity });
+        itemOps.push({
+            op: "ADD",
+            asset_id: add.asset_id,
+            quantity: add.quantity,
+            // ORANGE adds carry the client's in-picker maintenance decision.
+            ...(add.maintenance_decision ? { maintenance_decision: add.maintenance_decision } : {}),
+        });
     }
     if (itemOps.length > 0) body.items = itemOps;
 
@@ -259,16 +277,14 @@ export function SelfPickupEditPanel({ pickup }: { pickup: SelfPickupForEdit }) {
             }
             setIsEditing(false);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Failed to save changes";
-            // The API returns a descriptive 4xx when the pickup has left the
-            // editable band, when the window / quantities / a staged add lack
-            // availability, or when an item op is invalid (last-item removal,
-            // a cross-company asset add). Surface those inline as well as via toast.
-            if (
-                /editable|locked|confirmed|availability|available|at least one item|another company|409/i.test(
-                    message
-                )
-            ) {
+            const e = error as Error & { code?: string; status?: number };
+            const message = e?.message || "Failed to save changes";
+            // The API returns a descriptive 4xx with a machine-readable `code`
+            // when the pickup has left the editable band, when the window /
+            // quantities / a staged add lack availability, or when an item op is
+            // invalid (last-item removal, cross-company asset add). Surface those
+            // inline as well as via toast.
+            if (EDIT_ERROR_CODES.has(e?.code ?? "") || e?.status === 409 || e?.status === 400) {
                 setBandError(message);
             }
             toast.error(message);
@@ -414,12 +430,28 @@ export function SelfPickupEditPanel({ pickup }: { pickup: SelfPickupForEdit }) {
                                 }))
                             }
                             stagedAdds={draft.stagedAdds}
-                            onAddAsset={(add) =>
-                                setDraft((prev) =>
-                                    prev.stagedAdds.some((a) => a.asset_id === add.asset_id)
-                                        ? prev
-                                        : { ...prev, stagedAdds: [...prev.stagedAdds, add] }
-                                )
+                            onAddAssets={(adds) =>
+                                setDraft((prev) => {
+                                    const existing = new Map(
+                                        prev.stagedAdds.map((a) => [a.asset_id, a])
+                                    );
+                                    for (const add of adds) {
+                                        const prior = existing.get(add.asset_id);
+                                        existing.set(
+                                            add.asset_id,
+                                            prior
+                                                ? {
+                                                      ...prior,
+                                                      quantity: prior.quantity + add.quantity,
+                                                      maintenance_decision:
+                                                          add.maintenance_decision ??
+                                                          prior.maintenance_decision,
+                                                  }
+                                                : add
+                                        );
+                                    }
+                                    return { ...prev, stagedAdds: Array.from(existing.values()) };
+                                })
                             }
                             onChangeAddQty={(assetId, quantity) =>
                                 setDraft((prev) => ({

@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { usePlatform } from "@/contexts/platform-context";
 import { useUpdateOrderDetails, type OrderEditPayload } from "@/hooks/use-order-editing";
 import { ContactEditor, type ContactDraft } from "./ContactEditor";
 import { VenueContactEditor, type VenueContactDraft } from "./VenueContactEditor";
@@ -36,6 +37,18 @@ import {
     type QuantityEditorItem,
     type StagedAdd,
 } from "./OrderItemsQuantityEditor";
+
+// Machine-readable error codes the API returns on edit-flow failures. When the
+// thrown error carries one of these (or a 409/400 status), surface it inline in
+// the band rather than only as a toast.
+const EDIT_ERROR_CODES = new Set([
+    "EDIT_NOT_EDITABLE",
+    "INSUFFICIENT_AVAILABILITY",
+    "LAST_ITEM",
+    "MAINTENANCE_ASSET",
+    "TRANSFORMED_ASSET",
+    "CROSS_COMPANY",
+]);
 
 // One physical order item as returned by the order detail response. The order
 // item UUID + asset name + quantity live on the nested `order_item` object.
@@ -175,8 +188,17 @@ const nullable = (v: string) => (v.trim() === "" ? null : v.trim());
  * Diff the draft against the original and emit ONLY changed, allowlisted keys.
  * Venue contact goes as top-level columns; venue address/access_notes are nested
  * under venue_location; permit fields are nested under permit_requirements.
+ *
+ * `originalVenueLocation` is the order's full venue_location object (country +
+ * city + address + access_notes). The server does a full-column replace on
+ * venue_location, so we MUST spread the original and overwrite only the edited
+ * subfields — otherwise country/city are silently wiped.
  */
-function diffPayload(original: Draft, next: Draft): OrderEditPayload {
+function diffPayload(
+    original: Draft,
+    next: Draft,
+    originalVenueLocation: OrderForEdit["venue_location"]
+): OrderEditPayload {
     const body: OrderEditPayload = {};
 
     // Contact (required fields — send trimmed value, not null)
@@ -211,11 +233,24 @@ function diffPayload(original: Draft, next: Draft): OrderEditPayload {
     if (d.venue_city_id && d.venue_city_id !== o.venue_city_id)
         body.venue_city_id = d.venue_city_id;
 
-    // venue_location: only send if address or access_notes changed.
+    // venue_location: only send if address or access_notes changed. Spread the
+    // ORIGINAL venue_location (preserving country + city) and overwrite only the
+    // edited subfields — the server full-column-replaces this object, so omitting
+    // country/city would wipe them.
     const addressChanged = d.venue_address.trim() !== o.venue_address.trim();
     const accessNotesChanged = d.venue_access_notes.trim() !== o.venue_access_notes.trim();
     if (addressChanged || accessNotesChanged) {
         body.venue_location = {
+            ...(originalVenueLocation
+                ? {
+                      ...(originalVenueLocation.country != null
+                          ? { country: originalVenueLocation.country }
+                          : {}),
+                      ...(originalVenueLocation.city != null
+                          ? { city: originalVenueLocation.city }
+                          : {}),
+                  }
+                : {}),
             address: d.venue_address.trim(),
             access_notes: d.venue_access_notes.trim(),
         };
@@ -281,7 +316,14 @@ function diffPayload(original: Draft, next: Draft): OrderEditPayload {
         }
     }
     for (const add of next.stagedAdds) {
-        itemOps.push({ op: "ADD", asset_id: add.asset_id, quantity: add.quantity });
+        itemOps.push({
+            op: "ADD",
+            asset_id: add.asset_id,
+            quantity: add.quantity,
+            // ORANGE adds carry the client's in-picker maintenance decision so the
+            // server honors FIX_IN_ORDER (vs. the legacy hardcoded USE_AS_IS).
+            ...(add.maintenance_decision ? { maintenance_decision: add.maintenance_decision } : {}),
+        });
     }
     if (itemOps.length > 0) body.items = itemOps;
 
@@ -292,6 +334,7 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
     const [isEditing, setIsEditing] = useState(false);
     const [bandError, setBandError] = useState<string | null>(null);
     const updateOrder = useUpdateOrderDetails(order.id);
+    const { platform } = usePlatform();
 
     // Snapshot the order at the moment edit mode opens. Memoised on the order
     // identity + version so an external refetch reseeds the baseline in view mode.
@@ -311,13 +354,28 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
         setDraft(buildDraft(order));
     };
 
-    const payload = useMemo(() => diffPayload(baseline, draft), [baseline, draft]);
+    const payload = useMemo(
+        () => diffPayload(baseline, draft, order.venue_location),
+        [baseline, draft, order.venue_location]
+    );
     const hasChanges = Object.keys(payload).length > 0;
     const removedSet = useMemo(() => new Set(draft.removedItemIds), [draft.removedItemIds]);
+
+    // Mirror checkout's hard rule: a required permit with an UNKNOWN owner is
+    // ambiguous and must be resolved before saving.
+    const permitInvalid =
+        draft.descriptive.permit.requires_permit &&
+        draft.descriptive.permit.permit_owner === "UNKNOWN";
 
     const handleSave = async () => {
         if (!hasChanges) {
             toast.info("No changes to save.");
+            return;
+        }
+        if (permitInvalid) {
+            const msg = "Please choose who arranges the permit before saving.";
+            setBandError(msg);
+            toast.error(msg);
             return;
         }
         setBandError(null);
@@ -333,17 +391,14 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
             }
             setIsEditing(false);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Failed to save changes";
-            // The API returns a descriptive 4xx when the order has left the
-            // editable band, when event dates / quantities / a staged add lack
-            // availability, when an item op is invalid (last-item removal, a
-            // maintenance-requiring/cross-company asset add), etc. Surface those
-            // inline as well as via toast.
-            if (
-                /editable|locked|confirmed|availability|available|maintenance|at least one item|another company|409/i.test(
-                    message
-                )
-            ) {
+            const e = error as Error & { code?: string; status?: number };
+            const message = e?.message || "Failed to save changes";
+            // The API returns a descriptive 4xx with a machine-readable `code`
+            // when the order has left the editable band, when event dates /
+            // quantities / a staged add lack availability, or when an item op is
+            // invalid (last-item removal, maintenance-requiring/transformed/
+            // cross-company asset add). Surface those inline as well as via toast.
+            if (EDIT_ERROR_CODES.has(e?.code ?? "") || e?.status === 409 || e?.status === 400) {
                 setBandError(message);
             }
             toast.error(message);
@@ -461,6 +516,7 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                                 }))
                             }
                             disabled={updateOrder.isPending}
+                            companyName={platform?.company_name ?? null}
                         />
                     </section>
 
@@ -507,12 +563,30 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                                 }))
                             }
                             stagedAdds={draft.stagedAdds}
-                            onAddAsset={(add) =>
-                                setDraft((prev) =>
-                                    prev.stagedAdds.some((a) => a.asset_id === add.asset_id)
-                                        ? prev
-                                        : { ...prev, stagedAdds: [...prev.stagedAdds, add] }
-                                )
+                            onAddAssets={(adds) =>
+                                setDraft((prev) => {
+                                    const existing = new Map(
+                                        prev.stagedAdds.map((a) => [a.asset_id, a])
+                                    );
+                                    for (const add of adds) {
+                                        // Merge a re-selected asset by summing qty +
+                                        // taking the latest maintenance decision.
+                                        const prior = existing.get(add.asset_id);
+                                        existing.set(
+                                            add.asset_id,
+                                            prior
+                                                ? {
+                                                      ...prior,
+                                                      quantity: prior.quantity + add.quantity,
+                                                      maintenance_decision:
+                                                          add.maintenance_decision ??
+                                                          prior.maintenance_decision,
+                                                  }
+                                                : add
+                                        );
+                                    }
+                                    return { ...prev, stagedAdds: Array.from(existing.values()) };
+                                })
                             }
                             onChangeAddQty={(assetId, quantity) =>
                                 setDraft((prev) => ({
@@ -546,7 +620,7 @@ export function OrderEditPanel({ order }: { order: OrderForEdit }) {
                     </Button>
                     <Button
                         onClick={handleSave}
-                        disabled={updateOrder.isPending || !hasChanges}
+                        disabled={updateOrder.isPending || !hasChanges || permitInvalid}
                         className="font-mono gap-2"
                         data-testid="order-edit-save"
                     >
