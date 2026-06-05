@@ -5,7 +5,7 @@
  * Industrial-refined aesthetic matching catalog/checkout
  */
 
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -52,8 +52,9 @@ import { OrderItemsList } from "@/components/orders/OrderItemsList";
 import { ScanActivityTimeline } from "@/components/scanning/scan-activity-timeline";
 import { EntityAttachmentsCard } from "@/components/shared/entity-attachments-card";
 import { ClientWorkflowRequestsCard } from "@/components/workflows/workflow-requests-card";
-import { OrderEditPanel } from "@/components/orders/editing/OrderEditPanel";
+import { OrderDetailEdit } from "@/components/orders/editing/OrderDetailEdit";
 import { canEditOrderDetails } from "@/lib/order-helpers";
+import { useChangePulse } from "@/hooks/use-change-pulse";
 
 const costEstimatedStatus = [
     "QUOTED",
@@ -94,6 +95,31 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const downloadCostEstimate = useDownloadCostEstimate();
     const { platform } = usePlatform();
     const invoicingEnabled = platform?.features?.enable_kadence_invoicing === true;
+
+    // PULSE (#12): purely client-side "new activity" dot on the change-history
+    // (Order Timeline) surface. The latest change is the most-recent
+    // order_status_history timestamp; the pulse shows when it's newer than what
+    // this browser last saw, and clears on view. Hooks run before the early
+    // returns below, so this stays unconditional.
+    const latestChangeAt = useMemo(() => {
+        const history = (order?.order_status_history ?? []) as Array<{ timestamp?: string }>;
+        let latest: number | null = null;
+        let latestIso: string | null = null;
+        for (const entry of history) {
+            if (!entry?.timestamp) continue;
+            const t = new Date(entry.timestamp).getTime();
+            if (Number.isNaN(t)) continue;
+            if (latest === null || t > latest) {
+                latest = t;
+                latestIso = entry.timestamp;
+            }
+        }
+        return latestIso;
+    }, [order?.order_status_history]);
+    const { showPulse: showChangePulse, markSeen: markChangeSeen } = useChangePulse(
+        order?.id,
+        latestChangeAt
+    );
 
     const handleDownloadCostEstimate = async () => {
         if (!order?.id || !platform?.platform_id) {
@@ -481,15 +507,18 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Order-editing (P1): pre-CONFIRMED descriptive-field editor.
-                            Owner or company-manager scope; frozen (hidden) at CONFIRMED+. */}
+                            {/* Order-editing: pre-CONFIRMED PER-SECTION inline editor.
+                            Owner or company-manager scope; frozen (hidden) at CONFIRMED+.
+                            Each section (contact, venue, permit, event dates, items)
+                            shows its values with an inline Edit affordance that flips
+                            that section into its editor in place. */}
                             {canEditOrder && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.25 }}
                                 >
-                                    <OrderEditPanel order={order} />
+                                    <OrderDetailEdit order={order} />
                                 </motion.div>
                             )}
 
@@ -706,12 +735,27 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         transition={{ delay: 0.35 }}
                                     >
                                         <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                            <div className="flex items-center gap-2 mb-6">
+                                            <button
+                                                type="button"
+                                                onClick={markChangeSeen}
+                                                className="flex items-center gap-2 mb-6 text-left"
+                                                data-testid="order-timeline-header"
+                                            >
                                                 <Clock className="w-5 h-5 text-primary" />
                                                 <h3 className="text-lg font-bold font-mono uppercase tracking-wide">
                                                     Order Timeline
                                                 </h3>
-                                            </div>
+                                                {showChangePulse && (
+                                                    <span
+                                                        className="relative ml-1 flex h-2.5 w-2.5"
+                                                        title="New activity since you last viewed"
+                                                        data-testid="order-change-pulse"
+                                                    >
+                                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                                                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+                                                    </span>
+                                                )}
+                                            </button>
 
                                             <div className="space-y-1 relative">
                                                 {(() => {
@@ -854,20 +898,25 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     </motion.div>
                                 )}
 
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                            >
-                                <OrderItemsList
-                                    items={order.items}
-                                    orderId={order.id}
-                                    orderStatus={order.order_status}
-                                    calculatedTotals={order.calculated_totals}
-                                />
-                            </motion.div>
+                            {/* Read-only items list — suppressed while the per-section
+                            inline editor is shown (it renders the editable items list
+                            itself), so items aren't displayed twice. */}
+                            {!canEditOrder && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                >
+                                    <OrderItemsList
+                                        items={order.items}
+                                        orderId={order.id}
+                                        orderStatus={order.order_status}
+                                        calculatedTotals={order.calculated_totals}
+                                    />
+                                </motion.div>
+                            )}
 
-                            {order.permit_requirements?.requires_permit && (
+                            {!canEditOrder && order.permit_requirements?.requires_permit && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -1216,130 +1265,165 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
                         {/* Sidebar */}
                         <div className="space-y-6">
-                            {costEstimatedStatus.includes(order?.order_status || "") && (
-                                <Button
-                                    onClick={handleDownloadCostEstimate}
-                                    disabled={downloadCostEstimate.isPending}
-                                    className="w-full"
+                            {/* Estimate Download UX (#15): when the order was edited
+                            after a quote was sent it bounces to QUOTE_REVISED and the
+                            estimate PDF is stale (the API would 409). In that state we
+                            HIDE the download wherever it would otherwise appear and show
+                            the revising notice instead. This message is independent of
+                            the cost-estimate status gate because a QUOTE_REVISED order
+                            usually sits in PRICING_REVIEW (not an estimate-eligible
+                            status), and the client still needs to know why no download
+                            is offered. */}
+                            {order.financial_status === "QUOTE_REVISED" ? (
+                                <div
+                                    className="rounded-md border border-secondary/30 bg-secondary/5 px-4 py-3 text-xs text-muted-foreground leading-relaxed"
+                                    data-testid="client-estimate-revising"
                                 >
-                                    {downloadCostEstimate.isPending
-                                        ? "Downloading..."
-                                        : "Download Cost Estimate"}
-                                </Button>
+                                    <span className="font-mono font-semibold text-secondary uppercase tracking-wide block mb-1">
+                                        Estimate unavailable
+                                    </span>
+                                    Quote is being revised — a new estimate will be available once
+                                    re-approved.
+                                </div>
+                            ) : (
+                                costEstimatedStatus.includes(order?.order_status || "") && (
+                                    <Button
+                                        onClick={handleDownloadCostEstimate}
+                                        disabled={downloadCostEstimate.isPending}
+                                        className="w-full"
+                                    >
+                                        {downloadCostEstimate.isPending
+                                            ? "Downloading..."
+                                            : "Download Cost Estimate"}
+                                    </Button>
+                                )
                             )}
 
-                            {/* Event Details */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                            >
-                                <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <Calendar className="w-4 h-4 text-primary" />
-                                        <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
-                                            Event
-                                        </h4>
-                                    </div>
-                                    <div className="space-y-3 text-sm">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                Start
-                                            </p>
-                                            <p className="font-mono font-semibold">
-                                                {order.event_start_date
-                                                    ? new Date(
-                                                          order.event_start_date
-                                                      ).toLocaleDateString()
-                                                    : "N/A"}
-                                            </p>
+                            {/* Event / Venue / Contact sidebar cards — read-only
+                            mirrors. Suppressed while the per-section inline editor is
+                            shown (those values are editable there), so they aren't
+                            displayed twice. */}
+                            {!canEditOrder && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
+                                    <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Calendar className="w-4 h-4 text-primary" />
+                                            <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
+                                                Event
+                                            </h4>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                End
-                                            </p>
-                                            <p className="font-mono font-semibold">
-                                                {order.event_end_date
-                                                    ? new Date(
-                                                          order.event_end_date
-                                                      ).toLocaleDateString()
-                                                    : "N/A"}
-                                            </p>
+                                        <div className="space-y-3 text-sm">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                    Start
+                                                </p>
+                                                <p className="font-mono font-semibold">
+                                                    {order.event_start_date
+                                                        ? new Date(
+                                                              order.event_start_date
+                                                          ).toLocaleDateString()
+                                                        : "N/A"}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                    End
+                                                </p>
+                                                <p className="font-mono font-semibold">
+                                                    {order.event_end_date
+                                                        ? new Date(
+                                                              order.event_end_date
+                                                          ).toLocaleDateString()
+                                                        : "N/A"}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            </motion.div>
+                                    </Card>
+                                </motion.div>
+                            )}
 
                             {/* Venue */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                            >
-                                <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <MapPin className="w-4 h-4 text-primary" />
-                                        <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
-                                            Venue
-                                        </h4>
-                                    </div>
-                                    <div className="space-y-2 text-sm">
-                                        <span className="font-semibold">{order.venue_name}</span>,
-                                        <span className="text-xs text-muted-foreground leading-relaxed">
-                                            {order.venue_location?.address}
-                                        </span>
-                                        ,
-                                        <span className="text-xs text-muted-foreground leading-relaxed">
-                                            {order.venue_city}
-                                        </span>
-                                    </div>
-                                </Card>
-                            </motion.div>
+                            {!canEditOrder && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                >
+                                    <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <MapPin className="w-4 h-4 text-primary" />
+                                            <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
+                                                Venue
+                                            </h4>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <span className="font-semibold">
+                                                {order.venue_name}
+                                            </span>
+                                            ,
+                                            <span className="text-xs text-muted-foreground leading-relaxed">
+                                                {order.venue_location?.address}
+                                            </span>
+                                            ,
+                                            <span className="text-xs text-muted-foreground leading-relaxed">
+                                                {order.venue_city}
+                                            </span>
+                                        </div>
+                                    </Card>
+                                </motion.div>
+                            )}
 
                             {/* Contact */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                            >
-                                <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <User className="w-4 h-4 text-primary" />
-                                        <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
-                                            Contact
-                                        </h4>
-                                    </div>
-                                    <div className="space-y-2 text-sm">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                Name
-                                            </p>
-                                            <p className="font-mono font-semibold">
-                                                {order.contact_name}
-                                            </p>
+                            {!canEditOrder && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                >
+                                    <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <User className="w-4 h-4 text-primary" />
+                                            <h4 className="font-bold font-mono text-sm uppercase tracking-wide">
+                                                Contact
+                                            </h4>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                Email
-                                            </p>
-                                            <p className="font-mono font-semibold text-xs">
-                                                {order.contact_email}
-                                            </p>
+                                        <div className="space-y-2 text-sm">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                    Name
+                                                </p>
+                                                <p className="font-mono font-semibold">
+                                                    {order.contact_name}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                    Email
+                                                </p>
+                                                <p className="font-mono font-semibold text-xs">
+                                                    {order.contact_email}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                    Phone
+                                                </p>
+                                                <p className="font-mono font-semibold">
+                                                    {order.contact_phone}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                Phone
-                                            </p>
-                                            <p className="font-mono font-semibold">
-                                                {order.contact_phone}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </motion.div>
+                                    </Card>
+                                </motion.div>
+                            )}
 
-                            {/* Special Instructions */}
-                            {order.special_instructions && (
+                            {/* Special Instructions — read-only mirror; suppressed
+                            while the inline editor (which exposes it) is shown. */}
+                            {!canEditOrder && order.special_instructions && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}

@@ -31,11 +31,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { PermitWarningAlert, derivePermitChoice } from "@/components/permits/permit-warning-alert";
+import { PermitSection } from "@/components/permits/PermitSection";
 import { useEvaluateCommerceRules, type CommerceRuleHit } from "@/hooks/use-commerce-rules";
 import {
     AlertDialog,
@@ -2279,225 +2279,22 @@ function CheckoutPageInner() {
                                                 </div>
                                             </div>
 
-                                            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                                                {/* Required: explicit Yes/No to permit requirement.
-                                                    No default state — client must answer. */}
-                                                <div className="space-y-2">
-                                                    <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Is a permit required for this delivery? *
-                                                    </Label>
-                                                    <RadioGroup
-                                                        value={formData.permit_decision ?? ""}
-                                                        onValueChange={(value) => {
-                                                            const decision = value as "yes" | "no";
-                                                            setFormData({
-                                                                ...formData,
-                                                                permit_decision: decision,
-                                                                requires_permit: decision === "yes",
-                                                                // Reset owner when toggling to "no".
-                                                                permit_owner:
-                                                                    decision === "no"
-                                                                        ? "UNKNOWN"
-                                                                        : formData.permit_owner,
-                                                            });
-                                                        }}
-                                                        className="flex gap-3"
-                                                    >
-                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                            <RadioGroupItem
-                                                                value="yes"
-                                                                id="permitYes"
-                                                            />
-                                                            <span className="text-sm font-medium">
-                                                                Yes
-                                                            </span>
-                                                        </label>
-                                                        <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                            <RadioGroupItem
-                                                                value="no"
-                                                                id="permitNo"
-                                                            />
-                                                            <span className="text-sm font-medium">
-                                                                No
-                                                            </span>
-                                                        </label>
-                                                    </RadioGroup>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Confirm with the venue if you're unsure —
-                                                        this decision is binding.
-                                                    </p>
-                                                </div>
-
-                                                {/* Contextual warning — three variants per the
-                                                    locked spec. Re-shown on quote approval too. */}
-                                                <PermitWarningAlert
-                                                    choice={derivePermitChoice(
-                                                        formData.requires_permit,
-                                                        formData.permit_decision === null
-                                                            ? null
-                                                            : formData.permit_owner
-                                                    )}
-                                                    companyName={platform?.company_name ?? null}
-                                                />
-
-                                                {formData.requires_permit && (
-                                                    <div className="space-y-4">
-                                                        <div className="space-y-2">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Who will handle the permit? *
-                                                            </Label>
-                                                            <RadioGroup
-                                                                value={
-                                                                    formData.permit_owner ===
-                                                                    "UNKNOWN"
-                                                                        ? ""
-                                                                        : formData.permit_owner
-                                                                }
-                                                                onValueChange={(value) =>
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        permit_owner: value as
-                                                                            | "CLIENT"
-                                                                            | "PLATFORM",
-                                                                    })
-                                                                }
-                                                                className="flex gap-3"
-                                                            >
-                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                                    <RadioGroupItem
-                                                                        value="CLIENT"
-                                                                        id="permitOwnerClient"
-                                                                    />
-                                                                    <span className="text-sm font-medium">
-                                                                        {platform?.company_name ||
-                                                                            "We"}{" "}
-                                                                        will arrange it
-                                                                    </span>
-                                                                </label>
-                                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                                    <RadioGroupItem
-                                                                        value="PLATFORM"
-                                                                        id="permitOwnerPlatform"
-                                                                    />
-                                                                    <span className="text-sm font-medium">
-                                                                        Ops should arrange it
-                                                                    </span>
-                                                                </label>
-                                                            </RadioGroup>
-                                                        </div>
-
-                                                        {/* Visual separator + section label —
-                                                            the docs-required toggles are an
-                                                            independent concern from "who handles
-                                                            the permit", but they live in the same
-                                                            permit-required branch. */}
-                                                        <Separator className="my-2" />
-                                                        <div className="space-y-1">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Additional documentation
-                                                                requirements
-                                                            </Label>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Tick anything the venue asks for
-                                                                ahead of access.
-                                                            </p>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
-                                                                <Checkbox
-                                                                    checked={
-                                                                        formData.requires_vehicle_docs
-                                                                    }
-                                                                    onCheckedChange={(checked) =>
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            requires_vehicle_docs:
-                                                                                checked === true,
-                                                                        })
-                                                                    }
-                                                                />
-                                                                <div>
-                                                                    <p className="text-sm font-medium">
-                                                                        Vehicle documents required
-                                                                    </p>
-                                                                    <p className="text-xs text-muted-foreground">
-                                                                        Use this if venue access
-                                                                        needs truck registration or
-                                                                        driver docs.
-                                                                    </p>
-                                                                </div>
-                                                            </label>
-                                                            <label className="flex items-start gap-3 rounded-md border border-border/60 bg-background/70 p-3">
-                                                                <Checkbox
-                                                                    checked={
-                                                                        formData.requires_staff_ids
-                                                                    }
-                                                                    onCheckedChange={(checked) =>
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            requires_staff_ids:
-                                                                                checked === true,
-                                                                        })
-                                                                    }
-                                                                />
-                                                                <div>
-                                                                    <p className="text-sm font-medium">
-                                                                        Staff IDs required
-                                                                    </p>
-                                                                    <p className="text-xs text-muted-foreground">
-                                                                        Use this if crew names, IDs,
-                                                                        or passes are needed before
-                                                                        entry.
-                                                                    </p>
-                                                                </div>
-                                                            </label>
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Permit Notes
-                                                            </Label>
-                                                            <Textarea
-                                                                value={formData.permit_notes}
-                                                                onChange={(e) =>
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        permit_notes:
-                                                                            e.target.value,
-                                                                    })
-                                                                }
-                                                                placeholder="Permit timing, loading bay rules, access windows, or anything the team should know."
-                                                                rows={3}
-                                                                className="font-mono text-sm"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Access notes — always visible in permit section */}
-                                                <div className="space-y-2">
-                                                    <Label
-                                                        htmlFor="venueAccessNotes"
-                                                        className="font-mono uppercase text-xs tracking-wide"
-                                                    >
-                                                        Access Notes (Optional)
-                                                    </Label>
-                                                    <Textarea
-                                                        id="venueAccessNotes"
-                                                        value={formData.venue_access_notes}
-                                                        onChange={(e) =>
-                                                            setFormData({
-                                                                ...formData,
-                                                                venue_access_notes: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="Loading dock info, access codes, gate instructions, etc."
-                                                        rows={2}
-                                                        className="font-mono text-sm"
-                                                    />
-                                                </div>
-                                            </div>
+                                            <PermitSection
+                                                value={{
+                                                    permit_decision: formData.permit_decision,
+                                                    requires_permit: formData.requires_permit,
+                                                    permit_owner: formData.permit_owner,
+                                                    requires_vehicle_docs:
+                                                        formData.requires_vehicle_docs,
+                                                    requires_staff_ids: formData.requires_staff_ids,
+                                                    permit_notes: formData.permit_notes,
+                                                    venue_access_notes: formData.venue_access_notes,
+                                                }}
+                                                onChange={(patch) =>
+                                                    setFormData((prev) => ({ ...prev, ...patch }))
+                                                }
+                                                companyName={platform?.company_name ?? null}
+                                            />
                                         </div>
                                     </Card>
                                 </motion.div>

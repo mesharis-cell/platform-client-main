@@ -22,8 +22,7 @@
  */
 
 import { useState } from "react";
-import { Minus, Plus, Trash2, RotateCcw, PackagePlus, Wrench } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Trash2, RotateCcw, PackagePlus, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,6 +38,13 @@ import {
     type MaintenanceDecision,
     type NamedAssetSelection,
 } from "@/components/assets/asset-picker";
+// Shared, bounded quantity stepper (the EXACT control used inside the asset
+// picker cards). Bounding it by availableQuantity keeps the order-edit rows
+// 1:1 with the picker so the two surfaces never diverge.
+import {
+    QtyStepper,
+    clampQty as clampQtyBounded,
+} from "@/components/assets/asset-picker/QtyStepper";
 
 // One editable EXISTING row. `id` is the order_item UUID (item.order_item.id on
 // the order detail response); `name` is the asset name.
@@ -60,72 +66,6 @@ export interface StagedAdd {
     maintenance_decision?: MaintenanceDecision;
 }
 
-const clampQty = (n: number): number => {
-    if (!Number.isFinite(n)) return 1;
-    const i = Math.floor(n);
-    return i < 1 ? 1 : i;
-};
-
-// A quantity stepper used by both existing rows and staged-add rows.
-function QtyStepper({
-    qty,
-    name,
-    disabled,
-    onChange,
-}: {
-    qty: number;
-    name: string;
-    disabled?: boolean;
-    onChange: (next: number) => void;
-}) {
-    return (
-        <div className="flex items-center border border-border rounded-md overflow-hidden shrink-0">
-            <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onChange(qty - 1)}
-                disabled={disabled || qty <= 1}
-                aria-label={`Decrease quantity of ${name}`}
-                className="h-8 w-8 p-0 rounded-none border-r border-border hover:bg-muted"
-            >
-                <Minus className="h-3 w-3" />
-            </Button>
-            <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                step={1}
-                value={qty}
-                data-testid="order-edit-item-qty"
-                onChange={(e) => {
-                    const parsed = parseInt(e.target.value, 10);
-                    if (Number.isNaN(parsed)) return;
-                    onChange(parsed);
-                }}
-                onBlur={(e) => {
-                    const parsed = parseInt(e.target.value, 10);
-                    onChange(Number.isNaN(parsed) ? 1 : parsed);
-                }}
-                disabled={disabled}
-                aria-label={`Quantity of ${name}`}
-                className="h-8 w-16 rounded-none border-0 text-center font-mono focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onChange(qty + 1)}
-                disabled={disabled}
-                aria-label={`Increase quantity of ${name}`}
-                className="h-8 w-8 p-0 rounded-none border-l border-border hover:bg-muted"
-            >
-                <Plus className="h-3 w-3" />
-            </Button>
-        </div>
-    );
-}
-
 export function OrderItemsQuantityEditor({
     items,
     value,
@@ -136,6 +76,8 @@ export function OrderItemsQuantityEditor({
     onAddAssets,
     onChangeAddQty,
     onRemoveAdd,
+    maxByItemId,
+    maxByAssetId,
     disabled,
 }: {
     items: QuantityEditorItem[];
@@ -150,12 +92,19 @@ export function OrderItemsQuantityEditor({
     onAddAssets: (adds: StagedAdd[]) => void;
     onChangeAddQty: (assetId: string, quantity: number) => void;
     onRemoveAdd: (assetId: string) => void;
+    // Per-EXISTING-row upper bound, keyed by order_item_id. For an already-booked
+    // row this is (live available_quantity + this row's own booked qty), so a
+    // decrease / no-op is never falsely blocked. Missing entry = unbounded.
+    maxByItemId?: Record<string, number>;
+    // Per-STAGED-ADD upper bound, keyed by asset_id (the picker's
+    // availableQuantity for the edited window). Missing entry = unbounded.
+    maxByAssetId?: Record<string, number>;
     disabled?: boolean;
 }) {
     const [pickerOpen, setPickerOpen] = useState(false);
 
     const setQty = (id: string, next: number) => {
-        onChange({ [id]: clampQty(next) });
+        onChange({ [id]: clampQtyBounded(next, maxByItemId?.[id] ?? 0) });
     };
 
     // How many existing items remain (not pending-removal). With no staged adds,
@@ -181,6 +130,11 @@ export function OrderItemsQuantityEditor({
                 {items.map((item) => {
                     const qty = value[item.id] ?? 1;
                     const isRemoved = removedIds.has(item.id);
+                    const max = maxByItemId?.[item.id] ?? 0;
+                    // Inline feedback only — the server is authoritative and 409s on
+                    // a real shortfall. `max <= 0` means "unbounded / unknown" so we
+                    // never flag in that mode.
+                    const exceeds = !isRemoved && max > 0 && qty > max;
                     // Block removing the last item left, unless a new one is being
                     // added in the same edit (then the order won't be empty).
                     const blockRemove =
@@ -188,123 +142,162 @@ export function OrderItemsQuantityEditor({
                     return (
                         <div
                             key={item.id}
-                            className={`flex items-center justify-between gap-4 rounded-lg border p-3 transition-colors ${
+                            className={`rounded-lg border p-3 transition-colors ${
                                 isRemoved
                                     ? "border-destructive/40 bg-destructive/5"
-                                    : "border-border/40 bg-background/50"
+                                    : exceeds
+                                      ? "border-amber-500/40 bg-amber-500/5"
+                                      : "border-border/40 bg-background/50"
                             }`}
                             data-testid="order-edit-item-row"
                         >
-                            <span
-                                className={`min-w-0 flex-1 truncate text-sm font-medium ${
-                                    isRemoved ? "text-muted-foreground line-through" : ""
-                                }`}
-                            >
-                                {item.name}
-                                {isRemoved && (
-                                    <Badge
-                                        variant="outline"
-                                        className="ml-2 border-destructive/40 text-[10px] text-destructive"
-                                    >
-                                        Removing
-                                    </Badge>
-                                )}
-                            </span>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                                {!isRemoved && (
-                                    <QtyStepper
-                                        qty={qty}
-                                        name={item.name}
-                                        disabled={disabled}
-                                        onChange={(next) => setQty(item.id, next)}
-                                    />
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => onToggleRemove(item.id)}
-                                    disabled={disabled || blockRemove}
-                                    title={
-                                        blockRemove
-                                            ? "An order must keep at least one item"
-                                            : isRemoved
-                                              ? "Keep this item"
-                                              : "Remove this item"
-                                    }
-                                    aria-label={
-                                        isRemoved ? `Keep ${item.name}` : `Remove ${item.name}`
-                                    }
-                                    className="h-8 w-8 p-0"
-                                    data-testid="order-edit-item-remove"
+                            <div className="flex items-center justify-between gap-4">
+                                <span
+                                    className={`min-w-0 flex-1 truncate text-sm font-medium ${
+                                        isRemoved ? "text-muted-foreground line-through" : ""
+                                    }`}
                                 >
-                                    {isRemoved ? (
-                                        <RotateCcw className="h-3.5 w-3.5" />
-                                    ) : (
-                                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                    {item.name}
+                                    {isRemoved && (
+                                        <Badge
+                                            variant="outline"
+                                            className="ml-2 border-destructive/40 text-[10px] text-destructive"
+                                        >
+                                            Removing
+                                        </Badge>
                                     )}
-                                </Button>
+                                </span>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {!isRemoved && (
+                                        <QtyStepper
+                                            qty={qty}
+                                            max={max}
+                                            name={item.name}
+                                            disabled={disabled}
+                                            onChange={(next) => setQty(item.id, next)}
+                                        />
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onToggleRemove(item.id)}
+                                        disabled={disabled || blockRemove}
+                                        title={
+                                            blockRemove
+                                                ? "An order must keep at least one item"
+                                                : isRemoved
+                                                  ? "Keep this item"
+                                                  : "Remove this item"
+                                        }
+                                        aria-label={
+                                            isRemoved ? `Keep ${item.name}` : `Remove ${item.name}`
+                                        }
+                                        className="h-8 w-8 p-0"
+                                        data-testid="order-edit-item-remove"
+                                    >
+                                        {isRemoved ? (
+                                            <RotateCcw className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
+                            {exceeds && (
+                                <p
+                                    className="mt-2 text-xs font-medium text-amber-700"
+                                    data-testid="order-edit-item-exceeds"
+                                >
+                                    Exceeds available ({max}). We&apos;ll re-check stock when you
+                                    save.
+                                </p>
+                            )}
                         </div>
                     );
                 })}
 
                 {/* Staged adds — new assets not yet on the order. */}
-                {stagedAdds.map((add) => (
-                    <div
-                        key={add.asset_id}
-                        className="flex items-center justify-between gap-4 rounded-lg border border-primary/40 bg-primary/5 p-3"
-                        data-testid="order-edit-add-row"
-                    >
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                            {add.name}
-                            <Badge
-                                variant="outline"
-                                className="ml-2 border-primary/40 text-[10px] text-primary"
-                            >
-                                New
-                            </Badge>
-                            {add.maintenance_decision === "FIX_IN_ORDER" && (
-                                <Badge
-                                    variant="outline"
-                                    className="ml-2 gap-1 border-amber-300 text-[10px] text-amber-700"
+                {stagedAdds.map((add) => {
+                    const addMax = maxByAssetId?.[add.asset_id] ?? 0;
+                    const addExceeds = addMax > 0 && add.quantity > addMax;
+                    return (
+                        <div
+                            key={add.asset_id}
+                            className={`rounded-lg border p-3 ${
+                                addExceeds
+                                    ? "border-amber-500/40 bg-amber-500/5"
+                                    : "border-primary/40 bg-primary/5"
+                            }`}
+                            data-testid="order-edit-add-row"
+                        >
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                    {add.name}
+                                    <Badge
+                                        variant="outline"
+                                        className="ml-2 border-primary/40 text-[10px] text-primary"
+                                    >
+                                        New
+                                    </Badge>
+                                    {add.maintenance_decision === "FIX_IN_ORDER" && (
+                                        <Badge
+                                            variant="outline"
+                                            className="ml-2 gap-1 border-amber-300 text-[10px] text-amber-700"
+                                        >
+                                            <Wrench className="h-2.5 w-2.5" />
+                                            Fix before event
+                                        </Badge>
+                                    )}
+                                    {add.maintenance_decision === "USE_AS_IS" && (
+                                        <Badge
+                                            variant="outline"
+                                            className="ml-2 border-amber-300 text-[10px] text-amber-700"
+                                        >
+                                            Use as-is
+                                        </Badge>
+                                    )}
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <QtyStepper
+                                        qty={add.quantity}
+                                        max={addMax}
+                                        name={add.name}
+                                        disabled={disabled}
+                                        onChange={(next) =>
+                                            onChangeAddQty(
+                                                add.asset_id,
+                                                clampQtyBounded(next, addMax)
+                                            )
+                                        }
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onRemoveAdd(add.asset_id)}
+                                        disabled={disabled}
+                                        aria-label={`Remove staged ${add.name}`}
+                                        title="Don't add this item"
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                    </Button>
+                                </div>
+                            </div>
+                            {addExceeds && (
+                                <p
+                                    className="mt-2 text-xs font-medium text-amber-700"
+                                    data-testid="order-edit-add-exceeds"
                                 >
-                                    <Wrench className="h-2.5 w-2.5" />
-                                    Fix before event
-                                </Badge>
+                                    Exceeds available ({addMax}). We&apos;ll re-check stock when you
+                                    save.
+                                </p>
                             )}
-                            {add.maintenance_decision === "USE_AS_IS" && (
-                                <Badge
-                                    variant="outline"
-                                    className="ml-2 border-amber-300 text-[10px] text-amber-700"
-                                >
-                                    Use as-is
-                                </Badge>
-                            )}
-                        </span>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <QtyStepper
-                                qty={add.quantity}
-                                name={add.name}
-                                disabled={disabled}
-                                onChange={(next) => onChangeAddQty(add.asset_id, clampQty(next))}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRemoveAdd(add.asset_id)}
-                                disabled={disabled}
-                                aria-label={`Remove staged ${add.name}`}
-                                title="Don't add this item"
-                                className="h-8 w-8 p-0"
-                            >
-                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
