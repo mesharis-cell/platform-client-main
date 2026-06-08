@@ -936,6 +936,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                         <SectionEditModal
                                                             binding={permitBinding}
                                                             title="Permit / Access Coordination"
+                                                            contentClassName="sm:max-w-2xl"
                                                             editor={(b) => (
                                                                 <PermitSection
                                                                     value={permitSectionValue(
@@ -1340,6 +1341,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                 <SectionEditModal
                                                     binding={eventDatesBinding}
                                                     title="Event Dates"
+                                                    contentClassName="sm:max-w-2xl"
                                                     editor={(b) => (
                                                         <OrderEventDatesSection
                                                             value={b.draft.eventDates}
@@ -1436,6 +1438,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                 <SectionEditModal
                                                     binding={descriptiveBinding}
                                                     title="Venue & Logistics"
+                                                    contentClassName="sm:max-w-2xl"
                                                     editor={(b) => (
                                                         <DescriptiveFieldsEditor
                                                             value={b.draft.descriptive}
