@@ -18,7 +18,7 @@
  * cluster needs so the dates card can render the advisory UI without re-deriving.
  */
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
     useFeasibility,
     useFeasibilityConfig,
@@ -133,6 +133,15 @@ export function useOrderEditFeasibility(
         effectiveEventStartDatetime
     );
 
+    // `interpretFeasibilityPreview` returns a FRESH `.filter()` array for
+    // `blockingItems` on every call once the user has picked a date (the no-date
+    // branch returns the stable react-query `issues` array). That churning
+    // reference would invalidate the `helperProps` memo + the wiring memo every
+    // render and keep the page's setWiring effect firing. Stabilize it: keep the
+    // previous array reference when its element identities are unchanged (the
+    // element objects come from react-query data and are structurally shared).
+    const stableBlockingItems = useStableArray(feasibility.blockingItems);
+
     // Lead-time floor for the date input min (checkout's calculateMinDate). Verbatim.
     const minDate = useMemo<string | undefined>(() => {
         if (!feasibilityConfig) return undefined;
@@ -151,26 +160,70 @@ export function useOrderEditFeasibility(
         return `${year}-${month}-${day}`;
     }, [feasibilityConfig]);
 
-    const helperProps: FeasibilityHelperProps = {
-        helperEnabled: feasibilityHelperEnabled,
-        isLoading: feasibilityPreview.isLoading,
-        floorDate: feasibility.floorDate,
-        floorDatetime: feasibility.floorDatetime,
-        userEventDate: draft.eventDates.event_start_date,
-        userDateFeasible: feasibility.userDateFeasible,
-        blockingItems: feasibility.blockingItems,
-        config: feasibilityPreview.data?.config ?? null,
-        issues: feasibilityPreview.data?.issues ?? [],
-        hasChecked: !!feasibilityPreview.data && feasibilityItems.length > 0,
-        isChecking: feasibilityPreview.isLoading,
-        floorDatetimeForUseDate: feasibility.floorDatetime,
-        timezone: feasibilityConfig?.timezone,
-    };
+    // Memoize over the PRIMITIVE/stable inputs that actually feed it. `feasibility`
+    // is a fresh object every render (interpretFeasibilityPreview returns a new
+    // literal each call), so we depend on its scalar fields + the stable
+    // react-query data reference rather than the wrapper object. Without this memo
+    // `helperProps` is a new reference every render, which defeats the controller's
+    // `setWiring` update guard (it reference-compares helperProps) and spins the
+    // feedback effect into an infinite update loop (React #185).
+    const helperProps: FeasibilityHelperProps = useMemo(
+        () => ({
+            helperEnabled: feasibilityHelperEnabled,
+            isLoading: feasibilityPreview.isLoading,
+            floorDate: feasibility.floorDate,
+            floorDatetime: feasibility.floorDatetime,
+            userEventDate: draft.eventDates.event_start_date,
+            userDateFeasible: feasibility.userDateFeasible,
+            blockingItems: stableBlockingItems,
+            config: feasibilityPreview.data?.config ?? null,
+            issues: feasibilityPreview.data?.issues ?? [],
+            hasChecked: !!feasibilityPreview.data && feasibilityItems.length > 0,
+            isChecking: feasibilityPreview.isLoading,
+            floorDatetimeForUseDate: feasibility.floorDatetime,
+            timezone: feasibilityConfig?.timezone,
+        }),
+        [
+            feasibilityHelperEnabled,
+            feasibilityPreview.isLoading,
+            feasibilityPreview.data,
+            feasibility.floorDate,
+            feasibility.floorDatetime,
+            feasibility.userDateFeasible,
+            stableBlockingItems,
+            draft.eventDates.event_start_date,
+            feasibilityItems.length,
+            feasibilityConfig?.timezone,
+        ]
+    );
 
-    return {
-        userDateFeasible: feasibility.userDateFeasible,
-        blocks: feasibility.userDateFeasible === false,
-        minDate,
-        helperProps,
-    };
+    // Stabilize the wiring object itself. The page feeds this straight into
+    // `controller.setWiring(...)` from a `useEffect`; a new reference every render
+    // re-runs that effect every render, so the return MUST be referentially stable
+    // across renders where nothing changed.
+    return useMemo<OrderEditFeasibilityWiring>(
+        () => ({
+            userDateFeasible: feasibility.userDateFeasible,
+            blocks: feasibility.userDateFeasible === false,
+            minDate,
+            helperProps,
+        }),
+        [feasibility.userDateFeasible, minDate, helperProps]
+    );
+}
+
+/**
+ * Return a referentially-stable array: keep the previous reference whenever the
+ * new array has the same length and element identities. Used to absorb the fresh
+ * `.filter()` array `interpretFeasibilityPreview` produces for `blockingItems` so
+ * downstream memos/effects don't see a new reference every render.
+ */
+function useStableArray<T>(next: T[]): T[] {
+    const ref = useRef<T[]>(next);
+    const prev = ref.current;
+    if (prev !== next) {
+        const same = prev.length === next.length && prev.every((el, i) => el === next[i]);
+        if (!same) ref.current = next;
+    }
+    return ref.current;
 }

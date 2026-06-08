@@ -137,5 +137,14 @@ export function useOrderEditAvailability(
         return out;
     }, [draft.stagedAdds, availByAssetId]);
 
-    return { maxByItemId, maxByAssetId };
+    // Stabilize the wiring object itself. `maxByItemId`/`maxByAssetId` are already
+    // memoized, but the page feeds this return straight into
+    // `controller.setWiring(...)` from a `useEffect` — a fresh wrapper object every
+    // render would re-run that effect every render and spin the feedback loop. The
+    // controller's guard deep-compares the records, but stabilizing the wrapper too
+    // keeps the effect from firing needlessly.
+    return useMemo<AvailabilityWiring>(
+        () => ({ maxByItemId, maxByAssetId }),
+        [maxByItemId, maxByAssetId]
+    );
 }

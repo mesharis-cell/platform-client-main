@@ -194,12 +194,19 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     );
     // Feed the companion verdicts BACK into the controller (the inverted data-flow
     // from design §1.1 — closes the circular dep on the controller's own draft).
+    // Depend on the STABLE `setWiring` callback (a useCallback([]) on the
+    // controller), NOT the whole controller object — the controller is a fresh
+    // object every render, so depending on it would re-run this effect every render.
+    // `editFeasibility`/`editAvailability` are now memoized by their companion
+    // hooks, so this effect fires only when a verdict actually changes; the
+    // controller's setWiring guard then bails when the value is unchanged.
+    const setWiring = orderEditController.setWiring;
     useEffect(() => {
-        orderEditController.setWiring({
+        setWiring({
             feasibility: editFeasibility,
             availability: editAvailability,
         });
-    }, [orderEditController, editFeasibility, editAvailability]);
+    }, [setWiring, editFeasibility, editAvailability]);
 
     const handleDownloadCostEstimate = async () => {
         if (!order?.id || !platform?.platform_id) {

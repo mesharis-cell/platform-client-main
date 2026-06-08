@@ -360,8 +360,58 @@ function sameFeasibility(
         a.userDateFeasible === b.userDateFeasible &&
         a.blocks === b.blocks &&
         a.minDate === b.minDate &&
-        a.helperProps === b.helperProps
+        sameHelperProps(a.helperProps, b.helperProps)
     );
+}
+
+/** Compare `helperProps` by VALUE, not reference. The feasibility companion now
+ *  memoizes its return, but the wiring guard must not depend on the caller doing
+ *  so — a reference-only check here was the root of the order-edit infinite update
+ *  loop (React #185): the companion's helperProps was a fresh literal every render,
+ *  so this guard always reported "changed" and `setWiringState` committed on every
+ *  render, re-running the page's setWiring effect forever. Scalars are ===; the
+ *  array/object fields (blockingItems, issues, config) come from react-query data
+ *  with structural sharing, so reference equality there is a sound value signal. */
+function sameHelperProps(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+    const x = a as Record<string, unknown>;
+    const y = b as Record<string, unknown>;
+    // Scalar fields: strict equality.
+    const scalarKeys: string[] = [
+        "helperEnabled",
+        "isLoading",
+        "floorDate",
+        "floorDatetime",
+        "userEventDate",
+        "userDateFeasible",
+        "config",
+        "hasChecked",
+        "isChecking",
+        "floorDatetimeForUseDate",
+        "timezone",
+    ];
+    for (const k of scalarKeys) {
+        if (x[k] !== y[k]) return false;
+    }
+    // Array fields (blockingItems, issues): compare by CONTENT, not reference.
+    // `interpretFeasibilityPreview` returns a fresh `.filter()` array for
+    // blockingItems on every call when the user has picked a date, but the element
+    // objects come from react-query data (structurally shared), so element identity
+    // is a sound value signal even when the wrapper array is new each render.
+    if (!sameArrayByIdentity(x.blockingItems, y.blockingItems)) return false;
+    if (!sameArrayByIdentity(x.issues, y.issues)) return false;
+    return true;
+}
+
+function sameArrayByIdentity(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
 
 function sameAvailability(
