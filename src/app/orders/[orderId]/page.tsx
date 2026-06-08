@@ -64,9 +64,8 @@ import {
 } from "@/components/orders/editing/order-edit-contract";
 import {
     EditableEntityProvider,
-    useEditableSection,
     EditAffordance,
-    CardEditSwap,
+    SectionEditModal,
 } from "@/components/orders/editing/editable-primitives";
 import { ContactEditor } from "@/components/orders/editing/ContactEditor";
 import { VenueContactEditor } from "@/components/orders/editing/VenueContactEditor";
@@ -929,13 +928,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                             <EditAffordance
                                                                 binding={permitBinding}
                                                                 variant="client"
+                                                                mode="modal"
                                                             />
                                                         </div>
                                                     </CardHeader>
                                                     <CardContent className="space-y-3 text-sm">
-                                                        <CardEditSwap
+                                                        <SectionEditModal
                                                             binding={permitBinding}
-                                                            footerVariant="client"
+                                                            title="Permit / Access Coordination"
                                                             editor={(b) => (
                                                                 <PermitSection
                                                                     value={permitSectionValue(
@@ -953,74 +953,70 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                     disabled={b.saving}
                                                                 />
                                                             )}
-                                                        >
-                                                            {order.permit_requirements
-                                                                ?.requires_permit ? (
-                                                                <>
+                                                        />
+                                                        {order.permit_requirements
+                                                            ?.requires_permit ? (
+                                                            <>
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
+                                                                        Ownership
+                                                                    </p>
+                                                                    <p className="font-medium">
+                                                                        {order.permit_requirements
+                                                                            .permit_owner ===
+                                                                            "CLIENT" &&
+                                                                            "Client will arrange permits"}
+                                                                        {order.permit_requirements
+                                                                            .permit_owner ===
+                                                                            "PLATFORM" &&
+                                                                            "Platform will coordinate permits"}
+                                                                        {order.permit_requirements
+                                                                            .permit_owner ===
+                                                                            "UNKNOWN" &&
+                                                                            "Permit ownership still to be confirmed"}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                                                    {order.permit_requirements
+                                                                        .requires_vehicle_docs && (
+                                                                        <span className="rounded-full border px-2 py-1">
+                                                                            Vehicle documents
+                                                                            required
+                                                                        </span>
+                                                                    )}
+                                                                    {order.permit_requirements
+                                                                        .requires_staff_ids && (
+                                                                        <span className="rounded-full border px-2 py-1">
+                                                                            Staff IDs required
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {order.permit_requirements
+                                                                    .notes && (
                                                                     <div>
                                                                         <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                                            Ownership
+                                                                            Notes
                                                                         </p>
-                                                                        <p className="font-medium">
-                                                                            {order
-                                                                                .permit_requirements
-                                                                                .permit_owner ===
-                                                                                "CLIENT" &&
-                                                                                "Client will arrange permits"}
-                                                                            {order
-                                                                                .permit_requirements
-                                                                                .permit_owner ===
-                                                                                "PLATFORM" &&
-                                                                                "Platform will coordinate permits"}
-                                                                            {order
-                                                                                .permit_requirements
-                                                                                .permit_owner ===
-                                                                                "UNKNOWN" &&
-                                                                                "Permit ownership still to be confirmed"}
+                                                                        <p className="leading-relaxed">
+                                                                            {
+                                                                                order
+                                                                                    .permit_requirements
+                                                                                    .notes
+                                                                            }
                                                                         </p>
                                                                     </div>
-                                                                    <div className="flex flex-wrap gap-2 text-xs font-mono">
-                                                                        {order.permit_requirements
-                                                                            .requires_vehicle_docs && (
-                                                                            <span className="rounded-full border px-2 py-1">
-                                                                                Vehicle documents
-                                                                                required
-                                                                            </span>
-                                                                        )}
-                                                                        {order.permit_requirements
-                                                                            .requires_staff_ids && (
-                                                                            <span className="rounded-full border px-2 py-1">
-                                                                                Staff IDs required
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {order.permit_requirements
-                                                                        .notes && (
-                                                                        <div>
-                                                                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide mb-1">
-                                                                                Notes
-                                                                            </p>
-                                                                            <p className="leading-relaxed">
-                                                                                {
-                                                                                    order
-                                                                                        .permit_requirements
-                                                                                        .notes
-                                                                                }
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-                                                                    <p className="text-xs text-muted-foreground font-mono">
-                                                                        Additional charges may apply
-                                                                        depending on venue permit
-                                                                        requirements.
-                                                                    </p>
-                                                                </>
-                                                            ) : (
-                                                                <p className="font-medium">
-                                                                    No permit required
+                                                                )}
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    Additional charges may apply
+                                                                    depending on venue permit
+                                                                    requirements.
                                                                 </p>
-                                                            )}
-                                                        </CardEditSwap>
+                                                            </>
+                                                        ) : (
+                                                            <p className="font-medium">
+                                                                No permit required
+                                                            </p>
+                                                        )}
                                                     </CardContent>
                                                 </Card>
                                             </motion.div>
@@ -1338,11 +1334,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     <EditAffordance
                                                         binding={eventDatesBinding}
                                                         variant="client"
+                                                        mode="modal"
                                                     />
                                                 </div>
-                                                <CardEditSwap
+                                                <SectionEditModal
                                                     binding={eventDatesBinding}
-                                                    footerVariant="client"
+                                                    title="Event Dates"
                                                     editor={(b) => (
                                                         <OrderEventDatesSection
                                                             value={b.draft.eventDates}
@@ -1362,46 +1359,45 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                             }
                                                         />
                                                     )}
-                                                >
-                                                    <div className="space-y-3 text-sm">
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Start
-                                                            </p>
-                                                            <p className="font-mono font-semibold">
-                                                                {order.event_start_date
-                                                                    ? new Date(
-                                                                          order.event_start_date
-                                                                      ).toLocaleString([], {
-                                                                          year: "numeric",
-                                                                          month: "short",
-                                                                          day: "numeric",
-                                                                          hour: "2-digit",
-                                                                          minute: "2-digit",
-                                                                      })
-                                                                    : "N/A"}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                End
-                                                            </p>
-                                                            <p className="font-mono font-semibold">
-                                                                {order.event_end_date
-                                                                    ? new Date(
-                                                                          order.event_end_date
-                                                                      ).toLocaleString([], {
-                                                                          year: "numeric",
-                                                                          month: "short",
-                                                                          day: "numeric",
-                                                                          hour: "2-digit",
-                                                                          minute: "2-digit",
-                                                                      })
-                                                                    : "N/A"}
-                                                            </p>
-                                                        </div>
+                                                />
+                                                <div className="space-y-3 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Start
+                                                        </p>
+                                                        <p className="font-mono font-semibold">
+                                                            {order.event_start_date
+                                                                ? new Date(
+                                                                      order.event_start_date
+                                                                  ).toLocaleString([], {
+                                                                      year: "numeric",
+                                                                      month: "short",
+                                                                      day: "numeric",
+                                                                      hour: "2-digit",
+                                                                      minute: "2-digit",
+                                                                  })
+                                                                : "N/A"}
+                                                        </p>
                                                     </div>
-                                                </CardEditSwap>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            End
+                                                        </p>
+                                                        <p className="font-mono font-semibold">
+                                                            {order.event_end_date
+                                                                ? new Date(
+                                                                      order.event_end_date
+                                                                  ).toLocaleString([], {
+                                                                      year: "numeric",
+                                                                      month: "short",
+                                                                      day: "numeric",
+                                                                      hour: "2-digit",
+                                                                      minute: "2-digit",
+                                                                  })
+                                                                : "N/A"}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </Card>
                                         </motion.div>
                                     );
@@ -1434,11 +1430,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     <EditAffordance
                                                         binding={descriptiveBinding}
                                                         variant="client"
+                                                        mode="modal"
                                                     />
                                                 </div>
-                                                <CardEditSwap
+                                                <SectionEditModal
                                                     binding={descriptiveBinding}
-                                                    footerVariant="client"
+                                                    title="Venue & Logistics"
                                                     editor={(b) => (
                                                         <DescriptiveFieldsEditor
                                                             value={b.draft.descriptive}
@@ -1454,47 +1451,45 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                             disabled={b.saving}
                                                         />
                                                     )}
-                                                >
-                                                    <div className="space-y-3 text-sm">
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Venue Name
-                                                            </p>
-                                                            <p className="font-semibold break-words">
-                                                                {order.venue_name || "—"}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                City
-                                                            </p>
-                                                            <p className="font-medium break-words">
-                                                                {order.venue_city ||
-                                                                    order.venue_location?.city ||
-                                                                    "—"}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Address
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground leading-relaxed break-words">
-                                                                {order.venue_location?.address ||
-                                                                    "—"}
-                                                            </p>
-                                                        </div>
-                                                        {order.po_number && (
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                    PO Number
-                                                                </p>
-                                                                <p className="font-mono font-medium break-words">
-                                                                    {order.po_number}
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                />
+                                                <div className="space-y-3 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Venue Name
+                                                        </p>
+                                                        <p className="font-semibold break-words">
+                                                            {order.venue_name || "—"}
+                                                        </p>
                                                     </div>
-                                                </CardEditSwap>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            City
+                                                        </p>
+                                                        <p className="font-medium break-words">
+                                                            {order.venue_city ||
+                                                                order.venue_location?.city ||
+                                                                "—"}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Address
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground leading-relaxed break-words">
+                                                            {order.venue_location?.address || "—"}
+                                                        </p>
+                                                    </div>
+                                                    {order.po_number && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                                PO Number
+                                                            </p>
+                                                            <p className="font-mono font-medium break-words">
+                                                                {order.po_number}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </Card>
                                         </motion.div>
                                     );
@@ -1524,11 +1519,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                     <EditAffordance
                                                         binding={contactBinding}
                                                         variant="client"
+                                                        mode="modal"
                                                     />
                                                 </div>
-                                                <CardEditSwap
+                                                <SectionEditModal
                                                     binding={contactBinding}
-                                                    footerVariant="client"
+                                                    title="Contact"
                                                     editor={(b) => (
                                                         <ContactEditor
                                                             value={b.draft.contact}
@@ -1544,34 +1540,33 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                             disabled={b.saving}
                                                         />
                                                     )}
-                                                >
-                                                    <div className="space-y-2 text-sm">
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Name
-                                                            </p>
-                                                            <p className="font-mono font-semibold">
-                                                                {order.contact_name}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Email
-                                                            </p>
-                                                            <p className="font-mono font-semibold text-xs">
-                                                                {order.contact_email}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                Phone
-                                                            </p>
-                                                            <p className="font-mono font-semibold">
-                                                                {order.contact_phone}
-                                                            </p>
-                                                        </div>
+                                                />
+                                                <div className="space-y-2 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Name
+                                                        </p>
+                                                        <p className="font-mono font-semibold">
+                                                            {order.contact_name}
+                                                        </p>
                                                     </div>
-                                                </CardEditSwap>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Email
+                                                        </p>
+                                                        <p className="font-mono font-semibold text-xs">
+                                                            {order.contact_email}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Phone
+                                                        </p>
+                                                        <p className="font-mono font-semibold">
+                                                            {order.contact_phone}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </Card>
                                         </motion.div>
                                     );
@@ -1607,11 +1602,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                         <EditAffordance
                                                             binding={venueContactBinding}
                                                             variant="client"
+                                                            mode="modal"
                                                         />
                                                     </div>
-                                                    <CardEditSwap
+                                                    <SectionEditModal
                                                         binding={venueContactBinding}
-                                                        footerVariant="client"
+                                                        title="Venue Contact"
                                                         editor={(b) => (
                                                             <VenueContactEditor
                                                                 value={b.draft.venueContact}
@@ -1627,45 +1623,43 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                 disabled={b.saving}
                                                             />
                                                         )}
-                                                    >
-                                                        <div className="space-y-2 text-sm">
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                    Name
-                                                                </p>
-                                                                <p className="font-mono font-semibold">
-                                                                    {order.venue_contact_name ||
-                                                                        "—"}
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                    Email
-                                                                </p>
-                                                                <p className="font-mono font-semibold text-xs">
-                                                                    {order.venue_contact_email ||
-                                                                        "—"}
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground font-mono uppercase">
-                                                                    Phone
-                                                                </p>
-                                                                <p className="font-mono font-semibold">
-                                                                    {order.venue_contact_phone ||
-                                                                        "—"}
-                                                                </p>
-                                                            </div>
+                                                    />
+                                                    <div className="space-y-2 text-sm">
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                                Name
+                                                            </p>
+                                                            <p className="font-mono font-semibold">
+                                                                {order.venue_contact_name || "—"}
+                                                            </p>
                                                         </div>
-                                                    </CardEditSwap>
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                                Email
+                                                            </p>
+                                                            <p className="font-mono font-semibold text-xs">
+                                                                {order.venue_contact_email || "—"}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                                Phone
+                                                            </p>
+                                                            <p className="font-mono font-semibold">
+                                                                {order.venue_contact_phone || "—"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </Card>
                                             </motion.div>
                                         );
                                     })()}
 
-                                {/* Special Instructions — read-only mirror; suppressed
-                            while the inline editor (which exposes it) is shown. */}
-                                {!canEditOrder && order.special_instructions && (
+                                {/* Special Instructions — read-only mirror. Editing now
+                            lives in the Venue & Logistics modal (DescriptiveFieldsEditor
+                            exposes it), so this read card shows whenever there's content,
+                            editable or not — the modal is the single edit surface. */}
+                                {order.special_instructions && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}

@@ -21,6 +21,15 @@
 import React from "react";
 import { Pencil, X, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import type {
     EditableEntity,
     SectionBinding,
@@ -66,16 +75,26 @@ export function useEditableItems<TDraft>(): ItemsBinding<TDraft> {
  *  - "admin" (default) — icon-only ghost pencil (admin job-number affordance).
  *  - "client" — text ghost "Edit" button (the staging client read-card trigger).
  *  The EDITING state ([X, Save] icon cluster) is identical across variants — only
- *  the read-mode trigger differs. Renders null when not editable → card == main. */
+ *  the read-mode trigger differs. Renders null when not editable → card == main.
+ *
+ *  `mode`:
+ *  - "swap" (default) — in-place: read trigger → [X, Save] cluster while editing.
+ *  - "modal" — pure trigger: the editor + Cancel/Save live in a <SectionEditModal>,
+ *    so this is ALWAYS just the "Edit" trigger (even while the modal is open). The
+ *    client order detail uses this everywhere for a consistent modal-edit UX. */
 export function EditAffordance<TDraft>({
     binding,
     variant = "admin",
+    mode = "swap",
 }: {
     binding: SectionBinding<TDraft>;
     variant?: "client" | "admin";
+    mode?: "swap" | "modal";
 }): React.JSX.Element | null {
     if (!binding.canEdit) return null; // not editable → null → card == main
-    if (!binding.isEditing)
+    // In modal mode the trigger never becomes the [X, Save] cluster — those controls
+    // live in the modal footer — so it stays the read-mode trigger at all times.
+    if (mode === "modal" || !binding.isEditing)
         return variant === "client" ? (
             <Button
                 size="sm"
@@ -179,6 +198,84 @@ export function CardEditSwap<TDraft>({
             {editor(binding)}
             <SectionEditBar binding={binding} variant={footerVariant} />
         </>
+    );
+}
+
+/** Modal editor host. The card's read body stays in place (always rendered); the
+ *  header <EditAffordance mode="modal"> trigger flips `binding.isEditing`, which
+ *  opens THIS dialog with the same controlled editor + a Cancel/Save footer. Closing
+ *  (Esc / overlay / X / Cancel) routes through `binding.cancel`, which reseeds the
+ *  draft from baseline — i.e. discards in-progress edits, identical to the swap
+ *  footer's Cancel. Save success closes via the controller (`setOpen(null)`).
+ *
+ *  This is the client order-detail's consistent edit surface (every section edits in
+ *  a modal, matching the items/assets modal). Renders nothing when not editable. */
+export function SectionEditModal<TDraft>({
+    binding,
+    title,
+    description,
+    editor,
+    contentClassName,
+}: {
+    binding: SectionBinding<TDraft>;
+    title: React.ReactNode;
+    description?: React.ReactNode;
+    editor: (b: SectionBinding<TDraft>) => React.ReactNode;
+    contentClassName?: string;
+}): React.JSX.Element | null {
+    if (!binding.canEdit) return null;
+    return (
+        <Dialog
+            open={binding.isEditing}
+            onOpenChange={(next) => {
+                // Any close gesture while open → cancel (discard draft). Guard so a
+                // stray `onOpenChange(false)` when already closed is a no-op.
+                if (!next && binding.isEditing && !binding.saving) binding.cancel();
+            }}
+        >
+            <DialogContent
+                className={cn(
+                    "max-w-lg max-h-[90vh] overflow-hidden flex flex-col",
+                    contentClassName
+                )}
+            >
+                <DialogHeader>
+                    <DialogTitle className="font-mono uppercase tracking-wide text-base">
+                        {title}
+                    </DialogTitle>
+                    {description ? <DialogDescription>{description}</DialogDescription> : null}
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto -mx-1 px-1 py-1">{editor(binding)}</div>
+                {binding.blockedReason && (
+                    <p className="text-xs text-destructive font-mono">{binding.blockedReason}</p>
+                )}
+                <DialogFooter className="gap-2 sm:gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="font-mono"
+                        onClick={binding.cancel}
+                        disabled={binding.saving}
+                    >
+                        <X className="w-4 h-4 mr-1" /> Cancel
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="font-mono gap-2"
+                        onClick={binding.save}
+                        disabled={binding.saving || !binding.canSave}
+                        data-testid={`save-${binding.key}`}
+                    >
+                        {binding.saving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}{" "}
+                        {binding.saving ? "Saving..." : "Save"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
