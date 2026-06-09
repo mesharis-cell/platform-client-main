@@ -35,7 +35,7 @@
  *     items their own independent sub-draft is a behavior change, out of scope.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 /** A section key is a string; the per-entity SECTION_KEYS map defines which exist. */
@@ -147,6 +147,14 @@ export function useEditableEntity<TEntity, TDraft, TPayload, TKey extends string
     const [open, setOpen] = useState<TKey | null>(null);
     const [bandError, setBandError] = useState<string | null>(null);
 
+    // After a successful ITEMS save, the staged adds / removals / quantity edits
+    // have been applied server-side, but items never "close" (they're always
+    // inline), so the draft would keep rendering the just-added rows as staged
+    // "to be added" highlights forever. We flag the save here and reseed the draft
+    // from the entity once the refetch lands (see the effect below). A ref (not
+    // state) so setting it never triggers an extra render.
+    const pendingItemsReseedRef = useRef(false);
+
     // Cross-cutting verdicts fed back AFTER construction (the inverted data-flow,
     // §1.1). Stored in state so a wiring change re-renders the bindings.
     const [wiring, setWiringState] = useState<{
@@ -255,6 +263,10 @@ export function useEditableEntity<TEntity, TDraft, TPayload, TKey extends string
                 }
                 cfg.onSaved?.(result);
                 if (section !== "items") setOpen(null);
+                // Items stay inline (no close), so arm a reseed: once the
+                // refetched entity lands, the draft is rebuilt from it and the
+                // staged-add highlights collapse to clean saved rows.
+                else pendingItemsReseedRef.current = true;
             } catch (error) {
                 const e = error as Error & { code?: string; status?: number };
                 const message = e?.message || "Failed to save changes";
@@ -281,6 +293,19 @@ export function useEditableEntity<TEntity, TDraft, TPayload, TKey extends string
                 : { ...prev, ...(next as Partial<TDraft>) }
         );
     }, []);
+
+    // Items-save reseed: fires only after `saveSection('items')` armed the flag,
+    // when the refetched `entity` arrives with a new identity. Rebuilds the draft
+    // from the authoritative server state so staged adds become clean saved rows,
+    // removals disappear, and quantities reconcile — clearing the item save bar.
+    // Guarded by the ref so an unrelated background refetch never wipes an
+    // in-progress edit (the editor is `saving`-disabled during the mutation, so
+    // there is no in-flight edit to lose in the normal path).
+    useEffect(() => {
+        if (!pendingItemsReseedRef.current) return;
+        pendingItemsReseedRef.current = false;
+        setDraft(buildDraft(entity));
+    }, [entity, buildDraft]);
 
     // ---- per-section binding accessor ----
 

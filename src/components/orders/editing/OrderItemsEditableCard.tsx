@@ -24,8 +24,21 @@ import { Button } from "@/components/ui/button";
 import { useEditableItems } from "./editable-primitives";
 import { OrderItemsQuantityEditor } from "./OrderItemsQuantityEditor";
 import { buildItemRows, type Draft, type OrderForEdit } from "./order-edit-contract";
+import { FeasibilityHelper } from "@/components/checkout/FeasibilityHelper";
+import { RedFeasibilityAlert } from "@/components/checkout/RedFeasibilityAlert";
+import { roundedFloorTimeInZone, shiftDateStr } from "@/lib/feasibility/compose-datetime";
+import type { FeasibilityHelperProps } from "@/hooks/use-order-edit-feasibility";
 
-export function OrderItemsEditableCard({ order }: { order: OrderForEdit }) {
+export function OrderItemsEditableCard({
+    order,
+    helperProps,
+}: {
+    order: OrderForEdit;
+    // Feasibility verdict for the CURRENT draft (existing rows + staged adds),
+    // surfaced inline so an infeasible add is visible BEFORE the user hits save.
+    // Same cluster the Event-Dates editor renders; omitted → no feasibility UI.
+    helperProps?: FeasibilityHelperProps;
+}) {
     const items = useEditableItems<Draft>();
     const { draft, patch, maxByItemId, maxByAssetId, canSave, saving, save } = items;
 
@@ -113,6 +126,48 @@ export function OrderItemsEditableCard({ order }: { order: OrderForEdit }) {
                 maxByAssetId={maxByAssetId}
                 disabled={saving}
             />
+
+            {/* Feasibility for the edited item set — shown alongside pending item
+                changes so an infeasible add (e.g. an ORANGE that can't be refurbed
+                in time, or a date too soon for lead time) surfaces BEFORE save. The
+                verdict already folds staged adds in via the feasibility companion;
+                when it blocks, the controller also disables the save button below. */}
+            {hasItemChanges && helperProps && (
+                <div className="mt-4 space-y-3">
+                    <FeasibilityHelper
+                        helperEnabled={helperProps.helperEnabled}
+                        isLoading={helperProps.isLoading}
+                        floorDate={helperProps.floorDate}
+                        floorDatetime={helperProps.floorDatetime}
+                        userEventDate={helperProps.userEventDate}
+                        userDateFeasible={helperProps.userDateFeasible}
+                        blockingItems={helperProps.blockingItems}
+                        config={helperProps.config}
+                        onUseFloorDate={() => {
+                            if (!helperProps.floorDate) return;
+                            const rounded = roundedFloorTimeInZone(
+                                helperProps.floorDatetime,
+                                helperProps.timezone
+                            );
+                            const targetDate = rounded
+                                ? shiftDateStr(helperProps.floorDate, rounded.dayOffset)
+                                : helperProps.floorDate;
+                            patch((prev) => ({
+                                ...prev,
+                                eventDates: {
+                                    ...prev.eventDates,
+                                    event_start_date: targetDate,
+                                },
+                            }));
+                        }}
+                    />
+                    <RedFeasibilityAlert
+                        issues={helperProps.issues}
+                        hasChecked={helperProps.hasChecked}
+                        isChecking={helperProps.isChecking}
+                    />
+                </div>
+            )}
 
             {/* Save bar for item ops — only shown when there are item changes. */}
             {hasItemChanges && (

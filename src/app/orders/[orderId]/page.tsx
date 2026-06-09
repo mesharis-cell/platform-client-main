@@ -890,6 +890,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                     {canEditOrder ? (
                                         <OrderItemsEditableCard
                                             order={order as unknown as OrderForEdit}
+                                            helperProps={editFeasibility.helperProps}
                                         />
                                     ) : (
                                         <OrderItemsList
