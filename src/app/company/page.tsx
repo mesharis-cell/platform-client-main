@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, ShoppingCart, PackageCheck, FileText, Users, Boxes } from "lucide-react";
+import {
+    Building2,
+    ShoppingCart,
+    PackageCheck,
+    FileText,
+    Users,
+    Boxes,
+    BarChart3,
+    type LucideIcon,
+} from "lucide-react";
 import { ClientNav } from "@/components/client-nav";
 import { ClientHeader } from "@/components/client-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +25,15 @@ const TILES = [
     { key: "self_pickups", label: "Total Self-Pickups" },
 ] as const;
 
-const SECTIONS = [
+type Section = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    desc: string;
+    disabled?: boolean;
+};
+
+const SECTIONS: Section[] = [
     { href: "/company/orders", label: "Orders", icon: ShoppingCart, desc: "All company orders" },
     {
         href: "/company/self-pickups",
@@ -32,6 +49,14 @@ const SECTIONS = [
     },
     { href: "/company/members", label: "Members", icon: Users, desc: "People in your company" },
     { href: "/company/assets", label: "Assets", icon: Boxes, desc: "Browse + edit asset details" },
+    // Upcoming — shown disabled to posture the roadmap. Wire the href + remove `disabled` to ship.
+    {
+        href: "/company/reports",
+        label: "Reports",
+        icon: BarChart3,
+        desc: "Company reports & exports",
+        disabled: true,
+    },
 ];
 
 export default function CompanyDashboardPage() {
@@ -73,23 +98,43 @@ export default function CompanyDashboardPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {SECTIONS.map((s) => {
                                 const Icon = s.icon;
+                                const card = (
+                                    <Card
+                                        className={`bg-card border-border h-full ${
+                                            s.disabled
+                                                ? "opacity-60"
+                                                : "hover:border-primary/50 transition-colors"
+                                        }`}
+                                    >
+                                        <CardContent className="p-5 flex items-start gap-3">
+                                            <div className="h-10 w-10 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                                                <Icon className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="font-mono font-bold uppercase tracking-wide text-sm">
+                                                    {s.label}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    {s.desc}
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                                if (s.disabled) {
+                                    return (
+                                        <div
+                                            key={s.label}
+                                            aria-disabled
+                                            className="cursor-not-allowed select-none pointer-events-none"
+                                        >
+                                            {card}
+                                        </div>
+                                    );
+                                }
                                 return (
                                     <Link key={s.href} href={s.href}>
-                                        <Card className="bg-card border-border hover:border-primary/50 transition-colors h-full">
-                                            <CardContent className="p-5 flex items-start gap-3">
-                                                <div className="h-10 w-10 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
-                                                    <Icon className="h-5 w-5 text-primary" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-mono font-bold uppercase tracking-wide text-sm">
-                                                        {s.label}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {s.desc}
-                                                    </p>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                        {card}
                                     </Link>
                                 );
                             })}
