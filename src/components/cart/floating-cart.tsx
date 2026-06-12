@@ -26,18 +26,9 @@ import { useEffect, useState } from "react";
 
 // Lets the user type a quantity directly (paper cups etc. need thousands).
 // Local string state so intermediate values like "1" → "12" → "123" don't
-// fire the cart context's "only N available" toast on every keystroke. We
-// commit to the cart on blur or Enter; the +/- buttons still commit
-// instantly and we re-sync from props when they fire.
-function QuantityField({
-    value,
-    max,
-    onCommit,
-}: {
-    value: number;
-    max: number;
-    onCommit: (next: number) => void;
-}) {
+// commit to the cart on blur or Enter; the +/- buttons still commit instantly
+// and we re-sync from props when they fire.
+function QuantityField({ value, onCommit }: { value: number; onCommit: (next: number) => void }) {
     const [draft, setDraft] = useState(String(value));
 
     useEffect(() => {
@@ -58,7 +49,6 @@ function QuantityField({
             type="number"
             inputMode="numeric"
             min={1}
-            max={max}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commit}
@@ -294,7 +284,6 @@ export function FloatingCart() {
                                                             </Button>
                                                             <QuantityField
                                                                 value={item.quantity}
-                                                                max={item.availableQuantity}
                                                                 onCommit={(next) =>
                                                                     updateQuantity(
                                                                         item.assetId,
@@ -311,17 +300,14 @@ export function FloatingCart() {
                                                                         item.quantity + 1
                                                                     )
                                                                 }
-                                                                disabled={
-                                                                    item.quantity >=
-                                                                    item.availableQuantity
-                                                                }
                                                                 className="h-7 w-7 p-0 rounded-none border-l border-border hover:bg-muted"
                                                             >
                                                                 <Plus className="h-3 w-3" />
                                                             </Button>
                                                         </div>
                                                         <span className="text-xs text-muted-foreground font-mono">
-                                                            of {item.availableQuantity} available
+                                                            {item.availableQuantity} currently
+                                                            available
                                                         </span>
                                                     </div>
                                                 </div>

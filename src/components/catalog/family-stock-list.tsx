@@ -50,8 +50,6 @@ export function FamilyStockList({
     const [previewImgIdx, setPreviewImgIdx] = useState(0);
     const [selected, setSelected] = useState<Set<string>>(new Set());
 
-    const availableItems = stockRecords.filter((s) => s.availableQuantity > 0);
-    const unavailableItems = stockRecords.filter((s) => s.availableQuantity < 1);
     const hasSelection = selected.size > 0;
 
     function toggleSelect(id: string) {
@@ -64,7 +62,7 @@ export function FamilyStockList({
     }
 
     function selectAll() {
-        setSelected(new Set(availableItems.map((s) => s.id)));
+        setSelected(new Set(stockRecords.map((s) => s.id)));
     }
 
     function clearSelection() {
@@ -72,16 +70,12 @@ export function FamilyStockList({
     }
 
     function handleAddSingle(stock: CatalogFamilyStockItem) {
-        if (stock.availableQuantity < 1) {
-            toast.error("This item is currently unavailable");
-            return;
-        }
         addItem(stock.id, 1, buildCartDetails(stock));
         openCart();
     }
 
     function handleAddSelected() {
-        const items = availableItems.filter((s) => selected.has(s.id));
+        const items = stockRecords.filter((s) => selected.has(s.id));
         if (items.length === 0) return;
 
         items.forEach((stock) => {
@@ -111,7 +105,7 @@ export function FamilyStockList({
     return (
         <>
             {/* Selection toolbar */}
-            {availableItems.length > 1 && (
+            {stockRecords.length > 1 && (
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <Button
@@ -150,164 +144,114 @@ export function FamilyStockList({
                 </div>
             )}
 
-            {availableItems.length === 0 ? (
-                <div
-                    className="rounded-xl border border-dashed border-border py-12 text-center"
-                    data-testid="family-stock-empty"
-                >
-                    <Package className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
-                    <p className="font-medium">No items available right now</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Check back later.</p>
-                </div>
-            ) : (
-                <div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                    data-testid="family-stock-list"
-                >
-                    {availableItems.map((stock) => {
-                        const isDanger = stock.condition === "RED";
-                        const isWarning = stock.condition === "ORANGE";
-                        const stockImage = stock.images[0]?.url;
-                        const conditionClass =
-                            CONDITION_CLASSES[stock.condition] || CONDITION_CLASSES.GREEN;
-                        const isSelected = selected.has(stock.id);
+            <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                data-testid="family-stock-list"
+            >
+                {stockRecords.map((stock) => {
+                    const isDanger = stock.condition === "RED";
+                    const isWarning = stock.condition === "ORANGE";
+                    const stockImage = stock.images[0]?.url;
+                    const conditionClass =
+                        CONDITION_CLASSES[stock.condition] || CONDITION_CLASSES.GREEN;
+                    const isSelected = selected.has(stock.id);
 
-                        return (
-                            <Card
-                                key={stock.id}
-                                className={`group overflow-hidden transition-all ${isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/40"}`}
-                                data-testid="family-stock-card"
+                    return (
+                        <Card
+                            key={stock.id}
+                            className={`group overflow-hidden transition-all ${isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/40"}`}
+                            data-testid="family-stock-card"
+                        >
+                            <button
+                                onClick={() => {
+                                    setPreviewItem(stock);
+                                    setPreviewImgIdx(0);
+                                }}
+                                className="relative aspect-[4/3] w-full bg-muted block"
                             >
-                                <button
-                                    onClick={() => {
-                                        setPreviewItem(stock);
-                                        setPreviewImgIdx(0);
-                                    }}
-                                    className="relative aspect-[4/3] w-full bg-muted block"
-                                >
-                                    {stockImage ? (
-                                        <Image
-                                            src={stockImage}
-                                            alt={stock.name}
-                                            fill
-                                            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                {stockImage ? (
+                                    <Image
+                                        src={stockImage}
+                                        alt={stock.name}
+                                        fill
+                                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <Package className="h-8 w-8 text-muted-foreground/20" />
+                                    </div>
+                                )}
+                                {(isDanger || isWarning) && (
+                                    <Badge
+                                        variant="outline"
+                                        className={`absolute top-2 left-2 text-[10px] ${conditionClass}`}
+                                    >
+                                        <AlertCircle className="mr-1 h-2.5 w-2.5" />
+                                        {stock.condition}
+                                    </Badge>
+                                )}
+                                {/* Selection checkbox overlay */}
+                                {stockRecords.length > 1 && (
+                                    <div
+                                        className="absolute top-2 right-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSelect(stock.id);
+                                        }}
+                                    >
+                                        <Checkbox
+                                            checked={isSelected}
+                                            className="h-5 w-5 bg-background/80 backdrop-blur-sm border-2"
                                         />
+                                    </div>
+                                )}
+                            </button>
+
+                            <CardContent className="p-4 space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="font-medium truncate">{stock.name}</p>
+                                    <Badge
+                                        variant="outline"
+                                        className={`text-[10px] shrink-0 ${conditionClass}`}
+                                    >
+                                        {stock.condition}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                    {isSerialized ? (
+                                        <span>1 unit</span>
                                     ) : (
-                                        <div className="flex h-full w-full items-center justify-center">
-                                            <Package className="h-8 w-8 text-muted-foreground/20" />
-                                        </div>
+                                        <span>{stock.availableQuantity} available</span>
                                     )}
-                                    {(isDanger || isWarning) && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`absolute top-2 left-2 text-[10px] ${conditionClass}`}
-                                        >
-                                            <AlertCircle className="mr-1 h-2.5 w-2.5" />
-                                            {stock.condition}
-                                        </Badge>
+                                    {Number(stock.weight) > 0 && (
+                                        <span>{Number(stock.weight).toFixed(1)} kg</span>
                                     )}
-                                    {/* Selection checkbox overlay */}
-                                    {availableItems.length > 1 && (
-                                        <div
-                                            className="absolute top-2 right-2"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleSelect(stock.id);
-                                            }}
-                                        >
-                                            <Checkbox
-                                                checked={isSelected}
-                                                className="h-5 w-5 bg-background/80 backdrop-blur-sm border-2"
-                                            />
-                                        </div>
-                                    )}
-                                </button>
-
-                                <CardContent className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="font-medium truncate">{stock.name}</p>
-                                        <Badge
-                                            variant="outline"
-                                            className={`text-[10px] shrink-0 ${conditionClass}`}
-                                        >
-                                            {stock.condition}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                        {isSerialized ? (
-                                            <span>1 unit</span>
-                                        ) : (
-                                            <span>{stock.availableQuantity} available</span>
-                                        )}
-                                        {Number(stock.weight) > 0 && (
-                                            <span>{Number(stock.weight).toFixed(1)} kg</span>
-                                        )}
-                                        {Number(stock.dimensionLength) > 0 && (
-                                            <span>
-                                                {Number(stock.dimensionLength).toFixed(0)}×
-                                                {Number(stock.dimensionWidth).toFixed(0)}×
-                                                {Number(stock.dimensionHeight).toFixed(0)} cm
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-2 pt-1">
-                                        <Button
-                                            size="sm"
-                                            className="flex-1"
-                                            onClick={() => handleAddSingle(stock)}
-                                            data-testid="family-stock-add"
-                                        >
-                                            <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
-                                            Add to cart
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Unavailable items */}
-            {unavailableItems.length > 0 && (
-                <div className="mt-8">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                        Unavailable ({unavailableItems.length})
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 opacity-50">
-                        {unavailableItems.map((stock) => (
-                            <div
-                                key={stock.id}
-                                className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"
-                            >
-                                <div className="h-10 w-10 shrink-0 rounded bg-muted overflow-hidden">
-                                    {stock.images[0]?.url ? (
-                                        <Image
-                                            src={stock.images[0].url}
-                                            alt={stock.name}
-                                            width={40}
-                                            height={40}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center">
-                                            <Package className="h-4 w-4 text-muted-foreground/20" />
-                                        </div>
+                                    {Number(stock.dimensionLength) > 0 && (
+                                        <span>
+                                            {Number(stock.dimensionLength).toFixed(0)}×
+                                            {Number(stock.dimensionWidth).toFixed(0)}×
+                                            {Number(stock.dimensionHeight).toFixed(0)} cm
+                                        </span>
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">{stock.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Currently unavailable
-                                    </p>
+
+                                <div className="flex gap-2 pt-1">
+                                    <Button
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => handleAddSingle(stock)}
+                                        data-testid="family-stock-add"
+                                    >
+                                        <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
+                                        Add to cart
+                                    </Button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
 
             {/* Preview modal */}
             <Dialog
@@ -407,7 +351,6 @@ export function FamilyStockList({
                                 <div className="flex gap-3 pt-2">
                                     <Button
                                         className="flex-1"
-                                        disabled={previewItem.availableQuantity < 1}
                                         onClick={() => {
                                             handleAddSingle(previewItem);
                                             setPreviewItem(null);
