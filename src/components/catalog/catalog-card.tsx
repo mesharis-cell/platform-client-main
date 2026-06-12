@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AlertCircle, ArrowUpRight, Boxes, Eye, Layers, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
 import { useCart } from "@/contexts/cart-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,13 +88,13 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
               orange: item.conditionSummary?.orange ?? 0,
           }
         : null;
-    const canAddDirectly = !isCollection && item.availableQuantity > 0;
+    const canAddDirectly = !isCollection && (!isGroup || item.siblings.length > 0);
 
     const addFirstAvailable = () => {
         if (!isGroup) return;
-        const asset = item.siblings.find((sibling) => sibling.availableQuantity > 0);
+        const asset =
+            item.siblings.find((sibling) => sibling.availableQuantity > 0) ?? item.siblings[0];
         if (!asset) {
-            toast.error("No available stock records in this group");
             return;
         }
         addItem(asset.id, 1, cartDetails(asset));
@@ -104,10 +103,6 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
 
     const addAsset = () => {
         if (!isAsset) return;
-        if (item.availableQuantity <= 0) {
-            toast.error("This asset is not currently available");
-            return;
-        }
         addItem(item.id, 1, catalogAssetCartDetails(item));
         openCart();
     };
@@ -331,7 +326,6 @@ export function CatalogCard({ item }: { item: CatalogItem }) {
                                                     </div>
                                                     <Button
                                                         size="sm"
-                                                        disabled={asset.availableQuantity <= 0}
                                                         onClick={() => {
                                                             addItem(
                                                                 asset.id,

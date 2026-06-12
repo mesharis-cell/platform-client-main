@@ -53,9 +53,13 @@ export function CollectionCustomizer({
     useEffect(() => {
         const initial: SelectionState = {};
         collection.items.forEach((item) => {
+            const maxQuantity = Math.max(
+                1,
+                Number(item.totalQuantity || item.defaultQuantity || 1)
+            );
             initial[item.id] = {
-                selected: item.isAvailable,
-                quantity: Math.min(item.defaultQuantity, item.availableQuantity),
+                selected: !item.isArchived,
+                quantity: Math.min(item.defaultQuantity, maxQuantity),
             };
         });
         setSelections(initial);
@@ -81,6 +85,9 @@ export function CollectionCustomizer({
     }, [selectedItems, selections]);
 
     const handleToggle = (itemId: string) => {
+        const item = collection.items.find((i) => i.id === itemId);
+        if (item?.isArchived) return;
+
         setSelections((prev) => ({
             ...prev,
             [itemId]: { ...prev[itemId], selected: !prev[itemId].selected },
@@ -93,7 +100,11 @@ export function CollectionCustomizer({
 
         setSelections((prev) => {
             const current = prev[itemId].quantity;
-            const newQty = Math.max(1, Math.min(current + delta, item.availableQuantity));
+            const maxQuantity = Math.max(
+                1,
+                Number(item.totalQuantity || item.defaultQuantity || 1)
+            );
+            const newQty = Math.max(1, Math.min(current + delta, maxQuantity));
             return {
                 ...prev,
                 [itemId]: { ...prev[itemId], quantity: newQty },
@@ -152,14 +163,14 @@ export function CollectionCustomizer({
                                     isSelected
                                         ? "border-primary bg-primary/5"
                                         : "border-border bg-card"
-                                } ${!item.isAvailable ? "opacity-50" : ""}`}
+                                } ${item.isArchived ? "opacity-50" : ""}`}
                             >
                                 {/* Checkbox */}
                                 <div className="flex items-center pt-1">
                                     <Checkbox
                                         checked={isSelected}
                                         onCheckedChange={() => handleToggle(item.id)}
-                                        disabled={!item.isAvailable}
+                                        disabled={item.isArchived}
                                         className="h-5 w-5"
                                     />
                                 </div>
@@ -249,7 +260,15 @@ export function CollectionCustomizer({
                                                     size="sm"
                                                     onClick={() => handleQuantityChange(item.id, 1)}
                                                     disabled={
-                                                        selection.quantity >= item.availableQuantity
+                                                        selection.quantity >=
+                                                        Math.max(
+                                                            1,
+                                                            Number(
+                                                                item.totalQuantity ||
+                                                                    item.defaultQuantity ||
+                                                                    1
+                                                            )
+                                                        )
                                                     }
                                                     className="h-7 w-7 p-0 rounded-none"
                                                 >
@@ -257,7 +276,8 @@ export function CollectionCustomizer({
                                                 </Button>
                                             </div>
                                             <span className="text-xs text-muted-foreground font-mono">
-                                                of {item.availableQuantity} max
+                                                of {item.totalQuantity} total ·{" "}
+                                                {item.availableQuantity} currently available
                                             </span>
                                         </div>
                                     )}

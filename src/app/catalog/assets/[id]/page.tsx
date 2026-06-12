@@ -40,7 +40,6 @@ import Link from "next/link";
 import { ClientNav } from "@/components/client-nav";
 import { ConditionHistoryTimeline } from "@/components/conditions/condition-history-timeline";
 import { AssetUsageReport as AssetUsageReportPanel } from "@/components/assets/asset-usage-report";
-import { toast } from "sonner";
 
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -56,6 +55,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     const { data: usageReport, isLoading: isUsageReportLoading } = useAssetUsageReport(
         asset?.id || null
     );
+    const quantityLimit = Math.max(1, Number(asset?.totalQuantity || 1));
     const latestConditionEntry = conditionHistory?.[0];
     const latestConditionPhotos =
         latestConditionEntry?.damage_report_entries?.length > 0
@@ -64,11 +64,6 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
     const handleAddToCart = async () => {
         if (!asset) return;
-
-        if (asset.availableQuantity < selectedQuantity) {
-            toast.error("Not enough quantity available");
-            return;
-        }
 
         await addItem(asset.id, selectedQuantity, {
             assetName: asset.name,
@@ -373,70 +368,64 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                             )}
 
                             {/* Add to Cart Section */}
-                            {asset.availableQuantity > 0 && (
-                                <Card className="p-6 bg-card/50 border-border/50">
-                                    <h3 className="text-sm font-semibold mb-4 uppercase tracking-wide text-muted-foreground font-mono">
-                                        Add to Cart
-                                    </h3>
+                            <Card className="p-6 bg-card/50 border-border/50">
+                                <h3 className="text-sm font-semibold mb-4 uppercase tracking-wide text-muted-foreground font-mono">
+                                    Add to Cart
+                                </h3>
 
-                                    {/* Quantity Selector */}
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <label className="text-sm font-medium font-mono uppercase tracking-wide">
-                                            Quantity
-                                        </label>
-                                        <div className="flex items-center border border-border rounded-lg overflow-hidden">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    setSelectedQuantity(
-                                                        Math.max(1, selectedQuantity - 1)
-                                                    )
-                                                }
-                                                className="h-12 w-12 p-0 rounded-none border-r border-border"
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <div className="px-8 font-mono text-xl font-bold min-w-[6ch] text-center">
-                                                {selectedQuantity}
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    setSelectedQuantity(
-                                                        Math.min(
-                                                            asset.availableQuantity,
-                                                            selectedQuantity + 1
-                                                        )
-                                                    )
-                                                }
-                                                disabled={
-                                                    selectedQuantity >= asset.availableQuantity
-                                                }
-                                                className="h-12 w-12 p-0 rounded-none border-l border-border"
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <span className="text-sm text-muted-foreground font-mono">
-                                            of {asset.availableQuantity} available
-                                        </span>
-                                    </div>
-
-                                    {/* Add Buttons */}
-                                    <div className="space-y-3">
+                                {/* Quantity Selector */}
+                                <div className="flex items-center gap-4 mb-6">
+                                    <label className="text-sm font-medium font-mono uppercase tracking-wide">
+                                        Quantity
+                                    </label>
+                                    <div className="flex items-center border border-border rounded-lg overflow-hidden">
                                         <Button
-                                            onClick={() => handleAddToCart()}
-                                            className="w-full h-14 gap-2 font-mono uppercase tracking-wide text-base"
-                                            size="lg"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                                setSelectedQuantity(
+                                                    Math.max(1, selectedQuantity - 1)
+                                                )
+                                            }
+                                            className="h-12 w-12 p-0 rounded-none border-r border-border"
                                         >
-                                            <ShoppingCart className="w-5 h-5" />
-                                            Add {selectedQuantity} to Cart
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <div className="px-8 font-mono text-xl font-bold min-w-[6ch] text-center">
+                                            {selectedQuantity}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                                setSelectedQuantity(
+                                                    Math.min(quantityLimit, selectedQuantity + 1)
+                                                )
+                                            }
+                                            disabled={selectedQuantity >= quantityLimit}
+                                            className="h-12 w-12 p-0 rounded-none border-l border-border"
+                                        >
+                                            <Plus className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                </Card>
-                            )}
+                                    <span className="text-sm text-muted-foreground font-mono">
+                                        {asset.availableQuantity} currently available ·{" "}
+                                        {asset.totalQuantity} total
+                                    </span>
+                                </div>
+
+                                {/* Add Buttons */}
+                                <div className="space-y-3">
+                                    <Button
+                                        onClick={() => handleAddToCart()}
+                                        className="w-full h-14 gap-2 font-mono uppercase tracking-wide text-base"
+                                        size="lg"
+                                    >
+                                        <ShoppingCart className="w-5 h-5" />
+                                        Add {selectedQuantity} to Cart
+                                    </Button>
+                                </div>
+                            </Card>
 
                             <Card className="p-6 bg-card/50 border-border/50">
                                 <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide text-muted-foreground font-mono">

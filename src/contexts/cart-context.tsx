@@ -140,14 +140,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                         const existing = currentItems[existingIndex];
                         const newQuantity = existing.quantity + quantity;
 
-                        // Validate against available quantity
-                        if (newQuantity > existing.availableQuantity) {
-                            toast.error(`Only ${existing.availableQuantity} available`, {
-                                description: existing.assetName,
-                            });
-                            return currentItems; // Return unchanged items
-                        }
-
                         newItems = [...currentItems];
                         newItems[existingIndex] = {
                             ...existing,
@@ -157,14 +149,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                             description: `Quantity increased to ${newQuantity}`,
                         });
                     } else {
-                        // Add new item
-                        if (quantity > (assetDetails.availableQuantity || 0)) {
-                            toast.error(`Only ${assetDetails.availableQuantity} available`, {
-                                description: assetDetails.assetName,
-                            });
-                            return currentItems; // Return unchanged items
-                        }
-
                         const newItem: LocalCartItem = {
                             assetId,
                             quantity,
@@ -236,14 +220,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const item = items.find((i) => i.assetId === assetId);
             if (!item) return;
 
-            // Validate against available quantity
-            if (quantity > item.availableQuantity) {
-                toast.error(`Only ${item.availableQuantity} available`, {
-                    description: item.assetName,
-                });
-                return;
-            }
-
             const newItems = items.map((i) => (i.assetId === assetId ? { ...i, quantity } : i));
             setItems(newItems);
             saveCart(newItems); // Save immediately
@@ -277,14 +253,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                         const existing = currentItems[existingIndex];
                         const newQuantity = existing.quantity + quantity;
 
-                        // Validate against available quantity
-                        if (newQuantity > existing.availableQuantity) {
-                            toast.error(`Only ${existing.availableQuantity} available`, {
-                                description: existing.assetName,
-                            });
-                            return currentItems;
-                        }
-
                         newItems = [...currentItems];
                         newItems[existingIndex] = {
                             ...existing,
@@ -295,14 +263,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                             description: `${existing.assetName} - Quantity: ${newQuantity}`,
                         });
                     } else {
-                        // Add new item with rebrand data
-                        if (quantity > (assetDetails.availableQuantity || 0)) {
-                            toast.error(`Only ${assetDetails.availableQuantity} available`, {
-                                description: assetDetails.assetName,
-                            });
-                            return currentItems;
-                        }
-
                         const newItem: LocalCartItem = {
                             assetId,
                             quantity,

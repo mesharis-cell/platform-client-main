@@ -112,9 +112,8 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
                                 Some items unavailable
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Not all items are currently available. You can still proceed - only
-                                available items will be added to your cart. You can also customize
-                                your selection.
+                                Not all items are currently available. You can still proceed and
+                                confirm the event-date availability at checkout.
                             </p>
                         </>
                     )}
@@ -335,7 +334,8 @@ export function CollectionItemsList({ collectionId }: { collectionId: string }) 
 
             {!allAvailable && (
                 <p className="text-xs text-center text-muted-foreground font-mono">
-                    Some items are unavailable. You can still customize and add available items.
+                    Some items are currently unavailable. Checkout will confirm availability for
+                    your selected dates.
                 </p>
             )}
 
