@@ -240,13 +240,19 @@ export function useUpdateCompanyAsset() {
             data,
         }: {
             id: string;
-            // Only the five allowlisted presentation fields are ever sent.
+            // Allowlisted CBO-editable fields. Lone asset: name / images / cover.
+            // Grouped: group_name / group_images / group_on_display_image cascade
+            // to all siblings (service-side).
             data: {
                 name?: string;
                 description?: string | null;
                 category?: string;
                 brand_id?: string | null;
                 on_display_image?: string | null;
+                images?: { url: string; note?: string }[];
+                group_name?: string;
+                group_images?: { url: string; note?: string }[];
+                group_on_display_image?: string | null;
             };
         }) => {
             const res = await apiClient.patch(`/client/v1/company/asset/${id}`, data);

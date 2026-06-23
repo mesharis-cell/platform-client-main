@@ -23,6 +23,12 @@ export function CompanyAssetCard({ item }: { item: CatalogItem }) {
     const isCollection = item.type === "collection";
     const isGroup = item.type === "group";
     const editAssetId = isGroup ? item.siblings[0]?.id || item.id : item.id;
+    // Grouped edits land on a representative sibling but in group mode (?group=1):
+    // the editor pre-fills/saves the group label + group gallery, cascading to all
+    // siblings, instead of editing the single #N child.
+    const editHref = isGroup
+        ? `/company/assets/${editAssetId}?group=1`
+        : `/company/assets/${editAssetId}`;
     const image = !isCollection ? item.onDisplayImage || item.images[0] : item.images[0];
     const Fallback = isCollection ? Layers : Boxes;
 
@@ -107,7 +113,7 @@ export function CompanyAssetCard({ item }: { item: CatalogItem }) {
                         </p>
                     ) : (
                         <Button variant="outline" size="sm" className="w-full gap-1.5" asChild>
-                            <Link href={`/company/assets/${editAssetId}`}>
+                            <Link href={editHref}>
                                 <Pencil className="h-3.5 w-3.5" />
                                 Edit details
                             </Link>
