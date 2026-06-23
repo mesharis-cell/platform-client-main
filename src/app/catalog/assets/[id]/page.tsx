@@ -77,19 +77,32 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             image: asset.onDisplayImage || asset.images[0]?.url,
             condition: asset.condition,
             conditionNotes: asset.conditionNotes,
-            conditionImages: asset.images,
+            // Condition/maintenance views must show scan/return imagery only — never
+            // the client-curated catalogue photos that now also live in `images`.
+            conditionImages: asset.images.filter((img) => img.source !== "CLIENT"),
             refurbDaysEstimate: asset.refurbDaysEstimate,
         });
 
         setSelectedQuantity(1);
     };
 
-    // Build a combined image stream: curated `on_display_image` (admin-managed)
-    // first, then the rotating scan/return `images[]`. Index 0 is the curated
-    // hero when set, so clients land on it.
-    const combinedImages: { url: string; note?: string }[] = asset
-        ? [...(asset.onDisplayImage ? [{ url: asset.onDisplayImage }] : []), ...asset.images]
-        : [];
+    // Build a combined image stream: curated cover first, then the gallery
+    // (client photos lead, scan/return after). Deduped by URL so a cover that is
+    // also a gallery photo isn't shown twice.
+    const combinedImages: { url: string; note?: string }[] = (() => {
+        if (!asset) return [];
+        const seen = new Set<string>();
+        const out: { url: string; note?: string }[] = [];
+        const push = (img: { url?: string | null; note?: string }) => {
+            const url = img?.url;
+            if (!url || seen.has(url)) return;
+            seen.add(url);
+            out.push({ url, note: img.note });
+        };
+        if (asset.onDisplayImage) push({ url: asset.onDisplayImage });
+        asset.images.forEach(push);
+        return out;
+    })();
 
     if (isLoading) {
         return (

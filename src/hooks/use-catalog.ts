@@ -23,7 +23,7 @@ export const catalogKeys = {
     collection: (id: string) => [...catalogKeys.collections(), id] as const,
 };
 
-type AssetImageShape = { url: string; note?: string };
+type AssetImageShape = { url: string; note?: string; source?: "CLIENT" | "SCAN" };
 
 const normalizeCollectionImageUrls = (images: unknown): string[] => {
     if (!Array.isArray(images)) return [];
@@ -42,7 +42,13 @@ const normalizeAssetImages = (images: unknown): AssetImageShape[] => {
                 typeof (image as any).note === "string"
                     ? ((image as any).note as string)
                     : undefined;
-            normalized.push(note ? { url, note } : { url });
+            // Preserve the CLIENT|SCAN tag so condition/maintenance views can keep
+            // scan/return imagery distinct from curated catalogue photos.
+            const source =
+                (image as any).source === "CLIENT" || (image as any).source === "SCAN"
+                    ? ((image as any).source as "CLIENT" | "SCAN")
+                    : undefined;
+            normalized.push({ url, ...(note ? { note } : {}), ...(source ? { source } : {}) });
         } else if (typeof image === "string") {
             normalized.push({ url: image });
         }

@@ -3,6 +3,8 @@
 export interface AssetImage {
     url: string;
     note?: string;
+    // CLIENT = curated catalogue photo, SCAN = inbound/return scan imagery.
+    source?: "CLIENT" | "SCAN";
 }
 
 // Tracking Method

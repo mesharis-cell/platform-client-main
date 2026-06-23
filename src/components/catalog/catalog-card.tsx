@@ -31,7 +31,9 @@ function cartDetails(asset: CatalogAssetDetails) {
         image: asset.onDisplayImage || asset.images[0]?.url,
         condition: asset.condition,
         conditionNotes: asset.conditionNotes,
-        conditionImages: asset.images,
+        // Condition/maintenance views show scan/return imagery only — exclude the
+        // client-curated catalogue photos that now also live in `images`.
+        conditionImages: asset.images.filter((img) => img.source !== "CLIENT"),
         refurbDaysEstimate: asset.refurbDaysEstimate,
         dimensionLength: Number(asset.dimensionLength),
         dimensionWidth: Number(asset.dimensionWidth),
