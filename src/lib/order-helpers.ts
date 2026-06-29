@@ -82,6 +82,7 @@ export function getFinancialStatusText(status: FinancialStatus): string {
         PENDING_INVOICE: "Pending Invoice",
         INVOICED: "Invoiced",
         PAID: "Paid",
+        NOT_APPLICABLE: "N/A",
         CANCELLED: "Cancelled",
     };
     return map[status] || status;
