@@ -35,8 +35,6 @@ import {
     Building2,
     Calendar,
     Lock,
-    ClipboardList,
-    FileSpreadsheet,
     PackageCheck,
     BookOpen,
     ExternalLink,
@@ -71,12 +69,10 @@ const clientNav = [
         requiresCompanyAccess: true,
     },
     { name: "Quotes & Estimates", href: "/quotes-estimates", icon: FileText },
-    {
-        name: "Service Requests",
-        href: "/service-requests",
-        icon: ClipboardList,
-        featureFlag: "enable_service_requests",
-    },
+    // Service Requests + Reports are hard-disabled on the client portal
+    // (all tenants), independent of enable_service_requests — see the
+    // disabledClientRoutes block in src/middleware.tsx. To re-enable, restore
+    // the nav entries here and drop the routes from the middleware list.
     {
         name: "New Stock Request",
         href: "/assets-inbound",
@@ -89,7 +85,6 @@ const clientNav = [
         icon: Calendar,
         featureFlag: "enable_event_calendar",
     },
-    { name: "Reports", href: "/reports", icon: FileSpreadsheet },
 ] as const;
 
 interface ClientNavProps {

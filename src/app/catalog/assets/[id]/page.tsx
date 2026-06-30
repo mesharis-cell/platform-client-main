@@ -6,7 +6,6 @@
  */
 
 import { use, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
     useCatalogAsset,
     useAssetVersions,
@@ -43,7 +42,6 @@ import { AssetUsageReport as AssetUsageReportPanel } from "@/components/assets/a
 
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const router = useRouter();
     const { data, isLoading } = useCatalogAsset(id);
     const { addItem } = useCart();
     const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -441,22 +439,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                                     </Button>
                                 </div>
                             </Card>
-
-                            <Card className="p-6 bg-card/50 border-border/50">
-                                <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide text-muted-foreground font-mono">
-                                    Service
-                                </h3>
-                                <Button
-                                    variant="outline"
-                                    className="w-full gap-2 font-mono"
-                                    onClick={() =>
-                                        router.push(`/service-requests?asset_id=${asset.id}`)
-                                    }
-                                >
-                                    <Wrench className="w-4 h-4" />
-                                    Request Service
-                                </Button>
-                            </Card>
+                            {/* Service Requests are hard-disabled on the client
+                            portal — the "Request Service" entry point was removed
+                            here (see src/middleware.tsx disabledClientRoutes). */}
                         </div>
                     </div>
 

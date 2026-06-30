@@ -837,16 +837,13 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                 className="border rounded-lg p-3 bg-muted/10"
                                                             >
                                                                 <div className="flex items-center justify-between gap-3">
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            router.push(
-                                                                                `/service-requests/${sr.id}`
-                                                                            )
-                                                                        }
-                                                                        className="text-sm font-mono text-primary hover:underline"
-                                                                    >
+                                                                    {/* Service Requests are hard-disabled
+                                                                    on the client portal — show the id as
+                                                                    plain text (was a link to the now-blocked
+                                                                    /service-requests/<id> route). */}
+                                                                    <span className="text-sm font-mono text-foreground">
                                                                         {sr.service_request_id}
-                                                                    </button>
+                                                                    </span>
                                                                     <div className="flex items-center gap-2">
                                                                         <Badge
                                                                             variant={
