@@ -1400,6 +1400,27 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                                 : "N/A"}
                                                         </p>
                                                     </div>
+                                                    {/* Permanent-placement tag — matches the ops
+                                                    (warehouse/admin) tag so the client sees the same
+                                                    status they picked at checkout. */}
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground font-mono uppercase">
+                                                            Placement
+                                                        </p>
+                                                        <div className="mt-1">
+                                                            <Badge
+                                                                className={`font-mono text-xs px-3 py-1 border ${
+                                                                    order.is_permanent_placement
+                                                                        ? "border-primary/40 text-primary bg-primary/5"
+                                                                        : "border-border text-muted-foreground bg-muted/20"
+                                                                }`}
+                                                            >
+                                                                {order.is_permanent_placement
+                                                                    ? "PERMANENT"
+                                                                    : "TEMPORARY"}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </Card>
                                         </motion.div>
