@@ -2064,32 +2064,38 @@ function CheckoutPageInner() {
                                                 </div>
                                             </div>
 
-                                            {effectiveEventStart && effectiveEventEnd && (
-                                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <Calendar className="h-5 w-5 text-primary" />
-                                                        <div>
-                                                            <p className="text-sm font-medium">
-                                                                {eventDateInputsEnabled
-                                                                    ? "Event Duration"
-                                                                    : "Rental Duration"}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                {Math.ceil(
-                                                                    (new Date(
-                                                                        effectiveEventEnd
-                                                                    ).getTime() -
-                                                                        new Date(
-                                                                            effectiveEventStart
-                                                                        ).getTime()) /
-                                                                        (1000 * 60 * 60 * 24)
-                                                                ) + 1}{" "}
-                                                                days
-                                                            </p>
+                                            {/* Duration is meaningless for a permanent / no-return
+                                            order (event_end is the far-future sentinel, which would
+                                            render ~26,943 days). Only show it when there's a real
+                                            return date. */}
+                                            {needsCollection &&
+                                                effectiveEventStart &&
+                                                effectiveEventEnd && (
+                                                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <Calendar className="h-5 w-5 text-primary" />
+                                                            <div>
+                                                                <p className="text-sm font-medium">
+                                                                    {eventDateInputsEnabled
+                                                                        ? "Event Duration"
+                                                                        : "Rental Duration"}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground font-mono">
+                                                                    {Math.ceil(
+                                                                        (new Date(
+                                                                            effectiveEventEnd
+                                                                        ).getTime() -
+                                                                            new Date(
+                                                                                effectiveEventStart
+                                                                            ).getTime()) /
+                                                                            (1000 * 60 * 60 * 24)
+                                                                    ) + 1}{" "}
+                                                                    days
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
                                             {redItems.length > 0 && (
                                                 <div className="space-y-3">
