@@ -97,6 +97,11 @@ const STANDARD_STEPS: { key: Step; label: string; icon: any }[] = [
     { key: "review", label: "Review", icon: FileText },
 ];
 
+// Sentinel event_end for permanent / no-return orders — signals "no return in
+// sight" to ops; the far-future date holds inventory and keeps the order out of
+// the return-lifecycle cron. Do not null event_end — it is NOT NULL.
+const SENTINEL_NO_RETURN_DATE = "2099-12-31";
+
 function CheckoutPageInner() {
     const router = useRouter();
     const { user } = useToken();
@@ -382,12 +387,21 @@ function CheckoutPageInner() {
     // are whatever the user entered. When OFF, they mirror the delivery /
     // pickup dates (delivery start → event start, pickup end → event end).
     // Declared early so they can feed the consolidated feasibility hook.
+    // Whether a pickup/collection is expected. Only an explicit "temporary"
+    // (is_permanent_placement === false) triggers pickup capture. Permanent
+    // (true) OR unanswered (null) => no pickup shown.
+    const needsCollection = formData.is_permanent_placement === false;
     const effectiveEventStart = eventDateInputsEnabled
         ? formData.event_start_date
         : formData.requested_delivery_date;
+    // For a permanent / no-return order there is no pickup to derive the event
+    // end from, so we stamp the far-future sentinel (event_end_date is NOT NULL
+    // and load-bearing — see SENTINEL_NO_RETURN_DATE).
     const effectiveEventEnd = eventDateInputsEnabled
         ? formData.event_end_date
-        : formData.requested_pickup_date;
+        : needsCollection
+          ? formData.requested_pickup_date
+          : SENTINEL_NO_RETURN_DATE;
 
     // Memoized ISO datetimes with platform-TZ offset. Null until all
     // components (date, time, timezone) are available — the feasibility
@@ -717,6 +731,10 @@ function CheckoutPageInner() {
                     repairChoiceBlockedItems.length === 0
                 );
             case "installation": {
+                // is_permanent_placement moved here from the venue step — it's
+                // asked once and decides whether the pickup block is shown.
+                // Always required (explicit Yes/No).
+                if (formData.is_permanent_placement === null) return false;
                 const deliveryComplete = Boolean(
                     formData.requested_delivery_date &&
                         formData.requested_delivery_time_start &&
@@ -727,15 +745,18 @@ function CheckoutPageInner() {
                         formData.requested_pickup_time_start &&
                         formData.requested_pickup_time_end
                 );
-                // When the event-dates flag is OFF, delivery + pickup are the
-                // source of truth and BOTH must be complete. When ON, the user
-                // still provides event dates directly.
+                // When the event-dates flag is OFF, delivery is the source of
+                // truth for event start and is always required. Pickup
+                // completeness + the delivery<=pickup ordering are required
+                // ONLY for temporary orders (needsCollection); a permanent
+                // order has no pickup.
                 if (!eventDateInputsEnabled) {
                     return Boolean(
                         deliveryComplete &&
-                            pickupComplete &&
-                            new Date(formData.requested_delivery_date) <=
-                                new Date(formData.requested_pickup_date) &&
+                            (!needsCollection ||
+                                (pickupComplete &&
+                                    new Date(formData.requested_delivery_date) <=
+                                        new Date(formData.requested_pickup_date))) &&
                             feasibility.userDateFeasible !== false
                     );
                 }
@@ -757,14 +778,12 @@ function CheckoutPageInner() {
                 // Permit decision is mandatory: client must explicitly answer
                 // yes or no. If yes, they must also pick an owner (CLIENT or
                 // PLATFORM — UNKNOWN is rejected to prevent ambiguity).
-                // is_permanent_placement is also required — explicit Yes/No,
-                // no default.
+                // (is_permanent_placement moved to the installation step.)
                 return Boolean(
                     formData.venue_name &&
                         formData.venue_country_id &&
                         formData.venue_city_id &&
                         formData.venue_address &&
-                        formData.is_permanent_placement !== null &&
                         formData.permit_decision !== null &&
                         (formData.permit_decision === "no" ||
                             formData.permit_owner === "CLIENT" ||
@@ -1039,6 +1058,9 @@ function CheckoutPageInner() {
                 // Client-requested pickup window (optional) — date auto-falls-back
                 // to event_end_date if user set times but not date explicitly.
                 ...(() => {
+                    // No pickup window for permanent / no-return orders — the
+                    // pickup step is hidden and event_end is a sentinel.
+                    if (!needsCollection) return {};
                     const pickupDate = formData.requested_pickup_date || formData.event_end_date;
                     const tz = feasibilityConfig?.timezone;
                     if (
@@ -1808,6 +1830,52 @@ function CheckoutPageInner() {
                                                 blockingItems={availability.blockingItems}
                                             />
 
+                                            {/* Permanent placement — moved here from the
+                                        venue step so it's asked once and decides whether the
+                                        pickup block is shown. Required (explicit Yes/No). */}
+                                            <div className="space-y-3 pt-4 border-t border-border/40">
+                                                <div className="space-y-1">
+                                                    <Label className="font-mono uppercase text-xs tracking-wide">
+                                                        Permanent placement *
+                                                    </Label>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Permanent = these items are going out and
+                                                        will NOT be returned to us (no pickup
+                                                        needed). Temporary = we will collect them;
+                                                        you'll pick a pickup date.
+                                                    </p>
+                                                </div>
+                                                <RadioGroup
+                                                    value={
+                                                        formData.is_permanent_placement === null
+                                                            ? ""
+                                                            : formData.is_permanent_placement
+                                                              ? "yes"
+                                                              : "no"
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            is_permanent_placement: value === "yes",
+                                                        })
+                                                    }
+                                                    className="flex gap-3"
+                                                >
+                                                    <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                        <RadioGroupItem value="yes" id="permYes" />
+                                                        <span className="text-sm font-medium">
+                                                            Yes — permanent
+                                                        </span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
+                                                        <RadioGroupItem value="no" id="permNo" />
+                                                        <span className="text-sm font-medium">
+                                                            No — will be returned
+                                                        </span>
+                                                    </label>
+                                                </RadioGroup>
+                                            </div>
+
                                             {/* Delivery + Pickup windows.
                                         When event-dates flag is OFF, these are the primary
                                         input and BOTH are required. Native <input type="date">
@@ -1907,76 +1975,92 @@ function CheckoutPageInner() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Pickup */}
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="space-y-2">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                Pickup Date{" "}
-                                                                {eventDateInputsEnabled ? "" : "*"}
-                                                            </Label>
-                                                            <Input
-                                                                type="date"
-                                                                value={
-                                                                    formData.requested_pickup_date
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        requested_pickup_date:
-                                                                            e.target.value,
-                                                                    })
-                                                                }
-                                                                min={
-                                                                    formData.requested_delivery_date ||
-                                                                    calculateMinDate()
-                                                                }
-                                                                required={!eventDateInputsEnabled}
-                                                                className="h-12 font-mono"
-                                                            />
+                                                    {/* Pickup — only shown for temporary orders
+                                                        (needsCollection). Permanent / no-return
+                                                        orders have no pickup. */}
+                                                    {needsCollection && (
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                            <div className="space-y-2">
+                                                                <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                    Pickup Date{" "}
+                                                                    {eventDateInputsEnabled
+                                                                        ? ""
+                                                                        : "*"}
+                                                                </Label>
+                                                                <Input
+                                                                    type="date"
+                                                                    value={
+                                                                        formData.requested_pickup_date
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            requested_pickup_date:
+                                                                                e.target.value,
+                                                                        })
+                                                                    }
+                                                                    min={
+                                                                        formData.requested_delivery_date ||
+                                                                        calculateMinDate()
+                                                                    }
+                                                                    required={
+                                                                        !eventDateInputsEnabled
+                                                                    }
+                                                                    className="h-12 font-mono"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                    From{" "}
+                                                                    {eventDateInputsEnabled
+                                                                        ? ""
+                                                                        : "*"}
+                                                                </Label>
+                                                                <Input
+                                                                    type="time"
+                                                                    value={
+                                                                        formData.requested_pickup_time_start
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            requested_pickup_time_start:
+                                                                                e.target.value,
+                                                                        })
+                                                                    }
+                                                                    required={
+                                                                        !eventDateInputsEnabled
+                                                                    }
+                                                                    className="h-12 font-mono"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label className="font-mono uppercase text-xs tracking-wide">
+                                                                    To{" "}
+                                                                    {eventDateInputsEnabled
+                                                                        ? ""
+                                                                        : "*"}
+                                                                </Label>
+                                                                <Input
+                                                                    type="time"
+                                                                    value={
+                                                                        formData.requested_pickup_time_end
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            requested_pickup_time_end:
+                                                                                e.target.value,
+                                                                        })
+                                                                    }
+                                                                    required={
+                                                                        !eventDateInputsEnabled
+                                                                    }
+                                                                    className="h-12 font-mono"
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                From{" "}
-                                                                {eventDateInputsEnabled ? "" : "*"}
-                                                            </Label>
-                                                            <Input
-                                                                type="time"
-                                                                value={
-                                                                    formData.requested_pickup_time_start
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        requested_pickup_time_start:
-                                                                            e.target.value,
-                                                                    })
-                                                                }
-                                                                required={!eventDateInputsEnabled}
-                                                                className="h-12 font-mono"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label className="font-mono uppercase text-xs tracking-wide">
-                                                                To{" "}
-                                                                {eventDateInputsEnabled ? "" : "*"}
-                                                            </Label>
-                                                            <Input
-                                                                type="time"
-                                                                value={
-                                                                    formData.requested_pickup_time_end
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        requested_pickup_time_end:
-                                                                            e.target.value,
-                                                                    })
-                                                                }
-                                                                required={!eventDateInputsEnabled}
-                                                                className="h-12 font-mono"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -2050,52 +2134,6 @@ function CheckoutPageInner() {
                                             Where will the installation take place?
                                         </p>
                                     </div>
-
-                                    {/* Item 7: required Yes/No on permanent
-                                        placement. Blocks proceed until answered. */}
-                                    <Card className="p-6 bg-card/50 border-border/50">
-                                        <div className="space-y-3">
-                                            <div className="space-y-1">
-                                                <Label className="font-mono uppercase text-xs tracking-wide">
-                                                    Permanent placement *
-                                                </Label>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Are these items being placed permanently? (Yes =
-                                                    they won't be returned to us; No = they'll come
-                                                    back after the event.)
-                                                </p>
-                                            </div>
-                                            <RadioGroup
-                                                value={
-                                                    formData.is_permanent_placement === null
-                                                        ? ""
-                                                        : formData.is_permanent_placement
-                                                          ? "yes"
-                                                          : "no"
-                                                }
-                                                onValueChange={(value) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        is_permanent_placement: value === "yes",
-                                                    })
-                                                }
-                                                className="flex gap-3"
-                                            >
-                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                    <RadioGroupItem value="yes" id="permYes" />
-                                                    <span className="text-sm font-medium">
-                                                        Yes — permanent
-                                                    </span>
-                                                </label>
-                                                <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                    <RadioGroupItem value="no" id="permNo" />
-                                                    <span className="text-sm font-medium">
-                                                        No — will be returned
-                                                    </span>
-                                                </label>
-                                            </RadioGroup>
-                                        </div>
-                                    </Card>
 
                                     <Card className="p-8 bg-card/50 border-border/50">
                                         <div className="space-y-6">
