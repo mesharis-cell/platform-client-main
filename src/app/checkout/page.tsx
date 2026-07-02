@@ -1830,19 +1830,19 @@ function CheckoutPageInner() {
                                                 blockingItems={availability.blockingItems}
                                             />
 
-                                            {/* Permanent placement — moved here from the
-                                        venue step so it's asked once and decides whether the
-                                        pickup block is shown. Required (explicit Yes/No). */}
+                                            {/* Collection question — asked once here and decides
+                                        whether the pickup block is shown. Maps to
+                                        is_permanent_placement (collect => false, permanent => true).
+                                        Required. */}
                                             <div className="space-y-3 pt-4 border-t border-border/40">
                                                 <div className="space-y-1">
                                                     <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Permanent placement *
+                                                        Will these items be collected? *
                                                     </Label>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Permanent = these items are going out and
-                                                        will NOT be returned to us (no pickup
-                                                        needed). Temporary = we will collect them;
-                                                        you'll pick a pickup date.
+                                                        Select &quot;Yes&quot; to choose a
+                                                        collection date. Select &quot;No&quot; if
+                                                        the items will not be returned.
                                                     </p>
                                                 </div>
                                                 <RadioGroup
@@ -1850,27 +1850,34 @@ function CheckoutPageInner() {
                                                         formData.is_permanent_placement === null
                                                             ? ""
                                                             : formData.is_permanent_placement
-                                                              ? "yes"
-                                                              : "no"
+                                                              ? "permanent"
+                                                              : "collect"
                                                     }
                                                     onValueChange={(value) =>
                                                         setFormData({
                                                             ...formData,
-                                                            is_permanent_placement: value === "yes",
+                                                            is_permanent_placement:
+                                                                value === "permanent",
                                                         })
                                                     }
                                                     className="flex gap-3"
                                                 >
                                                     <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                        <RadioGroupItem value="yes" id="permYes" />
+                                                        <RadioGroupItem
+                                                            value="collect"
+                                                            id="collectYes"
+                                                        />
                                                         <span className="text-sm font-medium">
-                                                            Yes — permanent
+                                                            Yes — schedule a collection
                                                         </span>
                                                     </label>
                                                     <label className="flex items-center gap-2 rounded-md border border-border/60 bg-background/70 px-4 py-2 cursor-pointer flex-1">
-                                                        <RadioGroupItem value="no" id="permNo" />
+                                                        <RadioGroupItem
+                                                            value="permanent"
+                                                            id="collectNo"
+                                                        />
                                                         <span className="text-sm font-medium">
-                                                            No — will be returned
+                                                            No — no collection needed (permanent)
                                                         </span>
                                                     </label>
                                                 </RadioGroup>
