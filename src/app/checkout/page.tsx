@@ -1877,7 +1877,7 @@ function CheckoutPageInner() {
                                                             id="collectNo"
                                                         />
                                                         <span className="text-sm font-medium">
-                                                            No — no collection needed
+                                                            No — no collection needed (permanent)
                                                         </span>
                                                     </label>
                                                 </RadioGroup>
