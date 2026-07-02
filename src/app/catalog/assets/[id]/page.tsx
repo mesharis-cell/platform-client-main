@@ -86,9 +86,11 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         setSelectedQuantity(1);
     };
 
-    // Build a combined image stream: curated cover first, then the gallery
-    // (client photos lead, scan/return after). Deduped by URL so a cover that is
-    // also a gallery photo isn't shown twice.
+    // Build the CATALOGUE gallery: curated cover first, then the client-curated
+    // photos. SCAN/return imagery (source === "SCAN") is EXCLUDED — it is
+    // operational-only and must never surface to the ordering client here (mirrors
+    // the conditionImages filter above). Deduped by URL so a cover that is also a
+    // gallery photo isn't shown twice.
     const combinedImages: { url: string; note?: string }[] = (() => {
         if (!asset) return [];
         const seen = new Set<string>();
@@ -100,7 +102,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             out.push({ url, note: img.note });
         };
         if (asset.onDisplayImage) push({ url: asset.onDisplayImage });
-        asset.images.forEach(push);
+        asset.images.filter((img) => img.source !== "SCAN").forEach(push);
         return out;
     })();
 

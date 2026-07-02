@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { catalogueThumbUrl } from "@/lib/utils/catalogue-image";
 import {
     Dialog,
     DialogContent,
@@ -298,6 +299,9 @@ const OrderItemCard = ({
         }
     };
 
+    // Catalogue thumbnail only — never leak SCAN/return imagery to the client.
+    const thumbUrl = catalogueThumbUrl(item.asset?.images);
+
     return (
         <>
             <div
@@ -307,11 +311,11 @@ const OrderItemCard = ({
                     <div className="text-xl font-bold font-mono text-muted-foreground w-8 shrink-0">
                         {String(index + 1).padStart(2, "0")}
                     </div>
-                    {/* Thumbnail */}
-                    {item.asset?.images && item.asset.images.length > 0 && (
+                    {/* Thumbnail — catalogue photo only; never leak SCAN/return imagery */}
+                    {thumbUrl && (
                         <div className="w-20 h-20 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
                             <Image
-                                src={item.asset.images[0]?.url}
+                                src={thumbUrl}
                                 alt={item.order_item.asset_name}
                                 width={80}
                                 height={80}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { RequestItemCard } from "./request-item-card";
 import type { InboundRequestItem } from "@/types/inbound-request";
+import { catalogueThumbUrl } from "@/lib/utils/catalogue-image";
 
 interface AssetsFromInboundProps {
     items: InboundRequestItem[];
@@ -33,6 +34,9 @@ export function AssetsFromInbound({ items }: AssetsFromInboundProps) {
                 {items.map((item, index) => {
                     if (!item.asset) return null;
 
+                    // Catalogue thumbnail only — never leak SCAN/return imagery.
+                    const thumbUrl = catalogueThumbUrl(item.asset.images);
+
                     return (
                         <motion.div
                             key={item.id}
@@ -44,9 +48,9 @@ export function AssetsFromInbound({ items }: AssetsFromInboundProps) {
                                 <div className="flex h-full">
                                     {/* Image Section */}
                                     <div className="w-24 h-24 sm:w-32 sm:h-auto relative bg-muted shrink-0">
-                                        {item.asset.images?.[0] ? (
+                                        {thumbUrl ? (
                                             <img
-                                                src={item.asset.images[0]?.url}
+                                                src={thumbUrl}
                                                 alt={item.asset.name}
                                                 className="w-full h-full object-cover"
                                             />
