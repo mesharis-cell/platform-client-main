@@ -1384,17 +1384,22 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                             End
                                                         </p>
                                                         <p className="font-mono font-semibold">
-                                                            {order.event_end_date
-                                                                ? new Date(
-                                                                      order.event_end_date
-                                                                  ).toLocaleString([], {
-                                                                      year: "numeric",
-                                                                      month: "short",
-                                                                      day: "numeric",
-                                                                      hour: "2-digit",
-                                                                      minute: "2-digit",
-                                                                  })
-                                                                : "N/A"}
+                                                            {/* Permanent placements carry a far-future
+                                                            sentinel event_end (no return) — don't render
+                                                            the raw 2099 date. */}
+                                                            {order.is_permanent_placement
+                                                                ? "No return — permanent"
+                                                                : order.event_end_date
+                                                                  ? new Date(
+                                                                        order.event_end_date
+                                                                    ).toLocaleString([], {
+                                                                        year: "numeric",
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                  : "N/A"}
                                                         </p>
                                                     </div>
                                                     {/* Permanent-placement tag — matches the ops
