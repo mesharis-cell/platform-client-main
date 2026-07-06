@@ -66,10 +66,6 @@ export interface ServiceRequest {
     related_order_id: string | null;
     related_order_item_id: string | null;
     request_pricing_id: string | null;
-    client_sell_override_total: string | null;
-    concession_reason: string | null;
-    concession_approved_by: string | null;
-    concession_applied_at: string | null;
     requested_start_at: string | null;
     requested_due_at: string | null;
     created_at: string;
