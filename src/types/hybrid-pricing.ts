@@ -83,10 +83,9 @@ export interface OrderLineItem {
     total: number;
     notes: string | null;
     clientPriceVisible?: boolean;
-    // Per-line policy flags carried on admin-side responses. The client
-    // portal never sees these fields because projectByRole(CLIENT) strips
-    // them, but the types stay aligned for TS correctness.
-    applyMargin?: boolean | null;
+    // Per-line audience flag carried on admin-side responses. The client portal
+    // never sees it because projectByRole(CLIENT) strips it, but the type stays
+    // aligned for TS correctness.
     logisticsVisible?: boolean;
     isVoided: boolean;
 }
