@@ -45,7 +45,8 @@ export interface OrderEditPayload {
     event_start_date?: string;
     event_end_date?: string;
     // Item ops (P3b quantity + P3c add/remove "swap"). The server reconciles
-    // bookings (409 on insufficient availability) and reprices BASE_OPS on any op.
+    // bookings (409 on insufficient availability) and rebuilds the pricing
+    // breakdown on any op.
     // Send ONLY changed items; omit the key entirely when nothing changed. Each
     // entry is one of:
     //   UPDATE (default): { order_item_id, quantity } — change an existing item's quantity.

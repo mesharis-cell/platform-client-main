@@ -5,11 +5,6 @@
 export type TripType = "ONE_WAY" | "ROUND_TRIP";
 
 export interface OrderEstimate {
-    base_operations: {
-        volume: number;
-        rate: number;
-        total: number;
-    };
     transport?: {
         city: string;
         trip_type: TripType;
@@ -22,11 +17,9 @@ export interface OrderEstimate {
         estimated_rate: number;
         note?: string;
     };
-    logistics_subtotal: number;
     margin: {
         percent: number;
         total_amount?: number;
-        base_ops_amount?: number;
         transport_rate_amount?: number;
     };
     estimate_total: number;
@@ -36,7 +29,12 @@ export interface OrderEstimate {
 export interface OrderPricing {
     breakdown_lines?: Array<{
         line_id: string;
-        line_kind?: "BASE_OPS" | "RATE_CARD" | "CUSTOM";
+        // "SYSTEM" covers auto-managed lines (system_key-keyed). BASE_OPS was
+        // removed 2026-07 — the bucket survives as the substrate for future
+        // auto-spawn fee lines (e.g. percentage surcharges). The API's read
+        // path normalizes any legacy "BASE_OPS" snapshot value to "SYSTEM"
+        // before it ever reaches the client, so that literal never appears here.
+        line_kind?: "SYSTEM" | "RATE_CARD" | "CUSTOM";
         billing_mode?: "BILLABLE" | "NON_BILLABLE" | "COMPLIMENTARY";
         category?: string;
         label: string;
@@ -49,11 +47,11 @@ export interface OrderPricing {
         client_price_visible?: boolean;
     }>;
     totals?: {
-        base_ops_total?: number;
+        system_total?: number;
         rate_card_total?: number;
         custom_total?: number;
         total?: number;
-        sell_base_ops_total?: number;
+        sell_system_total?: number;
         sell_rate_card_total?: number;
         sell_custom_total?: number;
         sell_total?: number;
@@ -73,7 +71,9 @@ export interface OrderPricing {
 export interface OrderLineItem {
     id: string;
     lineItemType: "CATALOG" | "CUSTOM" | "SYSTEM";
-    systemKey?: "BASE_OPS" | null;
+    // BASE_OPS retired 2026-07; kept as a generic string slot for whatever
+    // future SYSTEM keys the system-key handler registry introduces (PLAN §11).
+    systemKey?: string | null;
     category: string;
     description: string;
     quantity: number | null;

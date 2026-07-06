@@ -2932,7 +2932,7 @@ function CheckoutPageInner() {
                                     {/* NEW: Hybrid Pricing Estimate */}
                                     {isEstimateFeatureEnabled &&
                                         availabilityIssues.length === 0 &&
-                                        estimateData?.data?.estimate?.base_operations && (
+                                        estimateData?.data?.estimate?.transport && (
                                             <OrderEstimate
                                                 estimate={estimateData.data.estimate}
                                                 hasRebrandItems={false}
