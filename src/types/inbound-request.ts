@@ -140,7 +140,10 @@ export interface InboundRequestDetails {
     request_pricing: {
         breakdown_lines?: Array<{
             line_id: string;
-            line_kind?: "BASE_OPS" | "RATE_CARD" | "CUSTOM";
+            // "SYSTEM" replaces "BASE_OPS" (removed 2026-07); the API's read
+            // path normalizes any legacy snapshot value before it reaches
+            // the client, so "BASE_OPS" never appears here.
+            line_kind?: "SYSTEM" | "RATE_CARD" | "CUSTOM";
             label: string;
             quantity: number;
             unit: string;
@@ -150,11 +153,11 @@ export interface InboundRequestDetails {
             sell_total?: number;
         }>;
         totals?: {
-            base_ops_total?: number;
+            system_total?: number;
             rate_card_total?: number;
             custom_total?: number;
             total?: number;
-            sell_base_ops_total?: number;
+            sell_system_total?: number;
             sell_rate_card_total?: number;
             sell_custom_total?: number;
             sell_total?: number;

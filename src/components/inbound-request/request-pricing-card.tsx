@@ -18,11 +18,11 @@ interface RequestPricingCardProps {
             is_voided?: boolean;
         }>;
         totals?: {
-            base_ops_total?: number;
+            system_total?: number;
             rate_card_total?: number;
             custom_total?: number;
             total?: number;
-            sell_base_ops_total?: number;
+            sell_system_total?: number;
             sell_rate_card_total?: number;
             sell_custom_total?: number;
             sell_total?: number;
