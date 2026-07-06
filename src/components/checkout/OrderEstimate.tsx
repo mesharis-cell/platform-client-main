@@ -14,35 +14,19 @@ interface OrderEstimateProps {
 
 export function OrderEstimate({ estimate, hasRebrandItems }: OrderEstimateProps) {
     const marginPercent = Number(estimate.margin?.percent || 0);
-    const baseOpsTotal = Number(estimate.base_operations?.total || 0);
     const transportRate = Number(
         estimate.transport?.rate ?? estimate.suggested_transport?.estimated_rate ?? 0
     );
-    const hasMarginBreakdown =
-        typeof estimate.margin?.base_ops_amount === "number" &&
-        typeof estimate.margin?.transport_rate_amount === "number";
-    const logisticsSubtotal = hasMarginBreakdown
-        ? baseOpsTotal + Number(estimate.margin.base_ops_amount)
-        : baseOpsTotal * (1 + marginPercent / 100);
+    const hasMarginBreakdown = typeof estimate.margin?.transport_rate_amount === "number";
     const transportSubtotal = hasMarginBreakdown
         ? transportRate + Number(estimate.margin.transport_rate_amount)
         : transportRate * (1 + marginPercent / 100);
-    const totalEstimate = Number(
-        estimate.estimate_total || (logisticsSubtotal + transportSubtotal).toFixed(2)
-    );
+    const totalEstimate = Number(estimate.estimate_total || transportSubtotal.toFixed(2));
     const tripType = estimate.transport?.trip_type || "ROUND_TRIP";
 
     return (
         <div className="border border-border rounded-lg p-6 space-y-3">
             <h3 className="text-lg font-semibold mb-4">Estimated Cost</h3>
-
-            {/* Picking & Handling */}
-            <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                    Picking & Handling ({estimate.base_operations.volume.toFixed(4)} m³)
-                </span>
-                <span className="font-mono">{logisticsSubtotal.toFixed(2)} AED</span>
-            </div>
 
             {/* Transport */}
             <div className="flex justify-between text-sm">
