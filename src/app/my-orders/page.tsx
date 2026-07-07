@@ -246,9 +246,11 @@ export default function MyOrdersPage() {
                                                                         order.event_start_date
                                                                     ).toLocaleDateString()}{" "}
                                                                     -{" "}
-                                                                    {new Date(
-                                                                        order.event_end_date
-                                                                    ).toLocaleDateString()}
+                                                                    {order.is_permanent_placement
+                                                                        ? "No return — permanent"
+                                                                        : new Date(
+                                                                              order.event_end_date
+                                                                          ).toLocaleDateString()}
                                                                 </span>
                                                             </p>
                                                         </div>

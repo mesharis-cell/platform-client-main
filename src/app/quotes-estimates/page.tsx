@@ -192,7 +192,13 @@ export default function QuotesEstimatesPage() {
                                 {order?.event_name || order?.venue_name || "N/A"}
                             </TableCell>
                             <TableCell>
-                                {formatDate(order?.event_start_date || order?.event_end_date)}
+                                {/* Permanent placements carry a far-future sentinel
+                                event_end_date (no return) — only ever fall back to it
+                                when a start date is genuinely missing, and even then
+                                don't render the raw 2099 date. */}
+                                {order?.is_permanent_placement && !order?.event_start_date
+                                    ? "No return — permanent"
+                                    : formatDate(order?.event_start_date || order?.event_end_date)}
                             </TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={`${reviewStatus.color} border`}>
