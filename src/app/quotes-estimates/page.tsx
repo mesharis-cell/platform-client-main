@@ -210,19 +210,29 @@ export default function QuotesEstimatesPage() {
                             </TableCell>
                             <TableCell>{formatDate(getDateSent(order))}</TableCell>
                             <TableCell className="text-right">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                    onClick={() => {
-                                        if (!order?.id || !order?.order_id) return;
-                                        handleDownloadCostEstimate(order.id, order.order_id);
-                                    }}
-                                    disabled={downloadCostEstimate.isPending || !order?.id}
-                                >
-                                    <Download className="h-4 w-4" />
-                                    Download
-                                </Button>
+                                {order?.pricing_mode === "NO_COST" ? (
+                                    // No-cost orders have no priced estimate — the API
+                                    // 409s the PDF for this mode (owner feedback
+                                    // 2026-07-07 item 14). Hide the download instead of
+                                    // letting the click round-trip into an error toast.
+                                    <span className="text-xs font-mono text-muted-foreground">
+                                        No cost
+                                    </span>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                        onClick={() => {
+                                            if (!order?.id || !order?.order_id) return;
+                                            handleDownloadCostEstimate(order.id, order.order_id);
+                                        }}
+                                        disabled={downloadCostEstimate.isPending || !order?.id}
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Download
+                                    </Button>
+                                )}
                             </TableCell>
                         </DataTableRow>
                     );
