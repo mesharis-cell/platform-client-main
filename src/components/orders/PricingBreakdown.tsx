@@ -16,34 +16,56 @@ export function PricingBreakdown({
     order,
     showTitle = true,
 }: PricingBreakdownProps) {
+    // No-cost orders (owner feedback 2026-07-07 item 14): no priced breakdown to
+    // show. Render the clean "provided at no cost" state instead of a hollow
+    // 0.00 total with an empty/near-empty line list — and never the download
+    // button (that lives in the page; the API 409s the PDF for this mode too).
+    const isNoCost = (order as any)?.pricing_mode === "NO_COST";
+    if (isNoCost) {
+        return (
+            <div className="border border-border rounded-lg p-6 space-y-4">
+                {showTitle && <h3 className="text-lg font-semibold mb-4">Cost Breakdown</h3>}
+                <div className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                        This order is provided at no cost.
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        No charges apply — there is nothing to pay.
+                    </p>
+                </div>
+                <div className="border-t border-border my-2"></div>
+                <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold">TOTAL</span>
+                    <span className="text-2xl font-bold font-mono text-primary">0.00 AED</span>
+                </div>
+            </div>
+        );
+    }
+
     if (!pricing) return null;
 
+    // Primary source: the role-projected breakdown snapshot. `projectByRole`
+    // (pricing.service.ts) already builds the CLIENT-visible line set FIRST —
+    // voided / NON_BILLABLE / client_visible=false lines are dropped from BOTH
+    // the list and the totals — so no re-filtering happens here; re-deriving
+    // hide rules client-side is exactly the drift this contract exists to avoid.
     const projectedLineItems = Array.isArray(pricing.breakdown_lines)
-        ? pricing.breakdown_lines.filter(
-              (line: any) =>
-                  !line.is_voided &&
-                  String(line.billing_mode || "BILLABLE") === "BILLABLE" &&
-                  !(
-                      String(line.line_kind || "") === "CUSTOM" &&
-                      String(line.billing_mode || "BILLABLE") === "NON_BILLABLE"
-                  )
-          )
+        ? pricing.breakdown_lines
         : [];
-    const fallbackLineItems = lineItems
-        .filter((item: any) => {
-            if (item.isVoided) return false;
-            const lineItemType = String(item.lineItemType || "CATALOG");
-            const billingMode = String(item.billingMode || "BILLABLE");
-            return !(lineItemType === "CUSTOM" && billingMode === "NON_BILLABLE");
-        })
-        .map((item) => ({
-            line_id: item.id,
-            label: item.description,
-            category: item.category,
-            quantity: Number(item.quantity || 0),
-            unit: item.unit || "service",
-            total: null,
-        }));
+    // Fallback only fires when the breakdown snapshot itself is absent/empty
+    // (e.g. a pre-projection legacy record). `lineItems` (order.line_items) is
+    // ALREADY the server-filtered CLIENT array (projectLineItemsForClient drops
+    // voided / NON_BILLABLE / client_visible=false) — this is a plain map, not a
+    // second filter pass, so it can't diverge from the server's choke point.
+    const fallbackLineItems = lineItems.map((item: any) => ({
+        line_id: item.id,
+        label: item.description,
+        category: item.category,
+        quantity: Number(item.quantity || 0),
+        unit: item.unit || "service",
+        is_complimentary: !!item.is_complimentary,
+        total: null,
+    }));
     const activeLineItems = projectedLineItems.length > 0 ? projectedLineItems : fallbackLineItems;
     const subtotal = Number(
         pricing.subtotal ?? pricing.totals?.subtotal ?? pricing.totals?.sell_total ?? 0
@@ -72,7 +94,11 @@ export function PricingBreakdown({
                         <span className="text-muted-foreground">
                             {item.label || item.description}
                         </span>
-                        {item.total === null || item.total === undefined ? null : (
+                        {item.is_complimentary ? (
+                            <span className="font-mono italic text-muted-foreground">
+                                Complimentary
+                            </span>
+                        ) : item.total === null || item.total === undefined ? null : (
                             <span className="font-mono">{Number(item.total).toFixed(2)} AED</span>
                         )}
                     </div>
