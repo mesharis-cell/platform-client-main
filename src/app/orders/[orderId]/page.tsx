@@ -297,6 +297,12 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     const isApproved = order.order_status === "APPROVED";
     const isDeclined = order.order_status === "DECLINED";
     const isConfirmed = order.order_status === "CONFIRMED";
+    // Owner feedback 2026-07-07 item 14: a no-cost order (mark-no-cost jumps
+    // straight to CONFIRMED, never QUOTED) has no priced cost estimate — the
+    // API 409s the PDF download for this mode (invoice.controllers.ts). Drive
+    // both the Quote Summary clean state and the sidebar download hide off
+    // this one flag.
+    const isNoCost = order.pricing_mode === "NO_COST";
     const isInPreparation = order.order_status === "IN_PREPARATION";
     const isReadyForDelivery = order.order_status === "READY_FOR_DELIVERY";
     const isInTransit = order.order_status === "IN_TRANSIT";
@@ -394,6 +400,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                                 ? "ON SITE"
                                                 : order?.order_status.replace(/_/g, " ")}
                                         </Badge>
+                                        {isNoCost && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="bg-neutral-500/10 text-neutral-700 border-neutral-400/60 font-mono text-xs"
+                                            >
+                                                NO COST
+                                            </Badge>
+                                        )}
                                         <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             {order.quote_sent_at
@@ -1292,6 +1306,20 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                                         </span>
                                         Quote is being revised — a new estimate will be available
                                         once re-approved.
+                                    </div>
+                                ) : isNoCost ? (
+                                    // No-cost orders never had a priced estimate to begin
+                                    // with — hide the download entirely (the API 409s it
+                                    // too; this just avoids the round trip + error toast).
+                                    <div
+                                        className="rounded-md border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground leading-relaxed"
+                                        data-testid="client-estimate-no-cost"
+                                    >
+                                        <span className="font-mono font-semibold text-foreground uppercase tracking-wide block mb-1">
+                                            No cost estimate
+                                        </span>
+                                        This order was approved at no cost — there is no cost
+                                        estimate to download.
                                     </div>
                                 ) : (
                                     costEstimatedStatus.includes(order?.order_status || "") && (
