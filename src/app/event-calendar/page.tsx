@@ -131,6 +131,18 @@ export default function EventCalendarPage() {
         month: formattedMonth, // Now passes "2024-12" format
     });
 
+    // The visible day-grid window for the selected month (shared by the grid
+    // itself and the event-grouping loop below, so multi-day events never get
+    // spread further than what's actually rendered).
+    const { calendarStart, calendarEnd } = useMemo(() => {
+        const monthStart = startOfMonth(new Date(selectedYear, selectedMonth - 1));
+        const monthEnd = endOfMonth(monthStart);
+        return {
+            calendarStart: startOfWeek(monthStart, { weekStartsOn: 0 }), // Start on Sunday
+            calendarEnd: endOfWeek(monthEnd, { weekStartsOn: 0 }),
+        };
+    }, [selectedMonth, selectedYear]);
+
     // Group events by date - spread multi-day events across all dates
     const eventsByDate = useMemo(() => {
         if (!data?.data) return {};
@@ -141,9 +153,18 @@ export default function EventCalendarPage() {
             const startDate = new Date(event.event_start_date);
             const endDate = new Date(event.event_end_date);
 
-            // Loop through each day from start to end (inclusive)
-            const currentDate = new Date(startDate);
-            while (currentDate <= endDate) {
+            // Clamp to the visible calendar window before iterating. Without
+            // this, a permanent-placement order (event_end_date pinned to the
+            // far-future 12/31/2099 sentinel) forces ~26,700 day-by-day loop
+            // iterations per order — and every one of those dates falls
+            // outside the rendered grid anyway, so the clamp changes nothing
+            // for the calendar view of normal, bounded-date orders.
+            const rangeStart = startDate < calendarStart ? calendarStart : startDate;
+            const rangeEnd = endDate > calendarEnd ? calendarEnd : endDate;
+            if (rangeStart > rangeEnd) return;
+
+            const currentDate = new Date(rangeStart);
+            while (currentDate <= rangeEnd) {
                 const dateKey = currentDate.toISOString().split("T")[0];
                 if (!grouped[dateKey]) {
                     grouped[dateKey] = [];
@@ -156,17 +177,12 @@ export default function EventCalendarPage() {
         });
 
         return grouped;
-    }, [data]);
+    }, [data, calendarStart, calendarEnd]);
 
     // Generate calendar days for the selected month
     const calendarDays = useMemo(() => {
-        const monthStart = startOfMonth(new Date(selectedYear, selectedMonth - 1));
-        const monthEnd = endOfMonth(monthStart);
-        const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // Start on Sunday
-        const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-
         return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    }, [selectedMonth, selectedYear]);
+    }, [calendarStart, calendarEnd]);
 
     // Month navigation
     const goToPreviousMonth = () => {
