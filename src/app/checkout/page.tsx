@@ -1837,12 +1837,12 @@ function CheckoutPageInner() {
                                             <div className="space-y-3 pt-4 border-t border-border/40">
                                                 <div className="space-y-1">
                                                     <Label className="font-mono uppercase text-xs tracking-wide">
-                                                        Will these items be collected? *
+                                                        Do you need these items uplifted? *
                                                     </Label>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Select &quot;Yes&quot; to choose a
-                                                        collection date. Select &quot;No&quot; if
-                                                        the items will not be returned.
+                                                        Choose whether you want us to schedule an
+                                                        uplift and return of items, or the items
+                                                        will not be returned.
                                                     </p>
                                                 </div>
                                                 <RadioGroup

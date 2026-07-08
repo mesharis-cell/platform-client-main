@@ -91,14 +91,18 @@ export function PricingBreakdown({
                         key={item.line_id || item.id}
                         className="flex justify-between text-sm gap-3"
                     >
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground inline-flex items-center gap-2">
                             {item.label || item.description}
+                            {item.is_complimentary ? (
+                                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-muted-foreground">
+                                    Complimentary
+                                </span>
+                            ) : null}
                         </span>
-                        {item.is_complimentary ? (
-                            <span className="font-mono italic text-muted-foreground">
-                                Complimentary
-                            </span>
-                        ) : item.total === null || item.total === undefined ? null : (
+                        {item.total === null ||
+                        item.total === undefined ? null : item.is_complimentary ? (
+                            <span className="font-mono text-muted-foreground">—</span>
+                        ) : (
                             <span className="font-mono">{Number(item.total).toFixed(2)} AED</span>
                         )}
                     </div>
