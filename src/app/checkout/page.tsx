@@ -57,6 +57,8 @@ import {
     Check,
     ChevronLeft,
     ChevronRight,
+    Circle,
+    CircleCheck,
     FileText,
     MapPin,
     Package,
@@ -1495,11 +1497,21 @@ function CheckoutPageInner() {
                                                                         <Button
                                                                             type="button"
                                                                             size="sm"
+                                                                            aria-pressed={
+                                                                                item.maintenanceDecision ===
+                                                                                "FIX_IN_ORDER"
+                                                                            }
                                                                             variant={
                                                                                 item.maintenanceDecision ===
                                                                                 "FIX_IN_ORDER"
                                                                                     ? "default"
                                                                                     : "outline"
+                                                                            }
+                                                                            className={
+                                                                                item.maintenanceDecision ===
+                                                                                "FIX_IN_ORDER"
+                                                                                    ? "gap-1.5"
+                                                                                    : "gap-1.5 opacity-70 hover:opacity-100"
                                                                             }
                                                                             disabled={
                                                                                 !item.refurbDaysEstimate
@@ -1511,16 +1523,32 @@ function CheckoutPageInner() {
                                                                                 )
                                                                             }
                                                                         >
+                                                                            {item.maintenanceDecision ===
+                                                                            "FIX_IN_ORDER" ? (
+                                                                                <CircleCheck className="h-4 w-4" />
+                                                                            ) : (
+                                                                                <Circle className="h-4 w-4" />
+                                                                            )}
                                                                             Repair before event
                                                                         </Button>
                                                                         <Button
                                                                             type="button"
                                                                             size="sm"
+                                                                            aria-pressed={
+                                                                                item.maintenanceDecision ===
+                                                                                "USE_AS_IS"
+                                                                            }
                                                                             variant={
                                                                                 item.maintenanceDecision ===
                                                                                 "USE_AS_IS"
                                                                                     ? "default"
                                                                                     : "outline"
+                                                                            }
+                                                                            className={
+                                                                                item.maintenanceDecision ===
+                                                                                "USE_AS_IS"
+                                                                                    ? "gap-1.5"
+                                                                                    : "gap-1.5 opacity-70 hover:opacity-100"
                                                                             }
                                                                             onClick={() =>
                                                                                 updateItemMaintenanceDecision(
@@ -1529,6 +1557,12 @@ function CheckoutPageInner() {
                                                                                 )
                                                                             }
                                                                         >
+                                                                            {item.maintenanceDecision ===
+                                                                            "USE_AS_IS" ? (
+                                                                                <CircleCheck className="h-4 w-4" />
+                                                                            ) : (
+                                                                                <Circle className="h-4 w-4" />
+                                                                            )}
                                                                             Accept current condition
                                                                         </Button>
                                                                     </div>
